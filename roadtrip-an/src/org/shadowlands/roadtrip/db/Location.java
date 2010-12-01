@@ -1,0 +1,255 @@
+/*
+ *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
+ *
+ *  Copyright (C) 2010 Jeremy D Monin <jdmonin@nand.net>
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+package org.shadowlands.roadtrip.db;
+
+import java.util.Vector;
+
+/**
+ * In-memory representation, and database access for,
+ * a Location at which vehicles stop.
+ * Used for autocomplete and FreqTrip.
+ *
+ * @author jdmonin
+ */
+public class Location extends RDBRecord
+{
+    private static final String TABNAME = "location";
+
+    /** db table fields.
+     * @see #buildInsertUpdate()
+     * @see #initFields(String[])
+     */
+    private static final String[] FIELDS =
+        { "a_id", "geo_lat", "geo_lon", "loc_descr" };
+    private static final String[] FIELDS_AND_ID =
+	    { "a_id", "geo_lat", "geo_lon", "loc_descr", "_id" };
+
+    /** may be unused (-1); foreign key to {@link GeoArea}. */
+    private int area_id;
+
+    /** may be null */
+    private String geo_lat, geo_lon;
+
+    /** location ('loc_descr' field); may not be null */
+    private String loc_descr;
+
+    /**
+     * Get the Locations currently in the database, by area.
+     * @param db  database connection
+     * @param areaID  area ID to filter, or -1 for all locations in all areas
+     * @return an array of Location objects from the database, ordered by description, or null if none
+     */
+    public static Location[] getAll(RDBAdapter db, final int areaID)
+    {
+    	final String kf = (areaID != -1) ? "a_id" : null;
+    	final String kv = (areaID != -1) ? Integer.toString(areaID) : null;
+		Vector<String[]> locs = db.getRows(TABNAME, kf, kv, FIELDS_AND_ID, "loc_descr");
+    	if (locs == null)
+    		return null;
+
+    	Location[] rv = new Location[locs.size()];
+		try {
+	    	for (int i = rv.length - 1; i >= 0; --i)
+				rv[i] = new Location(db, locs.elementAt(i));
+
+	    	return rv;
+		} catch (RDBKeyNotFoundException e) {
+			return null;  // catch is req'd but won't happen; record came from db.
+		}
+    }
+
+    /**
+     * Retrieve an existing location, by id, from the database.
+     *
+     * @param db  db connection
+     * @param id  id field
+     * @throws IllegalStateException if db not open
+     * @throws RDBKeyNotFoundException if cannot retrieve this ID
+     */
+    public Location(RDBAdapter db, final int id)
+        throws IllegalStateException, RDBKeyNotFoundException
+    {
+    	super(db, id);
+    	String[] rec = db.getRow(TABNAME, id, FIELDS);
+    	if (rec == null)
+    		throw new RDBKeyNotFoundException(id);
+
+    	initFields(rec);  // null descr shouldn't occur (IllegalArgumentException)
+    }
+
+    /**
+     * Existing record: Fill our obj fields from db-record string contents.
+     * @param db  connection
+     * @param rec  field contents, as returned by db.getRows(FIELDS_AND_ID); last element is _id
+     * @throws RDBKeyNotFoundException not thrown, but required due to super call
+     * @throws IllegalArgumentException if descr is null; descr is rec[3]
+     */
+    private Location(RDBAdapter db, final String[] rec)
+    	throws RDBKeyNotFoundException, IllegalArgumentException
+    {
+    	super(db, Integer.parseInt(rec[FIELDS.length]));
+    	initFields(rec);
+    }
+
+    /**
+     * Fill our obj fields from db-record string contents.
+     * @param rec  field contents, as returned by db.getRow(FIELDS) or db.getRows(FIELDS_AND_ID)
+     * @throws IllegalArgumentException if loc_descr is null; loc_descr is rec[3]
+     */
+    private void initFields(final String[] rec)
+    	throws IllegalArgumentException
+    {
+    	if (rec[0] != null)
+    		area_id = Integer.parseInt(rec[0]);  // FK
+    	else
+    		area_id = -1;
+    	geo_lat = rec[1];
+    	geo_lon = rec[2];
+    	if (rec[3] == null)
+    		 throw new IllegalArgumentException("null loc_descr");
+    	loc_descr = rec[3];
+
+    	if (rec.length == 5)
+    		id = Integer.parseInt(rec[4]);
+	}
+
+    /**
+     * Create a new location, but don't yet write to the database.
+     * When ready to write (after any changes you make to this object),
+     * call {@link #insert(RDBAdapter)}.
+     *<P>
+     *
+     * @param area_id    Area id, or -1
+     * @param geo_lat    Latitude, or null
+     * @param geo_lon    Longitude, or null
+     * @param descr      Description of location; not null
+     */
+    public Location(final int area_id,
+    		final String geo_lat, final String geo_lon, final String descr)
+    {
+    	super();
+    	this.area_id = area_id;
+    	this.geo_lat = geo_lat;
+    	this.geo_lon = geo_lon;
+    	if (descr == null)
+    		throw new IllegalArgumentException("null loc_descr");
+    	this.loc_descr = descr;
+    }
+
+	/**
+     * Insert a new record based on the current field values.
+	 * Clears dirty field; sets id and dbConn fields.
+	 *
+     * @return new record's primary key (_id)
+     * @throws IllegalStateException if the insert fails
+     */
+    public int insert(RDBAdapter db)
+        throws IllegalStateException
+    {
+    	id = db.insert(TABNAME, FIELDS, buildInsertUpdate(), true);
+		dirty = false;
+    	dbConn = db;
+    	return id;
+    }
+
+    /**
+	 * Commit changes to an existing record.
+	 * Commits to the database; clears dirty field.
+	 *<P>
+	 * For new records, <b>do not call commit</b>:
+	 * use {@link #insert(RDBAdapter)} instead.
+     * @throws IllegalStateException if the update fails
+     * @throws NullPointerException if dbConn was null because
+     *     this is a new record, not an existing one
+	 */
+	public void commit()
+        throws IllegalStateException, NullPointerException
+	{
+		dbConn.update(TABNAME, id, FIELDS, buildInsertUpdate());
+		dirty = false;
+	}
+
+	/**
+	 * Fill the db fields into an array with same
+	 * contents/order as {@link #FIELDS}.
+	 * @return field contents, ready for db update via insert() or commit() 
+	 */
+	private String[] buildInsertUpdate()
+	{
+		String[] fv =
+		    {
+			Integer.toString(area_id),
+			geo_lat, geo_lon,
+			loc_descr
+		    };
+		return fv;
+	}
+
+	/** Get the area ID, or -1 */
+	public int getAreaID() {
+		return area_id;
+	}
+
+	/**
+	 * Set or clear the area ID.
+	 * @param newArea new area ID, or -1 to clear
+	 */
+	public void setAreaID(int newArea)
+	{
+		area_id = newArea;
+		dirty = true;
+	}
+
+	/** Get the location description field. Never null. */
+	public String getLocation() {
+		return loc_descr;
+	}
+
+	/**
+	 * Set the location description field.
+	 * @param descr  new location description; must not be null.
+	 * @throws IllegalArgumentException if descr null
+	 */
+	public void setLocation(final String descr)
+		throws IllegalArgumentException
+	{
+		if (descr == null)
+			throw new IllegalArgumentException();
+		loc_descr = descr;
+		dirty = true;
+	}
+
+	/**
+	 * Delete an existing record.
+	 *
+     * @throws NullPointerException if dbConn was null because
+     *     this is a new record, not an existing one
+	 */
+	public void delete()
+	    throws NullPointerException
+	{
+		dbConn.delete(TABNAME, id);
+		deleteCleanup();
+	}
+
+	/** A location's toString is its description field. Used for AutoComplete / ComboBox GUI elements. */
+	public String toString() { return loc_descr; }
+
+}  // public class Location

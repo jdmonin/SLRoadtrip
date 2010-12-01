@@ -1,0 +1,1441 @@
+/*
+ *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
+ *
+ *  Copyright (C) 2010 Jeremy D Monin <jdmonin@nand.net>
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+package org.shadowlands.roadtrip.android;
+
+import java.util.Calendar;
+
+import org.shadowlands.roadtrip.AndroidStartup;
+import org.shadowlands.roadtrip.R;
+import org.shadowlands.roadtrip.android.util.Misc;
+import org.shadowlands.roadtrip.db.FreqTrip;
+import org.shadowlands.roadtrip.db.FreqTripTStop;
+import org.shadowlands.roadtrip.db.GeoArea;
+import org.shadowlands.roadtrip.db.Location;
+import org.shadowlands.roadtrip.db.Person;
+import org.shadowlands.roadtrip.db.RDBAdapter;
+import org.shadowlands.roadtrip.db.RDBKeyNotFoundException;
+import org.shadowlands.roadtrip.db.Settings;
+import org.shadowlands.roadtrip.db.TStop;
+import org.shadowlands.roadtrip.db.TStopGas;
+import org.shadowlands.roadtrip.db.Trip;
+import org.shadowlands.roadtrip.db.Vehicle;
+import org.shadowlands.roadtrip.db.ViaRoute;
+import org.shadowlands.roadtrip.db.android.RDBOpenHelper;
+
+import android.app.Activity;
+import android.app.DatePickerDialog;
+import android.app.DatePickerDialog.OnDateSetListener;
+import android.app.Dialog;
+import android.content.Intent;
+import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.text.format.DateFormat;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
+import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
+import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.DatePicker;
+import android.widget.EditText;
+import android.widget.ListAdapter;
+import android.widget.ListView;
+import android.widget.TextView;
+import android.widget.TimePicker;
+import android.widget.Toast;
+
+/**
+ * Confirm a trip stop during a trip, or end the trip, from Main activity.
+ * Called when the stop begins (no {@link Settings#CURRENT_TSTOP} in the database),
+ * when resuming the trip from the current stop (has <tt>CURRENT_TSTOP</tt>), and when
+ * ending the trip (show this with the boolean intent extra
+ * {@link #EXTRAS_FLAG_ENDTRIP}).
+ *<P>
+ * Assumes CURRENT_DRIVER, CURRENT_VEHICLE, CURRENT_TRIP are set.
+ * If not, it will jump to the {@link AndroidStartup} activity
+ * to enter the driver/vehicle data.
+ *<P>
+ * If we're not ending the trip right now, and we're on a frequent trip
+ * with stops ({@link Settings#CURRENT_FREQTRIP_TSTOPLIST} is set),
+ * then {@link #onCreate(Bundle)} will bring up another activity to ask the
+ * user if we've stopped at one of those {@link FreqTripTStop frequent TStops}.
+ * If that activity is canceled, this one will be too.
+ *<P>
+ * If stopping here creates a new {@link Location} or {@link ViaRoute}, and the
+ * text is changed when resuming the trip, make sure the new item's text is updated
+ * in the database.
+ *
+ * @author jdmonin
+ */
+public class TripTStopEntry extends Activity
+	implements OnDateSetListener, OnItemClickListener, TextWatcher
+{
+	/** Flag for ending the entire trip (not just stopping), for {@link Intent#putExtra(String, boolean)} */
+	public static final String EXTRAS_FLAG_ENDTRIP = "endtrip";
+
+	/** Historical Mode threshold is 24 hours, in milliseconds. */
+	private static final long TIMEDIFF_HISTORICAL_MILLIS = 24 * 60 * 60 * 1000L;
+
+	/** tag for Log debugs */
+	private static final String TAG = "Roadtrip.TripTStopEntry";
+
+	private RDBAdapter db = null;
+	private GeoArea currA;
+	private Vehicle currV;
+	private Person currD;
+	private Trip currT;
+	private TStop currTS;
+
+	/** all locations in the area, or null; set from {@link #currA} in {@link #onCreate(Bundle)} */
+	private Location[] areaLocs;
+
+	/**
+	 * true if {@link #EXTRAS_FLAG_ENDTRIP} was set when creating the activity.
+	 * @see #isCurrentlyStopped
+	 */
+	private boolean stopEndsTrip;
+
+	/**
+	 * When this activity was created, were we already at a TStop?
+	 * True if <tt>{@link #currTS} != null</tt>.
+	 * @see #stopEndsTrip
+	 */
+	private boolean isCurrentlyStopped;
+
+	/**
+	 * Frequent TStop chosen by user, if we'e on a freq trip and
+	 * {@link Settings#CURRENT_FREQTRIP_TSTOPLIST} isn't empty.
+	 * Null otherwise.
+	 */
+	private FreqTripTStop wantsFTS;
+
+	/** Gas info for {@link #currTS}, or null */
+	private TStopGas stopGas;
+
+	/** Button to enter info for gas.  Has a green light when {@link #stopGas} != null. */
+	private Button btnGas;
+
+	/**
+	 * Gas-stop info entered via {@link TripTStopGas}, or null.
+	 * When this is non-null, the "Gas" button has a green light,
+	 * and gas is associated with the TStop.
+	 */
+	private Bundle bundleGas;
+
+	private OdometerNumberPicker odo_total, odo_trip;
+	/** odometer value before it was changed within this activity; set in onCreate via {@link #updateTextAndButtons()} */
+	private int odoTotalOrig, odoTripOrig;
+	/** if true, the odometer values were adjusted using {@link #viaRouteObj} data. */
+	private boolean odosAreSetFromVia = false;
+	/** if true, the odometer values were adjusted using FreqTrip data. */
+	private boolean odosAreSetFromFreq = false;
+	private CheckBox odo_total_chk, odo_trip_chk, tp_time_stop_chk, tp_time_cont_chk;
+	private TimePicker tp_time_stop, tp_time_cont;
+
+	/** location; uses, sets {@link #locObj} */
+	private AutoCompleteTextView loc;
+	/** via_route; see {@link #updateViaRouteAutocomplete(ViaRoute, boolean)} */
+	private AutoCompleteTextView via;
+
+	/**
+	 * previous via destination-locID; helps {@link #updateViaRouteAutocomplete(ViaRoute, boolean)}
+	 * determine whether it needs to query certain data.
+	 */
+	private int via_lastLocIDTo = -1;
+
+	private ViaRouteListenerWatcher viaListener;
+
+	/**
+	 * When stopping at a stop, selection from the {@link #via} dropdown for selecting a ViaRoute.
+	 * Changing {@link #via}'s text clears {@link #viaRouteObj},
+	 * unless <tt>viaRouteObj</tt> was created for this stop
+	 * ({@link #viaRouteObjCreatedHere} != null).
+	 * @see #prevLocObj
+	 * @see #locObj
+	 * @see #viaRouteObjCreatedHere
+	 * @see ViaRouteOnItemClickListener#onItemClick(AdapterView, View, int, long)
+	 */
+	private ViaRoute viaRouteObj;
+
+	/**
+	 * if non-null, then <tt>currTS != null</tt>, and
+	 * {@link #viaRouteObj} was created for this TStop.
+	 */
+	private ViaRoute viaRouteObjCreatedHere = null;
+
+	/**
+	 * When at a stop, the previous stop's location ID; for trip's first stop, the trip start location;
+	 * from {@link Settings#getPreviousLocation(RDBAdapter, boolean)}.
+	 * Used for {@link #viaRouteObj}.
+	 */
+	private Location prevLocObj;
+
+	/**
+	 * when at a stop, the location we stopped at.
+	 * Used for {@link #loc} and {@link #viaRouteObj}.
+	 * Changing {@link #loc}'s text clears {@link #locObj},
+	 * unless <tt>locObj</tt> was created for this stop
+	 * ({@link #locObjCreatedHere} is true).
+	 */
+	private Location locObj;
+
+	/**
+	 * if non-null, then <tt>currTS != null</tt>, and
+	 * {@link #viaRouteObj} was created for this TStop.
+	 */
+	private Location locObjCreatedHere = null;
+
+	/** TStop's date-time for time_stop, time_continue */
+	private Calendar stopTime, contTime;
+
+	/** Which date to update? Set in {@link #onCreateDialog(int)}, checked in {@link #onDateSet(DatePicker, int, int, int)}. */
+	private Calendar currentDateToPick;
+
+	/**
+	 * date formatter for use by {@link DateFormat#format(CharSequence, Calendar)},
+	 * initialized once in {@link #updateDateButtons(int)}.
+	 */
+	private StringBuffer fmt_dow_shortdate;
+	private Button btnStopTimeDate, btnContTimeDate;
+
+	/** Called when the activity is first created.
+	 * See {@link #onResume()} for remainder of init work,
+	 * which includes checking the current driver/vehicle/trip
+	 * and hiding/showing buttons as appropriate.
+	 */
+	@Override
+	public void onCreate(Bundle savedInstanceState)
+	{
+	    super.onCreate(savedInstanceState);
+	    db = new RDBOpenHelper(this);
+	    setContentView(R.layout.trip_tstop_entry);
+
+		odo_total_chk = (CheckBox) findViewById(R.id.trip_tstop_odo_total_chk);
+		odo_total = (OdometerNumberPicker) findViewById(R.id.trip_tstop_odo_total);
+		odo_total.setCheckboxOnChanges(odo_total_chk);
+		odo_total.setTenthsVisibility(false);
+
+		odo_trip_chk = (CheckBox) findViewById(R.id.trip_tstop_odo_trip_chk);
+		odo_trip = (OdometerNumberPicker) findViewById(R.id.trip_tstop_odo_trip);
+		odo_trip.setCheckboxOnChanges(odo_trip_chk);
+
+		odo_total.setRelatedUncheckedOdoOnChanges(odo_trip, odo_trip_chk);
+		odo_trip.setRelatedUncheckedOdoOnChanges(odo_total, odo_total_chk);
+
+		tp_time_stop = (TimePicker) findViewById(R.id.trip_tstop_time_stop);
+		tp_time_cont = (TimePicker) findViewById(R.id.trip_tstop_time_cont);
+		tp_time_stop_chk = (CheckBox) findViewById(R.id.trip_tstop_time_stop_chk);
+		tp_time_cont_chk = (CheckBox) findViewById(R.id.trip_tstop_time_cont_chk);
+		{
+			final boolean pref24hr = DateFormat.is24HourFormat(this);
+			tp_time_stop.setIs24HourView(pref24hr);
+			tp_time_cont.setIs24HourView(pref24hr);
+		}
+		btnStopTimeDate = (Button) findViewById(R.id.trip_tstop_btn_stop_date);
+		btnContTimeDate = (Button) findViewById(R.id.trip_tstop_btn_cont_date);
+		btnGas = (Button) findViewById(R.id.trip_tstop_btn_gas);
+
+		if (! checkCurrentDriverVehicleTripSettings())  // set currA, currV, currT, etc
+		{
+        	Toast.makeText(getApplicationContext(),
+                "Current area/driver/vehicle/trip not found in db",
+                Toast.LENGTH_SHORT).show();
+	    	startActivity(new Intent(TripTStopEntry.this, AndroidStartup.class));
+	    	finish();
+	    	return;
+		}
+		isCurrentlyStopped = (currTS != null);
+
+		// if currTS != null, we'll read stopGas in updateTextAndButtons,
+		// and set btnGas's green light.
+		stopGas = null;
+
+		Intent i = getIntent();
+		if (i != null)
+		{
+			stopEndsTrip = i.getBooleanExtra(EXTRAS_FLAG_ENDTRIP, false);
+			if (stopEndsTrip)
+			{
+				Button eb = (Button) findViewById(R.id.trip_tstop_btn_enter);
+				if (eb != null)
+					eb.setText(R.string.end_trip);
+				setTitle(R.string.end_trip);
+				TextView tv = (TextView) findViewById(R.id.trip_tstop_loc_label);
+				if (tv != null)
+				{
+					if (0 == currT.getRoadtripEndAreaID())  // 0 for local trips
+						tv.setText(R.string.destination);
+					else
+						tv.setText(R.string.destination_within_the_area);
+				}
+				tv = (TextView) findViewById(R.id.trip_tstop_prompt);
+				if (tv != null)
+					tv.setVisibility(View.GONE);
+
+				if (currT.isFrequent())
+				{
+					tv = (TextView) findViewById(R.id.trip_tstop_end_mk_freq_text);
+					if (tv != null)
+						tv.setText(R.string.make_this_another_frequent_trip);
+				}
+			}
+		} // else, stopEndsTrip is false
+
+		if (! stopEndsTrip)
+		{
+			View vrow = findViewById(R.id.trip_tstop_row_end_mk_freq);
+			if (vrow != null)
+				vrow.setVisibility(View.GONE);
+
+			if (currTS != null)
+			{
+				Button eb = (Button) findViewById(R.id.trip_tstop_btn_enter);
+				if (eb != null)
+					eb.setText(R.string.continu);
+			}
+		}
+
+		// Based on current area, set up Location auto-complete
+		loc = (AutoCompleteTextView) findViewById(R.id.trip_tstop_loc);
+		loc.addTextChangedListener(this);
+		{
+			int areaID = 0;  // TODO consider an activity obj field instead; used a few places
+			if (currTS != null)
+				areaID = currTS.getAreaID();
+			if (areaID == 0)
+			{
+				if (! stopEndsTrip)
+				{
+					areaID = currA.getID();
+				} else {
+					areaID = currT.getRoadtripEndAreaID();
+					if (areaID == 0)  // 0 for local trips
+						areaID = currA.getID();
+				}
+			}
+			areaLocs = Location.getAll(db, areaID);
+			if (areaLocs != null)
+			{
+				ArrayAdapter<Location> adapter = new ArrayAdapter<Location>(this, R.layout.list_item, areaLocs);
+				loc.setAdapter(adapter);
+				loc.setOnItemClickListener(this);
+			}
+		}
+
+		via = (AutoCompleteTextView) findViewById(R.id.trip_tstop_via);
+		viaListener = new ViaRouteListenerWatcher();
+		via.addTextChangedListener(viaListener);
+
+		// adjust date/time fields, now that we know if we have currTS
+		// and know if stopEndsTrip.
+		final long timeNow = System.currentTimeMillis();
+		if (stopEndsTrip || (currTS == null))
+		{
+			contTime = null;
+			tp_time_cont.setVisibility(View.GONE);
+			tp_time_cont_chk.setVisibility(View.GONE);
+			btnContTimeDate.setVisibility(View.GONE);
+			findViewById(R.id.trip_tstop_time_cont_label).setVisibility(View.GONE);
+		} else {
+			contTime = Calendar.getInstance();
+			contTime.setTimeInMillis(timeNow);
+			tp_time_cont_chk.setChecked(true);
+		}
+		stopTime = Calendar.getInstance();
+		boolean setTimeStopCheckbox;
+		if (isCurrentlyStopped)
+		{
+			int stoptime_sec = currTS.getTime_stop();
+			if (stoptime_sec != 0)
+			{
+				setTimeStopCheckbox = true;
+				stopTime.setTimeInMillis(1000L * stoptime_sec);
+			} else {			
+				setTimeStopCheckbox = false;
+				stopTime.setTimeInMillis(timeNow);
+			}
+
+			// Historical Mode: continue from that date & time, not from today
+			if ((contTime != null)
+				&& (Math.abs(timeNow - (1000L * stoptime_sec)) >= TIMEDIFF_HISTORICAL_MILLIS))
+			{
+				contTime.setTimeInMillis(1000L * (stoptime_sec + 60));  // 1 minute later
+			}
+
+			// Focus on continue-time, to scroll the screen down
+			tp_time_cont.requestFocus();
+		} else {
+			// It's a new stop.
+			// How recent was that vehicle's most recent trip? (Historical Mode)
+			{
+				long latestVehTime = 1000L * currV.readLatestTime(currT);
+				if ((latestVehTime != 0L)
+				    && (Math.abs(latestVehTime - timeNow) >= TIMEDIFF_HISTORICAL_MILLIS))
+				{
+					Toast.makeText(this,
+						getResources().getString(R.string.using_old_date_due_to_previous),
+						Toast.LENGTH_SHORT).show();
+				} else {
+					latestVehTime = timeNow;
+				}
+				stopTime.setTimeInMillis(latestVehTime);
+			}
+			setTimeStopCheckbox = true;
+		}
+		tp_time_stop_chk.setChecked(setTimeStopCheckbox);
+		updateDateButtons(0);
+		initTimePicker(stopTime, tp_time_stop);
+		if (contTime != null) 
+			initTimePicker(contTime, tp_time_cont);
+
+		// Give status, read odometer, etc;
+		// if currTS != null, fill fields from it.
+		updateTextAndButtons();
+
+		// See if we're stopping on a frequent trip:
+		if ((! isCurrentlyStopped) && currT.isFrequent())
+		{
+			FreqTrip ft = Settings.getCurrentFreqTrip(db, false);
+			if (stopEndsTrip)
+			{
+				// Ending frequent trip. Copy default field values from FreqTrip.
+				copyValuesFromFreqTrip(ft);
+			}
+			else if (ft != null)
+			{
+				// Not ending trip yet. Should ask the user to choose a FreqTripTStop, if available.
+				try {
+					Settings cTSL = new Settings(db, Settings.CURRENT_FREQTRIP_TSTOPLIST);
+					if (cTSL.getStrValue() != null)
+					{
+						startActivityForResult
+							(new Intent(this, TripTStopChooseFreq.class),
+							 R.id.main_btn_freq_local);
+						// When it returns with the result, its intent should contain
+						// an int extra "_id" that's the chosen
+						// FreqTripTStop ID, or 0 for a new non-freq TStop.
+						// (see onActivityResult)
+					}
+				} catch (Throwable e) { } // RDBKeyNotFoundException
+			}
+		}
+	}
+
+	/** set a timepicker's hour and minute, based on a calendar's current time */
+	private final static void initTimePicker(Calendar c, TimePicker tp)
+	{
+		tp.setCurrentHour(c.get(Calendar.HOUR_OF_DAY));
+		tp.setCurrentMinute(c.get(Calendar.MINUTE));
+	}
+
+	/**
+	 * Check Settings table for <tt>CURRENT_DRIVER</tt>, <tt>CURRENT_VEHICLE</tt>,
+	 * <tt>CURRENT_TRIP</tt>.
+	 * Set {@link #currA}, {@link #currD}, {@link #currV} and {@link #currT}.
+	 * Set {@link #currTS} if <tt>CURRENT_TSTOP</tt> is set.
+	 * Set {#link {@link #prevLocObj}} if <tt>PREV_LOCATION</tt> is set.
+	 *<P>
+	 * If there's an inconsistency between Settings and GeoArea/Vehicle/Person tables, don't fix it,
+	 * but don't load objects either.
+	 *
+	 * @return true if settings exist and are OK, false otherwise.
+	 */
+	private boolean checkCurrentDriverVehicleTripSettings()  // TODO refactor common
+	{
+		currA = Settings.getCurrentArea(db, false);
+		if (currA == null)
+		{
+    		final String homearea = getResources().getString(R.string.home_area);
+    		currA = new GeoArea(homearea);
+    		currA.insert(db);
+    		Settings.setCurrentArea(db, currA);
+		}
+		currD = Settings.getCurrentDriver(db, false);
+		currV = Settings.getCurrentVehicle(db, false);
+		currT = Settings.getCurrentTrip(db, true);
+		currTS = Settings.getCurrentTStop(db, false);
+		prevLocObj = Settings.getPreviousLocation(db, false);
+
+		return ((currA != null) && (currD != null) && (currV != null) && (currT != null));
+		// null prevTS OK, null prevLocObj OK
+	}
+
+	/**
+	 * Update the text about current driver, vehicle and trip;
+	 * update odometers from {@link Trip#readHighestOdometers()}.
+	 * If <tt>{@link #currTS} != null</tt>, fill fields from that instead.
+	 * Called as an ending part of {@link #onCreate(Bundle)}.
+	 */
+	private void updateTextAndButtons()
+	{
+		int[] odos;
+		if (currTS == null)
+		{
+			odos = currT.readHighestOdometers();
+			odoTotalOrig = odos[0];
+			odoTripOrig = odos[1];
+			odo_total.setCurrent10d(odos[0], true);
+			odo_trip.setCurrent10d(odos[1], true);
+			return;  // <--- Early return: no current tstop ---
+		}
+
+		int odo = currTS.getOdo_total();
+		if (odo != 0)
+		{
+			odoTotalOrig = odo;
+			odo_total.setCurrent10d(odo, true);
+			odo_total_chk.setChecked(true);
+			odos = null;
+		} else {
+			odos = currT.readHighestOdometers();
+			odoTotalOrig = odos[0];
+			odo_total.setCurrent10d(odos[0], true);
+		}
+		odo = currTS.getOdo_trip();
+		if (odo != 0)
+		{
+			odoTripOrig = odo;
+			odo_trip.setCurrent10d(odo, true);
+			odo_trip_chk.setChecked(true);
+		} else {
+			if (odos == null)
+				odos = currT.readHighestOdometers();
+			odoTripOrig = odos[1];
+			odo_trip.setCurrent10d(odos[1], true);
+		}
+
+		// fill text fields, unless null or 0-length
+		setEditText(currTS.readLocationText(), R.id.trip_tstop_loc);
+		setEditText(currTS.getVia_route(), R.id.trip_tstop_via);
+		setEditText(currTS.getComment(), R.id.trip_tstop_comment);
+		locObj = null;
+		if (currTS.getLocationID() > 0)
+		{
+			try
+			{
+				locObj = new Location(db, currTS.getLocationID());
+				if (currTS.isSingleFlagSet(TStop.TEMPFLAG_CREATED_LOCATION))
+				{
+					locObjCreatedHere = locObj;
+				}
+			} catch (RDBKeyNotFoundException e)
+			{ }
+		}
+
+		updateViaRouteAutocomplete(null, true);  // sets viaRouteObj from currTS.via_id;
+			// also sets viaRouteObjCreatedHere if applicable.
+
+		if (via.getText().length() == 0)
+		{
+			if (viaRouteObj != null)
+				via.setText(viaRouteObj.toString());
+			else if ((currTS != null) && (currTS.getVia_route() != null))
+				via.setText(currTS.getVia_route());
+		}
+
+		try
+		{
+			stopGas = new TStopGas(db, currTS.getID());
+			btnGas.setCompoundDrawablesWithIntrinsicBounds
+			  ((stopGas != null) ? android.R.drawable.presence_online
+				: android.R.drawable.presence_invisible,
+				0, 0, 0);
+		} catch (RDBKeyNotFoundException e) {
+			stopGas = null;
+		}
+	}
+
+	/**
+	 * Set the stop-date/continue-date button text based on
+	 * {@link #stopTime}'s, {@link #contTime}'s value.
+	 *
+	 * @param which  1 for stoptime, 2 for conttime, 0 for both.
+	 *   If {@link #contTime} is <tt>null</tt>, its button text is not changed.
+	 */
+	private void updateDateButtons(final int which)
+	{
+		if (fmt_dow_shortdate == null)
+			fmt_dow_shortdate = Misc.buildDateFormatDOWShort(this);
+
+		// update btn text to current times:
+		if (which != 2)
+			btnStopTimeDate.setText(DateFormat.format(fmt_dow_shortdate, stopTime));
+		if ((which != 1) && (contTime != null))
+			btnContTimeDate.setText(DateFormat.format(fmt_dow_shortdate, contTime));
+	}
+
+	@Override
+	public void onPause()
+	{
+		super.onPause();
+		if (db != null)
+			db.close();
+	}
+
+	@Override
+	public void onDestroy()
+	{
+		super.onDestroy();
+		if (db != null)
+			db.close();
+	}
+
+	/**
+	 * Read fields, and record this TStop in the database.
+	 * If continuing from the stop, update {@link Settings#PREV_LOCATION}.
+	 * If {@link #EXTRAS_FLAG_ENDTRIP}, end the Trip too.
+	 * Finish this Activity.
+	 *<P>
+	 * Checks for required fields, such as description.
+	 * If missing, prompt for it and don't end the Activity yet.
+	 * IF ending the trip, the total odometer is required
+	 * for this stop.  If creating a Frequent Trip, the
+	 * ending trip odometer is also required.
+	 */
+	public void onClick_BtnEnterTStop(View v)
+	{
+		String locat = null, via_route = null, comment = null;
+		boolean createdLoc = false, createdVia = false;
+		int locID = 0;
+
+		CheckBox b;
+
+		int stopTimeSec = 0;  // optional stop-time
+		b = (CheckBox) findViewById (R.id.trip_tstop_time_stop_chk);
+		if ((b != null) && b.isChecked())
+		{			
+			if (tp_time_stop != null)
+			{
+				stopTime.set(Calendar.HOUR_OF_DAY, tp_time_stop.getCurrentHour());
+				stopTime.set(Calendar.MINUTE, tp_time_stop.getCurrentMinute());
+				stopTimeSec = (int) (stopTime.getTimeInMillis() / 1000L);
+			}
+		}
+
+		locat = textIfEntered(R.id.trip_tstop_loc);
+		if (locat == null)
+		{
+			loc.requestFocus();
+        	Toast.makeText(getApplicationContext(),
+    			getResources().getString(R.string.please_enter_the_location),
+                Toast.LENGTH_SHORT).show();
+        	return;  // <--- Early return: missing field ---
+		}
+		via_route = textIfEntered(R.id.trip_tstop_via);
+		comment = textIfEntered(R.id.trip_tstop_comment);
+
+		int odoTotal = 0, odoTrip = 0;
+		if ((odo_total_chk != null) && odo_total_chk.isChecked())
+			odoTotal = odo_total.getCurrent10d();
+		if ((odo_trip_chk != null) && odo_trip_chk.isChecked())
+			odoTrip = odo_trip.getCurrent10d();
+		if ((odoTotal == 0) &&
+			(stopEndsTrip || (bundleGas != null)))
+		{
+			odo_total.requestFocus();
+        	Toast.makeText(getApplicationContext(),
+    			getResources().getString(R.string.please_check_the_total_odometer),
+                Toast.LENGTH_SHORT).show();
+        	return;  // <--- Early return: missing required field ---
+		}
+
+		final boolean mkFreqTrip;
+		if (! stopEndsTrip)
+		{
+			mkFreqTrip = false;
+		} else {
+			CheckBox et = (CheckBox) findViewById(R.id.trip_tstop_end_mk_freq);
+			mkFreqTrip = (et != null) && et.isChecked();
+		}
+
+		if (mkFreqTrip && (odoTrip == 0))
+		{
+			odo_trip.requestFocus();
+        	Toast.makeText(getApplicationContext(),
+    			getResources().getString(R.string.please_check_the_trip_odometer),
+                Toast.LENGTH_SHORT).show();
+        	return;  // <--- Early return: missing required field ---
+		}
+
+		// continue-time
+		int contTimeSec = 0;
+		if (isCurrentlyStopped && (! stopEndsTrip) && tp_time_cont_chk.isChecked() && (contTime != null))
+		{
+			// Convert to unix time:
+			contTime.set(Calendar.HOUR_OF_DAY, tp_time_cont.getCurrentHour());
+			contTime.set(Calendar.MINUTE, tp_time_cont.getCurrentMinute());
+			contTimeSec = (int) (contTime.getTimeInMillis() / 1000L);
+
+			// Validate continue-time:
+			if (stopTimeSec == 0)
+				stopTimeSec = currT.getTime_start();
+			if ((stopTimeSec != 0) && (contTimeSec < stopTimeSec)) 
+			{
+				tp_time_cont.requestFocus();
+	        	Toast.makeText(getApplicationContext(),
+        			getResources().getString(R.string.this_time_must_be_no_earlier_than),
+                    Toast.LENGTH_LONG).show();
+				return;  // <--- inconsistent time ---
+			}
+		}
+
+		/**
+		 * Done checking field contents, time to update the db.
+		 * tsid is the TStop ID we'll create or update here.
+		 */
+		final int tsid;
+
+		// Get or create the Location db record,
+		// if we don't already have it
+		if ((locObj == null) || ! locObj.getLocation().equalsIgnoreCase(locat))
+		{
+			final int locatIdx = loc.getListSelection();
+			ListAdapter la = loc.getAdapter();
+			if ((locatIdx != ListView.INVALID_POSITION) && (locatIdx != ListAdapter.NO_SELECTION) && (la != null))
+			{
+				locObj = (Location) la.getItem(locatIdx);
+				if (locObj != null)
+					locID = locObj.getID();
+			}
+			if (locObj == null)
+			{
+				int areaID = 0;  // TODO consider add an activity obj field instead; used in a few places
+				if (currTS != null)
+					areaID = currTS.getAreaID();
+				if (areaID == 0)
+				{
+					if (! stopEndsTrip)
+					{
+						areaID = currA.getID();
+					} else {
+						areaID = currT.getRoadtripEndAreaID();
+						if (areaID == 0)  // 0 for local trips
+							areaID = currA.getID();
+					}
+				}
+				if (locObjCreatedHere == null)
+				{
+					locObj = new Location(areaID, null, null, locat);
+					locID = locObj.insert(db);
+					createdLoc = true;
+				} else {
+					// re-use it
+					locObj = locObjCreatedHere;
+					locID = locObj.getID();
+					locObj.setAreaID(areaID);
+					locObj.setLocation(locat);
+					locObj.commit();
+				}
+			}
+		} else {
+			// not null, and text matches: use it
+			locID = locObj.getID();
+		}
+		if ((locObjCreatedHere != null) && (locID != locObjCreatedHere.getID()))
+		{
+			// record created here wasn't used, so remove it from db
+			locObjCreatedHere.delete();
+			locObjCreatedHere = null;
+		}
+
+		// Get or create the ViaRoute db record,
+		// if we don't already have it
+		int viaID;
+		if ((locID == 0) || (via_route == null) || (prevLocObj == null))
+		{
+			viaID = 0;
+			viaRouteObj = null;  // it's probably already null
+		} else if ((viaRouteObj != null) && viaRouteObj.getDescr().equalsIgnoreCase(via_route))
+		{
+			viaID = viaRouteObj.getID();
+			// if isCurrentlyStopped, or ending the trip,
+			// and we don't yet have odo_dist for
+			// this ViaRoute, set it from this tstop:
+			if (isCurrentlyStopped || stopEndsTrip)
+			{
+				if (odo_trip_chk.isChecked())
+				{
+					if ((0 == viaRouteObj.getOdoDist())
+						|| ((viaRouteObjCreatedHere != null)
+							&& (viaID == viaRouteObjCreatedHere.getID())))
+					{
+						final int prev_tripOdo = TStop.tripReadPrevTStopOdo(currT, prevLocObj, currTS);
+						if (prev_tripOdo != -1)
+						{
+							int odo_dist = odo_trip.getCurrent10d() - prev_tripOdo;
+							viaRouteObj.setOdoDist(odo_dist);  // if unchanged, does nothing
+							viaRouteObj.commit();              // if unchanged, does nothing
+						}
+					}
+				}
+				else if ((viaRouteObjCreatedHere != null) && (viaID == viaRouteObjCreatedHere.getID()))
+				{
+					// odo_trip_chk not checked, but we created ViaRoute for this TStop;
+					// clear that via's odo_dist
+					if (0 != viaRouteObjCreatedHere.getOdoDist())
+					{
+						viaRouteObjCreatedHere.setOdoDist(0);
+						viaRouteObjCreatedHere.commit();
+					}
+				}
+			}
+		} else {
+			// via-route text doesn't match, create new ViaRoute
+			int odo_dist = 0;
+			if (odo_trip_chk.isChecked())
+			{
+				final int prev_tripOdo = TStop.tripReadPrevTStopOdo(currT, prevLocObj, currTS);
+				if (prev_tripOdo != -1)
+					odo_dist = odo_trip.getCurrent10d() - prev_tripOdo;
+			}
+			if (viaRouteObjCreatedHere == null)
+			{
+				viaRouteObj = new ViaRoute(prevLocObj.getID(), locID, odo_dist, via_route);
+				viaID = viaRouteObj.insert(db);
+				createdVia = true;
+				Toast.makeText(this, "set new viaRoute odo_dist = " + odo_dist, Toast.LENGTH_SHORT).show();
+			} else {
+				// re-use it
+				viaRouteObj = viaRouteObjCreatedHere;
+				viaID = viaRouteObj.getID();
+				viaRouteObj.set(locID, odo_dist, via_route);
+				viaRouteObj.commit();
+			}
+		}
+		if ((viaRouteObjCreatedHere != null) && (viaID != viaRouteObjCreatedHere.getID()))
+		{
+			// record created here wasn't used, so remove it from db
+			viaRouteObjCreatedHere.delete();
+			viaRouteObjCreatedHere = null;
+		}
+
+		// If we've chosen a frequent tstop, remove
+		// it from the list of unused ones.
+		if ((wantsFTS != null) && (locID == wantsFTS.getLocationID()) && ! stopEndsTrip)
+		{
+			Settings.reduceCurrentFreqTripTStops(db, wantsFTS);
+		}
+
+		if (! isCurrentlyStopped)
+		{
+			// Create a new TStop; set tsid (not currTS).
+			int areaID;
+			if (stopEndsTrip)
+				areaID = currT.getRoadtripEndAreaID();  // will be 0 if local trip
+			else
+				areaID = 0;
+
+			int flags = 0;
+			if (! stopEndsTrip)
+			{
+				if (createdLoc)
+					flags |= TStop.TEMPFLAG_CREATED_LOCATION;
+				if (createdVia)
+					flags |= TStop.TEMPFLAG_CREATED_VIAROUTE;
+			}
+			TStop newStop = new TStop(currT, odoTotal, odoTrip, stopTimeSec, 0, locID, areaID, null, null, flags, viaID, comment);
+			tsid = newStop.insert(db);
+			currT.addCommittedTStop(newStop);  // add it to the Trip's list
+			if (! stopEndsTrip)
+				Settings.setCurrentTStop(db, newStop);
+			// Don't set currTS field yet, it needs to be null for code here.
+
+			// Now set the gas info, if any:
+			if (bundleGas != null)
+			{
+				stopGas = TripTStopGas.saveDBObjFromBundle(bundleGas, null);
+				if (stopGas != null)
+				{
+					stopGas.setTStop(newStop);
+					stopGas.insert(db);
+					newStop.setFlagSingle(TStop.FLAG_GAS);
+					newStop.commit();
+				}
+			}
+		} else {
+			// Currently stopped; resuming from stop, or ending trip.
+			tsid = currTS.getID();
+			currTS.setOdos(odoTotal, odoTrip);
+			// text fields, info fields
+			currTS.setLocationID(locID);
+			currTS.setVia_id(viaID);
+			currTS.setComment(comment);
+			currTS.clearTempFlags();
+			// continue-time
+			if ((! stopEndsTrip) && (contTimeSec != 0))
+				currTS.setTime_continue(contTimeSec, false);
+			if (stopEndsTrip)
+			{
+				final int areaID = currT.getRoadtripEndAreaID();  // will be 0 if local trip
+				if (areaID != 0)
+					currTS.setAreaID(areaID);
+			}
+
+			currTS.commit();
+
+			// Now set the gas info, if any:
+			if (bundleGas != null)
+			{
+				stopGas = TripTStopGas.saveDBObjFromBundle(bundleGas, stopGas);
+				if (stopGas != null)
+				{
+					if (stopGas.getID() > 0)
+					{
+						stopGas.commit();
+						if (! currTS.isSingleFlagSet(TStop.FLAG_GAS))
+						{
+							currTS.setFlagSingle(TStop.FLAG_GAS);
+							currTS.commit();
+						}
+					} else {
+						stopGas.setTStop(currTS);
+						stopGas.insert(db);
+						currTS.setFlagSingle(TStop.FLAG_GAS);
+						currTS.commit();
+					}
+				}
+				// TODO else delete?
+			}
+		}
+
+		if (stopEndsTrip)
+			endCurrentTrip(tsid, odo_total.getCurrent10d(), mkFreqTrip);
+
+		if (currTS != null)  // if we were stopped already...
+		{
+			Settings.setCurrentTStop(db, null);  // clear it
+			Settings.setPreviousLocation(db, locObj); // update prev_loc
+		}
+
+		finish();
+	}
+
+	/**
+	 * Copy field values from this {@link FreqTripTStop} ID
+	 * (and also set {@link #wantsFTS}):
+	 * odo_trip (if greater than current setting), locID, viaID.
+	 * @see #copyValuesFromFreqTStop(int)
+	 */
+	private void copyValuesFromFreqTStop(final int ftsID)
+	{
+		try {
+			wantsFTS = new FreqTripTStop(db, ftsID);
+		} catch (Throwable e) {  // RDBKeyNotFoundException
+			return;
+		}
+
+		copyValuesFromFreq
+			(wantsFTS.getOdo_trip(), wantsFTS.getLocationID(), wantsFTS.getViaID());
+	}
+
+	/**
+	 * Copy field values from this {@link FreqTrip}:
+	 * odo_trip (if greater than current setting), locID, viaID.
+	 * @see #copyValuesFromFreqTStop(int)
+	 */
+	private void copyValuesFromFreqTrip(final FreqTrip ft)
+	{
+		if (ft == null)
+			return;
+
+		copyValuesFromFreq
+			(ft.getEnd_odoTrip(), ft.getEnd_locID(), ft.getEnd_ViaRouteID());
+	}
+
+	/**
+	 * Copy field values from this freqtrip or freqtripstop:
+	 * odo_trip (if greater than current setting), locID, viaID.
+	 */
+	private void copyValuesFromFreq
+		(final int odoStop, final int locID, final int viaID)
+	{
+		final int odoDiff = odoStop - odo_trip.getCurrent10d();
+		if (odoDiff > 0)
+		{
+			odo_trip.setCurrent10d(odoStop, false);
+			odo_trip_chk.setChecked(true);
+			odo_total.setCurrent10d(odo_total.getCurrent10d() + odoDiff, false);
+			odosAreSetFromFreq = true;
+		} else {
+			odosAreSetFromFreq = false;
+		}
+
+		// Set location from this, and requery/re-filter via IDs
+		Location loc = null;
+		if ((areaLocs != null) && (areaLocs.length < 100))
+		{
+			for (int i = 0; i < areaLocs.length; ++i)
+				if (locID == areaLocs[i].getID())
+				{
+					loc = areaLocs[i];
+					break;
+				}
+		}
+		if (loc == null)
+		{
+			try {
+				loc = new Location(db, locID);
+			} catch (Throwable e) { }  // RDBKeyNotFoundException, shouldn't happen
+		}
+
+		ViaRoute vr = null;
+		if ((loc != null) && (viaID != 0))
+		{
+			try {
+				vr = new ViaRoute(db, viaID);
+			} catch (Throwable e) { } // RDBKeyNotFoundException
+		}
+		setLocObjUpdateVias(loc, vr, true);
+	}
+
+	/**
+	 * Show the {@link DatePickerDialog} when the stop-date button is clicked.
+	 * @see #onCreateDialog(int)
+	 */
+	public void onClick_BtnStopDate(View v)
+	{
+		showDialog(R.id.trip_tstop_btn_stop_date);
+	}
+
+	/**
+	 * Show the {@link DatePickerDialog} when the continue-date button is clicked.
+	 * @see #onCreateDialog(int)
+	 */
+	public void onClick_BtnContDate(View v)
+	{
+		showDialog(R.id.trip_tstop_btn_cont_date);
+	}
+
+	public void onClick_BtnGas(View v)
+	{
+    	Intent i = new Intent(this, TripTStopGas.class);
+    	if ((bundleGas == null) && (stopGas != null))
+    	{
+    		bundleGas = new Bundle();
+        	if (stopGas != null)
+	    		TripTStopGas.saveBundleFromDBObj(stopGas, bundleGas);
+    	}
+    	if (bundleGas != null)
+    		i.putExtras(bundleGas);
+		startActivityForResult(i, R.id.trip_tstop_btn_gas);
+	}
+
+	/**
+	 * Callback from {@link TripTStopGas} or {@link TripTStopChooseFreq}.
+	 * @param idata  intent which may contain gas-stop info, or a freq-tstop ID
+	 */
+	@Override
+	public void onActivityResult(final int requestCode, final int resultCode, Intent idata)
+	{
+		if (resultCode == RESULT_CANCELED)
+			return;
+
+		switch(requestCode)
+		{
+		case R.id.trip_tstop_btn_gas:  // TripTStopGas
+			bundleGas = idata.getExtras();
+			btnGas.setCompoundDrawablesWithIntrinsicBounds
+			  ((bundleGas != null) ? android.R.drawable.presence_online
+				: android.R.drawable.presence_invisible,
+				0, 0, 0);
+			break;
+
+		case R.id.main_btn_freq_local:  // TripTStopChooseFreq
+			if (idata != null)
+			{
+				int id = idata.getIntExtra("_id", 0);
+				if (id > 0)
+					copyValuesFromFreqTStop(id);
+			}
+			break;
+		}
+	}
+
+	/**
+	 * Callback for displaying {@link DatePickerDialog} after {@link #onClick_BtnStartDate(View)}.
+	 * @see #onDateSet(DatePicker, int, int, int)
+	 */
+	@Override
+	protected Dialog onCreateDialog(final int id)
+	{
+		if (id == R.id.trip_tstop_btn_cont_date)
+		{
+			currentDateToPick = contTime;
+		} else {
+			currentDateToPick = stopTime;
+		}
+        return new DatePickerDialog
+        	(this, this,
+			currentDateToPick.get(Calendar.YEAR),
+			currentDateToPick.get(Calendar.MONTH),
+			currentDateToPick.get(Calendar.DAY_OF_MONTH));
+	}
+
+	/** Callback from {@link DatePickerDialog} for TStop stop-date or continue-date. */
+	public void onDateSet(DatePicker dp, final int year, final int month, final int monthday)
+	{
+		if (currentDateToPick == null)
+			return;  // shouldn't happen
+		currentDateToPick.set(Calendar.YEAR, year);
+		currentDateToPick.set(Calendar.MONTH, month);
+		currentDateToPick.set(Calendar.DAY_OF_MONTH, monthday);
+
+		if (currentDateToPick == stopTime)
+			updateDateButtons(1);
+		else
+			updateDateButtons(2);
+	}
+
+	/**
+	 * Get this field's text, if anything was entered.
+	 * @param editTextID  field ID from <tt>R.id</tt>
+	 * @return a nonzero-length trimmed String, or null
+	 */
+	private String textIfEntered(final int editTextID)
+	{
+		EditText et = (EditText) findViewById (editTextID);
+		if (et == null)
+			return null;
+		String st = et.getText().toString().trim();
+		if (st.length() > 0)
+			return st;
+		else
+			return null;
+	}
+
+	/** Unless <tt>txt</tt> is <tt>null</tt>, set <tt>editTextID</tt>'s contents. */
+	private void setEditText(final String txt, final int editTextID)
+	{
+		if ((txt == null) || (txt.length() == 0))
+			return;
+		EditText et = (EditText) findViewById (editTextID);
+		et.setText(txt);
+	}
+
+	/**
+	 * Finish the current trip in the database. (Completed trips have a time_end, odo_end).
+	 * Clear CURRENT_TRIP.
+	 * Update the Trip and Vehicle odometer.
+	 * If ending a roadtrip, also update CURRENT_AREA.
+	 * Assumes TStop already created or updated.
+	 * Uses {@link #stopAtTime} to set trip's time_end.
+	 *
+	 * @param tsid  This trip stop ID, not 0
+	 * @param odo_total  Total odometer at end of trip, not 0
+	 * @param mkFreqTrip  If true, want to create a {@link FreqTrip} based on this trip's data.
+	 */
+	private void endCurrentTrip(final int tsid, final int odo_total, final boolean mkFreqTrip)
+	{
+		currT.setTime_end((int) (stopTime.getTimeInMillis() / 1000L));
+		currT.setOdo_end(odo_total);
+		currT.commit();
+
+		currV.setOdometerCurrentAndLastTrip(odo_total, currT, true);
+		  // that also calls currV.commit()
+
+		Settings.setCurrentTrip(db, null);
+		if (currT.isFrequent())
+			Settings.setCurrentFreqTrip(db, null);
+
+		// For roadtrip, set current geoarea too
+		final int endAreaID = currT.getRoadtripEndAreaID();
+		if (endAreaID != 0)
+		{
+			try {
+				Settings.setCurrentArea(db, new GeoArea(db, endAreaID));
+			}
+			catch (IllegalStateException e) { }
+			catch (IllegalArgumentException e) { }
+			catch (RDBKeyNotFoundException e) { }
+		}
+
+		if (mkFreqTrip)
+		{
+			// make new intent, set "_id" to currT.id, call it.
+			Intent i = new Intent(TripTStopEntry.this, TripCreateFreq.class);
+			i.putExtra("_id", currT.getID());
+			startActivity(i);
+			// TripTStopEntry code outside of endCurrentTrip will soon call finish();
+		}
+	}
+
+	/** Callback for {@link OnItemClickListener} for location autocomplete; read {@link #loc}, set {@link #locObj}. */
+	public void onItemClick(AdapterView<?> parent, View clickedOn, int position, long rowID)
+	{
+		ListAdapter la = loc.getAdapter();
+		if (la == null)
+			return;
+		setLocObjUpdateVias((Location) la.getItem(position), null, false);
+	}
+
+	/**
+	 * Set {@link #locObj} to a new location; update {@link #currTS} if <tt>currTS</tt> != null;
+	 * and update via-route autocomplete with {@link #updateViaRouteAutocomplete(ViaRoute, boolean)}.
+	 * @param L  new locObj, or null
+	 * @param vr  new currTS.ViaRoute if known, or null to not change <tt>currTS.via_id</tt>.
+	 *           If this is set, check its location IDs against {@link #prevLocObj} and {@link #locObj}
+	 *           before updating <tt>currTS.via_id</tt>.
+	 * @param setLocText  If true, update {@link #loc}'s text contents after setting {@link #locObj}
+	 */
+	private void setLocObjUpdateVias(Location L, ViaRoute vr, final boolean setLocText)
+	{
+		locObj = L;
+		if (locObj != null)
+		{
+			if (setLocText)
+				loc.setText(locObj.toString());
+			int locID = locObj.getID();
+			if (currTS != null)
+			{
+				currTS.setLocationID(locID);
+				if (vr != null)
+				{
+					if ((prevLocObj != null) && (prevLocObj.getID() == vr.getLocID_From())
+						&& (locObj.getID() == vr.getLocID_To()))
+						currTS.setVia_id(vr.getID());
+					else
+						currTS.setVia_id(0);
+				}
+			}
+		} else {
+			if (setLocText)
+				loc.setText("");
+			if (currTS != null)
+			{
+				currTS.setLocationID(0);
+				currTS.setVia_id(0);
+			}
+			vr = null;
+		}
+		updateViaRouteAutocomplete(vr, false);
+	}
+
+	/**
+	 * If new location text is typed into {@link #loc}, and {@link #locObj}
+	 * no longer matches that text, clear <tt>locObj</tt>
+	 * and call {@link #updateViaRouteAutocomplete(ViaRoute, boolean)}.
+	 * (for addTextChangedListener / {@link TextWatcher}) 
+	 */
+	public void afterTextChanged(Editable arg0)
+	{
+		if (locObj == null)
+			return;
+		final String newText = arg0.toString().trim();
+		final int newLen = newText.length(); 
+		if ((newLen == 0) || ! locObj.toString().equalsIgnoreCase(newText))
+		{
+			// Mismatch: object no longer matches typed location
+			locObj = null;
+			updateViaRouteAutocomplete(null, false);
+		}
+	}
+
+	/** required stub for {@link TextWatcher} */
+	public void beforeTextChanged(CharSequence arg0, int arg1, int arg2, int arg3)
+	{ }
+
+	/** required stub for {@link TextWatcher} */
+	public void onTextChanged(CharSequence arg0, int arg1, int arg2, int arg3)
+	{ }
+
+	/**
+	 * Update contents of ViaRoute auto-complete {@link #via}, based on {@link #prevLocObj} and {@link #locObj}.
+	 * Also clear {@link #viaRouteObj} and via's text contents, since its possible values are changing.
+	 *<P>
+	 * For {@link #onCreate(Bundle)}, {@link #currTS}, {@link #locObj},
+	 * and {@link #prevLocObj} must be set before calling this method.
+	 *<P>
+	 * If {@link #currTS} != null, then if desired, update {@link TStop#getVia_id() currTS.getVia_id()}
+	 * and {@link TStop#getLocationID() currTS.getLocationID()}
+	 * before calling this method, in order to set {@link #viaRouteObj} from <tt>currTS.via_id</tt>.
+	 * To do this, {@link #prevLocObj} and {@link #locObj} must not be null.
+	 *<P>
+	 * If {@link #currTS} != null, and {@link #locObj} matches its locID, and
+	 * {@link TStop#getVia_id() currTS.getVia_id()} is set, then try to find and
+	 * set {@link #viaRouteObj} from the ViaRoutes loaded for the auto-complete.
+	 *<P>
+	 * If locObj is unchanged, do nothing to the autocomplete.
+	 * Update {@link #viaRouteObj} only if <tt>vr</tt> != null
+	 * and (if <tt>currTS</tT> != null) <tt>vr</tt>'s ID == currTS.getVia_id().
+	 *<P>
+	 * Called after {@link #locObj} changes, and also as part of {@link #onCreate(Bundle)}.
+	 *
+	 * @param vr  if not null, use this to set {@link #viaRouteObj} here,
+	 *     only if it matches {@link #prevLocObj} and {@link #locObj}.
+	 *     If {@link #currTS} != null, then {@link TStop#getVia_id() currTS.getVia_id()}
+	 *     must also match to do this.
+	 * @param isFromOnCreate  Are we being called from {@link #onCreate(Bundle)}?
+	 *     If so, update {@link #viaRouteObjCreatedHere}.
+	 */
+	private void updateViaRouteAutocomplete(ViaRoute vr, final boolean isFromOnCreate)
+	{
+		if (prevLocObj == null)
+			return;
+
+		// If isFromOnCreate, then viaRouteObjCreatedHere == null
+		// until it's updated below;
+		// if currTS == null, viaRouteObjCreatedHere remains null.
+
+		if ((locObj != null) && (via_lastLocIDTo == locObj.getID()))
+		{
+			// No need to update the autocomplete, but
+			// we'll set viaRouteObj if it's consistent.
+			// If isFromOnCreate, via_lastLocIDTo == -1,
+			// so we won't get here.
+			if ((vr != null) && (vr != viaRouteObj))
+			{
+				if ((vr.getLocID_From() == prevLocObj.getID())
+					&& (vr.getLocID_To() == via_lastLocIDTo)
+					&& ((currTS == null)
+						|| ((via_lastLocIDTo == currTS.getLocationID())
+							&& (vr.getID() == currTS.getVia_id()))))
+				{
+					viaRouteObj = vr;
+					via.setText(vr.getDescr());
+				}
+			}
+			return;  // <--- early return; no change to autocomplete ---
+		}
+
+		if (viaRouteObj != null)
+		{
+			viaRouteObj = null;
+			if (viaRouteObjCreatedHere == null)
+				via.setText("");
+		}
+		ViaRoute[] vias;
+		if (locObj != null)
+		{
+			vias = ViaRoute.getAll(db, prevLocObj, locObj);
+			via_lastLocIDTo = locObj.getID();
+		} else {
+			vias = null;
+			via_lastLocIDTo = -1;
+		}
+		if (vias != null)
+		{
+			// Assert: locObj != null.
+
+			ArrayAdapter<ViaRoute> adapter = new ArrayAdapter<ViaRoute>(this, R.layout.list_item, vias);
+			via.setAdapter(adapter);
+			via.setOnItemClickListener(viaListener);
+
+			if ((currTS != null) && (currTS.getLocationID() != locObj.getID()))
+				return;  // <--- Can't update viaRouteObj: different currTS location
+
+			if ((vr != null)
+				&& (vr.getLocID_From() == prevLocObj.getID())
+				&& (vr.getLocID_To() == locObj.getID())
+				&& ((currTS == null) || (vr.getID() == currTS.getVia_id())))
+			{
+				viaRouteObj = vr;
+				via.setText(vr.getDescr());
+			}
+			else if (currTS != null)
+			{
+				// Search the via array contents for currTS.viaID;
+				// set viaRouteObj, maybe viaRouteObjCreatedHere,
+				// if found.
+				final int currTSVia = currTS.getVia_id();
+				if (currTSVia != 0)
+				{
+					for (int i = vias.length - 1; i >= 0; --i)
+					{
+						if (currTSVia == vias[i].getID())
+						{
+							viaRouteObj = vias[i];
+							if (isFromOnCreate && currTS.isSingleFlagSet(TStop.TEMPFLAG_CREATED_VIAROUTE))
+							{
+								viaRouteObjCreatedHere = viaRouteObj;
+							}
+							via.setText(viaRouteObj.getDescr());
+							break;
+						}
+					}
+				}
+			}
+		} else {
+			via.setAdapter((ArrayAdapter<ViaRoute>) null);
+		}
+	}
+
+	/**
+	 * For ViaRoute autocomplete ({@link TripTStopEntry#via}), the callbacks for {@link OnItemClickListener}
+	 * and {@link TextWatcher}; sets or clears {@link TripTStopEntry#viaRouteObj},
+	 * possibly updates trip_odo, total_odo.
+	 */
+	private class ViaRouteListenerWatcher implements OnItemClickListener, TextWatcher
+	{
+		/** For ViaRoute autocomplete, the callback for {@link OnItemClickListener}; sets {@link TripTStopEntry#viaRouteObj}. */
+		public void onItemClick(AdapterView<?> parent, View clickedOn, int position, long rowID)
+		{
+			ListAdapter la = via.getAdapter();
+			if (la == null)
+				return;
+			viaRouteObj = (ViaRoute) la.getItem(position);
+			final int odo_dist = viaRouteObj.getOdoDist();
+			if ((odo_dist != 0) && ! odosAreSetFromFreq)
+			{
+				odosAreSetFromVia = true;
+				if (! odo_trip_chk.isChecked())
+					odo_trip.setCurrent10d(odoTripOrig + odo_dist, false);
+				if (! odo_total_chk.isChecked())
+					odo_total.setCurrent10d(odoTotalOrig + odo_dist, false);
+			}
+		}		
+
+		/**
+		 * If new via-route text is typed into {@link #via}, and {@link TripTStopEntry#viaRouteObj}
+		 * no longer matches that text, clear <tt>viaRouteObj</tt>.
+		 * (for addTextChangedListener / {@link TextWatcher}) 
+		 */
+		public void afterTextChanged(Editable arg0)
+		{
+			if (viaRouteObj == null)
+				return;
+			final String newText = arg0.toString().trim();
+			final int newLen = newText.length(); 
+			if ((newLen == 0) || ! viaRouteObj.toString().equalsIgnoreCase(newText))
+			{
+				viaRouteObj = null;  // Mismatch: object no longer matches typed ViaRoute description
+				if (odosAreSetFromVia)
+				{
+					if (! odo_trip_chk.isChecked())
+						odo_trip.setCurrent10d(odoTripOrig, false);
+					if (! odo_total_chk.isChecked())
+						odo_total.setCurrent10d(odoTotalOrig, false);
+					odosAreSetFromVia = false;
+				}
+			}
+		}
+
+		/** required stub for {@link TextWatcher} */
+		public void beforeTextChanged(CharSequence arg0, int arg1, int arg2, int arg3)
+		{ }
+
+		/** required stub for {@link TextWatcher} */
+		public void onTextChanged(CharSequence arg0, int arg1, int arg2, int arg3)
+		{ }
+
+	}
+
+}

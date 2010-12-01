@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+ This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
+
+ Copyright (C) 2010 Jeremy D Monin (jdmonin@nand.net)
+
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with this program.  If not, see http://www.gnu.org/licenses/ .
+ -->
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    >
+<LinearLayout
+    android:orientation="vertical"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    >
+<TextView 
+	android:id="@+id/trip_tstop_prompt"
+    android:layout_width="fill_parent" 
+    android:layout_height="wrap_content" 
+    android:text="@string/trip_tstop_entry_prompt"
+    />
+<TableLayout android:layout_height="wrap_content" android:layout_width="fill_parent">
+    <TableRow>
+		<LinearLayout
+		    android:orientation="vertical"
+		    android:layout_span="2"
+		    android:layout_width="wrap_content"
+		    android:layout_height="wrap_content"
+		    >
+		    <LinearLayout
+			    android:orientation="horizontal"
+			    android:layout_width="wrap_content"
+			    android:layout_height="wrap_content"
+			    >
+		        <CheckBox android:id="@+id/trip_tstop_time_stop_chk"
+		        	android:checked="true"
+		            android:paddingBottom="12sp"
+			        android:paddingTop="12sp"
+		            android:layout_width="wrap_content"
+		            android:layout_height="wrap_content" />
+				<TextView
+				    android:layout_width="wrap_content" 
+				    android:layout_height="fill_parent" 
+				    android:layout_gravity="right"
+				    android:layout_weight="1"
+				    android:text="@string/stopped_at_time"
+				    />
+		    </LinearLayout>
+		    <Button android:id="@+id/trip_tstop_btn_stop_date"
+		        android:layout_width="wrap_content"
+		        android:layout_height="wrap_content"
+		        android:layout_gravity="center"
+		        android:gravity="center"
+		        android:onClick="onClick_BtnStopDate"/>
+        </LinearLayout>
+		<TimePicker
+		    android:id="@+id/trip_tstop_time_stop"
+			android:layout_width="fill_parent"
+			android:layout_height="wrap_content" />
+    </TableRow>
+    <TableRow>
+		<TextView
+			android:id="@+id/trip_tstop_loc_label"
+		    android:layout_width="wrap_content" 
+		    android:layout_height="fill_parent" 
+		    android:text="@string/location"
+		    />
+		<AutoCompleteTextView
+		    android:id="@+id/trip_tstop_loc"
+		    android:inputType="text"
+		    android:layout_span="2"
+			android:layout_width="fill_parent"
+			android:layout_height="wrap_content" />
+    </TableRow>
+    <TableRow>
+		<TextView  
+		    android:layout_width="wrap_content" 
+		    android:layout_height="fill_parent" 
+		    android:text="@string/via_route"
+		    />
+		<AutoCompleteTextView
+		    android:id="@+id/trip_tstop_via"
+		    android:completionThreshold="1"
+		    android:inputType="text"
+		    android:layout_span="2" 
+			android:layout_width="fill_parent"
+			android:layout_height="wrap_content" />
+    </TableRow>
+    <TableRow>
+        <CheckBox android:id="@+id/trip_tstop_odo_trip_chk"
+            android:paddingBottom="12sp"
+	        android:paddingTop="12sp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+		<TextView  
+		    android:layout_width="wrap_content" 
+		    android:layout_height="fill_parent" 
+		    android:text="@string/trip_odometer"
+		    />
+		<org.shadowlands.roadtrip.android.OdometerNumberPicker
+		    android:id="@+id/trip_tstop_odo_trip"
+			android:layout_width="fill_parent"
+			android:layout_height="wrap_content" />
+    </TableRow>
+    <TableRow>
+        <CheckBox android:id="@+id/trip_tstop_odo_total_chk"
+            android:paddingBottom="12sp"
+	        android:paddingTop="12sp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+		<TextView  
+		    android:layout_width="wrap_content" 
+		    android:layout_height="fill_parent" 
+		    android:text="@string/current_total_odometer"
+		    />
+		<org.shadowlands.roadtrip.android.OdometerNumberPicker
+		    android:id="@+id/trip_tstop_odo_total"
+			android:layout_width="fill_parent"
+			android:layout_height="wrap_content" />
+    </TableRow>
+    <TableRow>
+		<LinearLayout
+		    android:orientation="vertical"
+		    android:layout_width="wrap_content"
+		    android:layout_height="wrap_content"
+		    >
+	        <CheckBox android:id="@+id/trip_tstop_time_cont_chk"
+	        	android:checked="true"
+	            android:paddingBottom="12sp"
+		        android:paddingTop="12sp"
+	            android:layout_width="wrap_content"
+	            android:layout_height="wrap_content" />
+		    <Button android:id="@+id/trip_tstop_btn_cont_date"
+		        android:layout_width="wrap_content"
+		        android:layout_height="wrap_content"
+		        android:layout_gravity="center"
+		        android:gravity="center"
+		        android:onClick="onClick_BtnContDate"/>
+        </LinearLayout>
+		<TextView
+		    android:id="@+id/trip_tstop_time_cont_label"		
+		    android:layout_width="wrap_content" 
+		    android:layout_height="fill_parent" 
+		    android:text="@string/continu_at_time"
+		    />
+		<TimePicker
+		    android:id="@+id/trip_tstop_time_cont"
+			android:layout_width="fill_parent"
+			android:layout_height="wrap_content" />
+    </TableRow>
+    <TableRow>
+		<TextView  
+		    android:layout_width="wrap_content" 
+		    android:layout_height="fill_parent" 
+		    android:text="@string/comment"
+		    />
+		<EditText
+		    android:id="@+id/trip_tstop_comment"
+		    android:layout_span="2"
+			android:layout_width="fill_parent"
+			android:layout_height="wrap_content"
+			android:layout_weight="1"
+		    android:minLines="2" />
+    </TableRow>
+    <TableRow>
+	    <Button android:id="@+id/trip_tstop_btn_gas"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:layout_gravity="center"
+	        android:gravity="center"
+		    android:text="@string/gas__dots"
+		    android:drawableLeft="@android:drawable/presence_invisible"
+		    android:drawablePadding="3px"
+		    android:layout_span="3"
+	        android:onClick="onClick_BtnGas"/>
+    </TableRow>
+</TableLayout>
+<LinearLayout android:id="@+id/trip_tstop_row_end_mk_freq"
+    android:orientation="horizontal"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    >
+	<CheckBox android:id="@+id/trip_tstop_end_mk_freq"
+		android:paddingBottom="12sp"
+		android:paddingTop="12sp"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content" />
+	<TextView android:id="@+id/trip_tstop_end_mk_freq_text"
+	    android:layout_width="wrap_content" 
+	    android:layout_height="fill_parent" 
+        android:gravity="center"
+	    android:text="@string/make_this_a_frequent_trip"
+	    />
+</LinearLayout>
+<Button android:id="@+id/trip_tstop_btn_enter"
+    android:text="@string/enter_stop"
+    android:layout_width="fill_parent" 
+    android:layout_height="wrap_content"
+    android:onClick="onClick_BtnEnterTStop"/>
+</LinearLayout>
+</ScrollView>

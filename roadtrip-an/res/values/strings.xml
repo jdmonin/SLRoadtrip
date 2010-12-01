@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+ This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
+
+ Copyright (C) 2010 Jeremy D Monin (jdmonin@nand.net)
+
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with this program.  If not, see http://www.gnu.org/licenses/ .
+ -->
+<resources>
+<string name="app_name">Shadowlands RoadTrip</string>
+<string name="androidstartup_pleaseCreate">Welcome!\n\nPlease begin by entering your name and vehicle.</string>
+<string name="androidstartup_verifyCurrD">Please verify the current driver.</string>
+<string name="androidstartup_verifyCurrV">Please verify the current vehicle.</string>
+<string name="backups">Backups</string>
+<string name="backup_now">Backup Now</string>
+<string name="begin__initcap">Begin</string>
+<string name="begin_trip">Begin Trip</string>
+<string name="change_driver">Change Driver</string>
+<string name="change_driver_vehicle">Change Driver / Vehicle</string>
+<string name="choose_a_frequent_trip">Choose a frequent trip</string>
+<string name="choose_a_stop">Choose a stop:</string>
+<string name="confirm">Confirm</string>
+<string name="continue_from_colon">Continue from:</string>
+<string name="create">Create</string>
+<string name="current_driver">Current driver</string>
+<string name="current_odometer">Current\nodometer</string>
+<string name="current_total_odometer">Current\ntotal\nodometer</string>
+<string name="current_vehicle">Current vehicle</string>
+<string name="comment">Comment</string>
+<string name="continu">Continue</string>
+<string name="continu_at_time">Continue\nat Time</string>
+<string name="continu_from_stop">Continue from Stop</string>
+<string name="description">Description</string>
+<string name="destination">Destination</string>
+<string name="destination_within_the_area">Destination\nwithin the area</string>
+<string name="driver">Driver</string>
+<string name="end_trip">End Trip</string>
+<string name="enter_stop">Enter Stop</string>
+<string name="fillup">Fill-up</string>
+<string name="frequent_local">Frequent Local</string>
+<string name="frequent_roadtrip">Frequent Roadtrip</string>
+<string name="from__colon">From:</string>
+<string name="gas__colon_sp">Gas: </string>
+<string name="gas__dots">Gas...</string>
+<string name="home_area">Home area</string>
+<string name="keep_this">Keep this</string>
+<string name="local_trip">Local Trip</string>
+<string name="location">Location</string>
+<string name="make_this_a_frequent_trip">Make this a Frequent Trip...</string>
+<string name="make_this_another_frequent_trip">Make this another Frequent Trip...</string>
+<string name="model">Model</string>
+<string name="name">Name</string>
+<string name="new_driver">New driver...</string>
+<string name="new_vehicle">New vehicle...</string>
+<string name="no_frequent_trips_found">No frequent trips were found.</string>
+<string name="not_found">Not found.</string>
+<string name="original_odometer">Original\nodometer</string>
+<string name="other_stop">Other stop...</string>
+<string name="please_check_the_total_odometer">Please check the total odometer.</string>
+<string name="please_check_the_trip_odometer">Please check the trip odometer.</string>
+<string name="please_enter_the_description">Please enter the description.</string>
+<string name="please_enter_the_location">Please enter the location.</string>
+<string name="please_enter_the_station">Please enter the station.</string>
+<string name="quantity">Quantity</string>
+<string name="revert">Revert</string>
+<string name="road_trip">Road Trip</string>
+<string name="road_trip_desti_area">Road Trip\nDestination area:</string>
+<string name="sdcard_not_mounted">The SD card is not mounted.</string>
+<string name="sdcard_read_only">The SD card is read-only.</string>
+<string name="settings">Settings...</string>
+<string name="show_logbook">Show Logbook</string>
+<string name="starting_time">Starting time</string>
+<string name="starting_location">Starting location</string>
+<string name="starting_odometer">Starting\nodometer</string>
+<string name="station">Station</string>
+<string name="stop_continue">Stop &amp; Continue</string>
+<string name="stop_during_a_trip">Stop during a Trip</string>
+<string name="stopped_at_time">Stopped\nat Time</string>
+<string name="this_time_must_be_no_earlier_than">This time must be no earlier than the stop time.</string>
+<string name="to__colon">To:</string>
+<string name="total">total</string>
+<string name="trip_odometer">Trip\nodometer</string>
+<string name="using_old_date_due_to_previous">Historical Mode:\nUsing an old date because of the previous date entered for this vehicle.</string>
+<string name="via">via</string>
+<string name="via_route">Via route</string>
+<string name="via_routes_changed">Via Routes Changed</string>
+<string name="vin">VIN</string>
+<string name="year">Year</string>
+<!--                            -->
+<!-- specific activities' texts -->
+<!--                            -->
+<string name="android_startup_starting">Starting up...</string>
+<string name="logbook_show__title">View Logbook</string>
+<string name="main_text">Main Screen</string>
+<string name="main_create_freq_from_recent">Create Frequent from recent trip...</string>
+<string name="main_no_recent_local_trips_for_vehicle">No recent local trips found for this vehicle.</string>
+<string name="main_no_recent_roadtrips_for_vehicle">No recent roadtrips found for this vehicle.</string>
+<string name="main_trip_based_on_frequent">This trip is based on another frequent trip.</string>
+<string name="backups_main_folder_nonefound">No backups found in the backup folder.</string>
+<string name="backups_main_last_bkuptime">Last backup time: </string> 
+<string name="backups_main_no_previous">Logbook has never been backed up!</string>
+<string name="backups_main_prevlist">Previous Backups on SD card:</string>
+<string name="backups_main_title">Backup and Restore</string>
+<string name="driver_entry_prompt">Enter information about this driver.</string>
+<string name="trip_createfreq__title">Create Frequent Trip</string>
+<string name="trip_createfreq_cancel_are_you_sure">Are you sure you want to cancel?\nThe Frequent Trip will not be created.</string>
+<string name="trip_createfreq_confirm_each_via">Because some stops were removed, please confirm the Via Route you wish to use for each remaining stop.</string>
+<string name="trip_createfreq_usually_about_time">Usually about this time of day:</string>
+<string name="trip_createfreq_usually_weekdays">Usually on weekdays</string>
+<string name="trip_createfreq_usually_weekends">Usually on weekends</string>
+<string name="trip_createfreq_tstops_to_include">Trip stops to include:</string>
+<string name="trip_tstart_geoarea_different">A roadtrip\'s destination must be different than the current geographic area.</string>
+<string name="trip_tstart_geoarea_prompt">Please enter the destination\'s geographic area.</string>
+<string name="trip_tstart_loc_not_freq">If the location changes, you won\'t be using the frequent trip. Do you want to go back to the frequent trip\'s location?</string>
+<string name="trip_tstart_loc_prompt">Please enter the starting location.</string>
+<string name="trip_tstop_entry_prompt">Choose what to record about this stop.</string>
+<string name="trip_tstop_gas_atprice"> \@ Price</string>
+<string name="trip_tstop_gas_perunit">/ unit</string>
+<string name="trip_tstop_gas_equalscost"> = Cost</string>
+<string name="trip_tstop_gas_prompt">Enter the gas stop details.</string>
+<string name="trip_tstop_gas__title">Trip Stop: Gas</string>
+<string name="vehicle_entry_prompt">Enter information about this vehicle.</string>
+<string name="vehicle_make">Make (Brand)</string>
+</resources>

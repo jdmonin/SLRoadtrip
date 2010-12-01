@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+ This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
+
+ Copyright (C) 2010 Jeremy D Monin (jdmonin@nand.net)
+
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with this program.  If not, see http://www.gnu.org/licenses/ .
+ -->
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    >
+<LinearLayout
+    android:orientation="vertical"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    >
+<TextView
+    android:id="@+id/trip_begin_text_current"
+    android:layout_width="fill_parent" 
+    android:layout_height="wrap_content" 
+    />
+<Button android:text="@string/change_driver_vehicle"
+    android:onClick="onClick_BtnChangeDriverVehicle"
+    android:layout_width="fill_parent" 
+    android:layout_height="wrap_content" 
+    />
+<TextView
+    android:text="@string/starting_location"
+    android:layout_width="fill_parent" 
+    android:layout_height="wrap_content"    
+    />
+<RadioGroup
+	android:layout_width="fill_parent"
+	android:layout_height="wrap_content"
+	android:id="@+id/trip_begin_radio_loc_group"
+	android:orientation="vertical">
+	<RadioButton android:id="@+id/trip_begin_radio_loc_cont"
+	    android:layout_width="wrap_content"
+	    android:layout_height="wrap_content"
+	    android:text="@string/continue_from_colon" />
+		<RadioButton android:id="@+id/trip_begin_radio_loc_new"
+		    android:layout_width="wrap_content"
+		    android:layout_height="wrap_content"
+		    android:text="" />
+		    </RadioGroup>
+	<LinearLayout
+	    android:orientation="horizontal"
+	    android:layout_width="fill_parent"
+	    android:layout_height="wrap_content"
+	    >
+		<AutoCompleteTextView
+		    android:id="@+id/trip_begin_loc_new"
+		    android:layout_width="fill_parent"
+		    android:layout_height="wrap_content"
+		    android:singleLine="true"
+		    />
+	</LinearLayout>
+<!--   /RadioGroup -->
+<LinearLayout
+	android:id="@+id/trip_begin_roadtrip_desti_row"
+    android:orientation="horizontal"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    >
+	<TextView
+	    android:layout_width="wrap_content" 
+	    android:layout_height="wrap_content" 
+	    android:text="@string/road_trip_desti_area"
+	    />
+	<AutoCompleteTextView
+	    android:id="@+id/trip_begin_roadtrip_desti"
+	    android:completionThreshold="1"
+	    android:layout_weight="1"
+	    android:layout_width="fill_parent"
+	    android:layout_height="wrap_content"
+	    android:singleLine="true"
+	    />
+	<ImageButton
+		android:src="@android:drawable/arrow_down_float"
+	    android:layout_width="wrap_content"
+	    android:layout_height="wrap_content"
+	    android:onClick="onClick_BtnRoadtripDestiDropdown"
+		/>
+</LinearLayout>
+<LinearLayout
+    android:orientation="horizontal"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    >
+	<TextView
+	    android:text="@string/starting_odometer"
+	    android:layout_width="wrap_content" 
+	    android:layout_height="wrap_content"
+	    />
+	<org.shadowlands.roadtrip.android.OdometerNumberPicker
+	    android:id="@+id/trip_begin_odometer"
+	    android:layout_weight="1"
+		android:layout_width="fill_parent"
+		android:layout_height="wrap_content" />
+</LinearLayout>
+<!-- starting date,time -->
+<TextView
+    android:layout_width="fill_parent" 
+    android:layout_height="wrap_content" 
+    android:text="@string/starting_time"
+    />
+<LinearLayout
+    android:orientation="horizontal"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    >
+    <Button android:id="@+id/trip_begin_btn_start_date"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:gravity="center"
+        android:onClick="onClick_BtnStartDate" />
+	<TimePicker
+	    android:id="@+id/trip_begin_start_time"
+		android:layout_width="fill_parent"
+		android:layout_height="wrap_content" />
+</LinearLayout>
+<Button android:id="@+id/trip_begin_btn_begin"
+    android:text="@string/begin_trip"
+    android:layout_width="fill_parent" 
+    android:layout_height="wrap_content"
+    android:onClick="onClick_BtnBeginTrip"/>
+</LinearLayout>
+</ScrollView>

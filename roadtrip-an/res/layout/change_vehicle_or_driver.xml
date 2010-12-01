@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+ This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
+
+ Copyright (C) 2010 Jeremy D Monin (jdmonin@nand.net)
+
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with this program.  If not, see http://www.gnu.org/licenses/ .
+ -->
+<TableLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_height="wrap_content" android:layout_width="fill_parent">
+    <TableRow>
+		<TextView  
+		    android:layout_width="wrap_content" 
+		    android:layout_height="fill_parent" 
+		    android:text="@string/current_driver"
+		    />
+       <Spinner android:layout_height="wrap_content"
+                android:layout_width="fill_parent"
+                android:layout_weight="1"
+                android:id="@+id/change_cvd_driver"/>
+    </TableRow>
+    <TableRow>
+		<TextView 
+		    android:layout_width="wrap_content" 
+		    android:layout_height="fill_parent" 
+		    android:text="@string/current_vehicle"
+		    android:id="@+id/change_cvd_vehicle_label"
+		    />
+       <Spinner android:layout_height="wrap_content"
+                android:layout_width="fill_parent"
+                android:layout_weight="1"
+                android:id="@+id/change_cvd_vehicle"/>
+    </TableRow>
+    <TableRow>
+		<Button 
+		    android:id="@+id/change_cvd_driver_new"
+		    android:text="@string/new_driver"
+		    android:onClick="onClick_BtnDriverNew"
+		    android:layout_width="wrap_content" 
+		    android:layout_height="fill_parent"
+		    android:layout_gravity="right" 
+		    android:layout_span="2"
+		    />
+    </TableRow>
+    <TableRow>
+		<Button 
+		    android:id="@+id/change_cvd_vehicle_new"
+		    android:text="@string/new_vehicle"
+		    android:onClick="onClick_BtnVehicleNew"
+		    android:layout_width="wrap_content" 
+		    android:layout_height="fill_parent"
+		    android:layout_gravity="right" 
+		    android:layout_span="2"
+		    />
+    </TableRow>
+    <TableRow>
+		<Button android:id="@+id/change_cvd_btn_ok"
+		        android:layout_width="wrap_content"
+		        android:layout_height="wrap_content"
+		        android:text="@android:R/string/ok"
+		        android:onClick="onClick_BtnOK"/>
+		<Button android:id="@+id/change_cvd_btn_cancel"
+		        android:layout_width="wrap_content"
+		        android:layout_height="wrap_content"
+		        android:text="@android:R/string/cancel"
+		        android:onClick="onClick_BtnCancel"/>
+    </TableRow>
+</TableLayout>

@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+ This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
+
+ Copyright (C) 2010 Jeremy D Monin (jdmonin@nand.net)
+
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with this program.  If not, see http://www.gnu.org/licenses/ .
+ -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+      package="org.shadowlands.roadtrip"
+      android:versionCode="905"
+      android:versionName="0.9.05">
+    <application android:icon="@drawable/icon"  android:label="@string/app_name" android:debuggable="true">
+        <activity android:name=".AndroidStartup"
+                  android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+	<activity android:name=".android.VehicleEntry" />
+	<activity android:name=".android.DriverEntry" />
+	<activity android:name=".android.Main" />
+	<activity android:name=".android.ChangeDriverOrVehicle" />
+	<activity android:name=".android.TripBegin"  android:label="@string/begin_trip" />
+	<activity android:name=".android.TripBeginChooseFreq"  android:label="@string/choose_a_frequent_trip" />
+	<activity android:name=".android.TripCreateFreq"  android:label="@string/trip_createfreq__title" />
+	<activity android:name=".android.LogbookShow" android:label="@string/logbook_show__title" />
+	<activity android:name=".android.TripTStopEntry"  android:label="@string/stop_during_a_trip" />
+	<activity android:name=".android.TripTStopGas"  android:label="@string/trip_tstop_gas__title" />
+	<activity android:name=".android.TripTStopChooseFreq"  android:label="@string/choose_a_stop" />
+	<activity android:name=".android.BackupsMain" />
+</application>
+    <uses-sdk android:minSdkVersion="3" />
+
+</manifest> 

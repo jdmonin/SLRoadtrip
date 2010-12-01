@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    >
+<TextView
+	android:text="@string/description"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content" />
+<EditText android:id="@+id/trip_createfreq_descr"
+ 	android:singleLine="true"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+	/>
+<ScrollView
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    >
+	<LinearLayout android:id="@+id/trip_createfreq_tstoplist_parent"
+	    android:orientation="vertical"
+	    android:layout_width="fill_parent"
+	    android:layout_height="wrap_content"
+	    >
+	<CheckBox android:id="@+id/trip_createfreq_cb_weekdays"
+		android:text="@string/trip_createfreq_usually_weekdays"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		/>
+	<CheckBox android:id="@+id/trip_createfreq_cb_weekends"
+		android:text="@string/trip_createfreq_usually_weekends"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		/>
+	<CheckBox android:id="@+id/trip_createfreq_cb_atTime"
+		android:text="@string/trip_createfreq_usually_about_time"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		/>
+	<TimePicker android:id="@+id/trip_createfreq_timepicker"
+		android:layout_width="wrap_content" android:layout_height="wrap_content"
+		/>
+	<TextView android:id="@+id/trip_createfreq_from"
+		android:text="@string/from__colon"
+	    android:layout_width="fill_parent"
+	    android:layout_height="wrap_content" />
+	<TextView android:id="@+id/trip_createfreq_to"
+		android:text="@string/to__colon"
+	    android:layout_width="fill_parent"
+	    android:layout_height="wrap_content" />
+	<TextView android:id="@+id/trip_createfreq_tstop_text"
+		android:text="@string/trip_createfreq_tstops_to_include"
+	    android:layout_width="fill_parent"
+	    android:layout_height="wrap_content" />
+    <!-- List of TStops will be added dynamically here -->
+    <!--   in TripCreateFreq.populateStopsList()       -->
+	<TextView android:id="@+id/trip_createfreq_desttext"
+	    android:layout_width="fill_parent"
+	    android:layout_height="wrap_content" />
+	<LinearLayout
+	    android:orientation="horizontal"
+	    android:layout_width="fill_parent"
+	    android:layout_height="wrap_content"
+	    >
+		<Button
+	        android:layout_width="fill_parent"
+	        android:layout_weight=".5"
+	        android:layout_height="wrap_content"
+	        android:text="@string/create"
+	        android:onClick="onClick_BtnCreate" />
+		<Button
+	        android:layout_width="fill_parent"
+	        android:layout_weight=".5"
+	        android:layout_height="wrap_content"
+	        android:text="@android:R/string/cancel"
+	        android:onClick="onClick_BtnCancel" />
+	</LinearLayout>
+</LinearLayout></ScrollView>
+</LinearLayout>

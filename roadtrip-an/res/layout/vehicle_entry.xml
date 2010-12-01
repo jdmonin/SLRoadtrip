@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+ This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
+
+ Copyright (C) 2010 Jeremy D Monin (jdmonin@nand.net)
+
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with this program.  If not, see http://www.gnu.org/licenses/ .
+ -->
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    >
+<LinearLayout
+    android:orientation="vertical"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    >
+<TextView  
+    android:layout_width="fill_parent" 
+    android:layout_height="wrap_content" 
+    android:text="@string/vehicle_entry_prompt"
+    />
+<EditText android:id="@+id/vehicle_entry_name" android:layout_width="fill_parent" android:layout_height="wrap_content"></EditText>
+<TableLayout android:layout_height="wrap_content" android:layout_width="fill_parent">
+    <TableRow>
+		<TextView  
+		    android:layout_width="wrap_content" 
+		    android:layout_height="fill_parent" 
+		    android:text="@string/driver"
+		    />
+       <Spinner android:layout_height="wrap_content"
+                android:layout_width="fill_parent"
+                android:layout_weight="1"
+                android:id="@+id/vehicle_entry_driver"/>
+    </TableRow>
+    <TableRow>
+		<TextView  
+		    android:layout_width="wrap_content" 
+		    android:layout_height="fill_parent" 
+		    android:text="@string/vehicle_make"
+		    />
+       <Spinner android:layout_height="wrap_content"
+                android:layout_width="fill_parent"
+                android:layout_weight="1"
+                android:id="@+id/vehicle_entry_vmake"/>
+    </TableRow>
+    <TableRow>
+		<TextView  
+		    android:layout_width="wrap_content" 
+		    android:layout_height="fill_parent" 
+		    android:text="@string/model"
+		    />
+		<EditText
+		    android:id="@+id/vehicle_entry_model" android:layout_width="fill_parent" android:layout_height="wrap_content"
+		    android:layout_weight="1"
+		    ></EditText>
+    </TableRow>
+    <TableRow>
+		<TextView  
+		    android:layout_width="wrap_content" 
+		    android:layout_height="fill_parent" 
+		    android:text="@string/year"
+		    />
+       <EditText android:layout_height="wrap_content"
+                android:layout_width="fill_parent"
+                android:id="@+id/vehicle_entry_year"
+                android:inputType="number"/>
+    </TableRow>
+    <TableRow>
+		<TextView  
+		    android:layout_width="wrap_content" 
+		    android:layout_height="fill_parent"
+			android:layout_weight="1"
+		    android:text="@string/vin"
+		    />
+		<EditText android:id="@+id/vehicle_entry_vin"
+		  android:layout_width="fill_parent" android:layout_height="wrap_content"
+		  android:layout_weight="1"
+		  android:maxLines="1"
+		  android:capitalize="characters"></EditText>
+    </TableRow>
+    <TableRow>
+		<TextView  
+		    android:layout_width="wrap_content" 
+		    android:layout_height="fill_parent" 
+		    android:text="@string/original_odometer"
+		    />
+		<org.shadowlands.roadtrip.android.OdometerNumberPicker
+		    android:id="@+id/vehicle_entry_odo_orig"
+			android:layout_width="fill_parent"
+			android:layout_height="wrap_content" />
+    </TableRow>
+    <TableRow>
+		<TextView  
+		    android:layout_width="wrap_content" 
+		    android:layout_height="fill_parent" 
+		    android:text="@string/current_odometer"
+		    />
+		<org.shadowlands.roadtrip.android.OdometerNumberPicker
+		    android:id="@+id/vehicle_entry_odo_curr"
+			android:layout_width="fill_parent"
+			android:layout_height="wrap_content" />
+    </TableRow>
+    <TableRow>
+		<TextView  
+		    android:layout_width="wrap_content" 
+		    android:layout_height="fill_parent" 
+		    android:text="@string/comment"
+		    />
+		<EditText android:id="@+id/vehicle_entry_comment"
+		    android:layout_width="fill_parent"
+		    android:layout_height="wrap_content"
+			android:layout_weight="1"
+		    android:minLines="2" >
+		    </EditText>
+    </TableRow>
+</TableLayout>
+<Button android:id="@+id/vehicle_entry_btn_ok"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/continu"
+        android:onClick="onClick_BtnOK"/>
+</LinearLayout>
+</ScrollView>

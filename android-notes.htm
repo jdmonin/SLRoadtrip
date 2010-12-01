@@ -1,0 +1,153 @@
+<html>
+<head>
+<title>Android programming notes</title>
+</head>
+<body>
+Compiled by Jeremy D Monin while working on projects.
+<P>
+
+<!-- TODO: section other refs (stackoverflow, etc) -->
+<!-- TODO: section jdbc eclipse (zentus, etc) -->
+
+<h3> Using Eclipse on Mac OSX </h3>
+<UL>
+<LI> Before writing any code or string resources, set <b>UTF-8</b> as your text encoding for Java and Android projects,
+or you'll have trouble later sharing anything that uses non-ascii characters.
+   <BR>
+    Eclipse Preferences -&gt; General -&gt; Workspace -&gt; Text file encoding: Default: UTF-8
+   <BR>
+	(The default encoding is MacRoman, which uses different bytes for accented characters.)
+</UL>
+
+<!-- TODO: section sqlite -->
+
+<h3> Using the Emulator </h3>
+
+<UL>
+<LI> To rotate the emulator's screen orientation, use Ctrl-F11 and Ctrl-F12.
+</UL>
+
+
+<h3> Debugging on Windows </h3>
+
+<UL>
+<LI> For more info, see <A href="http://developer.android.com/sdk/win-usb.html"
+	>http://developer.android.com/sdk/win-usb.html</A>
+<LI> If "adb devices" shows your device, you should be OK to run/debug from Eclipse.
+<LI> To install debugging support, your device may need to be added to <tt>android_winusb.inf</tt>
+	before running the installer.  For example:
+	<PRE>
+[Google.NTx86]:
+;
+;HTC Incredible
+%SingleAdbInterface% = USB_Install, USB\VID_0BB4&amp;PID_0C9E
+%CompositeAdbInterface% = USB_Install, USB\VID_0BB4&amp;PID_0C9E&amp;MI_01
+[Google.NTamd64]:
+;
+;HTC Incredible
+%SingleAdbInterface% = USB_Install, USB\VID_0BB4&amp;PID_0C9E
+%CompositeAdbInterface% = USB_Install, USB\VID_0BB4&amp;PID_0C9E&amp;MI_01
+	</PRE>
+	A reboot will be required after installation.
+</UL>
+
+<h3> Debugging "printf" techniques </h3>
+
+<UL>
+<LI> If the debug connection is active and you can use LogCat,
+	use <tt>Log.d(TAG, ...)</tt> to print debug info, current variable contents, etc.
+	This can be copied to the clipboard.
+	Typically, TAG is a static final per-activity String.
+<LI> For on-device debugging that's always available, use
+	<tt>Toast.makeText</tt>(activity.this, text, Toast.LENGTH_SHORT).show();
+	Don't forget to call show().
+</UL>
+
+<h3> Debugging app crashes </h3>
+
+When using the emulator, or the USB debug connection, LogCat will show the java stack traces
+whenever the app crashes.  You don't need to run using "Debug as Android Application" to use LogCat.
+
+<h3> Text in XML files </h3>
+
+<UL>
+<LI> To retrieve string text from your activity, use
+	<tt>getResources().getString</tt>(R.string.name_of_string);
+<LI> Several XML attributes treat "@" as a special character.  This carries over to <tt>strings.xml</tt>.
+  For example, to start a TextView's text with "@", you must use " \@" in that strings.xml value.
+  <PRE> &lt;string name="at_price"&gt; \@ Price&lt;/string&gt;   </PRE>
+</UL>
+
+<h3> Calling between intents; using bundles </h3>
+<UL>
+<LI> If you launch an activity using <tt>startActivityForResult</tt>,
+   its callback when complete will be <tt>onActivityResult</tt>.
+<LI> When calling with startActivityForResult,
+   choose a unique <tt>requestCode</tt> by using R.id.x ; for example,
+   if clicking a button starts the activity, use the button's ID.
+   You can then recognize that ID code in onActivityResult.
+<LI> The called activity can return data to you using:
+	<PRE>
+    		Intent i = getIntent();
+	    	i.putExtra("_id", someData.getID());
+	    	setResult(RESULT_OK, i);
+	</PRE>
+<LI> Unless you've called Intent.putExtra,
+   <tt>intent.getExtras()</tt> can return null.  Check null before dereferencing it.
+<LI> <tt>Bundle.getCharSequence</tt> can return null.
+</UL>
+
+<h3> Activity Title </h3>
+<UL>
+<LI> The activity's title bar is set in AndroidManifest:
+  <PRE> &lt;activity ... android:label="@string/this_title"&gt;  </PRE>
+<LI> If you want to append something to that text, use
+   <tt>setText(getText() + ...);</tt> in your activity's <tt>onCreate</tt>.
+</UL>
+
+<h3> Button click handlers </h3>
+
+<UL>
+<LI> For pressing buttons, use the <tt>android:onClick</tt> XML attribute, and have your activity
+contain a method named with this attribute's value.
+<P>
+<b>XML:</b> android:onClick="onClick_BtnCreate" <br>
+<b>Java:</b> <PRE>
+	/**
+	 * The 'Create' button was clicked: check fields, update the database if OK.
+	 */
+	public void <b>onClick_BtnCreate</b> (View v)
+	{
+	...
+	}
+	</PRE>
+
+<LI> If you need to long-press a button and display a context menu,
+
+<!-- STATE here... -->
+
+<h3> AutoCompleteTextView </h3>
+
+<!-- STATE here... -->
+<UL>
+<LI> AutoCompleteTextView is case-insensitive, and will also match text in the middle of the choices.
+  For instance, ....
+</UL>
+
+
+<h3> SQLite design and usage </h3>
+
+<UL>
+<LI> Android expects "<tt>_id</tt>" for your primary key column.
+  Declare as: <tt>_id integer PRIMARY KEY AUTOINCREMENT not null</tt>
+ <BR>
+  Using 'integer primary key' for <tt>_id</tt> ensures better performance, per
+	<A href="http://www.sqlite.org/lang_createtable.html"
+	>http://www.sqlite.org/lang_createtable.html</A>
+<LI> When using the <tt>sqlite3</tt> command-line tool, type:
+	<PRE> .headers on </PRE>
+	to see column names in SELECT query output.
+</UL>
+ ... something about db versions...
+
+</body>

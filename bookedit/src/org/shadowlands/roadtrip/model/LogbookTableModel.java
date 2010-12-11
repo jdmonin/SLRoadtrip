@@ -133,22 +133,46 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 			return;  // <--- nothing found ---
 		}
 
-		for (Trip t : td)
-		{
-			TStop ts_start = t.readStartTStop(false);  // may be null
+		Date prevTripStart = null;  // time of trip start
 
-			// first row of trip: odo
-			String[] firstrow = new String[colHeadings.length];
-			firstrow[2] = "/";
-			firstrow[3] = Integer.toString((int) (t.getOdo_start() / 10.0f));
-			if (ts_start != null)
-				firstrow[6] = getTStopLocDescr(ts_start, conn);
-			tData.addElement(firstrow);
+		// Does next trip continue from the same tstop and odometer?
+		boolean nextTripUsesSameStop = false;  // Updated at bottom of loop.
+
+		final int L = td.size();
+		for (int i = 0; i < L; ++i)  // towards end of trip, must look at next trip
+		{
+			Trip t = td.elementAt(i);
+			TStop ts_start = t.readStartTStop(false);  // may be null
+			String[] tr;
+
+			// first row of trip: date, if different from prev date
+			Date tstart = new Date(t.getTime_start() * 1000L);
+			if ((prevTripStart == null)
+			    || (prevTripStart.getDate() != tstart.getDate())
+			    || (prevTripStart.getMonth() != tstart.getMonth()))
+			{
+				tr = new String[colHeadings.length];
+				tr[0] = dfd.format(tstart);
+				tData.addElement(tr);
+			}
+			prevTripStart = tstart;
+
+			// next row of trip: location/odo, if different from previous trip's location/odo
+			String[] firstrow;
+			if (! nextTripUsesSameStop)
+			{
+				firstrow = new String[colHeadings.length];
+				firstrow[2] = "/";
+				firstrow[3] = Integer.toString((int) (t.getOdo_start() / 10.0f));
+				if (ts_start != null)
+					firstrow[6] = getTStopLocDescr(ts_start, conn);
+				tData.addElement(firstrow);
+			} else {
+				firstrow = null;
+			}
 
 			// next row of trip: time
-			String[] tr = new String[colHeadings.length];
-			Date tstart = new Date(t.getTime_start() * 1000L);
-			tr[0] = dfd.format(tstart);
+			tr = new String[colHeadings.length];
 			tr[1] = dft.format(tstart);
 			tData.addElement(tr);
 
@@ -156,12 +180,12 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 
 			// All well-formed trips have 1 or more TStops.
 			Vector<TStop> stops = t.readAllTStops();  // TODO current trip vs this?		
+			final TStop lastStop = (stops != null) ? stops.lastElement() : null;
 			if (stops != null)
 			{
-				final TStop lastStop = stops.lastElement();
 				for (TStop ts : stops)
 				{
-					if ((ts_start == null) && (ts.getOdo_trip() == 0))
+					if ((ts_start == null) && (ts.getOdo_trip() == 0) && (firstrow != null))
 					{
 						// this stop is the starting location
 						ts_start = ts;
@@ -262,18 +286,25 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 			// last rows, only if completed trip
 			if (odo_end != 0)
 			{
-				// next-to-last row of trip: time, trip-odo, via, trip-desc
+				// does next trip continue from the same tstop and odometer?
+				if ((i < (L-1)) && (lastStop != null))
+				{
+					Trip nt = td.elementAt(i+1);
+					nextTripUsesSameStop =
+						(t.getOdo_end() == nt.getOdo_start())
+						 && nt.isStartTStopFromPrevTrip();
+				} else {
+					nextTripUsesSameStop = false;
+				}
+
+				// last row of trip: odo, comment/desc
 				tr = new String[colHeadings.length];
-				Date tend = new Date(t.getTime_end() * 1000L);
-				tr[0] = dfd.format(tend);
-				tr[1] = dft.format(tend);
-				tr[6] = t.getComment();
-				tData.addElement(tr);
-	
-				// last row of trip: odo
-				tr = new String[colHeadings.length];
-				tr[2] = "\\";
+				if (nextTripUsesSameStop)
+					tr[2] = ">";
+				else
+					tr[2] = "\\";
 				tr[3] = Integer.toString((int) (odo_end / 10.0f));
+				tr[6] = t.getComment();
 				tData.addElement(tr);
 			}
 		}

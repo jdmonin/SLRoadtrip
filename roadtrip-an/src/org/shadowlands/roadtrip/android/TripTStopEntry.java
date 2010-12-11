@@ -96,6 +96,7 @@ public class TripTStopEntry extends Activity
 	private static final long TIMEDIFF_HISTORICAL_MILLIS = 24 * 60 * 60 * 1000L;
 
 	/** tag for Log debugs */
+	@SuppressWarnings("unused")
 	private static final String TAG = "Roadtrip.TripTStopEntry";
 
 	private RDBAdapter db = null;
@@ -502,25 +503,25 @@ public class TripTStopEntry extends Activity
 		if (odo != 0)
 		{
 			odoTotalOrig = odo;
-			odo_total.setCurrent10d(odo, true);
+			odo_total.setCurrent10d(odo, false);
 			odo_total_chk.setChecked(true);
 			odos = null;
 		} else {
 			odos = currT.readHighestOdometers();
 			odoTotalOrig = odos[0];
-			odo_total.setCurrent10d(odos[0], true);
+			odo_total.setCurrent10d(odos[0], false);
 		}
 		odo = currTS.getOdo_trip();
 		if (odo != 0)
 		{
 			odoTripOrig = odo;
-			odo_trip.setCurrent10d(odo, true);
+			odo_trip.setCurrent10d(odo, false);
 			odo_trip_chk.setChecked(true);
 		} else {
 			if (odos == null)
 				odos = currT.readHighestOdometers();
 			odoTripOrig = odos[1];
-			odo_trip.setCurrent10d(odos[1], true);
+			odo_trip.setCurrent10d(odos[1], false);
 		}
 
 		// fill text fields, unless null or 0-length
@@ -674,6 +675,32 @@ public class TripTStopEntry extends Activity
     			getResources().getString(R.string.please_check_the_trip_odometer),
                 Toast.LENGTH_SHORT).show();
         	return;  // <--- Early return: missing required field ---
+		}
+
+		// Make sure odometers don't run backwards
+		if ((odoTrip > 0) || (odoTotal > 0))
+		{
+			View focusStopHere = null;
+			String toastText = null;
+			final int[] odos = currT.readHighestOdometers(currTS);
+
+			if ((odoTotal > 0) && (odoTotal < odos[0]))
+			{
+				focusStopHere = odo_total;
+				toastText = getResources().getString(R.string.trip_tstop_entry_totalodo_low, odos[0] / 10);  // %1$d
+			}
+			else if ((odoTrip > 0) && (odoTrip < odos[1]))
+			{
+				focusStopHere = odo_trip;
+				toastText = getResources().getString(R.string.trip_tstop_entry_tripodo_low, odos[1] / 10.0);  // %1$.1f
+			}
+			
+			if (focusStopHere != null)
+			{
+				focusStopHere.requestFocus();
+				Toast.makeText(this, toastText, Toast.LENGTH_SHORT).show();
+				return;  // <--- Early return: Odometer is too low ---
+			}
 		}
 
 		// continue-time

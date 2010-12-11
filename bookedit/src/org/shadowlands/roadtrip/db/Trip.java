@@ -495,8 +495,25 @@ public class Trip extends RDBRecord
      * If the trip has no stops yet, "total" is the starting value and "trip" is 0.
      * @return array of [total,trip] odometer; the array is reused,
      *     so copy out the values before calling this again.
+     * @see #readHighestOdometers(TStop)
      */
     public int[] readHighestOdometers()
+    {
+    	return readHighestOdometers(null);
+    }
+
+    /**
+     * For a trip in progress, look at the trip's most recent stops, to calculate the
+     * most current odometer values.
+     * Where possible, use the highest trip-odo (more accurate) to drive the total-odo.
+     * If the trip has no stops yet, "total" is the starting value and "trip" is 0.
+     * @param ignoreStop  a TStop to ignore if found, or null;
+     *     this allows the latest stop (for example) to be ignored during the calculation.
+     * @return array of [total,trip] odometer; the array is reused,
+     *     so copy out the values before calling this again.
+     * @see #readHighestOdometers()
+     */
+    public int[] readHighestOdometers(final TStop ignoreStop)
     {
     	int oTotal = odo_start, oTrip = 0;
 
@@ -509,6 +526,8 @@ public class Trip extends RDBRecord
     		{
     			--i;
     			ts = stops.elementAt(i);
+    			if ((ignoreStop != null) && (ignoreStop.id == ts.id))
+    				continue;
 	    		oTotal = ts.getOdo_total();
 	    		oTrip = ts.getOdo_trip();
     		} while ((oTotal == 0) && (oTrip == 0) && (i > 0));

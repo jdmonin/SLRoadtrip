@@ -24,9 +24,11 @@ import android.content.Context;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Parcelable;
+import android.text.Editable;
 import android.text.InputFilter;
 import android.text.InputType;
 import android.text.Spanned;
+import android.text.TextWatcher;
 import android.text.method.NumberKeyListener;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
@@ -46,11 +48,13 @@ import android.widget.TextView;
  *<P>
  * This copy was obtained at <A href="http://www.quietlycoding.com/?p=5"
  *   >http://www.quietlycoding.com/?p=5</A>.
+ *<P>
+ * 2010-12-11 jdmonin Update mCurrent if mText is typed into
  *
  * @author Google
  */
 public class NumberPicker extends LinearLayout implements OnClickListener,
-        OnFocusChangeListener, OnLongClickListener {
+        OnFocusChangeListener, OnLongClickListener, TextWatcher {
 
     @SuppressWarnings("unused")
 	private static final String TAG = "NumberPicker";
@@ -154,6 +158,7 @@ public class NumberPicker extends LinearLayout implements OnClickListener,
         mText.setOnFocusChangeListener(this);
         mText.setFilters(new InputFilter[] {inputFilter});
         mText.setRawInputType(InputType.TYPE_CLASS_NUMBER);
+        mText.addTextChangedListener(this);
 
         if (!isEnabled()) {
             setEnabled(false);
@@ -268,16 +273,16 @@ public class NumberPicker extends LinearLayout implements OnClickListener,
                 : String.valueOf(value);
     }
 
-    protected void changeCurrent(int current) {
+    protected void changeCurrent(int newCurrent) {
 
         // Wrap around the values if we go past the start or end
-        if (current > mEnd) {
-            current = mStart;
-        } else if (current < mStart) {
-            current = mEnd;
+        if (newCurrent > mEnd) {
+            newCurrent = mStart;
+        } else if (newCurrent < mStart) {
+            newCurrent = mEnd;
         }
         mPrevious = mCurrent;
-        mCurrent = current;
+        mCurrent = newCurrent;
 
         notifyChange();
         updateView();
@@ -509,5 +514,28 @@ public class NumberPicker extends LinearLayout implements OnClickListener,
     public int getCurrent() {
         return mCurrent;
     }
+
+	/** update current value when typed into */
+	public void afterTextChanged(Editable mt)
+	{
+		// To avoid infinite loops, call validateCurrentView only
+		// if the new value is different and valid.
+		String nu = mt.toString().trim();
+		if (nu.length() > 0)
+		{
+			int i;
+			try {
+				i = Integer.parseInt(nu);
+				if (i != mCurrent)
+					validateCurrentView(nu);  // update mCurrent			
+			} catch (NumberFormatException e) { }
+		}
+	}
+
+	/** empty required stub for {@link TextWatcher} */ 
+	public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+	/** empty required stub for {@link TextWatcher} */ 
+	public void onTextChanged(CharSequence s, int start, int before, int count) {}
 
 }

@@ -57,6 +57,7 @@ import android.widget.LinearLayout;
 import android.widget.ListAdapter;
 import android.widget.TextView;
 import android.widget.TimePicker;
+import android.widget.TimePicker.OnTimeChangedListener;
 import android.widget.Toast;
 
 /**
@@ -72,7 +73,7 @@ import android.widget.Toast;
  * @author jdmonin
  */
 public class TripCreateFreq extends Activity
-	implements OnItemClickListener
+	implements OnItemClickListener, OnTimeChangedListener
 {
 	/** tag for android logging */
 	private static final String TAG = "RTR.TripCreateFreq";
@@ -118,7 +119,10 @@ public class TripCreateFreq extends Activity
 	/** Has the user confirmed they want to cancel creating it? */
 	private boolean confirmedCancel;
 
+	/** Checkboxes for freq-trip typical time info */
 	private CheckBox cbWeekdays, cbWeekends, cbAtTime;
+
+	/** Trip typically at this time; goes with {@link #calAtTime}, {@link #cbAtTime}. */
 	private TimePicker tpAtTime;
 
 	private EditText etDescr;
@@ -156,7 +160,7 @@ public class TripCreateFreq extends Activity
 	    cbAtTime = (CheckBox) findViewById(R.id.trip_createfreq_cb_atTime);
 	    tpAtTime = (TimePicker) findViewById(R.id.trip_createfreq_timepicker);
 
-	    // Contents of tpAtTime, etDescr will be set once we've
+	    // Listeners, contents of tpAtTime, etDescr will be set once we've
 	    // read the trip data from the db.
 
 	    db = new RDBOpenHelper(this);
@@ -179,6 +183,8 @@ public class TripCreateFreq extends Activity
 			finish();
 			return;  // <--- Early return: Trip somehow not found ---
 		} else {
+		    tpAtTime.setOnTimeChangedListener(this);
+
 		    // TODO etDescr: fill 'hint text' (empty text) based on src,dest,via, or trip comments
 
 			// Show starting, ending location
@@ -573,6 +579,12 @@ public class TripCreateFreq extends Activity
 		Toast.makeText(this, "got tstop id " + ts.getID(),
 			Toast.LENGTH_SHORT).show();
 		// TODO something else
+	}
+
+	/** When {@link #tpAtTime} is changed, make sure {@link #cbAtTime} is checked. */
+	public void onTimeChanged(TimePicker view, int hourOfDay, int minute) {
+		if (! cbAtTime.isChecked())
+			cbAtTime.setChecked(true);
 	}
 
 	/** for use by {@link TStopRowController}. Width <tt>FILL_PARENT</tt>, height <tt>WRAP_CONTENT</tt>. */

@@ -1,12 +1,12 @@
 -- org.shadowlands.roadtrip
--- version 0.9.05 schema for SQLite 3.4 or higher  2010-11-30
+-- version 0.9.06 schema for SQLite 3.4 or higher  2010-12-12
 -- Remember: When you upgrade the schema version, be sure to
 -- make all code changes listed in RDBSchema's class javadoc, and
 -- add the upgrade script to RtrDBOpenHelper.getSQLScript().
 -- Remember: Any schema changes must also be made
 -- within the java accessor classes.
 
-PRAGMA user_version = 0905;
+PRAGMA user_version = 0906;
 
 -- This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
 -- 
@@ -46,19 +46,19 @@ PRAGMA auto_vacuum = INCREMENTAL;
 
 create table appinfo ( _id integer PRIMARY KEY AUTOINCREMENT not null, aifield varchar(32) not null unique, aivalue varchar(64) not null );
 	-- Important keys: (See also db.AppInfo javadocs, where some of these are static final string fields)
-	-- DB_CREATE_SCHEMAVERSION: 0905
+	-- DB_CREATE_SCHEMAVERSION: 0906
 	-- DB_CREATE_DATETIME
 	-- DB_CREATE_APPNAME: 'org.shadowlands.roadtrip'
 	-- DB_BACKUP_PREVFILE: copied from previous DB_BACKUP_THISFILE when user asks to back up; doesn't include path, only filename
 	-- DB_BACKUP_PREVTIME: (unix format) time of DB_BACKUP_PREVFILE
 	-- DB_BACKUP_THISFILE: written just before closing db for backup copy; if backup fails, clear it afterwards (copy it back from DB_BACKUP_PREVFILE)
 	-- DB_BACKUP_THISTIME: (unix format) time of DB_BACKUP_THISFILE
-	-- DB_CURRENT_SCHEMAVERSION (0905 unless it was upgraded)
+	-- DB_CURRENT_SCHEMAVERSION (0906 unless it was upgraded)
 	-- DB_UPGRADED_DATETIME (may not be present)
 	-- DB_UPGRADED_APPNAME (may not be present)
 
-insert into appinfo (aifield, aivalue) values ('DB_CREATE_SCHEMAVERSION', '0905');
-insert into appinfo (aifield, aivalue) values ('DB_CURRENT_SCHEMAVERSION', '0905');
+insert into appinfo (aifield, aivalue) values ('DB_CREATE_SCHEMAVERSION', '0906');
+insert into appinfo (aifield, aivalue) values ('DB_CURRENT_SCHEMAVERSION', '0906');
 
 create table settings ( _id integer PRIMARY KEY AUTOINCREMENT not null, sname varchar(32) not null unique, svalue varchar(64), ivalue int );
 	-- DISTANCE_DISPLAY: KM or MI
@@ -155,10 +155,15 @@ create index "tstop~t" ON tstop(tripid);
 --   When a tstop has a tstop_gas, the FLAG_GAS bit is set in its flag_sides field.
 -- NOTE: tstop_gas._id == associated tstop._id
 --   Fillup: 1 or 0 (Fill the tank, or partial)
-create table tstop_gas ( _id integer PRIMARY KEY not null, quant int not null, price_per int not null, price_total int not null, fillup int not null, station varchar(255));
+--   Station: obsolete for 0.9.06+, use gas_brandgrade_id instead
+create table tstop_gas ( _id integer PRIMARY KEY not null, quant int not null, price_per int not null, price_total int not null, fillup int not null, gas_brandgrade_id int);
+
+-- Gas brand/grade, for tstop_gas
+create table gas_brandgrade ( _id integer PRIMARY KEY AUTOINCREMENT not null, name varchar(255) not null );
 
 -- Used for TStop description auto-fill, and freqtrip.
-create table location ( _id integer PRIMARY KEY AUTOINCREMENT not null, a_id int, geo_lat float, geo_lon float, loc_descr varchar(255) not null );
+--    latest_gas_brandgrade_id is for the auto-fill default at gas stop locations.
+create table location ( _id integer PRIMARY KEY AUTOINCREMENT not null, a_id int, geo_lat float, geo_lon float, loc_descr varchar(255) not null, latest_gas_brandgrade_id int );
 
 -- Via routes, between locations
 create table via_route ( _id integer PRIMARY KEY AUTOINCREMENT not null, locid_from int not null, locid_to int not null, odo_dist int, via_descr varchar(255) not null);

@@ -37,9 +37,9 @@ public class Location extends RDBRecord
      * @see #initFields(String[])
      */
     private static final String[] FIELDS =
-        { "a_id", "geo_lat", "geo_lon", "loc_descr" };
+        { "a_id", "geo_lat", "geo_lon", "loc_descr", "latest_gas_brandgrade_id" };
     private static final String[] FIELDS_AND_ID =
-	    { "a_id", "geo_lat", "geo_lon", "loc_descr", "_id" };
+	    { "a_id", "geo_lat", "geo_lon", "loc_descr", "latest_gas_brandgrade_id", "_id" };
 
     /** may be unused (-1); foreign key to {@link GeoArea}. */
     private int area_id;
@@ -49,6 +49,9 @@ public class Location extends RDBRecord
 
     /** location ('loc_descr' field); may not be null */
     private String loc_descr;
+
+    /** For gas stop locations, foreign key to {@link GasBrandGrade}; 0 for unused. */
+    private int latest_gas_brandgrade_id;
 
     /**
      * Get the Locations currently in the database, by area.
@@ -125,6 +128,10 @@ public class Location extends RDBRecord
     	if (rec[3] == null)
     		 throw new IllegalArgumentException("null loc_descr");
     	loc_descr = rec[3];
+    	if (rec[4] != null)
+    		latest_gas_brandgrade_id = Integer.parseInt(rec[4]);
+    	else
+    		latest_gas_brandgrade_id = 0;
 
     	if (rec.length == 5)
     		id = Integer.parseInt(rec[4]);
@@ -197,7 +204,8 @@ public class Location extends RDBRecord
 		    {
 			Integer.toString(area_id),
 			geo_lat, geo_lon,
-			loc_descr
+			loc_descr,
+			(latest_gas_brandgrade_id != 0) ? Integer.toString(latest_gas_brandgrade_id) : null
 		    };
 		return fv;
 	}
@@ -211,7 +219,7 @@ public class Location extends RDBRecord
 	 * Set or clear the area ID.
 	 * @param newArea new area ID, or -1 to clear
 	 */
-	public void setAreaID(int newArea)
+	public void setAreaID(final int newArea)
 	{
 		area_id = newArea;
 		dirty = true;
@@ -233,6 +241,22 @@ public class Location extends RDBRecord
 		if (descr == null)
 			throw new IllegalArgumentException();
 		loc_descr = descr;
+		dirty = true;
+	}
+
+	/** For gas stop locations, get the latest {@link GasBrandGrade} ID, or 0 if unused. */
+	public int getLatestGasBrandGradeID()
+	{
+		return latest_gas_brandgrade_id;
+	}
+
+	/**
+	 * For gas stop locations, set or clear the latest {@link GasBrandGrade} ID.
+	 * @param gas_brandgrade_id  New ID, or 0 for none
+	 */
+	public void setLatestGasBrandGradeID(final int gas_brandgrade_id)
+	{
+		latest_gas_brandgrade_id = gas_brandgrade_id;
 		dirty = true;
 	}
 

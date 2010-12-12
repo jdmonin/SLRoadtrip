@@ -41,7 +41,8 @@ public class TripTStopGas extends Activity
 		EXTRAS_FIELD_PERUNIT = "perunit",
 		EXTRAS_FIELD_TOTALCOST = "totalcost",
 		EXTRAS_FIELD_ISFILLUP = "isfillup",
-		EXTRAS_FIELD_STATION = "station",
+		EXTRAS_FIELD_BRANDGRADE_ID = "brandgrade_id",
+		EXTRAS_FIELD_BRANDGRADE = "brandgrade",
 		EXTRAS_FIELD_CALC_FLAGS = "calc";
 
 	private EditText quant_et, perunit_et, totalcost_et;
@@ -106,7 +107,7 @@ public class TripTStopGas extends Activity
 		perunit_et.setText(loadFrom.getCharSequence(EXTRAS_FIELD_PERUNIT));
 		totalcost_et.setText(loadFrom.getCharSequence(EXTRAS_FIELD_TOTALCOST));
 		isFillup_chk.setChecked(loadFrom.getBoolean(EXTRAS_FIELD_ISFILLUP, false));
-		station_et.setText(loadFrom.getCharSequence(EXTRAS_FIELD_STATION));
+		station_et.setText(loadFrom.getCharSequence(EXTRAS_FIELD_BRANDGRADE));
 		final boolean[] calc = loadFrom.getBooleanArray(EXTRAS_FIELD_CALC_FLAGS);
 		if (calc != null)
 		{
@@ -126,7 +127,7 @@ public class TripTStopGas extends Activity
 		saveTo.putCharSequence(EXTRAS_FIELD_PERUNIT, perunit_et.getText());
 		saveTo.putCharSequence(EXTRAS_FIELD_TOTALCOST, totalcost_et.getText());
 		saveTo.putBoolean(EXTRAS_FIELD_ISFILLUP, isFillup_chk.isChecked());
-		saveTo.putCharSequence(EXTRAS_FIELD_STATION, station_et.getText());
+		saveTo.putCharSequence(EXTRAS_FIELD_BRANDGRADE_ID, station_et.getText());
 		final boolean[] calc = new boolean[] {
 			quant_calc, perunit_calc, totalcost_calc
 		};
@@ -141,8 +142,12 @@ public class TripTStopGas extends Activity
 		saveTo.putCharSequence(EXTRAS_FIELD_PERUNIT, RDBSchema.formatFixedDec(tg.price_per, 3));
 		saveTo.putCharSequence(EXTRAS_FIELD_TOTALCOST, RDBSchema.formatFixedDec(tg.price_total, 2));
 		saveTo.putBoolean(EXTRAS_FIELD_ISFILLUP, tg.fillup);
-		if (tg.station != null)
-			saveTo.putCharSequence(EXTRAS_FIELD_STATION, tg.station);
+		if (tg.gas_brandgrade_id != 0)
+		{
+			saveTo.putInt(EXTRAS_FIELD_BRANDGRADE_ID, tg.gas_brandgrade_id);
+			if (tg.gas_brandgrade != null)
+				saveTo.putCharSequence(EXTRAS_FIELD_BRANDGRADE, tg.gas_brandgrade.getName());
+		}
 		if (! saveTo.containsKey("b_id"))
 			saveTo.putLong("b_id", System.currentTimeMillis());
 	}
@@ -175,8 +180,8 @@ public class TripTStopGas extends Activity
 		tg.price_per = pp;
 		tg.price_total = pt;
 		tg.fillup = saveFrom.getBoolean(EXTRAS_FIELD_ISFILLUP);
-		CharSequence sta = saveFrom.getCharSequence(EXTRAS_FIELD_STATION); 
-		tg.station = ((sta != null) && (sta.length() > 0)) ? sta.toString().trim() : null;
+		CharSequence sta = saveFrom.getCharSequence(EXTRAS_FIELD_BRANDGRADE_ID); 
+		// tg.station = ((sta != null) && (sta.length() > 0)) ? sta.toString().trim() : null;
 
 		return tg;
 	}

@@ -24,18 +24,12 @@ package org.shadowlands.roadtrip.db;
  * a stop for gas during a Trip's {@link TStop}.
  * The TStop's {@link TStop#getFlags()} will have
  * {@link TStop#FLAG_GAS} set.
- *<PRE>
- * -- NOTE: tstop_gas._id == associated tstop._id
- * create table tstop_gas (
- *  _id integer PRIMARY KEY not null,
- *  quant int not null,
- *  price_per int not null,
- *  price_total int not null,
- *  fillup int not null,  -- 1 or 0 (Fill the tank, or partial)
- *  station varchar(255)
- * );
- *</PRE>
+ *<P>
+ * -- NOTE: tstop_gas._id == associated tstop._id :
  *  The primary key is the same value as the stop's {@link #TStop#id} field.
+ *<P>
+ * The obsolete field <tt>station</tt> is ignored if present in the database.
+ * Schema 0.9.06+ do not contain the station field, using <tt>gas_brandgrade_id</tt> instead.
  *
  * @author jdmonin
  */
@@ -48,9 +42,9 @@ public class TStopGas extends RDBRecord
      * @see #initFields(String[])
      */
     private static final String[] FIELDS =
-    { "quant", "price_per", "price_total", "fillup", "station" };
+    { "quant", "price_per", "price_total", "fillup", "gas_brandgrade_id" };
     private static final String[] FIELDS_AND_ID =
-    { "quant", "price_per", "price_total", "fillup", "station", "_id" };
+    { "quant", "price_per", "price_total", "fillup", "gas_brandgrade_id", "_id" };
 
     /**
      * The TStop that we're related to.
@@ -63,8 +57,14 @@ public class TStopGas extends RDBRecord
 
     public boolean fillup;
 
-    /** may be null */
-    public String station;
+    /** 0 if unused */
+    public int gas_brandgrade_id;
+
+    /**
+     * Convenience field, not stored in database; used in {@link #toStringBuffer(Vehicle)}.
+     * If not <tt>null</tt>, its ID must == {@link gas_brandgrade_id}.
+     */
+    public transient GasBrandGrade gas_brandgrade;
 
     /** Constructor for creating a new record, before field contents are known.
      * 
@@ -108,7 +108,9 @@ public class TStopGas extends RDBRecord
     	price_per = Integer.parseInt(rec[1]);
     	price_total = Integer.parseInt(rec[2]);
     	fillup = ("1".equals(rec[3]));
-    	station = rec[4];  // may be null
+    	gas_brandgrade_id = (rec[4] != null)
+    		? Integer.parseInt(rec[4])
+			: 0 ;
     	if (rec.length == 6)
     		id = Integer.parseInt(rec[5]);
 	}
@@ -128,10 +130,10 @@ public class TStopGas extends RDBRecord
      * @param price_per  Price per unit
      * @param price_total  Price total
      * @param fillup   Completely filling up the tank?
-     * @param station  Gas station description, or null
+     * @param gasBrandGrade_id  Gas brand/grade (ID from {@link GasBrandGrade}), or 0 if unused
      */
     public TStopGas(TStop tstop, final int quant, final int price_per,
-    		final int price_total, final boolean fillup, final String station)
+    		final int price_total, final boolean fillup, final int gasBrandGrade_id)
     {
     	super();    	
     	ts = tstop;
@@ -141,7 +143,7 @@ public class TStopGas extends RDBRecord
     	this.price_per = price_per;
     	this.price_total = price_total;
     	this.fillup = fillup;
-    	this.station = station;
+    	this.gas_brandgrade_id = gasBrandGrade_id;
     }
 
 	/**
@@ -210,7 +212,7 @@ public class TStopGas extends RDBRecord
 		fv[1] = Integer.toString(price_per);
 		fv[2] = Integer.toString(price_total);
 		fv[3] = fillup ? "1" : "0";
-		fv[4] = station;
+		fv[4] = (gas_brandgrade_id != 0) ? Integer.toString(gas_brandgrade_id) : null;
 		if (withID)
 			fv[5] = Integer.toString(id);
 		return fv;
@@ -266,7 +268,11 @@ public class TStopGas extends RDBRecord
 		ts = tstop;
 	}
 
-	/** format is: "[partial:] quant @ price-per [totalprice] station".
+	/** format is: "[partial:] quant @ price-per [totalprice] [gas_brandgrade]".
+	 *<P>
+	 * If {@link #gas_brandgrade} != <tt>null</tt> and its ID matches {@link #gas_brandgrade_id},
+	 * the brand/grade name will be placed into the string buffer.
+	 *
 	 *  @param v  used for number of decimal places, currency symbol
 	 */
 	public StringBuffer toStringBuffer(Vehicle v)
@@ -281,10 +287,10 @@ public class TStopGas extends RDBRecord
 		sb.append(v.expense_curr_sym);
 		sb.append(RDBSchema.formatFixedDec(price_total, v.expense_curr_deci));
 		sb.append("]");
-		if ((station != null) && (station.length() > 0))
+		if ((gas_brandgrade_id != 0) && (gas_brandgrade != null) && (gas_brandgrade.id == gas_brandgrade_id))
 		{
 			sb.append(' ');
-			sb.append(station);
+			sb.append(gas_brandgrade.getName());
 		}
 		return sb;
 	}

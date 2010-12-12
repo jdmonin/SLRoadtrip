@@ -572,23 +572,26 @@ public class RDBOpenHelper
 		}
 
 		// REMINDER: Please also update RDBSchema.upgradeToCurrent!
+
 		int res = 0;
 		switch (upgScriptToVersion)
 		{
-		case   0: res = R.raw.schema_v0905;  break;  // create, not upgrade
+		case   0: res = R.raw.schema_v0906;  break;  // create, not upgrade
 
 		/* 
 		 * obsolete versions, not encountered in the wild:
+		 * These upgrade scripts have been moved to /doc/hist.
 		 * 
 		case 807: res = R.raw.upg_v0807;  break;
 		case 809: res = R.raw.upg_v0809;  break;
 		case 812: res = R.raw.upg_v0812;  break;
 		case 813: res = R.raw.upg_v0813;  break;
+		case 901: res = R.raw.upg_v0901;  break;
 		 *
 		 */
 
-		case 901: res = R.raw.upg_v0901;  break;
 		case 905: res = R.raw.upg_v0905;  break;
+		case 906: res = R.raw.upg_v0906;  break;
 		}
 		if (res == 0)
 		{

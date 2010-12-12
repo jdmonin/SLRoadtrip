@@ -1,4 +1,4 @@
--- upgrade from v0813 to v0901: (2010-11-16)
+-- upgrade from v0905 to v0906: (2010-12-12)
 
 -- This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
 -- 
@@ -17,12 +17,13 @@
 --  You should have received a copy of the GNU General Public License
 --  along with this program.  If not, see http://www.gnu.org/licenses/ .
 
--- freqtrip table unused before v0900, so OK to drop/recreate.
-DROP TABLE freqtrip;
-create table freqtrip ( _id integer PRIMARY KEY AUTOINCREMENT not null, a_id int, start_locid integer not null, end_locid integer not null, end_odo_trip int not null, roadtrip_end_aid int, descr varchar(255), end_via_id int, typ_timeofday int, flag_weekends int not null default 0, flag_weekdays int not null default 0);
-create index "freqtrip~l" ON freqtrip(start_locid);
+-- Gas brand/grade, for tstop_gas
+create table gas_brandgrade ( _id integer PRIMARY KEY AUTOINCREMENT not null, name varchar(255) not null );
 
-ALTER TABLE freqtrip_tstop ADD COLUMN via_id int;
-create index "freqtrip_tstop~f" ON freqtrip_tstop(freqtripid);
+-- Note that tstop_gas.station isn't auto-converted to new gas_brandgrades.
+--    This is not acceptable when there are users of the software,
+--    but at this early point, our user is okay with it.
+ALTER TABLE tstop_gas ADD COLUMN gas_brandgrade_id int;
 
-ALTER TABLE via_route ADD COLUMN odo_dist int;
+--    latest_gas_brandgrade_id is for the auto-fill default at gas stop locations.
+ALTER TABLE location ADD COLUMN latest_gas_brandgrade_id int;

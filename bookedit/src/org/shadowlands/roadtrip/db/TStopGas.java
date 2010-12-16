@@ -42,9 +42,9 @@ public class TStopGas extends RDBRecord
      * @see #initFields(String[])
      */
     private static final String[] FIELDS =
-    { "quant", "price_per", "price_total", "fillup", "gas_brandgrade_id" };
+    { "quant", "price_per", "price_total", "fillup", "vid", "gas_brandgrade_id" };
     private static final String[] FIELDS_AND_ID =
-    { "quant", "price_per", "price_total", "fillup", "gas_brandgrade_id", "_id" };
+    { "quant", "price_per", "price_total", "fillup", "vid", "gas_brandgrade_id", "_id" };
 
     /**
      * The TStop that we're related to.
@@ -56,6 +56,9 @@ public class TStopGas extends RDBRecord
     public int quant, price_per, price_total;
 
     public boolean fillup;
+
+    /** vehicle ID */
+    public int vid;
 
     /** 0 if unused */
     public int gas_brandgrade_id;
@@ -108,11 +111,12 @@ public class TStopGas extends RDBRecord
     	price_per = Integer.parseInt(rec[1]);
     	price_total = Integer.parseInt(rec[2]);
     	fillup = ("1".equals(rec[3]));
-    	gas_brandgrade_id = (rec[4] != null)
-    		? Integer.parseInt(rec[4])
+    	vid = Integer.parseInt(rec[4]);
+    	gas_brandgrade_id = (rec[5] != null)
+    		? Integer.parseInt(rec[5])
 			: 0 ;
-    	if (rec.length == 6)
-    		id = Integer.parseInt(rec[5]);
+    	if (rec.length == 7)
+    		id = Integer.parseInt(rec[6]);
 	}
 
     /**
@@ -130,10 +134,11 @@ public class TStopGas extends RDBRecord
      * @param price_per  Price per unit
      * @param price_total  Price total
      * @param fillup   Completely filling up the tank?
+     * @param vehicle_id  Vehicle ID being fueled
      * @param gasBrandGrade_id  Gas brand/grade (ID from {@link GasBrandGrade}), or 0 if unused
      */
     public TStopGas(TStop tstop, final int quant, final int price_per,
-    		final int price_total, final boolean fillup, final int gasBrandGrade_id)
+    		final int price_total, final boolean fillup, final int vehicle_id, final int gasBrandGrade_id)
     {
     	super();    	
     	ts = tstop;
@@ -143,6 +148,7 @@ public class TStopGas extends RDBRecord
     	this.price_per = price_per;
     	this.price_total = price_total;
     	this.fillup = fillup;
+    	vid = vehicle_id;
     	this.gas_brandgrade_id = gasBrandGrade_id;
     }
 
@@ -200,10 +206,6 @@ public class TStopGas extends RDBRecord
 	 */
 	private String[] buildInsertUpdate(final boolean withID)
 	{
-		/*
-	    private static final String[] FIELDS =
-	    { "quant", "price_per", "price_total", "fillup", "station" };
-	    */
 		String[] fv =
 		   (withID)
 			? new String[FIELDS_AND_ID.length]
@@ -212,9 +214,10 @@ public class TStopGas extends RDBRecord
 		fv[1] = Integer.toString(price_per);
 		fv[2] = Integer.toString(price_total);
 		fv[3] = fillup ? "1" : "0";
-		fv[4] = (gas_brandgrade_id != 0) ? Integer.toString(gas_brandgrade_id) : null;
+		fv[4] = Integer.toString(vid);
+		fv[5] = (gas_brandgrade_id != 0) ? Integer.toString(gas_brandgrade_id) : null;
 		if (withID)
-			fv[5] = Integer.toString(id);
+			fv[6] = Integer.toString(id);
 		return fv;
 	}
 
@@ -295,4 +298,4 @@ public class TStopGas extends RDBRecord
 		return sb;
 	}
 
-}  // public class TStop
+}  // public class TStopGas

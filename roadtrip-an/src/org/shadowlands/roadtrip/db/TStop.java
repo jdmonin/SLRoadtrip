@@ -67,7 +67,13 @@ public class TStop extends RDBRecord
     /** Temporary flag to indicate a new ViaRoute was created for this TStop */
     public static final int TEMPFLAG_CREATED_VIAROUTE = 0x02;
 
-    /** (unused) Flag to (eventually) indicate this TStop has a related {@link TStopGas} record */
+    /**
+     * Temporary flag to indicate a new {@link GasBrandGrade} was created for this TStop.
+     * @since 0.9.06
+     */
+    public static final int TEMPFLAG_CREATED_GASBRANDGRADE = 0x04;
+
+    /** Flag to indicate this TStop has a related {@link TStopGas} record */
     public static final int FLAG_GAS = 0x100;
 
     private int tripid;  // FK

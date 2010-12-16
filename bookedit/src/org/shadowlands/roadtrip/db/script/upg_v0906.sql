@@ -1,4 +1,4 @@
--- upgrade from v0905 to v0906: (2010-12-12)
+-- upgrade from v0905 to v0906: (2010-12-16)
 
 -- This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
 -- 
@@ -20,10 +20,18 @@
 -- Gas brand/grade, for tstop_gas
 create table gas_brandgrade ( _id integer PRIMARY KEY AUTOINCREMENT not null, name varchar(255) not null );
 
+-- vid's default 0 is to satisfy "not null"; actual vehicle IDs will
+--    be determined in an update statement.
 -- Note that tstop_gas.station isn't auto-converted to new gas_brandgrades.
 --    This is not acceptable when there are users of the software,
 --    but at this early point, our user is okay with it.
+ALTER TABLE tstop_gas ADD COLUMN vid int not null default 0;
 ALTER TABLE tstop_gas ADD COLUMN gas_brandgrade_id int;
 
 --    latest_gas_brandgrade_id is for the auto-fill default at gas stop locations.
 ALTER TABLE location ADD COLUMN latest_gas_brandgrade_id int;
+
+-- For existing tstop_gas, determine vehicle ID from the trip
+UPDATE tstop_gas SET vid=(select vid from trip where trip._id = (select tripid from tstop where tstop._id = tstop_gas._id ));
+
+create index "tstopgas~v" ON tstop_gas(vid);

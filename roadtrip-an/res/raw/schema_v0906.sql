@@ -1,5 +1,5 @@
 -- org.shadowlands.roadtrip
--- version 0.9.06 schema for SQLite 3.4 or higher  2010-12-12
+-- version 0.9.06 schema for SQLite 3.4 or higher  2010-12-16
 -- Remember: When you upgrade the schema version, be sure to
 -- make all code changes listed in RDBSchema's class javadoc, and
 -- add the upgrade script to RtrDBOpenHelper.getSQLScript().
@@ -156,7 +156,9 @@ create index "tstop~t" ON tstop(tripid);
 -- NOTE: tstop_gas._id == associated tstop._id
 --   Fillup: 1 or 0 (Fill the tank, or partial)
 --   Station: obsolete for 0.9.06+, use gas_brandgrade_id instead
-create table tstop_gas ( _id integer PRIMARY KEY not null, quant int not null, price_per int not null, price_total int not null, fillup int not null, gas_brandgrade_id int);
+--   vid: Vehicle ID
+create table tstop_gas ( _id integer PRIMARY KEY not null, quant int not null, price_per int not null, price_total int not null, fillup int not null, vid integer not null, gas_brandgrade_id int);
+create index "tstopgas~v" ON tstop_gas(vid);
 
 -- Gas brand/grade, for tstop_gas
 create table gas_brandgrade ( _id integer PRIMARY KEY AUTOINCREMENT not null, name varchar(255) not null );

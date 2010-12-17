@@ -25,6 +25,7 @@ import java.text.DateFormat;
 import java.util.Date;
 import java.util.Vector;
 
+import org.shadowlands.roadtrip.db.GasBrandGrade;
 import org.shadowlands.roadtrip.db.Location;
 import org.shadowlands.roadtrip.db.RDBAdapter;
 import org.shadowlands.roadtrip.db.TStop;
@@ -85,6 +86,11 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	private TIntObjectHashMap<ViaRoute> viaCache;
 
 	/**
+	 * {@link ViaRoute} cache. Each item is its own key.
+	 */
+	private TIntObjectHashMap<GasBrandGrade> gasCache;
+
+	/**
 	 * Are we adding a new trip right now?
 	 * @see #maxRowBeforeAdd
 	 */
@@ -106,6 +112,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 		tData = new Vector<String[]>();
 		locCache = new TIntObjectHashMap<Location>();
 		viaCache = new TIntObjectHashMap<ViaRoute>();
+		gasCache = new TIntObjectHashMap<GasBrandGrade>();
 
 		if (veh != null)
 		{
@@ -255,8 +262,26 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 						try
 						{
 							TStopGas tsg = new TStopGas(conn, ts.getID());
+							final int gradeID = tsg.gas_brandgrade_id;
+							if (gradeID != 0)
+							{
+								GasBrandGrade grade = gasCache.get(gradeID);
+								if (grade == null)
+								{
+									try
+									{
+										grade = new GasBrandGrade(conn, gradeID);
+										gasCache.put(gradeID, grade);
+									}
+									catch (Throwable th) {}
+								}
+								if (grade != null)
+									tsg.gas_brandgrade = grade;  // for toStringBuffer's use
+							}
 							StringBuffer gsb = new StringBuffer("* Gas: ");
 							gsb.append(tsg.toStringBuffer(veh));
+							if (gradeID != 0)
+								tsg.gas_brandgrade = null;  // clear the reference
 							if (desc.length() > 0)
 								gsb.append(' ');
 							desc.insert(0, gsb);

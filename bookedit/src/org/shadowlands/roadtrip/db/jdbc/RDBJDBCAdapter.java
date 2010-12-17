@@ -185,6 +185,9 @@ public class RDBJDBCAdapter implements RDBAdapter
 	/**
 	 * Get one or more rows matching a key field-value pair, or all rows except matching.
 	 * Returns null if no rows are found.
+	 *<P>
+	 * <tt>kf</tt> must not be null; if you want all rows in the table, use
+	 * {@link #getRows(String, String, String[], String[], String)} instead.
 	 *
 	 * @param tabname Table to query
 	 * @param kf  Key fieldname; must not be null.

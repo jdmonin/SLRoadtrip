@@ -45,7 +45,7 @@ public class GasBrandGrade extends RDBRecord
      */
     public static GasBrandGrade[] getAll(RDBAdapter db)
     {
-		Vector<String[]> gbg = db.getRows(TABNAME, null, (String) null, FIELDS_AND_ID, VALFIELD);
+		Vector<String[]> gbg = db.getRows(TABNAME, null, (String[]) null, FIELDS_AND_ID, VALFIELD);
     	if (gbg == null)
     		return null;
 

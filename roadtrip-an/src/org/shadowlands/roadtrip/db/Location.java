@@ -133,8 +133,8 @@ public class Location extends RDBRecord
     	else
     		latest_gas_brandgrade_id = 0;
 
-    	if (rec.length == 5)
-    		id = Integer.parseInt(rec[4]);
+    	if (rec.length == 6)
+    		id = Integer.parseInt(rec[5]);
 	}
 
     /**

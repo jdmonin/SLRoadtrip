@@ -686,8 +686,18 @@ public class TripTStopEntry extends Activity
 
 			if ((odoTotal > 0) && (odoTotal < odos[0]))
 			{
-				focusStopHere = odo_total;
-				toastText = getResources().getString(R.string.trip_tstop_entry_totalodo_low, odos[0] / 10);  // %1$d
+				// check if it's only the hidden tenths digit
+				final int wholeOdo0 = odos[0] / 10;
+				if (wholeOdo0 == (odoTotal/10))
+				{
+					// visually the same; update hidden tenths to keep the db consistent
+					odoTotal = odos[0];
+					odo_total.setCurrent10d(odoTotal, false);
+				} else {
+					// visually different
+					focusStopHere = odo_total;
+					toastText = getResources().getString(R.string.trip_tstop_entry_totalodo_low, wholeOdo0);  // %1$d
+				}
 			}
 			else if ((odoTrip > 0) && (odoTrip < odos[1]))
 			{

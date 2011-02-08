@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  Copyright (C) 2010 Jeremy D Monin <jdmonin@nand.net>
+ *  Copyright (C) 2010-2011 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -69,6 +69,12 @@ public class LogbookEditPane extends JPanel implements ActionListener, WindowLis
 	/** 'Vehicle: ' button text */
 	private static final String TEXT_VEHICLE = "Vehicle: ";
 
+	/**
+	 * Increment in weeks when loading newer/older trips from the database,
+	 * or 0 to load all (This may run out of memory).
+	 */
+	public static final int WEEK_INCREMENT = 2;
+
 	private RDBAdapter conn;
 	private final boolean isReadOnly;
 	private Vehicle veh;
@@ -82,8 +88,9 @@ public class LogbookEditPane extends JPanel implements ActionListener, WindowLis
 	 * call {@link #setupTbColumnModel()} afterwards.
 	 */
 	private JTable tb;
-	private JScrollPane sp;
-	private JPanel pbtns;
+	private JScrollPane sp;  // holds tb
+	private JButton bLoadPrevious;  // earlier trips
+	private JPanel pbtns;  // below JTable
 	private JButton bAddSimple, bAddWithStops, bAddDone, bAddCancel, bChgVehicle;
 
 	/**
@@ -99,16 +106,29 @@ public class LogbookEditPane extends JPanel implements ActionListener, WindowLis
 		this.conn = conn;
 		this.veh = veh;
 		this.isReadOnly = isReadOnly;
-		mdata = new LBSwingTableModel(veh, conn, isReadOnly);
+		mdata = new LBSwingTableModel(veh, WEEK_INCREMENT, conn, isReadOnly);
 		lbef = new JFrame
 		    ( (isReadOnly ? "Quick Viewer - " : "Quick Editor - ") + fname);
 		lbef.addWindowListener(this);  // needed for conn.close() when window closes
 		tb = new JTable(mdata);
+		setLayout(new BorderLayout());  // stretch JTable on resize
 		setupTbColumnModel();
 		sp = new JScrollPane(tb);
-		add(sp);
+		add(sp, BorderLayout.CENTER);
 		lbef.add(this, BorderLayout.CENTER);
 
+		// Buttons above JTable
+		{
+			GridLayout bgl = new GridLayout(1, 2);
+			JPanel pba = new JPanel(bgl);
+			bLoadPrevious = new JButton("<< Earlier trips");
+			bLoadPrevious.setToolTipText("Show trips previous to the ones shown now");
+			bLoadPrevious.addActionListener(this);
+			pba.add(bLoadPrevious);
+			lbef.add(pba, BorderLayout.NORTH);
+		}
+
+		// Buttons below JTable
         GridLayout bgl = new GridLayout(3, 2);
 		pbtns = new JPanel(bgl);
 		bAddSimple = new JButton("+ Simple Trip");
@@ -158,7 +178,9 @@ public class LogbookEditPane extends JPanel implements ActionListener, WindowLis
 	{
 		Object src = e.getSource();
 
-		if (src == bAddSimple)
+		if (src == bLoadPrevious)
+			actionLoadPrevious();
+		else if (src == bAddSimple)
 			actionAddTripBegin(false);
 		else if (src == bAddWithStops)
 			actionAddTripBegin(true);
@@ -168,6 +190,12 @@ public class LogbookEditPane extends JPanel implements ActionListener, WindowLis
 			actionAddTripFinish(false);
 		else if (src == bChgVehicle)
 			actionChangeVehicle();
+	}
+
+	private void actionLoadPrevious()
+	{
+		// TODO chk mdata.ltm.addMode; btn should be disabled, though
+		mdata.ltm.addEarlierTripWeeks(conn);
 	}
 
 	private void actionAddTripBegin(final boolean withStops)
@@ -208,7 +236,7 @@ public class LogbookEditPane extends JPanel implements ActionListener, WindowLis
 		Vehicle[] allV = Vehicle.getAll(conn);
 		if (allV.length < 2)
 		{
-			// TODO allow add new
+			// TODO allow add new veh
 			JOptionPane.showMessageDialog(lbef,
 			    "This is the only vehicle in the logbook.",
 			    "No other vehicles",
@@ -232,7 +260,7 @@ public class LogbookEditPane extends JPanel implements ActionListener, WindowLis
 		try {
 			mdata.fireTableRowsDeleted(1, mdata.getRowCount());
 			veh = new Vehicle(conn, vID);
-			mdata = new LBSwingTableModel(veh, conn, isReadOnly);
+			mdata = new LBSwingTableModel(veh, WEEK_INCREMENT, conn, isReadOnly);
 			// setModel and loads the current data from mdata,
 			// but loses the column model.
 			tb.setModel(mdata);
@@ -487,12 +515,14 @@ public class LogbookEditPane extends JPanel implements ActionListener, WindowLis
 		/**
     	 * Create and populate with existing data.
     	 * @param veh  Vehicle
+    	 * @param weeks  Week increment when loading data
     	 * @param conn Add existing rows from this connection, via addRowsFromTrips.
     	 */
-    	public LBSwingTableModel(Vehicle veh, RDBAdapter conn, final boolean isReadOnly)
+    	public LBSwingTableModel(Vehicle veh, final int weeks, RDBAdapter conn, final boolean isReadOnly)
     	{
     		this.isReadOnly = isReadOnly;
-    		ltm = new LogbookTableModel(veh, conn);
+    		ltm = new LogbookTableModel(veh, weeks, conn);
+    		ltm.setListener(this);
     	}
 
 		public int getRowCount() {

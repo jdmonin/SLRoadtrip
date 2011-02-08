@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  Copyright (C) 2010 Jeremy D Monin <jdmonin@nand.net>
+ *  Copyright (C) 2010-2011 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -65,6 +65,12 @@ public class Trip extends RDBRecord
     private static final String WHERE_VID_AND_IS_ROADTRIP =
     	"vid = ? and roadtrip_end_aid is not null";
 
+    /** Where-clause for use in {@link #tripsForVehicle(RDBAdapter, Vehicle, int, int, boolean, boolean, boolean)}  */
+    private static final String WHERE_TIME_START_AND_VID =
+    	"(time_start >= ?) and (time_start <= ?) and vid = ?";
+
+    private static final int WEEK_IN_SECONDS = 7 * 24 * 60 * 60;
+
     private int vehicleid;
     private int driverid;
     /** Starting odometer, in tenths of a unit */
@@ -115,6 +121,7 @@ public class Trip extends RDBRecord
      * @param alsoTStops  If true, call {@link #readAllTStops()} for each trip found
      * @return Trips for this Vehicle, sorted by time_start, or null if none
      * @throws IllegalStateException if db not open
+     * @see #tripsForVehicle(RDBAdapter, Vehicle, int, int, boolean, boolean, boolean)
      */
     public static Vector<Trip> tripsForVehicle(RDBAdapter db, Vehicle veh, final boolean alsoTStops)
         throws IllegalStateException
@@ -126,7 +133,62 @@ public class Trip extends RDBRecord
     	if (sv == null)
     		return null;
 
-    	Vector<Trip> vv = new Vector<Trip>(sv.size());
+		return tripsForVehicle_parse(db, alsoTStops, sv);
+    }
+
+    /**
+     * Retrieve all Trips within a date range for a Vehicle.
+     * @param db  db connection
+     * @param veh  vehicle to look for
+     * @param timeStart  Starting date/time of trip range, in Unix format
+     * @param weeks   Retrieve this many weeks past timeStart
+     * @param searchBeyondWeeks  If true, and if no trips found within
+     *          <tt>weeks</tt>, keep searching until a trip is found
+     * @param towardsNewer  If true, retrieve <tt>timeStart</tt> and newer;
+     *          otherwise retrieve <tt>timeStart</tt> and older.
+     * @param alsoTStops  If true, call {@link #readAllTStops()} for each trip found
+     * @return Trips for this Vehicle, sorted by time_start, or null if none
+     * @throws IllegalStateException if db not open
+     * @see #tripsForVehicle(RDBAdapter, Vehicle, boolean)
+     */
+    public static TripListTimeRange tripsForVehicle
+    	(RDBAdapter db, Vehicle veh, final int timeStart, final int weeks,
+    	 final boolean searchBeyondWeeks, final boolean towardsNewer, final boolean alsoTStops)
+        throws IllegalStateException
+    {
+    	if (db == null)
+    		throw new IllegalStateException("db null");
+    	int t0, t1;
+    	if (towardsNewer)
+    	{
+    		t0 = timeStart;
+    		t1 = timeStart + (weeks * WEEK_IN_SECONDS);
+    	} else {
+    		t1 = timeStart;
+    		t0 = timeStart - (weeks * WEEK_IN_SECONDS);
+    	}
+    	final String[] whereArgs = {
+			Integer.toString(t0), Integer.toString(t1), Integer.toString(veh.getID())
+    	};
+    	Vector<String[]> sv = db.getRows(TABNAME, WHERE_TIME_START_AND_VID, whereArgs, FIELDS_AND_ID, "time_start");
+    	if (sv == null)
+    	{
+    		// TODO searchBeyondWeeks
+    		return null;
+    	}
+
+    	Vector<Trip> tv = tripsForVehicle_parse(db, alsoTStops, sv);
+    	if (tv == null)
+    		return null;
+    	else
+    		return new TripListTimeRange(t0, t1, tv);
+    }
+
+    /** parse String[] to Trips */
+	private static final Vector<Trip> tripsForVehicle_parse
+		(RDBAdapter db, final boolean alsoTStops, Vector<String[]> sv)
+	{
+		Vector<Trip> vv = new Vector<Trip>(sv.size());
 		try
 		{
 			Trip t;
@@ -138,8 +200,8 @@ public class Trip extends RDBRecord
 	    		vv.addElement(t);
 	    	}
 		} catch (RDBKeyNotFoundException e) { }
-    	return vv;
-    }
+		return vv;
+	}
 
     /**
      * Get the most recent local trip or roadtrip for this vehicle, if any.
@@ -799,5 +861,37 @@ public class Trip extends RDBRecord
 			allStops = new Vector<TStop>();
 		allStops.addElement(newStop);
 	}
+
+	/**
+	 * Trips within a range of time; used by
+	 * {@link #tripsForVehicle(RDBAdapter, Vehicle, int, int, boolean, boolean, boolean)}.
+	 */
+	public static class TripListTimeRange
+	{
+		/** Starting/ending date/time of trip range, in Unix format */
+		public final int timeStart, timeEnd;
+
+		/** Trips found within this range of time */
+		public Vector<Trip> tr;
+
+		/**
+		 * Holds each rendered data row, not including the 1 empty-string row at the end.
+		 * Initially null.
+		 * A 0-length tText is not allowed; use null instead.
+		 * Each row's length is <tt>{@link org.shadowlands.roadtrip.model.LogbookTableModel#COL_HEADINGS LogbookTableModel.COL_HEADINGS}.length</tt>.
+		 */
+		public Vector<String[]> tText;
+
+		/** Are there no trips beyond this range? False if unknown. */
+		public boolean noneEarlier, noneLater;
+
+		public TripListTimeRange(int time_start, int time_end, Vector<Trip> t)
+		{
+			timeStart = time_start;
+			timeEnd = time_end;
+			tr = t;
+			tText = null;
+		}
+	}  // public static nested class TripListTimeRange
 
 }  // public class Trip

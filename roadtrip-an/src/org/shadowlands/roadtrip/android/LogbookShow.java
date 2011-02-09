@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  Copyright (C) 2010 Jeremy D Monin <jdmonin@nand.net>
+ *  Copyright (C) 2010-2011 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -37,6 +37,12 @@ import android.widget.Toast;
  */
 public class LogbookShow extends Activity
 {
+	/**
+	 * Increment in weeks when loading newer/older trips from the database,
+	 * or 0 to load all (This may run out of memory).
+	 */
+	public static final int WEEK_INCREMENT = 2;
+
 	private RDBAdapter db = null;
 	private TextView tvHeader, tvContent;
 	private Vehicle currV;
@@ -63,7 +69,7 @@ public class LogbookShow extends Activity
 		// Read and semi-format the trips for this vehicle.
 		// (The LogbookTableModel constructor calls ltm.addRowsFromTrips.)
 		// Retrieve via appendRowAsTabbedString.
-		LogbookTableModel ltm = new LogbookTableModel(currV, db);
+		LogbookTableModel ltm = new LogbookTableModel(currV, WEEK_INCREMENT, db);
 		StringBuffer sbTrips = new StringBuffer();
 		for (int r = 0; ltm.appendRowAsTabbedString(r, sbTrips); ++r )
 			/* loops until append returns false */ ;

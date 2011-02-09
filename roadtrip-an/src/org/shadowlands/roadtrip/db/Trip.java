@@ -864,6 +864,7 @@ public class Trip extends RDBRecord
 
 	/**
 	 * Trips within a range of time; used by
+	 * {@link org.shadowlands.model.LogbookTableModel LogbookTableModel} and by
 	 * {@link #tripsForVehicle(RDBAdapter, Vehicle, int, int, boolean, boolean, boolean)}.
 	 */
 	public static class TripListTimeRange

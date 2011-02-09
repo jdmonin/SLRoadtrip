@@ -40,6 +40,11 @@ import org.shadowlands.roadtrip.db.Trip.TripListTimeRange;
  * The last row is filled with the empty string; typing in this row
  * creates a new empty row under it.
  *<P>
+ * The data is loaded in "ranges" of several weeks.  You can either
+ * retrieve them as a grid of cells, or can retrieve the ranges
+ * by calling {@link #getRangeCount()} and {@link #getRange(int)}.
+ * Load earlier data by calling {@link #addEarlierTripWeeks(RDBAdapter)}.
+ *<P>
  * Assumes that data won't change elsewhere while displayed; for example,
  * cached ViaRoute object contents.
  *
@@ -132,7 +137,10 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	private transient int getValue_RangeRow0, getValue_RangeRowN;
 
 	/**
-	 * Create and populate with existing data.
+	 * Create and populate with the most recent trip data.
+	 *<P>
+	 * You can add earlier trips later by calling
+	 * {@link #addEarlierTripWeeks(RDBAdapter)}.
 	 * @param veh  Vehicle
 	 * @param weeks  Increment in weeks when loading newer/older trips from the database,
 	 *          or 0 to load all (This may run out of memory).
@@ -170,13 +178,19 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	/**
 	 * Add vehicle trips earlier than the current time range,
 	 * looking back {@link #getWeekIncrement()} weeks.
+	 *<P>
+	 * The added trips will be a new {@link TripListTimeRange}
+	 * inserted at the start of the range list; keep this
+	 * in mind when calling {@link #getRange(int)} afterwards.
+	 * (If no trips are found, no range is created.)
+	 *
 	 * @return true if trips were added, false if none found
 	 */
 	public boolean addEarlierTripWeeks(RDBAdapter conn)
 	{
 		final int loadToTime = tData.firstElement().timeStart;
 		int nAdded = addRowsFromDBTrips(loadToTime, weekIncr, true, false, conn);
-		// TODO ensure very 1st trip doesn't appear twice now
+		// TODO ensure previously-oldest trip doesn't appear twice now
 		if ((nAdded != 0) && (listener != null))
 			listener.fireTableRowsInserted(0, nAdded - 1);
 
@@ -569,6 +583,24 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 
 	/** get the week increment when moving to previous/next trips */
 	public int getWeekIncrement() { return weekIncr; }
+
+	/**
+	 * Get the number of ranges currently loaded from the database.
+	 * @see #getRange(int)
+	 */
+	public int getRangeCount() { return tData.size(); }
+
+	/**
+	 * Get a {@link TripListTimeRange} currently loaded from the database.
+	 * @param i  index of this range, 0 to {@link #getRangeCount()} - 1
+	 * @return the range at index <tt>i</tt>
+	 * @throws ArrayIndexOutOfBoundsException  if i &lt; 0 or i >= {@link #getRangeCount()}
+	 */
+	public TripListTimeRange getRange(final int i)
+		throws ArrayIndexOutOfBoundsException
+	{
+		return tData.elementAt(i);
+	}
 
 	/** column count; same as length of {@link #COL_HEADINGS} */
 	public int getColumnCount() { return COL_HEADINGS.length; }

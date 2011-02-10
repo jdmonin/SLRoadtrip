@@ -783,31 +783,6 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	}
 
 	/**
-	 * For StringBuffer output, append \n and then tab-delimited (\t) contents of this
-	 * row to the stringbuffer. 
-	 * @return true if appended, false if <tt>r</tt> is past {@link #getRowCount()}.
-	 */
-	public boolean appendRowAsTabbedString(final int r, StringBuffer sb)
-	{
-		if (r >= getRowCount())
-			return false;
-
-		sb.append('\n');
-		// Get the first column, to initialize getValue_* fields
-		final String rstr0 = (String) getValueAt(r, 0);
-		if (rstr0 != null)
-			sb.append(rstr0);
-		final String[] rstr = getValue_RangeText.elementAt(r - getValue_RangeRow0);
-		for (int c = 1; c < rstr.length; ++c)
-		{
-			sb.append('\t');
-			if (rstr[c] != null)
-				sb.append(rstr[c]);
-		}
-		return true;
-	}
-
-	/**
 	 * Set (or clear) our listener.
 	 * @param tcl  The only listener (does not allow multiple at once), or null to clear.
 	 */

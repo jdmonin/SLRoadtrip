@@ -877,9 +877,14 @@ public class Trip extends RDBRecord
 
 		/**
 		 * Holds each rendered data row, not including the 1 empty-string row at the end.
-		 * Initially null.
+		 *<P>
 		 * A 0-length tText is not allowed; use null instead.
 		 * Each row's length is <tt>{@link org.shadowlands.roadtrip.model.LogbookTableModel#COL_HEADINGS LogbookTableModel.COL_HEADINGS}.length</tt>.
+		 *<P>
+		 * Initially null.  Filled by
+		 * {@link org.shadowlands.roadtrip.model.LogbookTableModel LogbookTableModel}
+		 * constructor or
+		 * {@link org.shadowlands.roadtrip.model.LogbookTableModel#addEarlierTripWeeks(RDBAdapter) LogbookTableModel.addEarlierTripWeeks(RDBAdapter)}.
 		 */
 		public Vector<String[]> tText;
 
@@ -893,6 +898,32 @@ public class Trip extends RDBRecord
 			tr = t;
 			tText = null;
 		}
+
+		/**
+		 * For StringBuffer output, append \n and then tab-delimited (\t)
+		 * contents of each text row to the stringbuffer.
+		 */
+		public void appendRowsAsTabbedString(StringBuffer sb)
+		{
+			if (tText == null)
+				return;
+
+			final int S = tText.size();
+			for (int r = 0; r < S; ++r)
+			{
+				final String[] rstr = tText.elementAt(r);
+				sb.append('\n');
+				if (rstr[0] != null)
+					sb.append(rstr[0]);
+				for (int c = 1; c < rstr.length; ++c)
+				{
+					sb.append('\t');
+					if (rstr[c] != null)
+						sb.append(rstr[c]);
+				}
+			}
+		}
+
 	}  // public static nested class TripListTimeRange
 
 }  // public class Trip

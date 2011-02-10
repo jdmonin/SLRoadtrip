@@ -2,7 +2,7 @@
 <!--
  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
 
- Copyright (C) 2010 Jeremy D Monin (jdmonin@nand.net)
+ Copyright (C) 2010-2011 Jeremy D Monin (jdmonin@nand.net)
 
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
@@ -63,6 +63,7 @@
 <string name="name">Name</string>
 <string name="new_driver">New driver...</string>
 <string name="new_vehicle">New vehicle...</string>
+<string name="no_earlier_trips_found">No earlier trips were found.</string>
 <string name="no_frequent_trips_found">No frequent trips were found.</string>
 <string name="not_found">Not found.</string>
 <string name="original_odometer">Original\nodometer</string>
@@ -102,6 +103,7 @@
 <!--                            -->
 <string name="android_startup_starting">Starting up...</string>
 <string name="logbook_show__title">View Logbook</string>
+<string name="logbook_show__earlier_trips">^ Earlier Trips ^</string>
 <string name="main_text">Main Screen</string>
 <string name="main_create_freq_from_recent">Create Frequent from recent trip...</string>
 <string name="main_no_recent_local_trips_for_vehicle">No recent local trips found for this vehicle.</string>

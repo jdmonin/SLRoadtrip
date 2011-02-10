@@ -28,6 +28,10 @@ import org.shadowlands.roadtrip.model.LogbookTableModel;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.util.Log;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -43,9 +47,22 @@ public class LogbookShow extends Activity
 	 */
 	public static final int WEEK_INCREMENT = 2;
 
+	/** tag for android logging */
+	private static final String TAG = "RTR.LogbookShow";
+
+	/** for use by {@link #onClick_BtnEarlier(View)}. Width <tt>FILL_PARENT</tt>, height <tt>WRAP_CONTENT</tt>. */
+	private static ViewGroup.LayoutParams TS_ROW_LP = null;
+
 	private RDBAdapter db = null;
 	private TextView tvHeader, tvContent;
 	private Vehicle currV;
+	private LogbookTableModel ltm;
+
+	/** Used by {@link #onClick_BtnEarlier(View)} */
+	private LinearLayout tripListParentLayout = null;
+
+	/** Used by {@link #onClick_BtnEarlier(View)} */
+	private int tripListBtnEarlierPosition = -1;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -68,17 +85,33 @@ public class LogbookShow extends Activity
 
 		// Read and semi-format the trips for this vehicle.
 		// (The LogbookTableModel constructor calls ltm.addRowsFromTrips.)
-		// Retrieve via appendRowAsTabbedString.
-		LogbookTableModel ltm = new LogbookTableModel(currV, WEEK_INCREMENT, db);
+		ltm = new LogbookTableModel(currV, WEEK_INCREMENT, db);
 		StringBuffer sbTrips = new StringBuffer();
-		for (int r = 0; ltm.appendRowAsTabbedString(r, sbTrips); ++r )
-			/* loops until append returns false */ ;
+		ltm.getRange(0).appendRowsAsTabbedString(sbTrips);
 		if (sbTrips.length() < 5)
 		{
 			sbTrips.append("\nNo trips found for this Vehicle.");
 		}
 
 		tvContent.setText(sbTrips);
+
+		// Find the trip layout linearlayout, for onClick_BtnEarlier's benefit.
+		tripListParentLayout = (LinearLayout) findViewById(R.id.logbook_show_triplist_parent);
+		if (tripListParentLayout != null)
+		{
+			View v = findViewById(R.id.logbook_show_btn_earlier);
+			if (v != null)
+				tripListBtnEarlierPosition = tripListParentLayout.indexOfChild(v);
+		}
+		if ((tripListBtnEarlierPosition == -1) || (tripListParentLayout == null))
+		{
+			// shouldn't happen, but just in case
+			Log.e(TAG, "layout items not found");
+			Toast.makeText(this, "L110: internal error: layout items not found", Toast.LENGTH_SHORT).show();
+			View btnEarlier = findViewById(R.id.logbook_show_btn_earlier);
+			if (btnEarlier != null)
+				btnEarlier.setVisibility(View.GONE);
+		}
 	}
 
 	/**
@@ -91,6 +124,33 @@ public class LogbookShow extends Activity
 	{
 		currV = Settings.getCurrentVehicle(db, false);
 		return (currV != null);
+	}
+
+	/**
+	 * Load a few weeks of earlier trips from the database.
+	 * @param v  ignored
+	 */
+	public void onClick_BtnEarlier(View v)
+	{
+		// TODO if too many ranges loaded, consider clear out most recent ones
+		if (! ltm.addEarlierTripWeeks(db))
+		{
+			View btnEarlier = findViewById(R.id.logbook_show_btn_earlier);
+			if (btnEarlier != null)
+				btnEarlier.setVisibility(View.GONE);
+			Toast.makeText
+				(this, R.string.no_earlier_trips_found, Toast.LENGTH_SHORT).show();
+			return;
+		}
+		StringBuffer sbTrips = new StringBuffer();
+		ltm.getRange(0).appendRowsAsTabbedString(sbTrips);
+
+		if (TS_ROW_LP == null)
+			TS_ROW_LP = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.FILL_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+		TextView tv = new TextView(this);
+		tv.setLayoutParams(TS_ROW_LP);
+		tv.setText(sbTrips);
+		tripListParentLayout.addView(tv, tripListBtnEarlierPosition + 1);
 	}
 
 	@Override

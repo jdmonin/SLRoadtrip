@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  Copyright (C) 2010 Jeremy D Monin <jdmonin@nand.net>
+ *  Copyright (C) 2010-2011 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -292,6 +292,41 @@ public class RDBOpenHelper
 		else
 			return null;
 	}
+
+	/**
+	 * Get one field in one row, given a where-clause.
+	 * The where-clause should match at most one row, or <tt>fn</tt> should
+	 * contain an aggregate function which evaluates the multiple rows.
+	 * Returns null if not found.
+	 * @param tabname  Table to query
+	 * @param fn  Field name to get, or aggregate function such as <tt>max(v)</tt>
+	 * @param where  Where-clause, or null for all rows; may contain <tt>?</tt> which will be
+	 *       filled from <tt>whereArgs</tt> contents, as with PreparedStatements.
+	 *       Do not include the "where" keyword.
+	 * @param whereArgs  Strings to bind against each <tt>?</tt> in <tt>where</tt>, or null if <tt>where</tt> has none of those
+	 * @return field value, or null if not found; the value may be null.
+	 * @throws IllegalStateException if conn has been closed, table not found, etc.
+	 * @since 0.9.06
+	 */
+	public String getRowField(final String tabname, final String fn, final String where, final String[] whereArgs)
+	    throws IllegalStateException
+    {
+		if (db == null)
+			db = getWritableDatabase();  // TODO chk exceptions
+
+		Cursor dbqc = db.query(tabname, new String[]{ fn }, where, whereArgs, null, null, null /* ORDERBY */ );
+		String rv;
+    	if (dbqc.moveToFirst())
+    		rv = dbqc.getString(0);
+    	else
+    		rv = null;
+
+		// If fn is aggregate with no matching rows,
+		// moveToFirst is true but getString returns null.
+
+    	dbqc.close();
+    	return rv;
+    }
 
 	/**
 	 * Count the rows in this table, optionally matching a key value.

@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  Copyright (C) 2010 Jeremy D Monin <jdmonin@nand.net>
+ *  Copyright (C) 2010-2011 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -429,6 +429,77 @@ public class RDBJDBCAdapter implements RDBAdapter
 
 		return retval;
     }
+
+	/**
+	 * Get one field in one row, given a where-clause.
+	 * The where-clause should match at most one row, or <tt>fn</tt> should
+	 * contain an aggregate function which evaluates the multiple rows.
+	 * Returns null if not found.
+	 * @param tabname  Table to query
+	 * @param fn  Field name to get, or aggregate function such as <tt>max(v)</tt>
+	 * @param where  Where-clause, or null for all rows; may contain <tt>?</tt> which will be
+	 *       filled from <tt>whereArgs</tt> contents, as with PreparedStatements.
+	 *       Do not include the "where" keyword.
+	 * @param whereArgs  Strings to bind against each <tt>?</tt> in <tt>where</tt>, or null if <tt>where</tt> has none of those
+	 * @return field value, or null if not found; the value may be null.
+	 * @throws IllegalStateException if conn has been closed, table not found, etc.
+	 * @since 0.9.06
+	 */
+	public String getRowField(final String tabname, final String fn, final String where, final String[] whereArgs)
+	    throws IllegalStateException
+	{
+		if (conn == null)
+			throw new IllegalStateException("conn not open");
+	
+		ResultSet rs = null;
+		try
+		{
+			StringBuffer sb = new StringBuffer("select ");
+			sb.append(fn);
+			sb.append(" from ");
+			sb.append(tabname);
+			if (where != null)
+			{
+				sb.append(" where ");
+				sb.append(where);
+			}
+			else if (whereArgs != null)
+			{
+				throw new IllegalArgumentException("null where, non-null whereArgs");
+			}
+			sb.append(';');
+			PreparedStatement prep = conn.prepareStatement
+				(sb.toString());
+			if (whereArgs != null)
+			{
+				for (int i = 0; i < whereArgs.length; ++i)
+					prep.setString(i+1, whereArgs[i]);
+			}
+		    rs = prep.executeQuery();
+		} catch (SQLException e)
+		{
+			try
+			{
+				if (rs != null)
+					rs.close();
+			} catch (SQLException ee) { }
+			return null;
+		}
+
+		String retval = null;
+		try
+		{
+			if (rs.next())
+				retval = rs.getString(1);
+			// If fn is aggregate with no matching rows,
+			// rs.next() is true but getString returns null.
+		} catch (SQLException e) { }
+		try {
+			rs.close();
+		} catch (SQLException ee) { }
+
+		return retval;
+	}
 
 	/**
 	 * Count the rows in this table, optionally matching a key value.

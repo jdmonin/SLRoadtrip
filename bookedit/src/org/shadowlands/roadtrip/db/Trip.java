@@ -44,17 +44,20 @@ public class Trip extends RDBRecord
 {
     private static final String TABNAME = "trip";
 
+    /** The <tt>time_start</tt> db field; a trip's starting time */
+    private static final String FIELD_TIME_START = "time_start";
+
     /** db table fields.
      * @see #buildInsertUpdate()
      */
     private static final String[] FIELDS =
         { "vid", "did", "odo_start", "odo_end", "aid", "tstopid_start",
-    	  "time_start", "time_end", "start_lat", "start_lon", "end_lat", "end_lon",
-    	  "freqtripid", "comment", "roadtrip_end_aid", "has_continue" };
+		  FIELD_TIME_START, "time_end", "start_lat", "start_lon", "end_lat", "end_lon",
+		  "freqtripid", "comment", "roadtrip_end_aid", "has_continue" };
 
     private static final String[] FIELDS_AND_ID =
 	    { "vid", "did", "odo_start", "odo_end", "aid", "tstopid_start",
-		  "time_start", "time_end", "start_lat", "start_lon", "end_lat", "end_lon",
+		  FIELD_TIME_START, "time_end", "start_lat", "start_lon", "end_lat", "end_lon",
 		  "freqtripid", "comment", "roadtrip_end_aid", "has_continue", "_id" };
 
     /** Field names/where-clause for use in {@link #recentTripForVehicle(RDBAdapter, Vehicle, boolean)} */
@@ -68,6 +71,14 @@ public class Trip extends RDBRecord
     /** Where-clause for use in {@link #tripsForVehicle(RDBAdapter, Vehicle, int, int, boolean, boolean, boolean)}  */
     private static final String WHERE_TIME_START_AND_VID =
     	"(time_start >= ?) and (time_start <= ?) and vid = ?";
+
+    /** Where-clause for use in {@link #tripsForVehicle_searchBeyond(RDBAdapter, String, int, int, int, boolean)  */
+    private static final String WHERE_TIME_START_AFTER_AND_VID =
+    	"(time_start > ?) and vid = ?";
+
+    /** Where-clause for use in {@link #tripsForVehicle_searchBeyond(RDBAdapter, String, int, int, int, boolean)  */
+    private static final String WHERE_TIME_START_BEFORE_AND_VID =
+    	"(time_start < ?) and vid = ?";
 
     private static final int WEEK_IN_SECONDS = 7 * 24 * 60 * 60;
 
@@ -167,13 +178,39 @@ public class Trip extends RDBRecord
     		t1 = timeStart;
     		t0 = timeStart - (weeks * WEEK_IN_SECONDS);
     	}
-    	final String[] whereArgs = {
-			Integer.toString(t0), Integer.toString(t1), Integer.toString(veh.getID())
-    	};
-    	Vector<String[]> sv = db.getRows(TABNAME, WHERE_TIME_START_AND_VID, whereArgs, FIELDS_AND_ID, "time_start");
+
+    	Vector<String[]> sv = null;
+    	final String vIDstr = Integer.toString(veh.getID());
+
+    	/**
+    	 * Search in the range t0 to t1 for trips.
+    	 * If searchBeyondWeeks, try 2 more times
+    	 * by moving further into the past/future.
+    	 */
+    	for (int tries = 0; (sv == null) && (tries < 2); ++tries)
+    	{
+			final String[] whereArgs = {
+				Integer.toString(t0), Integer.toString(t1), vIDstr
+			};
+			sv = db.getRows(TABNAME, WHERE_TIME_START_AND_VID, whereArgs, FIELDS_AND_ID, "time_start");
+			if (sv == null)
+			{
+				if (! searchBeyondWeeks)
+					break;
+
+				if (towardsNewer)
+					t1 += (weeks * WEEK_IN_SECONDS);
+				else
+					t0 -= (weeks * WEEK_IN_SECONDS);
+			}
+		}
+
+		if ((sv == null) && searchBeyondWeeks)
+			sv = tripsForVehicle_searchBeyond
+				(db, vIDstr, t0, t1, weeks, towardsNewer);
+
     	if (sv == null)
     	{
-    		// TODO searchBeyondWeeks
     		return null;
     	}
 
@@ -183,6 +220,72 @@ public class Trip extends RDBRecord
     	else
     		return new TripListTimeRange(t0, t1, tv);
     }
+
+	/**
+	 * Search for trips beyond this range.
+	 * @param db  db connection
+	 * @param vIDstr   Vehicle ID to look for, as Integer.toString (for sql)
+	 * @param tt0  Early end of time range
+	 * @param tt1  Late end of time range
+	 * @param weeks   Retrieve this many weeks past t0 or t1
+	 * @param towardsNewer  If true, retrieve newer past t1;
+	 *            otherwise return older past t0.
+	 * @return Trip rows from sql SELECT, or null if none found
+	 */
+	private static final Vector<String[]> tripsForVehicle_searchBeyond
+		(RDBAdapter db, String vIDstr, final int tt0, final int tt1,
+		 final int weeks, final boolean towardsNewer)
+	{
+		/**
+		 * Find the next trip id for this vehicle, and load
+		 * its trip (sTrip0), to find the starting time (timeStart)
+		 * for the time range to load.
+		 */
+		String tripIDstr;
+		if (towardsNewer)
+			tripIDstr = db.getRowField(TABNAME,
+				"min(_id)",
+				WHERE_TIME_START_AFTER_AND_VID,
+				new String[]{ Integer.toString(tt1), vIDstr } );
+		else
+			tripIDstr = db.getRowField(TABNAME,
+				"max(_id)",
+				WHERE_TIME_START_BEFORE_AND_VID,
+				new String[]{ Integer.toString(tt0), vIDstr } );
+		if (tripIDstr == null)
+		{
+			return null;  // <--- nothing found ---
+		}
+		String timeStartStr = db.getRowField(TABNAME, "_id", tripIDstr, FIELD_TIME_START);
+		if (timeStartStr == null)
+			return null;  // shouldn't happen
+		final int timeStart;
+		try {
+			timeStart = Integer.parseInt(timeStartStr);
+		} catch (NumberFormatException e) {
+			return null;  // shouldn't happen
+		}
+
+		/**
+		 * Now, load weeks beyond that starting time.
+		 */
+		final int t0, t1;
+		if (towardsNewer)
+		{
+			t0 = timeStart;
+			t1 = timeStart + (weeks * WEEK_IN_SECONDS);
+		} else {
+			t1 = timeStart;
+			t0 = timeStart - (weeks * WEEK_IN_SECONDS);
+		}
+		final String[] whereArgs = {
+			Integer.toString(t0), Integer.toString(t1), vIDstr
+		};
+		Vector<String[]> sv = db.getRows
+			(TABNAME, WHERE_TIME_START_AND_VID, whereArgs, FIELDS_AND_ID, FIELD_TIME_START);
+
+		return sv;
+	}
 
     /** parse String[] to Trips */
 	private static final Vector<Trip> tripsForVehicle_parse

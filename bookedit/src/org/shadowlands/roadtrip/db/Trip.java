@@ -680,11 +680,12 @@ public class Trip extends RDBRecord
      */
     public int[] readHighestOdometers(final TStop ignoreStop)
     {
-    	int oTotal = odo_start, oTrip = 0;
+    	int oTrip = 0, oTotal;
 
     	Vector<TStop> stops = readAllTStops();
     	if (stops != null)
     	{
+    		oTotal = 0;
     		int i = stops.size();  // at least 1, because stops != null
     		TStop ts;
     		do
@@ -701,6 +702,8 @@ public class Trip extends RDBRecord
     		else if (oTrip == 0)
     			oTrip = oTotal - odo_start;
     		// else, they're both nonzero already.
+    	} else {
+    		oTotal = odo_start;
     	}
 
     	if (readhighest_ret == null)

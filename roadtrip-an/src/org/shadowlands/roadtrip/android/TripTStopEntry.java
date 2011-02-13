@@ -504,8 +504,8 @@ public class TripTStopEntry extends Activity
 			odos = currT.readHighestOdometers();
 			odoTotalOrig = odos[0];
 			odoTripOrig = odos[1];
-			odo_total.setCurrent10d(odos[0], true);
-			odo_trip.setCurrent10d(odos[1], true);
+			odo_total.setCurrent10d(odos[0], false);
+			odo_trip.setCurrent10d(odos[1], false);
 			return;  // <--- Early return: no current tstop ---
 		}
 

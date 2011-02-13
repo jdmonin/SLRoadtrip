@@ -194,8 +194,11 @@ public class LogbookEditPane extends JPanel implements ActionListener, WindowLis
 
 	private void actionLoadPrevious()
 	{
-		// TODO chk mdata.ltm.addMode; btn should be disabled, though
-		mdata.ltm.addEarlierTripWeeks(conn);
+		// TODO chk mdata.ltm.addMode; btn should be disabled if addMode true, though
+		if (! mdata.ltm.addEarlierTripWeeks(conn))
+			bLoadPrevious.setEnabled(false);
+		else
+			tb.scrollRectToVisible(tb.getCellRect(0, 0, true));  // scroll to top
 	}
 
 	private void actionAddTripBegin(final boolean withStops)
@@ -212,7 +215,7 @@ public class LogbookEditPane extends JPanel implements ActionListener, WindowLis
 		// (TODO) how?
 		// scroll to bottom of visible
 		{
-			tb.scrollRectToVisible(tb.getCellRect(mdata.getRowCount(), 1, true));
+			tb.scrollRectToVisible(tb.getCellRect(mdata.getRowCount(), 0, true));
 			// this doesn't deal with the newly-expanded vertical max:
 			// JScrollBar vsb = sp.getVerticalScrollBar();
 			// vsb.setValue(vsb.getMaximum() - vsb.getVisibleAmount());

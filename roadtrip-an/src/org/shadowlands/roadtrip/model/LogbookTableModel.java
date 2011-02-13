@@ -226,7 +226,14 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 		TripListTimeRange ttr = Trip.tripsForVehicle
 			(conn, veh, timeStart, weeks, searchBeyondWeeks, towardsNewer, true);
 		if (ttr == null)
+		{
+			if (searchBeyondWeeks)
+				if (towardsNewer)
+					tData.lastElement().noneLater = true;
+				else
+					tData.firstElement().noneEarlier = true;
 			return 0;  // <--- nothing found ---
+		}
 		if (towardsNewer)
 			tData.add(ttr);
 		else

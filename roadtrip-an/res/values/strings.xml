@@ -84,7 +84,6 @@
 <string name="starting_time">Starting time</string>
 <string name="starting_location">Starting location</string>
 <string name="starting_odometer">Starting\nodometer</string>
-<string name="station">Station</string>
 <string name="stop_continue">Stop &amp; Continue</string>
 <string name="stop_during_a_trip">Stop during a Trip</string>
 <string name="stopped_at_time">Stopped\nat Time</string>
@@ -130,6 +129,7 @@
 <string name="trip_tstop_entry_totalodo_low">The total odometer is lower than %1$d, the previous stop\'s value.</string>
 <string name="trip_tstop_entry_tripodo_low">The trip odometer is lower than %1$.1f, the previous stop\'s value.</string>
 <string name="trip_tstop_gas_atprice"> \@ Price</string>
+<string name="trip_tstop_gas_brand_grade">Brand/\nGrade</string>
 <string name="trip_tstop_gas_perunit">/ unit</string>
 <string name="trip_tstop_gas_equalscost"> = Cost</string>
 <string name="trip_tstop_gas_prompt">Enter the gas stop details.</string>

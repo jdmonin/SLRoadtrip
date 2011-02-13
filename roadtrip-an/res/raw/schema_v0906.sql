@@ -1,5 +1,5 @@
 -- org.shadowlands.roadtrip
--- version 0.9.06 schema for SQLite 3.4 or higher  2010-12-16
+-- version 0.9.06 schema for SQLite 3.4 or higher  (2010-12-16)
 -- Remember: When you upgrade the schema version, be sure to
 -- make all code changes listed in RDBSchema's class javadoc, and
 -- add the upgrade script to RtrDBOpenHelper.getSQLScript().
@@ -34,6 +34,7 @@ PRAGMA user_version = 0906;
 -- all date-time values are stored as unix time integers:
 --    like System.currentTimeMillis(): UTC seconds since the unix epoch
 --    You can use perl on the command line to easily calculate these values:
+--                                       timelocal is (s, m, h, d, mon-1, yr)
 --    perl -e 'use Time::Local; print scalar timelocal(0, 30, 13, 9, 5, 2001); print "\n"; '
 --    992107800
 --    perl -e 'print localtime(992107800) . "\n"; '
@@ -156,7 +157,7 @@ create index "tstop~t" ON tstop(tripid);
 -- NOTE: tstop_gas._id == associated tstop._id
 --   Fillup: 1 or 0 (Fill the tank, or partial)
 --   Station: obsolete for 0.9.06+, use gas_brandgrade_id instead
---   vid: Vehicle ID
+--   vid: Vehicle ID (denormalization for query performance)
 create table tstop_gas ( _id integer PRIMARY KEY not null, quant int not null, price_per int not null, price_total int not null, fillup int not null, vid integer not null, gas_brandgrade_id int);
 create index "tstopgas~v" ON tstop_gas(vid);
 

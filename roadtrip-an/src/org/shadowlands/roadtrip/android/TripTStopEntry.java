@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  Copyright (C) 2010 Jeremy D Monin <jdmonin@nand.net>
+ *  Copyright (C) 2010-2011 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -26,6 +26,7 @@ import org.shadowlands.roadtrip.R;
 import org.shadowlands.roadtrip.android.util.Misc;
 import org.shadowlands.roadtrip.db.FreqTrip;
 import org.shadowlands.roadtrip.db.FreqTripTStop;
+import org.shadowlands.roadtrip.db.GasBrandGrade;
 import org.shadowlands.roadtrip.db.GeoArea;
 import org.shadowlands.roadtrip.db.Location;
 import org.shadowlands.roadtrip.db.Person;
@@ -204,6 +205,15 @@ public class TripTStopEntry extends Activity
 	 * {@link #viaRouteObj} was created for this TStop.
 	 */
 	private Location locObjCreatedHere = null;
+
+	/**
+	 * if true, then <tt>currTS != null</tt>, and <tt>stopGas.gas_brandgrade</tt>
+	 * was created for this TStop.
+	 *<P>
+	 * Remember that <tt>stopGas</tt> isn't loaded from the db until
+	 * {@link #onClick_BtnGas(View)} or {@link #onClick_BtnEnterTStop(View)}.
+	 */
+	private boolean gbgCreatedHere = false;
 
 	/** TStop's date-time for time_stop, time_continue */
 	private Calendar stopTime, contTime;
@@ -560,6 +570,9 @@ public class TripTStopEntry extends Activity
 			  ((stopGas != null) ? android.R.drawable.presence_online
 				: android.R.drawable.presence_invisible,
 				0, 0, 0);
+			if ((stopGas.gas_brandgrade_id != 0) && currTS.isSingleFlagSet(TStop.TEMPFLAG_CREATED_GASBRANDGRADE))
+				gbgCreatedHere = true;
+
 		} catch (RDBKeyNotFoundException e) {
 			stopGas = null;
 		}
@@ -872,6 +885,65 @@ public class TripTStopEntry extends Activity
 			Settings.reduceCurrentFreqTripTStops(db, wantsFTS);
 		}
 
+		// If the stop has gas, check for a new GasBrandGrade.
+		boolean createdGasBrandGrade = false;
+		if ((bundleGas != null)
+			&& bundleGas.containsKey(TripTStopGas.EXTRAS_FIELD_BRANDGRADE))
+		{
+			int bgid = bundleGas.getInt(TripTStopGas.EXTRAS_FIELD_BRANDGRADE_ID);
+			String gbName = bundleGas.getString(TripTStopGas.EXTRAS_FIELD_BRANDGRADE);
+			if (gbName != null)
+			{
+				gbName = gbName.trim();
+				if (gbName.length() == 0)
+					gbName = null;
+			}
+
+			createdGasBrandGrade = (0 == bgid);
+			if (createdGasBrandGrade)
+			{
+				if (gbName != null)
+				{
+					GasBrandGrade bg = new GasBrandGrade(gbName);
+					bgid = bg.insert(db);
+					bundleGas.putInt(TripTStopGas.EXTRAS_FIELD_BRANDGRADE_ID, bgid);
+					if (stopGas != null)
+					{
+						stopGas.gas_brandgrade_id = bgid;
+						stopGas.gas_brandgrade = bg;
+					}
+					Toast.makeText(this, "L912: Made new GBG " + bg.getName(), Toast.LENGTH_SHORT).show();
+				} else {
+					createdGasBrandGrade = false;  // null or 0-length name
+					if (gbgCreatedHere)
+					{
+						// TODO delete the one created, since we aren't using it
+					}
+				}
+			}
+			else if (gbgCreatedHere && (0 != bgid))
+			{
+				// brand was created here when we stopped, now we're
+				// continuing; see if the created name was changed.
+				if (stopGas.gas_brandgrade == null)
+				{
+					try
+					{
+						stopGas.gas_brandgrade = new GasBrandGrade(db, bgid);
+					}
+					catch (Throwable th) {}					
+				}
+
+				if ((stopGas.gas_brandgrade != null)
+					&& ! gbName.equalsIgnoreCase(stopGas.gas_brandgrade.getName()))
+				{
+					stopGas.gas_brandgrade.setName(gbName);
+					stopGas.gas_brandgrade.commit();
+					Toast.makeText(this, "L936: Updated GBG name " + gbName, Toast.LENGTH_SHORT).show();
+				}
+			}
+		}  // if (bundle contains gas brand)
+
 		if (! isCurrentlyStopped)
 		{
 			// Create a new TStop; set tsid (not currTS).
@@ -888,6 +960,8 @@ public class TripTStopEntry extends Activity
 					flags |= TStop.TEMPFLAG_CREATED_LOCATION;
 				if (createdVia)
 					flags |= TStop.TEMPFLAG_CREATED_VIAROUTE;
+				if (createdGasBrandGrade)
+					flags |= TStop.TEMPFLAG_CREATED_GASBRANDGRADE;
 			}
 			TStop newStop = new TStop(currT, odoTotal, odoTrip, stopTimeSec, 0, locID, areaID, null, null, flags, viaID, comment);
 			tsid = newStop.insert(db);
@@ -1069,7 +1143,18 @@ public class TripTStopEntry extends Activity
     	{
     		bundleGas = new Bundle();
         	if (stopGas != null)
-	    		TripTStopGas.saveBundleFromDBObj(stopGas, bundleGas);
+        	{
+        		final int bgid = stopGas.gas_brandgrade_id;
+        		if ((bgid != 0) && (stopGas.gas_brandgrade == null))
+        		{
+        			try
+        			{
+        				stopGas.gas_brandgrade = new GasBrandGrade(db, bgid);
+        			}
+        			catch (Throwable th) {}
+        		}
+	    		TripTStopGas.saveBundleFromDBObj(stopGas, bundleGas, gbgCreatedHere);
+        	}
     	}
     	if (bundleGas != null)
     		i.putExtras(bundleGas);

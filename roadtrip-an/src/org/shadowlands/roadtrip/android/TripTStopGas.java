@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  Copyright (C) 2010 Jeremy D Monin <jdmonin@nand.net>
+ *  Copyright (C) 2010-2011 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -20,39 +20,74 @@
 package org.shadowlands.roadtrip.android;
 
 import org.shadowlands.roadtrip.R;
+import org.shadowlands.roadtrip.db.GasBrandGrade;
+import org.shadowlands.roadtrip.db.RDBAdapter;
 import org.shadowlands.roadtrip.db.RDBSchema;
+import org.shadowlands.roadtrip.db.Settings;
 import org.shadowlands.roadtrip.db.TStopGas;
+import org.shadowlands.roadtrip.db.Vehicle;
+import org.shadowlands.roadtrip.db.android.RDBOpenHelper;
 
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
+import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
 import android.widget.CheckBox;
 import android.widget.EditText;
-import android.widget.Toast;
+import android.widget.ListAdapter;
 
 public class TripTStopGas extends Activity
-	implements TextWatcher
+	implements TextWatcher, OnItemClickListener
 {
 
 	private static final String EXTRAS_FIELD_QUANT = "quant",
 		EXTRAS_FIELD_PERUNIT = "perunit",
 		EXTRAS_FIELD_TOTALCOST = "totalcost",
 		EXTRAS_FIELD_ISFILLUP = "isfillup",
-		EXTRAS_FIELD_BRANDGRADE_ID = "brandgrade_id",
-		EXTRAS_FIELD_BRANDGRADE = "brandgrade",
+		EXTRAS_FIELD_VEH_ID = "vid",
 		EXTRAS_FIELD_CALC_FLAGS = "calc";
 
+	/**
+	 * Bundle keys related to {@link GasBrandGrade}.
+	 * @see #loadFieldsFromBundle(Bundle)
+	 * @see #saveBundleFromDBObj(TStopGas, Bundle)
+	 * @see #saveDBObjFromBundle(Bundle, TStopGas)
+	 */
+	public static final String EXTRAS_FIELD_BRANDGRADE_ID = "brandgrade_id",
+		EXTRAS_FIELD_BRANDGRADE = "brandgrade",
+		EXTRAS_FIELD_BRANDGRADE_CREATED = "brandgrade_created";
+
+	/** needed to populate {@link #brandGrade_at}, {@link #brandGradeObj} */
+	private RDBAdapter db = null;
+
+	/** Current vehicle */
+	private Vehicle currV;  // TODO use this to set up currency symbol
+
+	/** the pre-existing brand/grade chosen in {@link #brandGrade_at}, if any */
+	private GasBrandGrade brandGradeObj = null;
+
+	/** Was {@link #brandGradeObj} created for this TStop? */
+	private boolean gbgCreatedHere = false;
+
+	/** decimal numbers (no currency sign): quantity, per-unit cost, total cost */
 	private EditText quant_et, perunit_et, totalcost_et;
+
 	/**
 	 * if true, the contents of the corresponding EditText
 	 * are calculated, not entered by the user.
 	 */
 	private boolean quant_calc, perunit_calc, totalcost_calc;
 	private CheckBox isFillup_chk;
-	private EditText station_et;
+
+	/** {@link GasBrandGrade}s available; updates {@link #brandGradeObj} */
+	private AutoCompleteTextView brandGrade_at;
 
 	/** Called when the activity is first created. */
 	@Override
@@ -64,17 +99,73 @@ public class TripTStopGas extends Activity
 	    perunit_et = (EditText) findViewById(R.id.trip_tstopgas_perunit);
 	    totalcost_et = (EditText) findViewById(R.id.trip_tstopgas_total);
 	    isFillup_chk = (CheckBox) findViewById(R.id.trip_tstopgas_fillup_chk);
-	    station_et = (EditText) findViewById(R.id.trip_tstopgas_station);
+	    brandGrade_at = (AutoCompleteTextView) findViewById(R.id.trip_tstopgas_brandgrade);
+
+		db = new RDBOpenHelper(this);
+	    currV = Settings.getCurrentVehicle(db, false);
 
 	    Bundle b = savedInstanceState;
 	    if (b == null)
 	    	b = getIntent().getExtras();
 	    if (b != null)
+	    {
 	    	loadFieldsFromBundle(b);
+	    	if (currV.getID() != b.getInt(EXTRAS_FIELD_VEH_ID))
+	    	{
+	    		// shouldn't happen, but just in case
+	    		b.putInt(EXTRAS_FIELD_VEH_ID, currV.getID());
+	    	}
+	    }
 
 	    quant_et.addTextChangedListener(this);
 	    perunit_et.addTextChangedListener(this);
 	    totalcost_et.addTextChangedListener(this);
+
+		// see onResume for rest of initialization, such as populating brandGrade_at.
+	}
+
+	@Override
+	public void onPause()
+	{
+		super.onPause();
+		if (db != null)
+			db.close();
+	}
+
+	/** Populate {@link #brandGrade_at} from db */
+	@Override
+	public void onResume()
+	{
+		super.onResume();
+		GasBrandGrade[] gbg = GasBrandGrade.getAll(db);
+		if (gbg != null)
+		{
+			ArrayAdapter<GasBrandGrade> adapter = new ArrayAdapter<GasBrandGrade>(this, R.layout.list_item, gbg);
+			brandGrade_at.setAdapter(adapter);
+			brandGrade_at.setOnItemClickListener(this);
+		} else {
+			brandGrade_at.setAdapter((ArrayAdapter<GasBrandGrade>) null);
+		}	
+	}
+
+	@Override
+	public void onDestroy()
+	{
+		super.onDestroy();
+		if (db != null)
+			db.close();
+	}
+
+	/** Show or hide the gas brand/grade dropdown */
+	public void onClick_BtnBrandGradeDropdown(View v)
+	{
+		if (brandGrade_at == null)
+			return;
+
+		if (brandGrade_at.isPopupShowing())
+			brandGrade_at.dismissDropDown();
+		else
+			brandGrade_at.showDropDown();
 	}
 
 	public void onClick_BtnOK(View v)
@@ -99,15 +190,38 @@ public class TripTStopGas extends Activity
 		finish();
 	}
 
+	/**
+	 * Load GUI fields from a bundle.
+	 * @see #saveBundleFromFields(Bundle)
+	 * @see #saveBundleFromDBObj(TStopGas, Bundle)
+	 */
 	private void loadFieldsFromBundle(Bundle loadFrom)
 	{
 		if (loadFrom == null)
 			return;
+
 		quant_et.setText(loadFrom.getCharSequence(EXTRAS_FIELD_QUANT));
 		perunit_et.setText(loadFrom.getCharSequence(EXTRAS_FIELD_PERUNIT));
 		totalcost_et.setText(loadFrom.getCharSequence(EXTRAS_FIELD_TOTALCOST));
 		isFillup_chk.setChecked(loadFrom.getBoolean(EXTRAS_FIELD_ISFILLUP, false));
-		station_et.setText(loadFrom.getCharSequence(EXTRAS_FIELD_BRANDGRADE));
+		// EXTRAS_FIELD_VEH_ID isn't loaded; use currV instead.
+		// That extra is used in saveDBObjFromBundle.
+		brandGrade_at.setText(loadFrom.getCharSequence(EXTRAS_FIELD_BRANDGRADE));
+		brandGradeObj = null;
+		gbgCreatedHere = false;
+		final int bgid = loadFrom.getInt(EXTRAS_FIELD_BRANDGRADE_ID, 0);
+		if (bgid != 0)
+		{
+			try
+			{
+				brandGradeObj = new GasBrandGrade(db, bgid);
+				gbgCreatedHere = loadFrom.getBoolean(EXTRAS_FIELD_BRANDGRADE_CREATED, false);
+			}
+			catch (Throwable th) {}
+			Log.d(TAG, "loadFieldsFromBundle: bgid = " + bgid + ", obj = " + brandGradeObj);
+		} else {
+			Log.d(TAG, "loadFieldsFromBundle: bgid = 0");
+		}
 		final boolean[] calc = loadFrom.getBooleanArray(EXTRAS_FIELD_CALC_FLAGS);
 		if (calc != null)
 		{
@@ -121,13 +235,28 @@ public class TripTStopGas extends Activity
 		}
 	}
 
+	/**
+	 * Save GUI field contents to a bundle.
+	 * @see #loadFieldsFromBundle(Bundle)
+	 * @see #saveDBObjFromBundle(Bundle, TStopGas)
+	 */
 	private void saveBundleFromFields(Bundle saveTo)
 	{
 		saveTo.putCharSequence(EXTRAS_FIELD_QUANT, quant_et.getText());
 		saveTo.putCharSequence(EXTRAS_FIELD_PERUNIT, perunit_et.getText());
 		saveTo.putCharSequence(EXTRAS_FIELD_TOTALCOST, totalcost_et.getText());
 		saveTo.putBoolean(EXTRAS_FIELD_ISFILLUP, isFillup_chk.isChecked());
-		saveTo.putCharSequence(EXTRAS_FIELD_BRANDGRADE_ID, station_et.getText());
+		saveTo.putInt(EXTRAS_FIELD_VEH_ID, currV.getID());
+		String bgText = brandGrade_at.getText().toString().trim();
+		saveTo.putCharSequence(EXTRAS_FIELD_BRANDGRADE, bgText);
+		if (brandGradeObj != null)
+		{
+			if ((bgText.length() == 0)
+				 || ! (gbgCreatedHere || bgText.equalsIgnoreCase(brandGradeObj.getName())))
+				brandGradeObj = null;  // a new name was typed, or no name was typed
+		}
+		saveTo.putInt(EXTRAS_FIELD_BRANDGRADE_ID, (brandGradeObj != null) ? brandGradeObj.getID() : 0);
+		Log.d(TAG, "saveBundleFromFields: bgobj = " + brandGradeObj);
 		final boolean[] calc = new boolean[] {
 			quant_calc, perunit_calc, totalcost_calc
 		};
@@ -136,17 +265,31 @@ public class TripTStopGas extends Activity
 			saveTo.putLong("b_id", System.currentTimeMillis());
 	}
 
-	public static void saveBundleFromDBObj(TStopGas tg, Bundle saveTo)
+	/**
+	 * Save bundle from <tt>tg</tt>'s contents,
+	 * for GUI usage by {@link #loadFieldsFromBundle(Bundle)}.
+	 *<P>
+	 * If <tt>tg.gas_brandgrade</tt> != null, its text will be placed into the
+	 * bundle as {@link #EXTRAS_FIELD_BRANDGRADE}.  Otherwise, the bundle will
+	 * contain {@link #EXTRAS_FIELD_BRANDGRADE_ID} but not the brand/grade text.
+	 */
+	public static void saveBundleFromDBObj(TStopGas tg, Bundle saveTo, final boolean gbgCreatedHere)
 	{
 		saveTo.putCharSequence(EXTRAS_FIELD_QUANT, RDBSchema.formatFixedDec(tg.quant, 3));
 		saveTo.putCharSequence(EXTRAS_FIELD_PERUNIT, RDBSchema.formatFixedDec(tg.price_per, 3));
 		saveTo.putCharSequence(EXTRAS_FIELD_TOTALCOST, RDBSchema.formatFixedDec(tg.price_total, 2));
 		saveTo.putBoolean(EXTRAS_FIELD_ISFILLUP, tg.fillup);
-		if (tg.gas_brandgrade_id != 0)
+		saveTo.putInt(EXTRAS_FIELD_VEH_ID, tg.vid);
+		saveTo.putInt(EXTRAS_FIELD_BRANDGRADE_ID, tg.gas_brandgrade_id);
+		if ((tg.gas_brandgrade_id != 0) && (tg.gas_brandgrade != null))
 		{
-			saveTo.putInt(EXTRAS_FIELD_BRANDGRADE_ID, tg.gas_brandgrade_id);
-			if (tg.gas_brandgrade != null)
-				saveTo.putCharSequence(EXTRAS_FIELD_BRANDGRADE, tg.gas_brandgrade.getName());
+			saveTo.putCharSequence(EXTRAS_FIELD_BRANDGRADE, tg.gas_brandgrade.getName());
+			saveTo.putBoolean(EXTRAS_FIELD_BRANDGRADE_CREATED, gbgCreatedHere);
+		}
+		else if (saveTo.containsKey(EXTRAS_FIELD_BRANDGRADE))
+		{
+			saveTo.remove(EXTRAS_FIELD_BRANDGRADE);
+			saveTo.remove(EXTRAS_FIELD_BRANDGRADE_CREATED);
 		}
 		if (! saveTo.containsKey("b_id"))
 			saveTo.putLong("b_id", System.currentTimeMillis());
@@ -157,14 +300,22 @@ public class TripTStopGas extends Activity
 
 	/**
 	 * Save the bundle to the fields of a {@link TStopGas} to write later to the database.
-	 * @param saveFrom
+	 *<P>
+	 * <b>Note:</b> If a new {@link GasBrandGrade} must be created, please insert it, and
+	 * set <tt>saveFrom.</tt>{@link #EXTRAS_FIELD_BRANDGRADE_ID} to its id,
+	 * before calling this method.  (You'll need to create the new GasBrandGrade if
+	 * {@link #EXTRAS_FIELD_BRANDGRADE_ID} is 0, but {@link #EXTRAS_FIELD_BRANDGRADE}
+	 * is not empty.)
+	 *
+	 * @param saveFrom  bundle as created from {@link #saveBundleFromFields(Bundle)}
 	 * @param tg  tstopgas to change based on bundle contents, or null for new
 	 * @return created or updated tstopgas, or null if nothing (or all empty strings) in the bundle.
 	 *      If a new TStopGas is created, be sure to call {@link TStopGas#setTStop(org.shadowlands.roadtrip.db.TStop)}
-	 *      before inserting it.
+	 *      before inserting the TStopGas.
 	 */
 	public static TStopGas saveDBObjFromBundle(Bundle saveFrom, TStopGas tg)
 	{
+		// TODO instead of hardcoded # of digits, use currV fields
 		final int q = RDBSchema.parseFixedDecOr0(saveFrom.getCharSequence(EXTRAS_FIELD_QUANT), 3),
 		          pp = RDBSchema.parseFixedDecOr0(saveFrom.getCharSequence(EXTRAS_FIELD_PERUNIT), 3),
 		          pt = RDBSchema.parseFixedDecOr0(saveFrom.getCharSequence(EXTRAS_FIELD_TOTALCOST), 2);
@@ -180,8 +331,8 @@ public class TripTStopGas extends Activity
 		tg.price_per = pp;
 		tg.price_total = pt;
 		tg.fillup = saveFrom.getBoolean(EXTRAS_FIELD_ISFILLUP);
-		CharSequence sta = saveFrom.getCharSequence(EXTRAS_FIELD_BRANDGRADE_ID); 
-		// tg.station = ((sta != null) && (sta.length() > 0)) ? sta.toString().trim() : null;
+		tg.vid = saveFrom.getInt(EXTRAS_FIELD_VEH_ID);
+		tg.gas_brandgrade_id = saveFrom.getInt(EXTRAS_FIELD_BRANDGRADE_ID, 0); 
 
 		return tg;
 	}
@@ -219,7 +370,7 @@ public class TripTStopGas extends Activity
 			float total = Float.parseFloat(quant_et.getText().toString()) * Float.parseFloat(perunit_et.getText().toString());
 			totalcost_calc = true;
 			afterTextChanged_lastChanged = totalcost_et;
-			totalcost_et.setText(String.format("%1$1.2f", total));  // TODO dynamic # of digits
+			totalcost_et.setText(String.format("%1$1.2f", total));  // TODO dynamic # of digits from currV
 			return;
 		}
 
@@ -267,4 +418,15 @@ public class TripTStopGas extends Activity
 		System.out.println("parse('5.123', 1) = " + RDBSchema.parseFixedDecOr0("5.123", 1));
 	}
 	*/
+
+	/** For {@link GasBrandGrade} autocomplete, the callback for {@link OnItemClickListener} */
+	public void onItemClick(AdapterView<?> parent, View clickedOn, int position, long rowID)
+	{
+		ListAdapter ga = brandGrade_at.getAdapter();
+		if (ga == null)
+			return;
+		brandGradeObj = (GasBrandGrade) ga.getItem(position);
+		Log.d(TAG, "clicked: bgobj = id " + brandGradeObj.getID() + " " + brandGradeObj);
+	}
+
 }

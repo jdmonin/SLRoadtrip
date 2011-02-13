@@ -22,6 +22,7 @@ create table gas_brandgrade ( _id integer PRIMARY KEY AUTOINCREMENT not null, na
 
 -- vid's default 0 is to satisfy "not null"; actual vehicle IDs will
 --    be determined in an update statement.
+--    (this added field is denormalization for query performance)
 -- Note that tstop_gas.station isn't auto-converted to new gas_brandgrades.
 --    This is not acceptable when there are users of the software,
 --    but at this early point, our user is okay with it.

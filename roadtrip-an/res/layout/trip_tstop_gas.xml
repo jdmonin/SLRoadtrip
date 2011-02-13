@@ -2,7 +2,7 @@
 <!--
  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
 
- Copyright (C) 2010 Jeremy D Monin (jdmonin@nand.net)
+ Copyright (C) 2010-2011 Jeremy D Monin (jdmonin@nand.net)
 
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
@@ -99,14 +99,34 @@
 		<TextView  
 		    android:layout_width="wrap_content" 
 		    android:layout_height="wrap_content" 
-		    android:text="@string/station"
+		    android:text="@string/trip_tstop_gas_brand_grade"
 		    />
-		<EditText
-		    android:id="@+id/trip_tstopgas_station"
-		    android:inputType="text"
+		<LinearLayout
+		    android:orientation="horizontal"
+		    android:layout_width="fill_parent"
+		    android:layout_height="wrap_content"
+		    android:layout_span="2"
 		    android:layout_weight="1"
-			android:layout_width="fill_parent"
-			android:layout_height="wrap_content" />
+		    >
+			<AutoCompleteTextView
+			    android:id="@+id/trip_tstopgas_brandgrade"
+			    android:completionThreshold="1"
+			    android:inputType="text"
+			    android:layout_weight="1"
+			    android:padding="0px"
+			    android:layout_margin="0px"
+				android:layout_width="fill_parent"
+				android:layout_height="wrap_content" />
+			<ImageButton
+				android:src="@android:drawable/arrow_down_float"
+			    android:layout_width="24px"
+			    android:layout_height="24px"
+			    android:layout_gravity="center_vertical"
+			    android:padding="1px"
+			    android:layout_margin="0px"
+			    android:onClick="onClick_BtnBrandGradeDropdown"
+				/>
+		</LinearLayout>
     </TableRow>
 </TableLayout>
 <LinearLayout

@@ -96,6 +96,9 @@ public class TripTStopEntry extends Activity
 	/** Historical Mode threshold is 24 hours, in milliseconds. */
 	private static final long TIMEDIFF_HISTORICAL_MILLIS = 24 * 60 * 60 * 1000L;
 
+	/** Determines if {@link #onCreate(Bundle)} should call {@link #onRestoreInstanceState(Bundle)} */
+	private static final String TSTOP_BUNDLE_SAVED_MARKER = "tripTStopEntrySavedState";
+
 	/** tag for Log debugs */
 	@SuppressWarnings("unused")
 	private static final String TAG = "Roadtrip.TripTStopEntry";
@@ -229,9 +232,11 @@ public class TripTStopEntry extends Activity
 	private Button btnStopTimeDate, btnContTimeDate;
 
 	/** Called when the activity is first created.
-	 * See {@link #onResume()} for remainder of init work,
+	 * See {@link #updateTextAndButtons()} for remainder of init work,
 	 * which includes checking the current driver/vehicle/trip
 	 * and hiding/showing buttons as appropriate.
+	 * Also calls {@link #onRestoreInstanceState(Bundle)} if
+	 * our state was saved.
 	 */
 	@Override
 	public void onCreate(Bundle savedInstanceState)
@@ -421,6 +426,8 @@ public class TripTStopEntry extends Activity
 		// Give status, read odometer, etc;
 		// if currTS != null, fill fields from it.
 		updateTextAndButtons();
+		if ((savedInstanceState != null) && savedInstanceState.containsKey(TSTOP_BUNDLE_SAVED_MARKER))
+			onRestoreInstanceState(savedInstanceState);
 
 		// See if we're stopping on a frequent trip:
 		if ((! isCurrentlyStopped) && currT.isFrequent())
@@ -1498,6 +1505,53 @@ public class TripTStopEntry extends Activity
 		} else {
 			via.setAdapter((ArrayAdapter<ViaRoute>) null);
 		}
+	}
+
+	/**
+	 * Save our state before an Android pause or stop.
+	 * @see #onRestoreInstanceState(Bundle)
+	 */
+	@Override
+	public void onSaveInstanceState(Bundle outState)
+	{
+		super.onSaveInstanceState(outState);
+		if (outState == null)
+			return;
+		outState.putBoolean(TSTOP_BUNDLE_SAVED_MARKER, true);
+		odo_total.onSaveInstanceState(outState, "OTO");
+		odo_trip.onSaveInstanceState(outState, "OTR");
+		outState.putBoolean("OTOC", odo_total_chk.isChecked());
+		outState.putBoolean("OTRC", odo_trip_chk.isChecked());
+		outState.putBoolean("TSC", tp_time_stop_chk.isChecked());
+		outState.putBoolean("TCC", tp_time_cont_chk.isChecked());
+		outState.putInt("TSV", (tp_time_stop.getCurrentHour() << 8) | tp_time_stop.getCurrentMinute() );
+		outState.putInt("TCV", (tp_time_cont.getCurrentHour() << 8) | tp_time_cont.getCurrentMinute() );
+	}
+
+	/**
+	 * Restore our state after an Android pause or stop.
+	 * Happens here (and not <tt>onCreate</tt>) to ensure the
+	 * initialization is complete before this method is called.
+	 * @see #onSaveInstanceState(Bundle)
+	 */
+	@Override
+	public void onRestoreInstanceState(Bundle inState)
+	{
+		super.onRestoreInstanceState(inState);
+		if ((inState == null) || ! inState.containsKey(TSTOP_BUNDLE_SAVED_MARKER))
+			return;
+		odo_total.onRestoreInstanceState(inState, "OTO");
+		odo_trip.onRestoreInstanceState(inState, "OTR");
+		odo_total_chk.setChecked(inState.getBoolean("OTOC"));
+		odo_trip_chk.setChecked(inState.getBoolean("OTRC")); 
+		tp_time_stop_chk.setChecked(inState.getBoolean("TSC"));
+		tp_time_cont_chk.setChecked(inState.getBoolean("TCC"));
+		int hhmm = inState.getInt("TSV");
+		tp_time_stop.setCurrentHour(hhmm >> 8);
+		tp_time_stop.setCurrentMinute(hhmm & 0xFF);
+		hhmm = inState.getInt("TCV");
+		tp_time_cont.setCurrentHour(hhmm >> 8);
+		tp_time_cont.setCurrentMinute(hhmm & 0xFF);
 	}
 
 	/**

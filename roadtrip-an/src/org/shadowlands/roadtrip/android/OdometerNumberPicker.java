@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  Copyright (C) 2010 Jeremy D Monin <jdmonin@nand.net>
+ *  Copyright (C) 2010-2011 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -25,6 +25,8 @@ import com.quietlycoding.android.picker.NumberPicker;
 import com.quietlycoding.android.picker.NumberPicker.OnChangedListener;
 
 import android.content.Context;
+import android.os.Bundle;
+import android.os.Parcelable;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -259,4 +261,45 @@ public class OdometerNumberPicker extends LinearLayout implements OnChangedListe
 		if (dot != null)
 			dot.setVisibility(vis);
 	}
+
+	/**
+	 * Save our state before an Android pause or stop;
+	 * to be called from a parent view's <tt>onSaveInstanceState</tt>.
+	 * @param outState  bundle to save into
+	 * @param prefix  unique prefix for bundle keys for this odo, or null
+	 * @see #onRestoreInstanceState(Bundle, String)
+	 */
+	public void onSaveInstanceState(Bundle outState, String prefix)
+	{
+		if (outState == null)
+			return;
+		if (prefix == null)
+			prefix = "";
+    	Parcelable bWhole = mWholeNum.onSaveInstanceState();
+    	outState.putParcelable(prefix+"OW", bWhole);
+    	outState.putInt(prefix+"OT", mTenths.getCurrent());
+    	outState.putBoolean(prefix+"OV", tenthsVisible);
+	}
+
+	/**
+	 * Restore our state after an Android pause or stop;
+	 * to be called from a parent view's <tt>onRestoreInstanceState</tt>.
+	 * Happens here (and not <tt>onCreate</tt>) to ensure the
+	 * initialization is complete before this method is called.
+	 * @param inState  bundle to restore from
+	 * @param prefix  unique prefix for bundle keys for this odo, or null
+	 * @see #onSaveInstanceState(Bundle, String)
+	 */
+	public void onRestoreInstanceState(Bundle inState, String prefix)
+	{
+		if (inState == null)
+			return;
+		if (prefix == null)
+			prefix = "";
+		Parcelable bWhole = inState.getParcelable(prefix+"OW");
+		mWholeNum.onRestoreInstanceState(bWhole);
+		mTenths.setCurrent(inState.getInt(prefix+"OT"));
+		tenthsVisible = inState.getBoolean(prefix+"OV", true);
+	}
+
 }

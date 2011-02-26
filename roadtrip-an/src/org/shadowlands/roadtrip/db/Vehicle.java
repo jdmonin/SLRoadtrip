@@ -237,6 +237,7 @@ public class Vehicle extends RDBRecord
 
     /**
      * Retrieve the most recent time of a trip or tstop for this Vehicle.
+     * If the vehicle is currently on a trip, pass that current trip as <tt>tr</tt>.
      * Assumes no current TStop, because you could use that TStop's time instead.
      * @param tr  The vehicle's current trip, if one is in progress, or null.
      *          tr's dbConn should be valid (not closed).

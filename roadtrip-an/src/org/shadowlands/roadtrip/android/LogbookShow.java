@@ -92,6 +92,10 @@ public class LogbookShow extends Activity
 		{
 			sbTrips.append("\nNo trips found for this Vehicle.");
 		}
+		if (ltm.hasCurrentTrip())
+		{
+			sbTrips.append("\n\t\t(Current Trip in progress)");
+		}
 
 		tvContent.setText(sbTrips);
 

@@ -28,6 +28,7 @@ import java.util.Vector;
 import org.shadowlands.roadtrip.db.GasBrandGrade;
 import org.shadowlands.roadtrip.db.Location;
 import org.shadowlands.roadtrip.db.RDBAdapter;
+import org.shadowlands.roadtrip.db.Settings;
 import org.shadowlands.roadtrip.db.TStop;
 import org.shadowlands.roadtrip.db.TStopGas;
 import org.shadowlands.roadtrip.db.Trip;
@@ -121,6 +122,11 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	 */
 	private boolean addMode;
 
+	/**
+	 * Is there a current trip?
+	 */
+	private boolean hasCurrT;
+
 	/** During {@link #addMode}, {@link Vector#size() tData.size()} before starting the add. */
 	private int maxRowBeforeAdd;
 
@@ -160,10 +166,32 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 		this.weekIncr = weeks;
 		getValue_RangeRow0 = -1;
 		getValue_RangeRowN = -1;
+		hasCurrT = false;
 
 		if (veh != null)
 		{
-			final int ltime = veh.readLatestTime(null);
+			// Set currT only if it's for this vehicle
+			Trip currT = Settings.getCurrentTrip(conn, false);
+			TStop currTS = null;
+			if (currT != null)
+			{
+				if (currT.getVehicleID() == veh.getID())
+				{
+					hasCurrT = true;
+					currTS = Settings.getCurrentTStop(conn, false);
+				} else {
+					currT = null;
+				}
+			}
+			int ltime = 0;
+			if (currTS != null)
+			{
+				ltime = currTS.getTime_stop();
+				if (ltime == 0)
+					currTS = null;
+			}
+			if (currTS == null)
+				ltime = veh.readLatestTime(currT);  // don't call if we have currTS
 			if ((ltime != 0) && (weekIncr != 0))
 			{
 				addRowsFromDBTrips(ltime, weekIncr, true, false, conn);
@@ -173,6 +201,16 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 				addRowsFromDBTrips(conn);
 			}
 		}
+	}
+
+	/**
+	 * Is this vehicle currently on the current trip?
+	 * Determined in constructor, not updated afterwards.
+	 * @return whether this vehicle has the current trip
+	 */
+	public boolean hasCurrentTrip()
+	{
+		return hasCurrT;
 	}
 
 	/**

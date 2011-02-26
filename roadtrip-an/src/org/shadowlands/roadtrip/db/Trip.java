@@ -643,11 +643,12 @@ public class Trip extends RDBRecord
      * @return that stop, or null if none yet on this trip
      * @throws IllegalStateException if the db connection is closed
      * @see #readAllTStops()
+     * @see TStop#latestStopForTrip(RDBAdapter, int, boolean)
      */
     public TStop readLatestTStop()
         throws IllegalStateException
     {
-    	return TStop.latestStopForTrip(dbConn, id);
+    	return TStop.latestStopForTrip(dbConn, id, false);
     }
 
     /** Array to fill and return from readHighestOdometer. */
@@ -735,9 +736,9 @@ public class Trip extends RDBRecord
     	{
     		latest = allStops.lastElement();
     	} else {
-    		latest = TStop.latestStopForTrip(dbConn, id);
+    		latest = TStop.latestStopForTrip(dbConn, id, true);
     	}
-		if (latest == null)  // no stops yet: starting time
+		if ((latest == null) || (latest.getTime_stop() == 0))  // no stops yet: starting time
 			return time_start;
     	int t = latest.getTime_continue();  // continue time
     	if (t == 0)

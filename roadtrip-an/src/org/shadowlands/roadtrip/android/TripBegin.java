@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  Copyright (C) 2010 Jeremy D Monin <jdmonin@nand.net>
+ *  Copyright (C) 2010-2011 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -289,7 +289,7 @@ public class TripBegin extends Activity
 			final int last_tid = currV.getLastTripID();
 			if (last_tid != 0)
 			{
-				startingPrevTStop = TStop.latestStopForTrip(db, last_tid);
+				startingPrevTStop = TStop.latestStopForTrip(db, last_tid, false);
 				if (startingPrevTStop != null)
 				{
 					try

@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  Copyright (C) 2010 Jeremy D Monin <jdmonin@nand.net>
+ *  Copyright (C) 2010-2011 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -202,17 +202,19 @@ public class TStop extends RDBRecord
      * If the trip is completed, it will have an ending TStop,
      * and that will be the one returned.
      *
+     * @param ignoreIfnoTime  Ignore stops which don't have a continue time nor a stopping time
      * @return that stop, or null if none yet on this trip
      * @throws IllegalStateException if the db connection is closed
      * @see #readAllTStops()
+     * 
      */
-    public static TStop latestStopForTrip(RDBAdapter db, final int tripID)
+    public static TStop latestStopForTrip(RDBAdapter db, final int tripID, final boolean ignoreIfNoTime)
     	throws IllegalStateException
 	{
 		if (db == null)
 			throw new IllegalStateException("dbConn null");
 
-		// TODO: "LIMIT 1"
+		// TODO: "LIMIT 1" if not ignoreIfNoTime
 		Vector<String[]> sv = db.getRows
 		    (TABNAME, FIELD_TRIPID, Integer.toString(tripID), FIELDS_AND_ID, "_id DESC");
 		if (sv == null)
@@ -220,7 +222,17 @@ public class TStop extends RDBRecord
 
 		try
 		{
-			return new TStop(db, sv.firstElement());
+			TStop ts = null;
+			do
+			{
+				ts = new TStop(db, sv.firstElement());
+				if (ignoreIfNoTime && (0 == ts.getTime_continue()) && (0 == ts.getTime_stop()))
+				{
+					ts = null;
+					sv.removeElementAt(0);
+				}
+			} while ((ts == null) && ! sv.isEmpty());
+			return ts;
 		} catch (RDBKeyNotFoundException e)
 		{
 			return null;

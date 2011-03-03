@@ -128,7 +128,12 @@ public class TripBegin extends Activity
 	/** If freqtrip, the chosen freqtrip, or null */
 	private FreqTrip wantsFT;
 
-	/** if not null, a prev trip's final TStop, that we can continue from */
+	/**
+	 * If not null, a prev trip's final TStop, that we can continue from.
+	 * To use this, the starting odometer must be the same as this TStop's;
+	 * otherwise there's a gap in this vehicle's history, and startingPrevTStop
+	 * should be null to keep the data consistent.
+	 */
 	private TStop startingPrevTStop;
 
 	private OdometerNumberPicker odo;
@@ -513,11 +518,11 @@ public class TripBegin extends Activity
 			}
 		}
 
-		// Check other fields:
+		// Check starting odometer:
 
 		int startOdo = odo.getCurrent10d();
 		final int prevOdo = currV.getOdometerCurrent();
-		if (startOdo < prevOdo)
+		if (startOdo != prevOdo)
 		{
 			// check if it's only the hidden tenths digit
 			final int wholeOdo0 = startOdo / 10;
@@ -528,13 +533,37 @@ public class TripBegin extends Activity
 				odo.setCurrent10d(startOdo, false);
 			} else {
 				// visually different
-				odo.requestFocus();
-				final String toastText = getResources().getString
-					(R.string.trip_tstop_entry_totalodo_low, prevOdo / 10);  // %1$d
-				Toast.makeText(this, toastText, Toast.LENGTH_SHORT).show();
-				return;  // <--- Early return: Odometer is too low ---
+				if (startOdo < prevOdo)
+				{
+					odo.requestFocus();
+					final String toastText = getResources().getString
+						(R.string.trip_tstop_entry_totalodo_low, prevOdo / 10);  // %1$d
+					Toast.makeText(this, toastText, Toast.LENGTH_SHORT).show();
+					return;  // <--- Early return: Odometer is too low ---
+				}
+				else if (startingPrevTStop != null)
+				{
+					// if odo increases, there's a gap in this vehicle's
+					// history, so we need to not "continue from previous stop"
+					// to keep the data consistent.
+					if ((locObj == null) || (locObj.getID() != startingPrevTStop.getLocationID()))
+					{
+						try
+						{
+							final int id = startingPrevTStop.getLocationID();
+							if (id != 0)
+								locObj = new Location(db, id);
+						} catch (RDBKeyNotFoundException e)
+						{
+							locObj = null;
+						}						
+					}
+					startingPrevTStop = null;
+				}
 			}
 		}
+
+		// Check other fields:
 
 		if (isRoadtrip)
 		{

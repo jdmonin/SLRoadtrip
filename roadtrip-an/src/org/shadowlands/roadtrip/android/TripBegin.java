@@ -87,6 +87,7 @@ public class TripBegin extends Activity
 	private static final long TIMEDIFF_HISTORICAL_MILLIS = 21 * 24 * 60 * 60 * 1000L;
 
 	/** tag for Log debugs */
+	@SuppressWarnings("unused")
 	private static final String TAG = "Roadtrip.TripBegin";
 
 	private RDBAdapter db = null;
@@ -279,7 +280,7 @@ public class TripBegin extends Activity
 
 		if (prevVId != vID)
 		{
-			odo.setCurrent10d(currV.getOdometerCurrent(), true);
+			odo.setCurrent10d(currV.getOdometerCurrent(), false);
 			prevVId = vID;
 
 			// read veh's prev-trip stuff, fill in begin-from
@@ -514,6 +515,27 @@ public class TripBegin extends Activity
 
 		// Check other fields:
 
+		int startOdo = odo.getCurrent10d();
+		final int prevOdo = currV.getOdometerCurrent();
+		if (startOdo < prevOdo)
+		{
+			// check if it's only the hidden tenths digit
+			final int wholeOdo0 = startOdo / 10;
+			if (wholeOdo0 == (prevOdo/10))
+			{
+				// visually the same; update hidden tenths to keep the db consistent
+				startOdo = prevOdo;
+				odo.setCurrent10d(startOdo, false);
+			} else {
+				// visually different
+				odo.requestFocus();
+				final String toastText = getResources().getString
+					(R.string.trip_tstop_entry_totalodo_low, prevOdo / 10);  // %1$d
+				Toast.makeText(this, toastText, Toast.LENGTH_SHORT).show();
+				return;  // <--- Early return: Odometer is too low ---
+			}
+		}
+
 		if (isRoadtrip)
 		{
 			String destarea = etGeoArea.getText().toString().trim();
@@ -542,8 +564,6 @@ public class TripBegin extends Activity
 				Toast.makeText(this, "Using dest geoarea " + destAreaObj.getID(), Toast.LENGTH_SHORT).show();
 			}
 		}
-
-		final int startOdo = odo.getCurrent10d();
 
 		Trip t = new Trip(currV, currD, startOdo, 0, currA.getID(),
 			startingPrevTStop, startTimeSec, 0,

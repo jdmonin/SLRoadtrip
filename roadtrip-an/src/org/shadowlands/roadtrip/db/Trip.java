@@ -520,6 +520,7 @@ public class Trip extends RDBRecord
      *         don't include the TStop at the destination which ends the trip.
      * @return  ordered list of stops, or null if none
      * @throws IllegalStateException if the db connection is closed
+     * @see #hasIntermediateTStops()
      */
     public Vector<TStop> readAllTStops(boolean ignoreTripEndStop)
 	    throws IllegalStateException
@@ -967,6 +968,26 @@ public class Trip extends RDBRecord
 		if (allStops == null)
 			allStops = new Vector<TStop>();
 		allStops.addElement(newStop);
+	}
+
+	/**
+	 * Does this trip have TStops, other than its start and end?
+	 * <b>Note:</b> Queries the database, not a cached list of stops.
+	 * @return true if any TStops exist in the middle of the trip
+	 */
+	public boolean hasIntermediateTStops()
+	{
+		Vector<TStop> ts = readAllTStops(true);  // TODO can we use allStops instead?
+		if (ts == null)
+			return false;
+		int nstop = ts.size();
+		if (tstopid_start == 0)
+		{
+			TStop ts0 = ts.firstElement();
+			if ((ts0.getOdo_trip() == 0) && (ts0.getOdo_total() == odo_start))
+				--nstop;  // ignore the starting tstop
+		}
+		return (nstop > 0);
 	}
 
 	/**

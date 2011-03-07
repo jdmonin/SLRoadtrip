@@ -370,6 +370,12 @@ public class Main extends Activity
 
 	public void onClick_BtnChangeDriverVehicle(View v)
 	{
+		if (null != Settings.getCurrentTrip(db, false))
+		{
+			// TODO implement changing during a trip within ChangeDriverOrVehicle
+			Toast.makeText(this, R.string.main_changedriver_cannot_during_trip, Toast.LENGTH_SHORT).show();
+			return;
+		}
 		startActivityForResult
 		   (new Intent(Main.this, ChangeDriverOrVehicle.class),
 			R.id.main_btn_change_driver_vehicle);

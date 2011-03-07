@@ -85,7 +85,7 @@ public class Vehicle extends RDBRecord
      */
     public static Vehicle[] getAll(RDBAdapter db)
     {
-		Vector<String[]> ves = db.getRows(TABNAME, null, (String[]) null, FIELDS_AND_ID, "nickname");
+		Vector<String[]> ves = db.getRows(TABNAME, null, (String[]) null, FIELDS_AND_ID, "nickname COLLATE NOCASE");
     	if (ves == null)
     		return null;
 

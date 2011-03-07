@@ -940,6 +940,51 @@ public class Trip extends RDBRecord
 	}
 
 	/**
+	 * Delete this trip, if the current trip, from the database.
+	 * Requiring the current trip simplifies the assumptions and
+	 * maintains database history and integrity.
+	 *<P>
+	 * Checks {@link Settings#getCurrentTrip(RDBAdapter, boolean)}, but
+	 * does not clear {@link Settings#CURRENT_TRIP} or other settings.
+	 *
+	 * @throws IllegalStateException if the trip has intermediate stops,
+	 *   other than its start, or isn't the current trip ID,
+	 *   or if the trip has an ending odometer
+	 *   (and thus the trip has ended and isn't current).
+	 */
+	public void cancelAndDeleteCurrentTrip()
+		throws IllegalStateException
+	{
+		if (odo_end != 0)
+			throw new IllegalStateException("Trip has ended");
+		Trip currT = Settings.getCurrentTrip(dbConn, false);
+		if (this.id != currT.id)
+			throw new IllegalStateException("Not current trip");
+
+		// Any intermediate stops? / (TODO) same code as hasIntermediateTStops
+		Vector<TStop> ts = readAllTStops(true);  // TODO can we use allStops field instead?
+		if (ts != null)
+		{
+			int nstop = ts.size();
+			if (tstopid_start == 0)
+			{
+				TStop ts0 = ts.firstElement();
+				if ((ts0.getOdo_trip() == 0) && (ts0.getOdo_total() == odo_start))
+					--nstop;  // ignore the starting tstop
+			}
+			if (nstop > 0)
+				throw new IllegalStateException("Has intermediate stops");
+
+			// Delete starting TStop with our trip ID, if any
+			for (int i = ts.size() - 1; i >= 0; --i)
+				ts.elementAt(i).delete();
+		}
+
+		// Finally, delete the trip
+		this.delete();
+	}
+
+	/**
 	 * A new stop has been added to this trip; now that
 	 * it's committed to the database, add it to our
 	 * cached list of TStops, if we already have that list.

@@ -26,6 +26,7 @@
 <string name="backup_now">Backup Now</string>
 <string name="begin__initcap">Begin</string>
 <string name="begin_trip">Begin Trip</string>
+<string name="cancel_trip">Cancel Trip</string>
 <string name="change_driver">Change Driver</string>
 <string name="change_driver_vehicle">Change Driver / Vehicle</string>
 <string name="choose_a_frequent_trip">Choose a frequent trip</string>
@@ -104,6 +105,8 @@
 <string name="logbook_show__title">View Logbook</string>
 <string name="logbook_show__earlier_trips">^ Earlier Trips ^</string>
 <string name="main_text">Main Screen</string>
+<string name="main_cancel_are_you_sure">Are you sure you want to cancel the current trip?</string>
+<string name="main_cancel_cannot_with_stops">Cannot cancel a trip with stops; use End Trip instead.</string>
 <string name="main_create_freq_from_recent">Create Frequent from recent trip...</string>
 <string name="main_no_recent_local_trips_for_vehicle">No recent local trips found for this vehicle.</string>
 <string name="main_no_recent_roadtrips_for_vehicle">No recent roadtrips found for this vehicle.</string>

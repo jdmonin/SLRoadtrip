@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  Copyright (C) 2010 Jeremy D Monin <jdmonin@nand.net>
+ *  Copyright (C) 2010-2011 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -99,12 +99,27 @@ public class Main extends Activity
 		return true;
 	}
 
+	/** If current trip, enable "cancel" menu item */
+	@Override
+	public boolean onPrepareOptionsMenu(Menu menu) {
+		super.onPrepareOptionsMenu(menu);
+		MenuItem item = menu.findItem(R.id.menu_main_canceltrip);
+		if (item != null)
+			item.setEnabled(null != Settings.getCurrentTrip(db, false));
+
+		return true;
+	}
+
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 	    switch (item.getItemId()) {
 	    case R.id.menu_main_backup:
 	    	startActivity(new Intent(Main.this, BackupsMain.class));
 	        return true;
+
+	    case R.id.menu_main_canceltrip:
+	    	confirmCancelCurrentTrip();
+	    	return true;
 
 	    default:
 	        return super.onOptionsItemSelected(item);
@@ -138,6 +153,56 @@ public class Main extends Activity
 			return super.onContextItemSelected(item);
 		}
 		return true;
+	}
+
+	/**
+	 * Prompt user if wants to cancel the current trip (if that's possible).
+	 * If they confirm, delete it and clear current-trip settings.
+	 */
+	public void confirmCancelCurrentTrip()
+	{
+		boolean canCancel = true;
+		final Trip currT = Settings.getCurrentTrip(db, false);
+		TStop currTS = ((currT != null) ? Settings.getCurrentTStop(db, false) : null);
+		if (currTS != null)
+		{
+			canCancel = false;
+		} else if (currT != null) {
+			// Any TStops?
+			canCancel = ! currT.hasIntermediateTStops();
+		}
+
+		if (! canCancel)
+		{
+			Toast.makeText(this, R.string.main_cancel_cannot_with_stops, Toast.LENGTH_SHORT).show();
+			return;  // <--- Early return: Cannot cancel ---
+		}
+
+		// Prompt user if wants to revert back to locObjOrig.
+    	AlertDialog.Builder alert = new AlertDialog.Builder(this);
+
+    	alert.setTitle(R.string.confirm);
+    	alert.setMessage(R.string.main_cancel_are_you_sure);
+    	alert.setPositiveButton(R.string.cancel_trip, new DialogInterface.OnClickListener() {
+	    	  public void onClick(DialogInterface dialog, int whichButton)
+	    	  {
+	    		  final boolean isFreq = currT.isFrequent();
+	    		  try
+	    		  {
+		    		  currT.cancelAndDeleteCurrentTrip();
+		    		  Settings.setCurrentTrip(db, null);
+		    		  if (isFreq)
+		    			  Settings.setCurrentFreqTrip(db, null);		    		  
+	    		  } catch (IllegalStateException e) {}
+	    		  checkCurrentDriverVehicleSettings();
+	    		  updateDriverVehTripTextAndButtons();
+	    	  }
+	    	});
+    	alert.setNegativeButton(R.string.continu, new DialogInterface.OnClickListener() {
+	    	  public void onClick(DialogInterface dialog, int whichButton)
+	    	  { }
+	    	});
+    	alert.show();
 	}
 
 	/**

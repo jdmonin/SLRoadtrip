@@ -112,7 +112,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	private TIntObjectHashMap<ViaRoute> viaCache;
 
 	/**
-	 * {@link ViaRoute} cache. Each item is its own key.
+	 * {@link GasBrandGrade} cache. Each item is its own key.
 	 */
 	private TIntObjectHashMap<GasBrandGrade> gasCache;
 
@@ -523,11 +523,12 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	/**
 	 * Read this TStop's location description from text or from its associated Location.
 	 * Attempts to read or fill {@link #locCache}.
+	 * A copy of this method is in org.shadowlands.roadtrip.android.LogbookRecentGas.
 	 * @param conn  db connection to use
 	 * @param ts  TStop to look at
 	 * @return Location text, or null
 	 */
-	private String getTStopLocDescr(TStop ts, RDBAdapter conn)
+	private final String getTStopLocDescr(TStop ts, RDBAdapter conn)
 	{
 		String locDescr = ts.getLocationDescr();
 		if (locDescr == null)

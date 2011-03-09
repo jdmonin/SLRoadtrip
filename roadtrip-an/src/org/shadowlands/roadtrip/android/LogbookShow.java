@@ -27,8 +27,11 @@ import org.shadowlands.roadtrip.db.android.RDBOpenHelper;
 import org.shadowlands.roadtrip.model.LogbookTableModel;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
@@ -128,6 +131,24 @@ public class LogbookShow extends Activity
 	{
 		currV = Settings.getCurrentVehicle(db, false);
 		return (currV != null);
+	}
+
+	@Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+		getMenuInflater().inflate(R.menu.logbook_menu, menu);
+		return true;
+	}
+
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+	    switch (item.getItemId()) {
+	    case R.id.menu_logbook_recent_gas:
+	    	startActivity(new Intent(this, LogbookRecentGas.class));
+	        return true;
+
+	    default:
+	        return super.onOptionsItemSelected(item);
+	    }
 	}
 
 	/**

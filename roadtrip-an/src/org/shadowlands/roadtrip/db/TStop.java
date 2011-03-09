@@ -38,6 +38,18 @@ public class TStop extends RDBRecord
     /** Foreign-key field name for TStop.tripID in the database.  Access is package, not private, for Trip's use */
     static final String FIELD_TRIPID = "tripid";
 
+    /** Foreign-key field name for TStop.odo_total in the database.  Access is package, not private, for TStopGas's use */
+    static final String FIELD_ODO_TOTAL = "odo_total";
+
+    /** Foreign-key field name for TStop.time_stop in the database.  Access is package, not private, for TStopGas's use */
+    static final String FIELD_TIME_STOP = "time_stop";
+
+    /** Foreign-key field name for TStop.time_continue in the database.  Access is package, not private, for TStopGas's use */
+    static final String FIELD_TIME_CONTINUE = "time_continue";
+
+    /** Foreign-key field name for TStop.locid in the database.  Access is package, not private, for TStopGas's use */
+    static final String FIELD_LOCID = "locid";
+
     /** Field names/where-clause for use in {@link #readStartingStopWithinTrip(RDBAdapter, Trip)} */
     private static final String WHERE_TRIPID_AND_ODOTRIP = FIELD_TRIPID + " = ? AND odo_trip = 0";
 
@@ -47,12 +59,12 @@ public class TStop extends RDBRecord
      * @see #initFields(String[])
      */
     private static final String[] FIELDS =
-        { FIELD_TRIPID, "odo_total", "odo_trip", "time_stop", "time_continue",
-    	  "locid", "a_id", "geo_lat", "geo_lon", "flag_sides",
+        { FIELD_TRIPID, FIELD_ODO_TOTAL, "odo_trip", FIELD_TIME_STOP, FIELD_TIME_CONTINUE,
+    	  FIELD_LOCID, "a_id", "geo_lat", "geo_lon", "flag_sides",
     	  "descr", "via_route", "via_id", "comment" };
     private static final String[] FIELDS_AND_ID =
-	    { FIELD_TRIPID, "odo_total", "odo_trip", "time_stop", "time_continue",
-		  "locid", "a_id", "geo_lat", "geo_lon", "flag_sides",
+	    { FIELD_TRIPID, FIELD_ODO_TOTAL, "odo_trip", FIELD_TIME_STOP, "time_continue",
+    	  FIELD_LOCID, "a_id", "geo_lat", "geo_lon", "flag_sides",
 		  "descr", "via_route", "via_id", "comment", "_id" };
     private final static String[] FIELD_TIME_CONTINUE_ARR =
     	{ "time_continue" };
@@ -259,6 +271,39 @@ public class TStop extends RDBRecord
     }
 
     /**
+     * Existing record, only some fields, from {@link TStopGas} db query:
+     * Fill our obj fields from db-record string contents.
+     * For use by {@link TStopGas#recentGasForVehicle(RDBAdapter, Vehicle)}.
+     * Very limited use, because (for example) the {@link Trip} field isn't filled.
+     * @param db  connection
+     * @param tsg  TStopGas associated with this stop; it must be committed, with a valid ID
+     * @param odo_total  Total odometer
+     * @param time_stop  Stop time, or null
+     * @param time_cont  Continue time, or null
+     * @param locid    LocID
+     * @throws RDBKeyNotFoundException not thrown, but required due to super call
+     * @throws IllegalArgumentException if odo_total or locid is null
+     * @throws NumberFormatException if any non-null field does not parse to an integer
+     * @throws RDBKeyNotFoundException
+     * @throws IllegalArgumentException
+     * @throws NumberFormatException
+     */
+    TStop(RDBAdapter db, final TStopGas tsg, final String odo_total,
+		final String time_stop, final String time_cont, final String locid)
+    	throws RDBKeyNotFoundException, IllegalArgumentException, NumberFormatException
+    {
+    	super(db, tsg.id);
+    	if ((odo_total == null) || (locid == null))
+    		throw new IllegalArgumentException("required but null");
+    	this.odo_total = Integer.parseInt(odo_total);
+    	if (time_stop != null)
+    		this.time_stop = Integer.parseInt(time_stop);
+    	if (time_cont != null)
+    		this.time_continue = Integer.parseInt(time_cont);
+    	this.locid = Integer.parseInt(locid);
+    }
+
+    /**
      * Existing record: Fill our obj fields from db-record string contents.
      * @param db  connection
      * @param rec  field contents, as returned by db.getRows(FIELDS_AND_ID); last element is _id
@@ -276,9 +321,10 @@ public class TStop extends RDBRecord
      * Fill our obj fields from db-record string contents.
      * @param rec  field contents, as returned by db.getRow(FIELDS) or db.getRows(FIELDS_AND_ID)
      * @throws IllegalArgumentException if locat is null; locat is rec[10]
+     * @throws NumberFormatException if an integer string can't be parsed
      */
     private void initFields(final String[] rec)
-    	throws IllegalArgumentException
+    	throws IllegalArgumentException, NumberFormatException
     {
 		tripid = Integer.parseInt(rec[0]);  // FK
     	if (rec[1] != null)
@@ -312,7 +358,7 @@ public class TStop extends RDBRecord
      * call {@link #insert(RDBAdapter)}.
      *<P>
      * If this TStop is to begin a new trip (with <tt>trip_odo</tt> == 0),
-     * call {@link #TStop(Trip, int, int, Location, String, String)
+     * call {@link #TStop(Trip, int, int, Location, String, String)}
      * instead of this constructor.
      *
      * @param trip   Trip containing this stop; it must be committed, with a valid tripID

@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  Copyright (C) 2010 Jeremy D Monin <jdmonin@nand.net>
+ *  Copyright (C) 2010-2011 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,6 +18,8 @@
  */
 
 package org.shadowlands.roadtrip.db;
+
+import java.util.Vector;
 
 /**
  * In-memory representation, and database access for,
@@ -46,6 +48,25 @@ public class TStopGas extends RDBRecord
     private static final String[] FIELDS_AND_ID =
     { "quant", "price_per", "price_total", "fillup", "vid", "gas_brandgrade_id", "_id" };
 
+    /** All of our fields, and a few TStop fields, for {@link #recentGasForVehicle(RDBAdapter, Vehicle)} */
+    private static final String[] FIELDS_AND_ID_AND_TSTOP_SOME =
+    { "g.quant", "g.price_per", "g.price_total", "g.fillup", "g.vid", "g.gas_brandgrade_id", "g._id",
+    	"ts." + TStop.FIELD_ODO_TOTAL,
+    	"ts." + TStop.FIELD_TIME_STOP,
+    	"ts." + TStop.FIELD_TIME_CONTINUE,
+    	"ts." + TStop.FIELD_LOCID
+    };
+
+    /** Field offset within {@link #FIELDS_AND_ID_AND_TSTOP_SOME} */
+    private static final int FIELDNUM_TSTOP_ODO_TOTAL = FIELDS_AND_ID.length,
+        FIELDNUM_TSTOP_TIME_STOP = FIELDNUM_TSTOP_ODO_TOTAL + 1,
+        FIELDNUM_TSTOP_TIME_CONTINUE = FIELDNUM_TSTOP_TIME_STOP + 1,
+        FIELDNUM_TSTOP_LOCID = FIELDNUM_TSTOP_TIME_CONTINUE + 1;
+
+    /** Where-clause to join with {@link TStop} for use in {@link #recentGasForVehicle(RDBAdapter, Vehicle) */
+    private static final String WHERE_VID_AND_JOIN_TSTOP =
+    	"vid = ? and g._id = ts._id";
+
     /**
      * The TStop that we're related to.
      * May be null if this TStopGas was already in the database;
@@ -68,6 +89,58 @@ public class TStopGas extends RDBRecord
      * If not <tt>null</tt>, its ID must == {@link gas_brandgrade_id}.
      */
     public transient GasBrandGrade gas_brandgrade;
+
+    /**
+     * Find recent gas stops for this vehicle in the database.
+     *<P>
+     * Note that each returned {@link TStopGas} has all fields from the database,
+     * but its {@link #getTStop()} has only a few fields:
+     * ID, total odometer, stop time, continue time, and location ID.
+     * The trip ID and other fields are not filled by this query,
+     * so do not use that TStop object for other purposes than gas information.
+     * The TStopGas.{@link #gas_brandgrade} convenience field is also not filled here.
+     *
+     * @param db  db connection
+     * @param veh  retrieve for this vehicle
+     * @return Gas stops for this vehicle, most recent first, or null if none
+     * @throws IllegalStateException if db is null or not open, or if an unexpected result parse error occurs
+     */
+    public static Vector<TStopGas> recentGasForVehicle(RDBAdapter db, final Vehicle veh)
+    	throws IllegalStateException
+    {
+    	// select g.*, ts.odo_total, ts.time_stop, ts.time_cont, ts.locid
+    	//    from tstop_gas g, tstop ts
+    	//    where g.vid=2 and g._id=ts._id
+    	//    order by g._id desc limit 5;
+    	if (db == null)
+    		throw new IllegalStateException("db null");
+    	Vector<String[]> sv = db.getRows
+			(TABNAME + " g, " + TStop.TABNAME + " ts",
+			  WHERE_VID_AND_JOIN_TSTOP,
+			  new String[]{ Integer.toString(veh.getID()) },
+			  FIELDS_AND_ID_AND_TSTOP_SOME, "g._id DESC");
+		// TODO LIMIT n
+		if (sv == null)
+			return null;
+		final int L = sv.size();
+		Vector<TStopGas> tsgv = new Vector<TStopGas>(L);
+		try
+		{
+			for (int i = 0; i < L; ++i)
+			{
+				TStopGas tsg = new TStopGas(null);
+				final String[] s = sv.elementAt(i); 
+		    	tsg.initFields(s);
+				tsg.setTStop(new TStop
+					(db, tsg, s[FIELDNUM_TSTOP_ODO_TOTAL], s[FIELDNUM_TSTOP_TIME_STOP],
+					 s[FIELDNUM_TSTOP_TIME_CONTINUE], s[FIELDNUM_TSTOP_LOCID]));
+		    	tsgv.addElement(tsg);
+			}
+		} catch (Throwable t) {
+			throw new IllegalStateException("Problem parsing query results", t);
+		}
+		return tsgv;
+    }
 
     /** Constructor for creating a new record, before field contents are known.
      * 
@@ -115,7 +188,7 @@ public class TStopGas extends RDBRecord
     	gas_brandgrade_id = (rec[5] != null)
     		? Integer.parseInt(rec[5])
 			: 0 ;
-    	if (rec.length == 7)
+    	if (rec.length >= 7)
     		id = Integer.parseInt(rec[6]);
 	}
 

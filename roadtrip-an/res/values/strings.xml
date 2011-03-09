@@ -102,8 +102,11 @@
 <!-- specific activities' texts -->
 <!--                            -->
 <string name="android_startup_starting">Starting up...</string>
+<string name="logbook_recent_gas_nonefound">No recent Gas Stops found for this vehicle.</string>
+<string name="logbook_recent_gas_text">Recent Gas Stops for Vehicle</string>
 <string name="logbook_show__title">View Logbook</string>
 <string name="logbook_show__earlier_trips">^ Earlier Trips ^</string>
+<string name="logbook_show__recent_gas">Recent Gas</string>
 <string name="main_text">Main Screen</string>
 <string name="main_cancel_are_you_sure">Are you sure you want to cancel the current trip?</string>
 <string name="main_cancel_cannot_with_stops">Cannot cancel a trip with stops; use End Trip instead.</string>

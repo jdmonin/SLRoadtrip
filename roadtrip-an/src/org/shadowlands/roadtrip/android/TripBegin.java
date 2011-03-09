@@ -354,7 +354,7 @@ public class TripBegin extends Activity
 	private void updateStartDateButton()
 	{
 		if (fmt_dow_shortdate == null)
-			fmt_dow_shortdate = Misc.buildDateFormatDOWShort(this);
+			fmt_dow_shortdate = Misc.buildDateFormatDOWShort(this, true);
 
 		// update btn text to current startTime:
 		btnStartTimeDate.setText(DateFormat.format(fmt_dow_shortdate, startTime));

@@ -85,7 +85,7 @@ public class LogbookRecentGas extends Activity
 
 	/**
 	 * date formatter for use by {@link DateFormat#format(CharSequence, Calendar)},
-	 * initialized via {@link Misc#buildDateFormatDOWShort(Context)}.
+	 * initialized via {@link Misc#buildDateFormatDOWShort(Context, boolean)}.
 	 */
 	private StringBuffer fmt_dow_shortdate;
 
@@ -135,7 +135,7 @@ _id|quant|price_per|price_total|fillup|station|vid|gas_brandgrade_id|odo_total|t
 				locCache = new TIntObjectHashMap<Location>();
 				gasCache = new TIntObjectHashMap<GasBrandGrade>();
 				if (fmt_dow_shortdate == null)
-					fmt_dow_shortdate = Misc.buildDateFormatDOWShort(this);
+					fmt_dow_shortdate = Misc.buildDateFormatDOWShort(this, false);
 
 				final int L = gstop.size();
 				gasRows = new ArrayList<String>(L);

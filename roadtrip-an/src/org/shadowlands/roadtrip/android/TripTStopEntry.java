@@ -595,7 +595,7 @@ public class TripTStopEntry extends Activity
 	private void updateDateButtons(final int which)
 	{
 		if (fmt_dow_shortdate == null)
-			fmt_dow_shortdate = Misc.buildDateFormatDOWShort(this);
+			fmt_dow_shortdate = Misc.buildDateFormatDOWShort(this, true);
 
 		// update btn text to current times:
 		if (which != 2)

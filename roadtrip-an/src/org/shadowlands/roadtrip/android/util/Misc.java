@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  Copyright (C) 2010 Jeremy D Monin <jdmonin@nand.net>
+ *  Copyright (C) 2010-2011 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -32,12 +32,13 @@ public abstract class Misc
 
 	/**
 	 * DateFormatter (day-of-week + short date) for use by {@link DateFormat#format(CharSequence, Calendar)}.
-	 * Format will be like: Day-of-week\nshort-date
+	 * Format will be: Day-of-week\nshort-date  or  Day-of-week short-date
 	 *<P>
 	 * @param ctx calling context, to get user's current date format
-	 * @return a StringBuffer usable in <tt>format</tt>
+	 * @param twoLines  If true, format includes <tt>\n</tt> between day of week and short date.
+	 * @return a StringBuffer usable in <tt>DateFormat.format</tt>
 	 */
-	public static StringBuffer buildDateFormatDOWShort(Context ctx)
+	public static StringBuffer buildDateFormatDOWShort(Context ctx, final boolean twoLines)
 	{
 		// note use of android.text.format.DateFormat,
 		// not java.text.DateFormat, throughout.
@@ -50,7 +51,10 @@ public abstract class Misc
 		fmt_dow_shortdate.append(da);
 		fmt_dow_shortdate.append(da);
 		fmt_dow_shortdate.append(qu);
-		fmt_dow_shortdate.append('\n');
+		if (twoLines)
+			fmt_dow_shortdate.append('\n');
+		else
+			fmt_dow_shortdate.append(' ');
 		fmt_dow_shortdate.append(qu);
 		// year-month-date will be 3 chars: yMd, Mdy, etc
 		final char[] ymd_order = DateFormat.getDateFormatOrder(ctx);

@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  Copyright (C) 2010 Jeremy D Monin <jdmonin@nand.net>
+ *  Copyright (C) 2010-2011 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -65,7 +65,7 @@ public class BackupsMain extends Activity
 
 	/**
 	 * date formatter for use by {@link DateFormat#format(CharSequence, Calendar)},
-	 * initialized via {@link Misc#buildDateFormatDOWShort(Context)}.
+	 * initialized via {@link Misc#buildDateFormatDOWShort(Context, boolean)}.
 	 */
 	private StringBuffer fmt_dow_shortdate;
 
@@ -145,8 +145,9 @@ public class BackupsMain extends Activity
 			tvTimeOfLast.setText(R.string.backups_main_no_previous);
 		} else {
 			if (fmt_dow_shortdate == null)
-				fmt_dow_shortdate = Misc.buildDateFormatDOWShort(this);
+				fmt_dow_shortdate = Misc.buildDateFormatDOWShort(this, false);
 			StringBuffer sb = new StringBuffer(getResources().getString(R.string.backups_main_last_bkuptime));
+			sb.append(' ');
 			sb.append(DateFormat.format(fmt_dow_shortdate, lasttime * 1000L));
 			tvTimeOfLast.setText(sb);
 		}

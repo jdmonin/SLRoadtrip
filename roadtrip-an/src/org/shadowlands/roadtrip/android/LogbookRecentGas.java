@@ -21,44 +21,36 @@ package org.shadowlands.roadtrip.android;
 
 import gnu.trove.TIntObjectHashMap;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Vector;
 
 import org.shadowlands.roadtrip.R;
-import org.shadowlands.roadtrip.android.util.DBBackup;
 import org.shadowlands.roadtrip.android.util.Misc;
-import org.shadowlands.roadtrip.db.AppInfo;
 import org.shadowlands.roadtrip.db.GasBrandGrade;
 import org.shadowlands.roadtrip.db.Location;
 import org.shadowlands.roadtrip.db.RDBAdapter;
-import org.shadowlands.roadtrip.db.RDBKeyNotFoundException;
-import org.shadowlands.roadtrip.db.RDBSchema;
 import org.shadowlands.roadtrip.db.Settings;
 import org.shadowlands.roadtrip.db.TStop;
 import org.shadowlands.roadtrip.db.TStopGas;
 import org.shadowlands.roadtrip.db.Vehicle;
-import org.shadowlands.roadtrip.db.ViaRoute;
 import org.shadowlands.roadtrip.db.android.RDBOpenHelper;
 import org.shadowlands.roadtrip.model.LogbookTableModel;
 
 import android.app.Activity;
+import android.content.Context;
 import android.os.Bundle;
-import android.os.Environment;
 import android.text.format.DateFormat;
-import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 /**
- * Activity listing recent gas stops for the current vehicle.
+ * Activity listing recent gas stops for the current vehicle (up to 40).
  *
  * @author jdmonin
  */
@@ -90,8 +82,9 @@ public class LogbookRecentGas extends Activity
 	private StringBuffer fmt_dow_shortdate;
 
 	/**
+	 * Get data for up to 40 recent gas stops.
 	 * Called when the activity is first created.
-	 * Calls {@link #populateRecentGasList(RDBAdapter)}.
+	 * Calls {@link #populateRecentGasList(RDBAdapter, int)}.
 	 */
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -103,14 +96,14 @@ public class LogbookRecentGas extends Activity
 	    lvGasStopsList.setOnItemClickListener(this);
 
 		RDBAdapter db = new RDBOpenHelper(this);
-		populateRecentGasList(db);
+		populateRecentGasList(db, 40);  // LIMIT 40
 		db.close();
 	}
 
 	/**
 	 * List the recent gas stops for the current vehicle.
 	 */
-	private void populateRecentGasList(RDBAdapter db)
+	private void populateRecentGasList(RDBAdapter db, final int limit)
 	{
 		String[] gaslist;
 		Vehicle currV = Settings.getCurrentVehicle(db, false);
@@ -129,7 +122,7 @@ _id|quant|price_per|price_total|fillup|station|vid|gas_brandgrade_id|odo_total|t
 		{
 			tvTopText.setText(currV.toString());
 
-			Vector<TStopGas> gstop = TStopGas.recentGasForVehicle(db, currV);
+			Vector<TStopGas> gstop = TStopGas.recentGasForVehicle(db, currV, limit);
 			if (gstop != null)
 			{
 				locCache = new TIntObjectHashMap<Location>();

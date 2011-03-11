@@ -190,7 +190,7 @@ public class RDBOpenHelper
 	 * Returns null if no rows are found.
 	 *<P>
 	 * <tt>kf</tt> must not be null; if you want all rows in the table, use
-	 * {@link #getRows(String, String, String[], String[], String)} instead.
+	 * {@link #getRows(String, String, String[], String[], String, int)} instead.
 	 *
 	 * @param tabname Table to query
 	 * @param kf  Key fieldname; must not be null.
@@ -199,15 +199,16 @@ public class RDBOpenHelper
 	 * @param kv  Key value; must not be null
 	 * @param fieldnames  Field names to return
 	 * @param orderby  Order-by field(s), or null; may contain "desc" for sorting
+	 * @param limit  Maximum number of rows to return, or 0 for no limit
 	 * @return  Corresponding field values to field names, or null if errors or if table not found.
 	 *       Field values are returned in the order specified in <tt>fields[]</tt>.
 	 *       If any field is null or not in the table, that element is null.
 	 * @throws IllegalArgumentException if <tt>kf</tt> or <tt>kv</tt> null
 	 * @throws IllegalStateException if conn has been closed
-	 * @see #getRows(String, String, String[], String[], String)
+	 * @see #getRows(String, String, String[], String[], String, int)
 	 */
 	public Vector<String[]> getRows
-	    (final String tabname, final String kf, final String kv, final String[] fieldnames, final String orderby)
+	    (final String tabname, final String kf, final String kv, final String[] fieldnames, final String orderby, final int limit)
 	    throws IllegalArgumentException, IllegalStateException
     {
 		if (kf == null)
@@ -220,7 +221,7 @@ public class RDBOpenHelper
 		else 
 			where = kf + "=?";
 
-		return getRows(tabname, where, new String[]{ kv }, fieldnames, orderby); 
+		return getRows(tabname, where, new String[]{ kv }, fieldnames, orderby, limit); 
     }
 
 	/**
@@ -234,15 +235,16 @@ public class RDBOpenHelper
 	 * @param whereArgs  Strings to bind against each <tt>?</tt> in <tt>where</tt>, or null if <tt>where</tt> has none of those
 	 * @param fieldnames  Field names to return
 	 * @param orderby  Order-by field(s) sql clause, or null; may contain "desc" for sorting
+	 * @param limit  Maximum number of rows to return, or 0 for no limit
 	 * @return  Corresponding field values to field names, or null if errors or if table not found.
 	 *       Field values are returned in the order specified in <tt>fields[]</tt>.
 	 *       If any field is null or not in the table, that element is null.
 	 * @throws IllegalArgumentException if <tt>whereArgs</tt> != null, but <tt>where</tt> == null
 	 * @throws IllegalStateException if conn has been closed
-	 * @see #getRows(String, String, String, String[], String)
+	 * @see #getRows(String, String, String, String[], String, int)
 	 */
 	public Vector<String[]> getRows
-	    (final String tabname, final String where, final String[] whereArgs, final String[] fieldnames, final String orderby)
+	    (final String tabname, final String where, final String[] whereArgs, final String[] fieldnames, final String orderby, final int limit)
 	    throws IllegalArgumentException, IllegalStateException
 	{
 		if ((whereArgs != null) && (where == null))
@@ -250,7 +252,8 @@ public class RDBOpenHelper
 		if (db == null)
 			db = getWritableDatabase();  // TODO chk exceptions
 
-		Cursor dbqc = db.query(tabname, fieldnames, where, whereArgs, null, null, orderby);
+		final String limitStr = (limit == 0) ? null : Integer.toString(limit);
+		Cursor dbqc = db.query(tabname, fieldnames, where, whereArgs, null, null, orderby, limitStr);
 		Vector<String[]> rv;
     	if (dbqc.moveToFirst())
     	{

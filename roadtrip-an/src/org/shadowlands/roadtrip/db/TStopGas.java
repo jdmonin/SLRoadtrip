@@ -48,7 +48,7 @@ public class TStopGas extends RDBRecord
     private static final String[] FIELDS_AND_ID =
     { "quant", "price_per", "price_total", "fillup", "vid", "gas_brandgrade_id", "_id" };
 
-    /** All of our fields, and a few TStop fields, for {@link #recentGasForVehicle(RDBAdapter, Vehicle)} */
+    /** All of our fields, and a few TStop fields, for {@link #recentGasForVehicle(RDBAdapter, Vehicle, int)} */
     private static final String[] FIELDS_AND_ID_AND_TSTOP_SOME =
     { "g.quant", "g.price_per", "g.price_total", "g.fillup", "g.vid", "g.gas_brandgrade_id", "g._id",
     	"ts." + TStop.FIELD_ODO_TOTAL,
@@ -63,7 +63,7 @@ public class TStopGas extends RDBRecord
         FIELDNUM_TSTOP_TIME_CONTINUE = FIELDNUM_TSTOP_TIME_STOP + 1,
         FIELDNUM_TSTOP_LOCID = FIELDNUM_TSTOP_TIME_CONTINUE + 1;
 
-    /** Where-clause to join with {@link TStop} for use in {@link #recentGasForVehicle(RDBAdapter, Vehicle) */
+    /** Where-clause to join with {@link TStop} for use in {@link #recentGasForVehicle(RDBAdapter, Vehicle, int) */
     private static final String WHERE_VID_AND_JOIN_TSTOP =
     	"vid = ? and g._id = ts._id";
 
@@ -102,10 +102,11 @@ public class TStopGas extends RDBRecord
      *
      * @param db  db connection
      * @param veh  retrieve for this vehicle
+     * @param limit  maximum number of gas stops to return, or 0 for no limit
      * @return Gas stops for this vehicle, most recent first, or null if none
      * @throws IllegalStateException if db is null or not open, or if an unexpected result parse error occurs
      */
-    public static Vector<TStopGas> recentGasForVehicle(RDBAdapter db, final Vehicle veh)
+    public static Vector<TStopGas> recentGasForVehicle(RDBAdapter db, final Vehicle veh, final int limit)
     	throws IllegalStateException
     {
     	// select g.*, ts.odo_total, ts.time_stop, ts.time_cont, ts.locid
@@ -118,8 +119,7 @@ public class TStopGas extends RDBRecord
 			(TABNAME + " g, " + TStop.TABNAME + " ts",
 			  WHERE_VID_AND_JOIN_TSTOP,
 			  new String[]{ Integer.toString(veh.getID()) },
-			  FIELDS_AND_ID_AND_TSTOP_SOME, "g._id DESC");
-		// TODO LIMIT n
+			  FIELDS_AND_ID_AND_TSTOP_SOME, "g._id DESC", limit);
 		if (sv == null)
 			return null;
 		final int L = sv.size();
@@ -129,8 +129,10 @@ public class TStopGas extends RDBRecord
 			for (int i = 0; i < L; ++i)
 			{
 				TStopGas tsg = new TStopGas(null);
-				final String[] s = sv.elementAt(i); 
+				final String[] s = sv.elementAt(i);
 		    	tsg.initFields(s);
+		    	if (s[FIELDNUM_TSTOP_LOCID] == null)  // workaround for old tstop data
+		    		s[FIELDNUM_TSTOP_LOCID] = "0";    // from before locid was required
 				tsg.setTStop(new TStop
 					(db, tsg, s[FIELDNUM_TSTOP_ODO_TOTAL], s[FIELDNUM_TSTOP_TIME_STOP],
 					 s[FIELDNUM_TSTOP_TIME_CONTINUE], s[FIELDNUM_TSTOP_LOCID]));

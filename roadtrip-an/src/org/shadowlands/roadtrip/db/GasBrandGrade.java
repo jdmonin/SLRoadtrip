@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  Copyright (C) 2010 Jeremy D Monin <jdmonin@nand.net>
+ *  Copyright (C) 2010-2011 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -45,7 +45,7 @@ public class GasBrandGrade extends RDBRecord
      */
     public static GasBrandGrade[] getAll(RDBAdapter db)
     {
-		Vector<String[]> gbg = db.getRows(TABNAME, null, (String[]) null, FIELDS_AND_ID, VALFIELD);
+		Vector<String[]> gbg = db.getRows(TABNAME, null, (String[]) null, FIELDS_AND_ID, VALFIELD, 0);
     	if (gbg == null)
     		return null;
 

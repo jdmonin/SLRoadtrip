@@ -156,7 +156,7 @@ public class TStop extends RDBRecord
     	if (db == null)
     		throw new IllegalStateException("db null");
     	Vector<String[]> sv = db.getRows
-    	    (TABNAME, FIELD_TRIPID, Integer.toString(trip.getID()), FIELDS_AND_ID, "_id");
+    	    (TABNAME, FIELD_TRIPID, Integer.toString(trip.getID()), FIELDS_AND_ID, "_id", 0);
     	if (sv == null)
     		return null;
 
@@ -192,7 +192,7 @@ public class TStop extends RDBRecord
     	Vector<String[]> ts = db.getRows
     		(TABNAME,
     		 WHERE_TRIPID_AND_ODOTRIP, new String[]{ Integer.toString(t.id) },
-    		 FIELDS_AND_ID, "_id");
+    		 FIELDS_AND_ID, "_id", 0);
     	if (ts == null)
     		return null;  // Inconsistency, should not occur; likewise, size > 1 should not occur
 
@@ -226,9 +226,9 @@ public class TStop extends RDBRecord
 		if (db == null)
 			throw new IllegalStateException("dbConn null");
 
-		// TODO: "LIMIT 1" if not ignoreIfNoTime
 		Vector<String[]> sv = db.getRows
-		    (TABNAME, FIELD_TRIPID, Integer.toString(tripID), FIELDS_AND_ID, "_id DESC");
+		    (TABNAME, FIELD_TRIPID, Integer.toString(tripID), FIELDS_AND_ID, "_id DESC",
+    		 ignoreIfNoTime ? 0 : 1);  // "LIMIT 1" if not ignoreIfNoTime
 		if (sv == null)
 			return null;
 
@@ -273,7 +273,7 @@ public class TStop extends RDBRecord
     /**
      * Existing record, only some fields, from {@link TStopGas} db query:
      * Fill our obj fields from db-record string contents.
-     * For use by {@link TStopGas#recentGasForVehicle(RDBAdapter, Vehicle)}.
+     * For use by {@link TStopGas#recentGasForVehicle(RDBAdapter, Vehicle, int)}.
      * Very limited use, because (for example) the {@link Trip} field isn't filled.
      * @param db  connection
      * @param tsg  TStopGas associated with this stop; it must be committed, with a valid ID
@@ -293,8 +293,10 @@ public class TStop extends RDBRecord
     	throws RDBKeyNotFoundException, IllegalArgumentException, NumberFormatException
     {
     	super(db, tsg.id);
-    	if ((odo_total == null) || (locid == null))
-    		throw new IllegalArgumentException("required but null");
+    	if (odo_total == null)
+    		throw new IllegalArgumentException("null odo_total");
+    	if (locid == null)
+    		throw new IllegalArgumentException("null locid");
     	this.odo_total = Integer.parseInt(odo_total);
     	if (time_stop != null)
     		this.time_stop = Integer.parseInt(time_stop);

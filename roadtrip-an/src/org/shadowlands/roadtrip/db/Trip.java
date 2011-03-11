@@ -140,7 +140,7 @@ public class Trip extends RDBRecord
     	if (db == null)
     		throw new IllegalStateException("db null");
     	Vector<String[]> sv = db.getRows
-    	    (TABNAME, "vid", Integer.toString(veh.getID()), FIELDS_AND_ID, "time_start");
+    	    (TABNAME, "vid", Integer.toString(veh.getID()), FIELDS_AND_ID, "time_start", 0);
     	if (sv == null)
     		return null;
 
@@ -192,7 +192,7 @@ public class Trip extends RDBRecord
 			final String[] whereArgs = {
 				Integer.toString(t0), Integer.toString(t1), vIDstr
 			};
-			sv = db.getRows(TABNAME, WHERE_TIME_START_AND_VID, whereArgs, FIELDS_AND_ID, "time_start");
+			sv = db.getRows(TABNAME, WHERE_TIME_START_AND_VID, whereArgs, FIELDS_AND_ID, "time_start", 0);
 			if (sv == null)
 			{
 				if (! searchBeyondWeeks)
@@ -282,7 +282,7 @@ public class Trip extends RDBRecord
 			Integer.toString(t0), Integer.toString(t1), vIDstr
 		};
 		Vector<String[]> sv = db.getRows
-			(TABNAME, WHERE_TIME_START_AND_VID, whereArgs, FIELDS_AND_ID, FIELD_TIME_START);
+			(TABNAME, WHERE_TIME_START_AND_VID, whereArgs, FIELDS_AND_ID, FIELD_TIME_START, 0);
 
 		return sv;
 	}
@@ -323,8 +323,8 @@ public class Trip extends RDBRecord
     		throw new IllegalStateException("db null");
     	final String where = (wantsLocal) ? WHERE_VID_AND_NOT_ROADTRIP : WHERE_VID_AND_IS_ROADTRIP;
     	Vector<String[]> sv = db.getRows
-    		(TABNAME, where, new String[]{ Integer.toString(veh.getID()) }, FIELDS_AND_ID, "time_start DESC");
-    	// TODO LIMIT 1 or LIMIT n
+    		(TABNAME, where, new String[]{ Integer.toString(veh.getID()) }, FIELDS_AND_ID, "time_start DESC", 1);
+    		// LIMIT 1
     	if (sv == null)
     		return null;
     	try

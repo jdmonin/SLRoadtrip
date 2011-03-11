@@ -54,7 +54,7 @@ public class Person extends RDBRecord
     		kf = null;
     		kv = null;
     	}
-		Vector<String[]> names = db.getRows(TABNAME, kf, kv, FIELDS_AND_ID, "name COLLATE NOCASE");
+		Vector<String[]> names = db.getRows(TABNAME, kf, kv, FIELDS_AND_ID, "name COLLATE NOCASE", 0);
     	if (names == null)
     		return null;
 

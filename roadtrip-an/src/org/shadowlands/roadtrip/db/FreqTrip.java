@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  Copyright (C) 2010 Jeremy D Monin <jdmonin@nand.net>
+ *  Copyright (C) 2010-2011 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -94,7 +94,7 @@ public class FreqTrip extends RDBRecord
     	if (db == null)
     		throw new IllegalStateException("db null");
     	Vector<String[]> sv = db.getRows
-    	    (TABNAME, "start_locid", Integer.toString(locID), FIELDS_AND_ID, "_id");  // TODO sorting
+    	    (TABNAME, "start_locid", Integer.toString(locID), FIELDS_AND_ID, "_id", 0);  // TODO sorting
     	// TODO nonLocal
     	if (sv == null)
     		return null;
@@ -130,7 +130,7 @@ public class FreqTrip extends RDBRecord
     	if (db == null)
     		throw new IllegalStateException("db null");
     	Vector<String[]> sv = db.getRows
-    	    (TABNAME, "a_id", Integer.toString(areaID), FIELDS_AND_ID, "_id");  // TODO sorting
+    	    (TABNAME, "a_id", Integer.toString(areaID), FIELDS_AND_ID, "_id", 0);  // TODO sorting
     	// TODO nonLocal
     	if (sv == null)
     		return null;

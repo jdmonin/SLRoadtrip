@@ -163,7 +163,7 @@ public class TStopGas extends RDBRecord
 					continue;
 
 	    		// Look for previous fillup, calculate effic_dist and effic_quant.
-	    		// Higher i are older.
+	    		// Higher i are earlier stops.
 	    		int quant = tsg.quant;
 	    		int odo = 0;  // if still 0 after iprev loop, no fill-ups found
 	    		int iprev;
@@ -402,7 +402,8 @@ public class TStopGas extends RDBRecord
 	 * Calculate the efficiency and add to this stringbuffer, if available
 	 * and calculated by {@link #recentGasForVehicle(RDBAdapter, Vehicle, int)}.
 	 * Format is "##.#" for mpg, or "##.##" for L/100km.
-	 * @param sb  Use this stringbuffer; if null, a new one is created and returned.
+	 * @param sb  Use this stringbuffer; if null, a new one is created and returned
+	 *     unless {@link #effic_dist} is 0 or {@link #effic_quant} is 0.
 	 * @param v  used for number of decimal places, currency symbol
 	 * @param fmtPer100  Calculate as L/100km or gal/100mi, not mpg or km/L
 	 * @return  the stringbuffer with efficiency number appended,
@@ -413,6 +414,9 @@ public class TStopGas extends RDBRecord
 	{
 		if ((effic_dist == 0) || (effic_quant == 0))
 			return sb;
+
+		if (sb == null)
+			sb = new StringBuffer();
 		float dist = effic_dist / 10f;  // Convert from 10ths
 		float quant = effic_quant * (float) Math.pow(10, -v.fuel_qty_deci);
 		float effic;

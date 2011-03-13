@@ -91,6 +91,14 @@ public class TStopGas extends RDBRecord
     public transient GasBrandGrade gas_brandgrade;
 
     /**
+     * Convenience field, not stored in database, used in fuel
+     * efficiency calcs between fill-ups.  Calculated in
+     * {@link #recentGasForVehicle(RDBAdapter, Vehicle, int)}.
+     * 0 for non-{@link #fillup} stops or when not calculated.
+     */
+    public transient int effic_quant, effic_dist;
+
+    /**
      * Find recent gas stops for this vehicle in the database.
      *<P>
      * Note that each returned {@link TStopGas} has all fields from the database,
@@ -98,13 +106,19 @@ public class TStopGas extends RDBRecord
      * ID, total odometer, stop time, continue time, and location ID.
      * The trip ID and other fields are not filled by this query,
      * so do not use that TStop object for other purposes than gas information.
-     * The TStopGas.{@link #gas_brandgrade} convenience field is also not filled here.
+     *<P>
+     * The {@link #effic_quant} and {@link #effic_dist} fields are calculated
+     * for each {@link #fillup} gas stop after the oldest, by looking at the
+     * distance and quantity since the previous fill-up.
+     *<P>
+     * The TStopGas.{@link #gas_brandgrade} convenience field is not filled here.
      *
      * @param db  db connection
      * @param veh  retrieve for this vehicle
      * @param limit  maximum number of gas stops to return, or 0 for no limit
      * @return Gas stops for this vehicle, most recent first, or null if none
      * @throws IllegalStateException if db is null or not open, or if an unexpected result parse error occurs
+     * @see #efficToStringBuffer(boolean, StringBuffer, Vehicle)
      */
     public static Vector<TStopGas> recentGasForVehicle(RDBAdapter db, final Vehicle veh, final int limit)
     	throws IllegalStateException
@@ -138,6 +152,42 @@ public class TStopGas extends RDBRecord
 					 s[FIELDNUM_TSTOP_TIME_CONTINUE], s[FIELDNUM_TSTOP_LOCID]));
 		    	tsgv.addElement(tsg);
 			}
+
+			// Now that we have all TSGs and TStops,
+			// we can calculate effic_dist and effic_quant.
+			// List is reverse chrono: Higher i are earlier.
+			for (int i = 0; i < L; ++i)
+			{
+				TStopGas tsg = tsgv.elementAt(i);
+				if (! tsg.fillup)
+					continue;
+
+	    		// Look for previous fillup, calculate effic_dist and effic_quant.
+	    		// Higher i are older.
+	    		int quant = tsg.quant;
+	    		int odo = 0;  // if still 0 after iprev loop, no fill-ups found
+	    		int iprev;
+	    		for (iprev = i + 1; iprev < L; ++iprev)
+	    		{
+	    			TStopGas prev = tsgv.elementAt(iprev);
+	    			if (! prev.fillup)
+	    			{
+	    				quant += prev.quant;
+	    			} else {
+		    			odo = prev.ts.getOdo_total();
+	    				break;  // found prev fill-up
+	    			}
+	    		}
+	    		if (odo != 0)
+	    		{
+	    			tsg.effic_dist = tsg.ts.getOdo_total() - odo;
+	    			tsg.effic_quant = quant;
+	    		}
+
+	    		// For next iteration, skip to prev fill-up:
+	    		i = iprev - 1;  
+	    	}
+
 		} catch (Throwable t) {
 			throw new IllegalStateException("Problem parsing query results", t);
 		}
@@ -190,6 +240,8 @@ public class TStopGas extends RDBRecord
     	gas_brandgrade_id = (rec[5] != null)
     		? Integer.parseInt(rec[5])
 			: 0 ;
+		effic_dist = 0;
+		effic_quant = 0;
     	if (rec.length >= 7)
     		id = Integer.parseInt(rec[6]);
 	}
@@ -346,12 +398,43 @@ public class TStopGas extends RDBRecord
 		ts = tstop;
 	}
 
+	/**
+	 * Calculate the efficiency and add to this stringbuffer, if available
+	 * and calculated by {@link #recentGasForVehicle(RDBAdapter, Vehicle, int)}.
+	 * Format is "##.#" for mpg, or "##.##" for L/100km.
+	 * @param sb  Use this stringbuffer; if null, a new one is created and returned.
+	 * @param v  used for number of decimal places, currency symbol
+	 * @param fmtPer100  Calculate as L/100km or gal/100mi, not mpg or km/L
+	 * @return  the stringbuffer with efficiency number appended,
+	 *     or do nothing if {@link #effic_dist} or {@link #effic_quant} is 0.
+	 * @see #toStringBuffer(Vehicle)
+	 */
+	public StringBuffer efficToStringBuffer(final boolean fmtPer100, StringBuffer sb, Vehicle v)
+	{
+		if ((effic_dist == 0) || (effic_quant == 0))
+			return sb;
+		float dist = effic_dist / 10f;  // Convert from 10ths
+		float quant = effic_quant * (float) Math.pow(10, -v.fuel_qty_deci);
+		float effic;
+		if (fmtPer100)
+		{
+			effic = (quant * 100f) / dist;
+			sb.append(String.format("%.2f", effic));
+		} else {
+			effic = dist / quant;
+			sb.append(String.format("%.1f", effic));
+		}
+
+		return sb;
+	}
+
 	/** format is: "[partial:] quant @ price-per [totalprice] [gas_brandgrade]".
 	 *<P>
 	 * If {@link #gas_brandgrade} != <tt>null</tt> and its ID matches {@link #gas_brandgrade_id},
 	 * the brand/grade name will be placed into the string buffer.
 	 *
 	 *  @param v  used for number of decimal places, currency symbol
+	 *  @see #efficToStringBuffer(boolean, StringBuffer, Vehicle)
 	 */
 	public StringBuffer toStringBuffer(Vehicle v)
 	{

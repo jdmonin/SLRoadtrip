@@ -57,7 +57,7 @@ import android.widget.Toast;
 public class LogbookRecentGas extends Activity
 	implements OnItemClickListener
 {
-	// db is not kept open, so we can backup/restore, so no RDBAdapter field.
+	// db is not kept open, so no RDBAdapter field.
 
 	private TextView tvTopText;
 	private ListView lvGasStopsList;
@@ -177,6 +177,16 @@ _id|quant|price_per|price_total|fillup|station|vid|gas_brandgrade_id|odo_total|t
 					}
 
 					sb.append(getTStopLocDescr(ts, db));
+
+					if ((tsg.effic_dist != 0) && (tsg.effic_quant != 0))
+					{
+						// TODO pref to specify format: mpg, g/100mi, L/100km, km/L
+						sb.append("\n");
+						tsg.efficToStringBuffer(false, sb, currV);
+						sb.append(" mpg, ");
+						tsg.efficToStringBuffer(true, sb, currV);
+						sb.append(" gal/100mi");
+					}
 
 					gasRows.add(sb.toString());
 

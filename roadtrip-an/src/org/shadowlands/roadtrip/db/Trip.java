@@ -887,6 +887,15 @@ public class Trip extends RDBRecord
 	}
 
 	/**
+	 * Is this trip a road trip, between 2 {@link GeoArea}s?
+	 * @return true if {@link #getRoadtripEndAreaID()} != 0
+	 */
+	public boolean isRoadtrip()
+	{
+		return (roadtrip_end_aid != 0);
+	}
+
+	/**
 	 * Is this trip based on a {@link FreqTrip}?
 	 * @see #getFreqTripID()
 	 */

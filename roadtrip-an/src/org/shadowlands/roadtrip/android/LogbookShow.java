@@ -35,6 +35,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -119,6 +120,15 @@ public class LogbookShow extends Activity
 			if (btnEarlier != null)
 				btnEarlier.setVisibility(View.GONE);
 		}
+
+		// Scroll to bottom (most recent)
+		final ScrollView sv = (ScrollView) findViewById(R.id.logbook_show_triplist_scroll);
+		if (sv != null)
+			sv.post(new Runnable() {
+				public void run() {
+					sv.fullScroll(ScrollView.FOCUS_DOWN);
+				}
+			});
 	}
 
 	/**

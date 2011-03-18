@@ -2,7 +2,7 @@
 <!--
  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
 
- Copyright (C) 2010 Jeremy D Monin (jdmonin@nand.net)
+ Copyright (C) 2010-2011 Jeremy D Monin (jdmonin@nand.net)
 
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
@@ -18,6 +18,7 @@
  along with this program.  If not, see http://www.gnu.org/licenses/ .
  -->
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+	android:id="@+id/trip_tstop_scrollview"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     >
@@ -70,6 +71,33 @@
 		    android:id="@+id/trip_tstop_time_stop"
 			android:layout_width="fill_parent"
 			android:layout_height="wrap_content" />
+    </TableRow>
+    <TableRow>
+		<TextView android:id="@+id/trip_tstop_area_label"
+		    android:layout_width="wrap_content" 
+		    android:layout_height="fill_parent" 
+		    android:text="@string/trip_tstop_entry_geo_area"
+		    android:textSize="12sp"
+		    />
+	    <LinearLayout android:id="@+id/trip_tstop_area_buttons"
+	    	android:orientation="horizontal"
+		    android:layout_span="2" 
+			android:layout_width="fill_parent"
+			android:layout_height="wrap_content" >
+			<Button android:id="@+id/trip_tstop_btn_area_start"
+			    android:layout_width="wrap_content" 
+			    android:layout_height="fill_parent"
+			    android:onClick="onClick_BtnAreaStart" />
+			<Button android:id="@+id/trip_tstop_btn_area_none"
+				android:text="@string/none"
+			    android:layout_width="wrap_content" 
+			    android:layout_height="fill_parent"
+			    android:onClick="onClick_BtnAreaNone" />
+			<Button android:id="@+id/trip_tstop_btn_area_end"
+			    android:layout_width="wrap_content" 
+			    android:layout_height="fill_parent"
+			    android:onClick="onClick_BtnAreaEnd" />
+		</LinearLayout>
     </TableRow>
     <TableRow>
 		<TextView

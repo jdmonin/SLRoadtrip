@@ -66,6 +66,7 @@
 <string name="new_vehicle">New vehicle...</string>
 <string name="no_earlier_trips_found">No earlier trips were found.</string>
 <string name="no_frequent_trips_found">No frequent trips were found.</string>
+<string name="none">none</string>
 <string name="not_found">Not found.</string>
 <string name="original_odometer">Original\nodometer</string>
 <string name="other_stop">Other stop...</string>
@@ -132,9 +133,11 @@
 <string name="trip_tstart_geoarea_prompt">Please enter the destination\'s geographic area.</string>
 <string name="trip_tstart_loc_not_freq">If the location changes, you won\'t be using the frequent trip. Do you want to go back to the frequent trip\'s location?</string>
 <string name="trip_tstart_loc_prompt">Please enter the starting location.</string>
+<string name="trip_tstop_entry_geo_area">Geographic\narea</string>
 <string name="trip_tstop_entry_prompt">Choose what to record about this stop.</string>
 <string name="trip_tstop_entry_totalodo_low">The total odometer is lower than %1$d, the previous stop\'s value.</string>
 <string name="trip_tstop_entry_tripodo_low">The trip odometer is lower than %1$.1f, the previous stop\'s value.</string>
+<string name="trip_tstop_entry_roadtrip_end_geoarea">To end the roadtrip, this stop must be within the ending geo area.</string>
 <string name="trip_tstop_gas_atprice"> \@ Price</string>
 <string name="trip_tstop_gas_brand_grade">Brand/\nGrade</string>
 <string name="trip_tstop_gas_perunit">/ unit</string>

@@ -60,6 +60,7 @@ import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.ListAdapter;
 import android.widget.ListView;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.TimePicker;
 import android.widget.Toast;
@@ -112,6 +113,13 @@ public class TripTStopEntry extends Activity
 
 	/** all locations in the area, or null; set from {@link #currA} in {@link #onCreate(Bundle)} */
 	private Location[] areaLocs;
+
+	/**
+	 * the areaID of locations in {@link #areaLocs}, or -1.
+	 * For roadtrips, also the currently selected area ID of
+	 * {@link #btnRoadtripArea_chosen}. 
+	 */
+	private int areaLocs_areaID;
 
 	/**
 	 * true if {@link #EXTRAS_FLAG_ENDTRIP} was set when creating the activity.
@@ -231,6 +239,21 @@ public class TripTStopEntry extends Activity
 	private StringBuffer fmt_dow_shortdate;
 	private Button btnStopTimeDate, btnContTimeDate;
 
+	/** null unless currT.isRoadtrip */
+	private Button btnRoadtripAreaStart, btnRoadtripAreaNone, btnRoadtripAreaEnd;
+
+	/**
+	 * For roadtrip, the currently hilighted geoarea button.
+	 * Null, or one of {@link #btnRoadtripAreaStart},
+	 * {@link #btnRoadtripAreaNone} or {@link #btnRoadtripAreaEnd}.
+	 * @see #hilightRoadtripAreaButton(int, boolean, int)
+	 * @see #areaLocs_areaID
+	 * @see #onClick_BtnAreaStart(View)
+	 * @see #onClick_BtnAreaNone(View)
+	 * @see #onClick_BtnAreaEnd(View)
+	 */
+	private Button btnRoadtripArea_chosen;
+
 	/** Called when the activity is first created.
 	 * See {@link #updateTextAndButtons()} for remainder of init work,
 	 * which includes checking the current driver/vehicle/trip
@@ -270,7 +293,8 @@ public class TripTStopEntry extends Activity
 		btnContTimeDate = (Button) findViewById(R.id.trip_tstop_btn_cont_date);
 		btnGas = (Button) findViewById(R.id.trip_tstop_btn_gas);
 
-		if (! checkCurrentDriverVehicleTripSettings())  // set currA, currV, currT, etc
+		// set currA, currV, currT, maybe currTS and prevLocObj
+		if (! checkCurrentDriverVehicleTripSettings())
 		{
         	Toast.makeText(getApplicationContext(),
                 "Current area/driver/vehicle/trip not found in db",
@@ -330,32 +354,11 @@ public class TripTStopEntry extends Activity
 			}
 		}
 
-		// Based on current area, set up Location auto-complete
 		loc = (AutoCompleteTextView) findViewById(R.id.trip_tstop_loc);
 		loc.addTextChangedListener(this);
-		{
-			int areaID = 0;  // TODO consider an activity obj field instead; used a few places
-			if (currTS != null)
-				areaID = currTS.getAreaID();
-			if (areaID == 0)
-			{
-				if (! stopEndsTrip)
-				{
-					areaID = currA.getID();
-				} else {
-					areaID = currT.getRoadtripEndAreaID();
-					if (areaID == 0)  // 0 for local trips
-						areaID = currA.getID();
-				}
-			}
-			areaLocs = Location.getAll(db, areaID);
-			if (areaLocs != null)
-			{
-				ArrayAdapter<Location> adapter = new ArrayAdapter<Location>(this, R.layout.list_item, areaLocs);
-				loc.setAdapter(adapter);
-				loc.setOnItemClickListener(this);
-			}
-		}
+		areaLocs_areaID = -1;
+		areaLocs = null;
+		// loc, areaLocs, areaLocs_areaID will be filled soon.
 
 		via = (AutoCompleteTextView) findViewById(R.id.trip_tstop_via);
 		viaListener = new ViaRouteListenerWatcher();
@@ -422,12 +425,49 @@ public class TripTStopEntry extends Activity
 		initTimePicker(stopTime, tp_time_stop);
 		if (contTime != null) 
 			initTimePicker(contTime, tp_time_cont);
+		btnRoadtripArea_chosen = null;  // Will soon be set by calling hilightRoadtripAreaButton
 
 		// Give status, read odometer, etc;
 		// if currTS != null, fill fields from it.
 		updateTextAndButtons();
 		if ((savedInstanceState != null) && savedInstanceState.containsKey(TSTOP_BUNDLE_SAVED_MARKER))
 			onRestoreInstanceState(savedInstanceState);
+
+		// If needed, determine current area.
+		// Based on current area, set up Location auto-complete
+		if (areaLocs_areaID == -1)
+		{
+			if (currTS != null)
+			{
+				areaLocs_areaID = currTS.getAreaID();
+			}
+			else if ((prevLocObj != null) && currT.isRoadtrip() && ! stopEndsTrip)
+			{
+				final int pArea = prevLocObj.getAreaID();
+				if ((pArea == 0)
+					|| (pArea == currT.getAreaID())
+					|| (pArea == currT.getRoadtripEndAreaID()))
+					areaLocs_areaID = pArea;
+			}
+		}
+		if (areaLocs_areaID == -1)
+		{
+			if (! stopEndsTrip)
+			{
+				areaLocs_areaID = currA.getID();
+			} else {
+				areaLocs_areaID = currT.getRoadtripEndAreaID();
+				if (areaLocs_areaID == 0)  // rtrEndAreaID is 0 for local trips
+					areaLocs_areaID = currA.getID();
+			}
+		}
+		areaLocs = Location.getAll(db, areaLocs_areaID);
+		if (areaLocs != null)
+		{
+			ArrayAdapter<Location> adapter = new ArrayAdapter<Location>(this, R.layout.list_item, areaLocs);
+			loc.setAdapter(adapter);
+			loc.setOnItemClickListener(this);
+		}
 
 		// See if we're stopping on a frequent trip:
 		if ((! isCurrentlyStopped) && currT.isFrequent())
@@ -456,6 +496,36 @@ public class TripTStopEntry extends Activity
 				} catch (Throwable e) { } // RDBKeyNotFoundException
 			}
 		}
+
+		// If not roadtrip, hide the area buttons;
+		// otherwise, load their values and hilight if stopped.
+		if (currT.isRoadtrip() && ! stopEndsTrip)
+		{
+			final int gaID_s = currT.getAreaID(),
+				gaID_e = currT.getRoadtripEndAreaID();
+			final GeoArea ga_s, ga_e;
+			try {
+				ga_s = new GeoArea(db, gaID_s);
+				ga_e = new GeoArea(db, gaID_e);
+			} catch (Throwable e) {
+				// TODO not found, inconsistency
+				return;
+			}
+			btnRoadtripAreaStart = (Button) findViewById(R.id.trip_tstop_btn_area_start);
+			btnRoadtripAreaNone = (Button) findViewById(R.id.trip_tstop_btn_area_none);
+			btnRoadtripAreaEnd = (Button) findViewById(R.id.trip_tstop_btn_area_end);
+			btnRoadtripAreaStart.setText(ga_s.getName());
+			btnRoadtripAreaEnd.setText(ga_e.getName());
+			hilightRoadtripAreaButton(areaLocs_areaID, false, 0);
+		} else {
+			View v = findViewById(R.id.trip_tstop_area_label);
+			if (v != null)
+				v.setVisibility(View.GONE);
+
+			v = findViewById(R.id.trip_tstop_area_buttons);
+			if (v != null)
+				v.setVisibility(View.GONE);
+		}		
 	}
 
 	/** set a timepicker's hour and minute, based on a calendar's current time */
@@ -463,6 +533,89 @@ public class TripTStopEntry extends Activity
 	{
 		tp.setCurrentHour(c.get(Calendar.HOUR_OF_DAY));
 		tp.setCurrentMinute(c.get(Calendar.MINUTE));
+	}
+
+	/**
+	 * Hilight the matching button, update {@link #areaLocs_areaID},
+	 * and optionally update related data.
+	 * @param areaID  GeoArea ID to hilight
+	 * @param alsoUpdateData If true, also update currTS,
+	 *   and re-query location fields.  If false, only change the
+	 *   checkmark, {@link #areaLocs_areaID}, and {@link #btnRoadtripArea_chosen}.
+	 * @param confirmChange  User-confirm action, if <tt>alsoUpdateData</tt>,
+	 *   if they've already chosen a Location in another geoarea:
+	 *   <UL>
+	 *   <LI> 0: Ask the user in a popup
+	 *   <LI> 1: Confirm changing to this location in the new area
+	 *   <LI> 2: Clear the Location and ViaRoute fields
+	 *   </UL>
+	 *   The buttons of the popup in choice 0 will either call this method again,
+	 *   with <tt>confirmChange</tt> 1 or 2, or cancel changing the GeoArea.
+	 */
+	private void hilightRoadtripAreaButton
+		(final int areaID, final boolean alsoUpdateData, final int confirmChange)
+	{
+		if (areaLocs_areaID == areaID)
+			return;
+
+		final boolean locObjIsDifferentArea = alsoUpdateData
+			&& (locObj != null) && (areaID != locObj.getAreaID())
+			&& ((locObjCreatedHere == null) || (locObj.getID() != locObjCreatedHere.getID()));
+		if (locObjIsDifferentArea && (confirmChange == 0))
+		{
+			// TODO popup to confirm changing it; see confirmChange javadoc
+
+			return;  // <--- Early return: Popup to confirm ---
+		}
+
+		if (btnRoadtripArea_chosen != null)
+			// un-hilight previous
+			btnRoadtripArea_chosen.setCompoundDrawablesWithIntrinsicBounds
+			  (0, 0, 0, 0);
+
+		Button toChg;
+		if (areaID == currT.getAreaID())
+			toChg = btnRoadtripAreaStart;
+		else if (areaID == currT.getRoadtripEndAreaID())
+			toChg = btnRoadtripAreaEnd;
+		else if (areaID == 0)
+			toChg = btnRoadtripAreaNone;
+		else
+			toChg = null;
+
+		areaLocs_areaID = areaID;
+		btnRoadtripArea_chosen = toChg;
+
+		if (toChg != null)
+			toChg.setCompoundDrawablesWithIntrinsicBounds
+			  (R.drawable.checkmark_green19, 0, 0, 0);
+
+		if (! alsoUpdateData)
+		{
+			return;   // <--- Early return: No data changes ---
+		}
+
+		final Editable prevLocText;
+		if (locObjIsDifferentArea && (confirmChange == 2))
+		{
+			prevLocText = null;  // clear
+			locObj = null;
+			updateViaRouteAutocomplete(null, false);
+		} else {
+			prevLocText = loc.getText();  // ok to keep text & obj
+		}
+		areaLocs = Location.getAll(db, areaLocs_areaID);
+		if (areaLocs != null)
+		{
+			ArrayAdapter<Location> adapter = new ArrayAdapter<Location>(this, R.layout.list_item, areaLocs);
+			loc.setAdapter(adapter);
+		} else {
+			loc.setAdapter( (ArrayAdapter<Location>) null);
+		}
+		if (prevLocText != null)
+			loc.setText(prevLocText);
+		else
+			loc.setText("");
 	}
 
 	/**
@@ -620,6 +773,24 @@ public class TripTStopEntry extends Activity
 			db.close();
 	}
 
+	/** For roadtrips, update GUI and data from a click on the 'starting geoarea' button. */
+	public void onClick_BtnAreaStart(View v)
+	{
+		hilightRoadtripAreaButton(currT.getAreaID(), true, 0);
+	}
+
+	/** For roadtrips, update GUI and data from a click on the 'no geoarea' button. */
+	public void onClick_BtnAreaNone(View v)
+	{
+		hilightRoadtripAreaButton(0, true, 0);
+	}
+
+	/** For roadtrips, update GUI and data from a click on the 'ending geoarea' button. */
+	public void onClick_BtnAreaEnd(View v)
+	{
+		hilightRoadtripAreaButton(currT.getRoadtripEndAreaID(), true, 0);
+	}
+
 	/**
 	 * Read fields, and record this TStop in the database.
 	 * If continuing from the stop, update {@link Settings#PREV_LOCATION}.
@@ -755,6 +926,33 @@ public class TripTStopEntry extends Activity
 			}
 		}
 
+		// area ID (roadtrips)
+		if (stopEndsTrip && currT.isRoadtrip() && areaLocs_areaID != currT.getRoadtripEndAreaID())
+		{
+			// Scroll to top and show toast
+			final ScrollView sv = (ScrollView) findViewById(R.id.trip_tstop_scrollview);
+			if (sv != null)
+				sv.post(new Runnable() {
+					public void run() {
+						sv.fullScroll(ScrollView.FOCUS_DOWN);
+					}
+				});
+			Toast.makeText(this, R.string.trip_tstop_entry_roadtrip_end_geoarea, Toast.LENGTH_SHORT).show();
+			return;  // <--- Early return: Wrong area ID ---
+		}
+		// areaID is set in onCreate, but check just in case.
+		if ((areaLocs_areaID <= 0) && (stopEndsTrip || ! currT.isRoadtrip()))
+		{
+			if (! stopEndsTrip)
+			{
+				areaLocs_areaID = currA.getID();
+			} else {
+				areaLocs_areaID = currT.getRoadtripEndAreaID();
+				if (areaLocs_areaID == 0)  // rtrEndAreaID is 0 for local trips
+					areaLocs_areaID = currA.getID();
+			}
+		}
+
 		/**
 		 * Done checking field contents, time to update the db.
 		 * tsid is the TStop ID we'll create or update here.
@@ -763,7 +961,10 @@ public class TripTStopEntry extends Activity
 
 		// Get or create the Location db record,
 		// if we don't already have it
-		if ((locObj == null) || ! locObj.getLocation().equalsIgnoreCase(locat))
+		if ((locObj == null)
+			|| (! locObj.getLocation().equalsIgnoreCase(locat))
+			|| ((areaLocs_areaID != locObj.getAreaID())
+				&& ((locObjCreatedHere == null) || (locObj.getID() != locObjCreatedHere.getID()))))
 		{
 			final int locatIdx = loc.getListSelection();
 			ListAdapter la = loc.getAdapter();
@@ -775,30 +976,16 @@ public class TripTStopEntry extends Activity
 			}
 			if (locObj == null)
 			{
-				int areaID = 0;  // TODO consider add an activity obj field instead; used in a few places
-				if (currTS != null)
-					areaID = currTS.getAreaID();
-				if (areaID == 0)
-				{
-					if (! stopEndsTrip)
-					{
-						areaID = currA.getID();
-					} else {
-						areaID = currT.getRoadtripEndAreaID();
-						if (areaID == 0)  // 0 for local trips
-							areaID = currA.getID();
-					}
-				}
 				if (locObjCreatedHere == null)
 				{
-					locObj = new Location(areaID, null, null, locat);
+					locObj = new Location(areaLocs_areaID, null, null, locat);
 					locID = locObj.insert(db);
 					createdLoc = true;
 				} else {
 					// re-use it
 					locObj = locObjCreatedHere;
 					locID = locObj.getID();
-					locObj.setAreaID(areaID);
+					locObj.setAreaID(areaLocs_areaID);
 					locObj.setLocation(locat);
 					locObj.commit();
 				}
@@ -806,6 +993,18 @@ public class TripTStopEntry extends Activity
 		} else {
 			// not null, and text matches: use it
 			locID = locObj.getID();
+
+			if ((locObjCreatedHere != null) && (locID == locObjCreatedHere.getID())
+				&& (areaLocs_areaID != locObjCreatedHere.getAreaID()))
+			{
+				locObjCreatedHere.setAreaID(areaLocs_areaID);
+				locObjCreatedHere.commit();
+
+				// no need to update locObj.areaid field too, because
+				// we're resuming from this stop, and won't be at
+				// locObj next time this activity is called.
+			}
+					
 		}
 		if ((locObjCreatedHere != null) && (locID != locObjCreatedHere.getID()))
 		{
@@ -957,6 +1156,8 @@ public class TripTStopEntry extends Activity
 			int areaID;
 			if (stopEndsTrip)
 				areaID = currT.getRoadtripEndAreaID();  // will be 0 if local trip
+			else if (currT.isRoadtrip() && (areaLocs_areaID != -1))
+				areaID = areaLocs_areaID;  // db contents note: unless stopEndsTrip, tstop.a_id always 0 before March 2011
 			else
 				areaID = 0;
 
@@ -1462,7 +1663,7 @@ public class TripTStopEntry extends Activity
 		}
 		if (vias != null)
 		{
-			// Assert: locObj != null.
+			// Assert: locObj != null, because vias != null.
 
 			ArrayAdapter<ViaRoute> adapter = new ArrayAdapter<ViaRoute>(this, R.layout.list_item, vias);
 			via.setAdapter(adapter);
@@ -1526,12 +1727,17 @@ public class TripTStopEntry extends Activity
 		outState.putBoolean("TCC", tp_time_cont_chk.isChecked());
 		outState.putInt("TSV", (tp_time_stop.getCurrentHour() << 8) | tp_time_stop.getCurrentMinute() );
 		outState.putInt("TCV", (tp_time_cont.getCurrentHour() << 8) | tp_time_cont.getCurrentMinute() );
+		outState.putInt("AID", areaLocs_areaID);
 	}
 
 	/**
 	 * Restore our state after an Android pause or stop.
 	 * Happens here (and not <tt>onCreate</tt>) to ensure the
 	 * initialization is complete before this method is called.
+	 *<P>
+	 * Check {@link #areaLocs_areaID} before and after calling, to see if it changed,
+	 * because this method won't reload the {@link #areaLocs} autocomplete list.
+	 *
 	 * @see #onSaveInstanceState(Bundle)
 	 */
 	@Override
@@ -1552,6 +1758,7 @@ public class TripTStopEntry extends Activity
 		hhmm = inState.getInt("TCV");
 		tp_time_cont.setCurrentHour(hhmm >> 8);
 		tp_time_cont.setCurrentMinute(hhmm & 0xFF);
+		areaLocs_areaID = inState.getInt("AID", -1);
 	}
 
 	/**

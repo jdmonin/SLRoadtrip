@@ -379,7 +379,7 @@ public class TStop extends RDBRecord
      * @param flag_sides  Side-table flags, or 0
      * @param via_id     Street via_route ID from previous tstop's location, or 0
      * @param comment    Comment/description, or null
-     * @throws IllegalArgumentException if <tt>trip</tt> or <tt>locid</tt> or <tt>locat</tt> is bad
+     * @throws IllegalArgumentException if <tt>trip</tt> or <tt>locid</tt> or <tt>locat</tt> or <tt>areaid</tt> is bad
      */
     public TStop(Trip trip, final int odo_total, final int odo_trip,
 		final int time_stop, final int time_continue, final int locid, final int areaid,
@@ -399,6 +399,8 @@ public class TStop extends RDBRecord
     	if (locid <= 0)
     		throw new IllegalArgumentException("empty locid");
     	this.areaid = areaid;
+    	if (areaid < 0)
+    		throw new IllegalArgumentException("bad areaid");
     	this.geo_lat = geo_lat;
     	this.geo_lon = geo_lon;
     	this.flag_sides = flag_sides;
@@ -651,10 +653,13 @@ public class TStop extends RDBRecord
 	/**
 	 * Set the GeoArea field.
 	 * @param a_id  New GeoArea ID, or 0 for null
+	 * @throws IllegalArgumentException if &lt; 0
 	 */
 	public void setAreaID(final int a_id)
 		throws IllegalArgumentException
 	{
+		if (a_id < 0)
+			throw new IllegalArgumentException();
 		areaid = a_id;
 		dirty = true;
 	}

@@ -117,7 +117,10 @@ public class TripTStopEntry extends Activity
 	/**
 	 * the areaID of locations in {@link #areaLocs}, or -1.
 	 * For roadtrips, also the currently selected area ID of
-	 * {@link #btnRoadtripArea_chosen}. 
+	 * {@link #btnRoadtripArea_chosen}.
+	 * 0 is used for all local trips.
+	 * 0 OK for tstops/locations within a roadtrip, but not
+	 * for the start or end tstop/location.
 	 */
 	private int areaLocs_areaID;
 
@@ -927,7 +930,8 @@ public class TripTStopEntry extends Activity
 		}
 
 		// area ID (roadtrips)
-		if (stopEndsTrip && currT.isRoadtrip() && areaLocs_areaID != currT.getRoadtripEndAreaID())
+		if (stopEndsTrip && currT.isRoadtrip()
+			&& (areaLocs_areaID != currT.getRoadtripEndAreaID()))
 		{
 			// Scroll to top and show toast
 			final ScrollView sv = (ScrollView) findViewById(R.id.trip_tstop_scrollview);
@@ -1159,7 +1163,7 @@ public class TripTStopEntry extends Activity
 			else if (currT.isRoadtrip() && (areaLocs_areaID != -1))
 				areaID = areaLocs_areaID;  // db contents note: unless stopEndsTrip, tstop.a_id always 0 before March 2011
 			else
-				areaID = 0;
+				areaID = 0;  // unused in local trip tstops
 
 			int flags = 0;
 			if (! stopEndsTrip)

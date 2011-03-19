@@ -41,7 +41,7 @@ public class Location extends RDBRecord
     private static final String[] FIELDS_AND_ID =
 	    { "a_id", "geo_lat", "geo_lon", "loc_descr", "latest_gas_brandgrade_id", "_id" };
 
-    /** may be unused (-1); foreign key to {@link GeoArea}. */
+    /** May be unused (0); foreign key to {@link GeoArea}. */
     private int area_id;
 
     /** may be null */
@@ -122,7 +122,7 @@ public class Location extends RDBRecord
     	if (rec[0] != null)
     		area_id = Integer.parseInt(rec[0]);  // FK
     	else
-    		area_id = -1;
+    		area_id = 0;
     	geo_lat = rec[1];
     	geo_lon = rec[2];
     	if (rec[3] == null)
@@ -143,15 +143,20 @@ public class Location extends RDBRecord
      * call {@link #insert(RDBAdapter)}.
      *<P>
      *
-     * @param area_id    Area id, or -1
+     * @param area_id    Area id, or 0 for unused
      * @param geo_lat    Latitude, or null
      * @param geo_lon    Longitude, or null
      * @param descr      Description of location; not null
+     * @throws IllegalArgumentException if <tt>descr</tt> is null,
+     *   or if <tt>area_id</tt> is &lt; 0
      */
     public Location(final int area_id,
-    		final String geo_lat, final String geo_lon, final String descr)
+		final String geo_lat, final String geo_lon, final String descr)
+    	throws IllegalArgumentException
     {
     	super();
+    	if (area_id < 0)
+    		throw new IllegalArgumentException("area_id");
     	this.area_id = area_id;
     	this.geo_lat = geo_lat;
     	this.geo_lon = geo_lon;
@@ -202,7 +207,7 @@ public class Location extends RDBRecord
 	{
 		String[] fv =
 		    {
-			Integer.toString(area_id),
+			(area_id != 0) ? Integer.toString(area_id) : null,
 			geo_lat, geo_lon,
 			loc_descr,
 			(latest_gas_brandgrade_id != 0) ? Integer.toString(latest_gas_brandgrade_id) : null
@@ -210,17 +215,21 @@ public class Location extends RDBRecord
 		return fv;
 	}
 
-	/** Get the area ID, or -1 */
+	/** Get the area ID, or 0 if empty/unused. Foreign key to {@link GeoArea}. */
 	public int getAreaID() {
 		return area_id;
 	}
 
 	/**
 	 * Set or clear the area ID.
-	 * @param newArea new area ID, or -1 to clear
+	 * @param newArea new area ID, or 0 to clear
+	 * @throws IllegalArgumentException if <tt>newArea</tt> &lt; 0
 	 */
 	public void setAreaID(final int newArea)
+		throws IllegalArgumentException
 	{
+		if (newArea < 0)
+			throw new IllegalArgumentException();
 		area_id = newArea;
 		dirty = true;
 	}

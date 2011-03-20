@@ -62,6 +62,7 @@
 <string name="make_this_another_frequent_trip">Make this another Frequent Trip...</string>
 <string name="model">Model</string>
 <string name="name">Name</string>
+<string name="new_area">New area</string>
 <string name="new_driver">New driver...</string>
 <string name="new_vehicle">New vehicle...</string>
 <string name="no_earlier_trips_found">No earlier trips were found.</string>
@@ -133,8 +134,11 @@
 <string name="trip_tstart_geoarea_prompt">Please enter the destination\'s geographic area.</string>
 <string name="trip_tstart_loc_not_freq">If the location changes, you won\'t be using the frequent trip. Do you want to go back to the frequent trip\'s location?</string>
 <string name="trip_tstart_loc_prompt">Please enter the starting location.</string>
+<string name="trip_tstop_entry_clear_location">Clear\nlocation</string>
 <string name="trip_tstop_entry_geo_area">Geographic\narea</string>
+<string name="trip_tstop_entry_keep_location">Keep\nlocation</string>
 <string name="trip_tstop_entry_prompt">Choose what to record about this stop.</string>
+<string name="trip_tstop_entry_prompt_geoarea_confirm">You\'ve already chosen a location in the previous area.</string>
 <string name="trip_tstop_entry_totalodo_low">The total odometer is lower than %1$d, the previous stop\'s value.</string>
 <string name="trip_tstop_entry_tripodo_low">The trip odometer is lower than %1$.1f, the previous stop\'s value.</string>
 <string name="trip_tstop_entry_roadtrip_end_geoarea">To end the roadtrip, this stop must be within the ending geo area.</string>

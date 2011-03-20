@@ -41,9 +41,11 @@ import org.shadowlands.roadtrip.db.ViaRoute;
 import org.shadowlands.roadtrip.db.android.RDBOpenHelper;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.DatePickerDialog;
 import android.app.DatePickerDialog.OnDateSetListener;
 import android.app.Dialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
@@ -249,7 +251,7 @@ public class TripTStopEntry extends Activity
 	 * For roadtrip, the currently hilighted geoarea button.
 	 * Null, or one of {@link #btnRoadtripAreaStart},
 	 * {@link #btnRoadtripAreaNone} or {@link #btnRoadtripAreaEnd}.
-	 * @see #hilightRoadtripAreaButton(int, boolean, int)
+	 * @see #hilightRoadtripAreaButton(int, String, boolean, int)
 	 * @see #areaLocs_areaID
 	 * @see #onClick_BtnAreaStart(View)
 	 * @see #onClick_BtnAreaNone(View)
@@ -519,7 +521,7 @@ public class TripTStopEntry extends Activity
 			btnRoadtripAreaEnd = (Button) findViewById(R.id.trip_tstop_btn_area_end);
 			btnRoadtripAreaStart.setText(ga_s.getName());
 			btnRoadtripAreaEnd.setText(ga_e.getName());
-			hilightRoadtripAreaButton(areaLocs_areaID, false, 0);
+			hilightRoadtripAreaButton(areaLocs_areaID, null, false, 0);
 		} else {
 			View v = findViewById(R.id.trip_tstop_area_label);
 			if (v != null)
@@ -542,13 +544,15 @@ public class TripTStopEntry extends Activity
 	 * Hilight the matching button, update {@link #areaLocs_areaID},
 	 * and optionally update related data.
 	 * @param areaID  GeoArea ID to hilight
+	 * @param newAreaText  New GeoArea's name, or null for "none" (no area).
+	 *   Not needed unless <tt>alsoUpdateData</tt>.
 	 * @param alsoUpdateData If true, also update currTS,
 	 *   and re-query location fields.  If false, only change the
 	 *   checkmark, {@link #areaLocs_areaID}, and {@link #btnRoadtripArea_chosen}.
 	 * @param confirmChange  User-confirm action, if <tt>alsoUpdateData</tt>,
 	 *   if they've already chosen a Location in another geoarea:
 	 *   <UL>
-	 *   <LI> 0: Ask the user in a popup
+	 *   <LI> 0: Ask the user in a popup AlertDialog
 	 *   <LI> 1: Confirm changing to this location in the new area
 	 *   <LI> 2: Clear the Location and ViaRoute fields
 	 *   </UL>
@@ -556,9 +560,9 @@ public class TripTStopEntry extends Activity
 	 *   with <tt>confirmChange</tt> 1 or 2, or cancel changing the GeoArea.
 	 */
 	private void hilightRoadtripAreaButton
-		(final int areaID, final boolean alsoUpdateData, final int confirmChange)
+		(final int areaID, String newAreaText, final boolean alsoUpdateData, final int confirmChange)
 	{
-		if (areaLocs_areaID == areaID)
+		if ((areaLocs_areaID == areaID) && alsoUpdateData)
 			return;
 
 		final boolean locObjIsDifferentArea = alsoUpdateData
@@ -566,7 +570,11 @@ public class TripTStopEntry extends Activity
 			&& ((locObjCreatedHere == null) || (locObj.getID() != locObjCreatedHere.getID()));
 		if (locObjIsDifferentArea && (confirmChange == 0))
 		{
-			// TODO popup to confirm changing it; see confirmChange javadoc
+			// popup to confirm changing it; see confirmChange javadoc
+			if (newAreaText == null)
+				newAreaText = getResources().getString(R.string.none);
+			showRoadtripAreaButtonConfirmDialog
+				(areaID, locObj.toString(), newAreaText, via.getText().toString());
 
 			return;  // <--- Early return: Popup to confirm ---
 		}
@@ -619,6 +627,64 @@ public class TripTStopEntry extends Activity
 			loc.setText(prevLocText);
 		else
 			loc.setText("");
+	}
+
+	/**
+	 * Called from {@link #hilightRoadtripAreaButton(int, String, boolean, int)}
+	 * when the user should confirm changing the GeoArea.
+	 * @param areaID  GeoArea ID to confirm changing to
+	 * @param locText  Location text currently entered, or null
+	 * @param newAreaText  New GeoArea's name
+	 * @param viaText  ViaRoute text currently entered, or null
+	 */
+	private void showRoadtripAreaButtonConfirmDialog
+		(final int areaID, final String locText, final String newAreaText, final String viaText)
+	{
+    	AlertDialog.Builder alert = new AlertDialog.Builder(this);
+    	alert.setTitle(R.string.confirm);
+    	// Build popup message, including texts passed in
+    	{
+			String txt = getResources().getString(R.string.trip_tstop_entry_prompt_geoarea_confirm);
+        	StringBuffer sb = new StringBuffer(txt);
+        	if ((locText != null) && (locText.length() > 0))
+        	{
+        		sb.append("\n");
+        		sb.append(getResources().getString(R.string.location));
+        		sb.append(": ");
+        		sb.append(locText);
+        	}
+    		sb.append("\n");
+    		sb.append(getResources().getString(R.string.new_area));
+    		sb.append(": ");
+    		sb.append(newAreaText);        		
+        	if ((viaText != null) && (viaText.length() > 0))
+        	{
+        		sb.append("\n");
+        		sb.append(getResources().getString(R.string.via_route));
+        		sb.append(": ");
+        		sb.append(viaText);
+        	}
+        	alert.setMessage(sb);
+    	}
+    	alert.setPositiveButton(R.string.trip_tstop_entry_keep_location, new DialogInterface.OnClickListener() {
+	    	  public void onClick(DialogInterface dialog, int whichButton)
+	    	  {
+	    		  hilightRoadtripAreaButton(areaID, newAreaText, true, 1);  // keep location, change area
+	    	  }
+	    	});
+    	alert.setNegativeButton(R.string.trip_tstop_entry_clear_location, new DialogInterface.OnClickListener() {
+	    	  public void onClick(DialogInterface dialog, int whichButton)
+	    	  {
+	    		  hilightRoadtripAreaButton(areaID, newAreaText, true, 2);  // clear location, change area
+	    	  }
+	    	});
+    	alert.setNeutralButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+	    	  public void onClick(DialogInterface dialog, int whichButton)
+	    	  {
+	    		  // don't change the area, do nothing
+	    	  }
+	    	});
+    	alert.show();
 	}
 
 	/**
@@ -779,19 +845,21 @@ public class TripTStopEntry extends Activity
 	/** For roadtrips, update GUI and data from a click on the 'starting geoarea' button. */
 	public void onClick_BtnAreaStart(View v)
 	{
-		hilightRoadtripAreaButton(currT.getAreaID(), true, 0);
+		hilightRoadtripAreaButton
+			(currT.getAreaID(), btnRoadtripAreaStart.getText().toString(), true, 0);
 	}
 
 	/** For roadtrips, update GUI and data from a click on the 'no geoarea' button. */
 	public void onClick_BtnAreaNone(View v)
 	{
-		hilightRoadtripAreaButton(0, true, 0);
+		hilightRoadtripAreaButton(0, null, true, 0);
 	}
 
 	/** For roadtrips, update GUI and data from a click on the 'ending geoarea' button. */
 	public void onClick_BtnAreaEnd(View v)
 	{
-		hilightRoadtripAreaButton(currT.getRoadtripEndAreaID(), true, 0);
+		hilightRoadtripAreaButton
+			(currT.getRoadtripEndAreaID(), btnRoadtripAreaEnd.getText().toString(), true, 0);
 	}
 
 	/**

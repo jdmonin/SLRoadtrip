@@ -59,6 +59,7 @@ public class LogbookShow extends Activity
 
 	private RDBAdapter db = null;
 	private TextView tvHeader, tvContent;
+	private ScrollView sv;
 	private Vehicle currV;
 	private LogbookTableModel ltm;
 
@@ -122,7 +123,7 @@ public class LogbookShow extends Activity
 		}
 
 		// Scroll to bottom (most recent)
-		final ScrollView sv = (ScrollView) findViewById(R.id.logbook_show_triplist_scroll);
+		sv = (ScrollView) findViewById(R.id.logbook_show_triplist_scroll);
 		if (sv != null)
 			sv.post(new Runnable() {
 				public void run() {
@@ -182,10 +183,19 @@ public class LogbookShow extends Activity
 
 		if (TS_ROW_LP == null)
 			TS_ROW_LP = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.FILL_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-		TextView tv = new TextView(this);
+		final TextView tv = new TextView(this);
 		tv.setLayoutParams(TS_ROW_LP);
 		tv.setText(sbTrips);
 		tripListParentLayout.addView(tv, tripListBtnEarlierPosition + 1);
+
+		// Once layout is done, scroll to the bottom of the newly added tv
+		// so that what's currently visible, stays visible.
+		if (sv != null)
+			sv.post(new Runnable() {
+				public void run() {
+					sv.scrollTo(0, tv.getMeasuredHeight());
+				}
+			});
 	}
 
 	@Override

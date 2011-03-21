@@ -70,16 +70,16 @@ public interface RDBAdapter
 	 *
 	 * @param tabname Table to query
 	 * @param kf  Key fieldname; must not be null.
-	 *              To get all rows except <tt>kf</tt> &lt;&gt; <tt>kv</tt>,
+	 *              To get all rows except <tt>kv</tt> (<tt>kf</tt> &lt;&gt; <tt>kv</tt>),
 	 *              the <tt>kf</tt> string should contain &lt;&gt; after the fieldname.
-	 * @param kv  Key value; must not be null
+	 * @param kv  Key value; can be null for "is NULL". For "is not NULL", place &lt;&gt; into kf.
 	 * @param fieldnames  Field names to return
 	 * @param orderby  Order-by field(s), or null; may contain "desc" for sorting
 	 * @param limit  Maximum number of rows to return, or 0 for no limit
 	 * @return  Corresponding field values to field names, or null if errors or if table not found.
 	 *       Field values are returned in the order specified in <tt>fields[]</tt>.
 	 *       If any field is null or not in the table, that element is null.
-	 * @throws IllegalArgumentException if <tt>kf</tt> or <tt>kv</tt> null
+	 * @throws IllegalArgumentException if <tt>kf</tt> is null
 	 * @throws IllegalStateException if conn has been closed
 	 * @see #getRows(String, String, String[], String[], String, int)
 	 */

@@ -191,15 +191,15 @@ public class RDBJDBCAdapter implements RDBAdapter
 	 *
 	 * @param tabname Table to query
 	 * @param kf  Key fieldname; must not be null.
-	 *              To get all rows except <tt>kf</tt> &lt;&gt; <tt>kv</tt>,
+	 *              To get all rows except <tt>kv</tt> (<tt>kf</tt> &lt;&gt; <tt>kv</tt>),
 	 *              the <tt>kf</tt> string should contain &lt;&gt; after the fieldname.
-	 * @param kv  Key value; must not be null
+	 * @param kv  Key value; can be null for "is NULL". For "is not NULL", place &lt;&gt; into kf.
 	 * @param fieldnames  Field names to return
 	 * @param orderby  Order-by field(s), or null; may contain "desc" for sorting
 	 * @return  Corresponding field values to field names, or null if errors or if table not found.
 	 *       Field values are returned in the order specified in <tt>fields[]</tt>.
 	 *       If any field is null or not in the table, that element is null.
-	 * @throws IllegalArgumentException if <tt>kf</tt> or <tt>kv</tt> null
+	 * @throws IllegalArgumentException if <tt>kf</tt> is null
 	 * @throws IllegalStateException if conn has been closed
 	 * @see #getRows(String, String, String[], String[], String)
 	 */
@@ -209,8 +209,6 @@ public class RDBJDBCAdapter implements RDBAdapter
 	{
 		if (kf == null)
 			throw new IllegalArgumentException("null kf");
-		if (kv == null)
-			throw new IllegalArgumentException("null kv");
 		if (conn == null)
 			throw new IllegalStateException("conn not open");
 	
@@ -219,11 +217,23 @@ public class RDBJDBCAdapter implements RDBAdapter
 		{
 			StringBuffer sb = new StringBuffer("select * from ");
 			sb.append(tabname);
-			if (kv != null)
+			if (kf != null)
 			{
 				sb.append(" where ");
-				sb.append(kf);
-				sb.append(" = ? ");
+				if (kf.endsWith("<>"))
+				{
+					sb.append(kf.substring(0, kf.length() - 2));
+					if (kv != null)
+						sb.append(" <> ? ");
+					else
+						sb.append(" is not null ");
+				} else {
+					sb.append(kf);
+					if (kv != null)
+						sb.append(" = ? ");
+					else
+						sb.append(" is null ");
+				}
 			}
 			if (orderby != null)
 			{

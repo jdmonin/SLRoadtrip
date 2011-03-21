@@ -17,12 +17,12 @@
  You should have received a copy of the GNU General Public License
  along with this program.  If not, see http://www.gnu.org/licenses/ .
 
- Menu for LogbookShow activity
+ Menu for LogbookRecentGas activity
  -->
 <menu
   xmlns:android="http://schemas.android.com/apk/res/android">
-<item android:id="@+id/menu_logbook_recent_gas"
-	android:title="@string/logbook_show__recent_gas"
-	android:icon="@android:R/drawable/ic_menu_recent_history"
+<item android:id="@+id/menu_logbook_gas_otherv"
+	android:title="@string/other_vehicle"
+	android:icon="@android:R/drawable/ic_menu_more"
 	/>
 </menu>

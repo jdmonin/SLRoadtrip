@@ -38,9 +38,15 @@ import org.shadowlands.roadtrip.db.android.RDBOpenHelper;
 import org.shadowlands.roadtrip.model.LogbookTableModel;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.database.sqlite.SQLiteException;
 import android.os.Bundle;
 import android.text.format.DateFormat;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
@@ -51,16 +57,22 @@ import android.widget.Toast;
 
 /**
  * Activity listing recent gas stops for the current vehicle (up to 40).
+ * Another vehicle's gas stops can be displayed by calling {@link #populateRecentGasList(RDBAdapter, Vehicle, int)}.
  *
  * @author jdmonin
  */
 public class LogbookRecentGas extends Activity
 	implements OnItemClickListener
 {
-	// db is not kept open, so no RDBAdapter field.
+	private RDBAdapter db = null;
 
 	private TextView tvTopText;
 	private ListView lvGasStopsList;
+
+	/** For {@link #askVehicleChange()}'s list */
+	private Vehicle[] allV;
+	/** Currently showing vehicle ID, or -1 */
+	private int v_id;
 
 	/**
 	 * {@link Location} cache. Each item is its own key.
@@ -84,29 +96,36 @@ public class LogbookRecentGas extends Activity
 	/**
 	 * Get data for up to 40 recent gas stops.
 	 * Called when the activity is first created.
-	 * Calls {@link #populateRecentGasList(RDBAdapter, int)}.
+	 * Calls {@link #populateRecentGasList(RDBAdapter, Vehicle, int)}.
 	 */
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 	    super.onCreate(savedInstanceState);
+	    db = new RDBOpenHelper(this);
 	    setContentView(R.layout.logbook_recent_gas);
 
 	    tvTopText = (TextView) findViewById(R.id.logbook_recent_gas_toptext);
 	    lvGasStopsList = (ListView) findViewById(R.id.logbook_recent_gas_list);
 	    lvGasStopsList.setOnItemClickListener(this);
 
-		RDBAdapter db = new RDBOpenHelper(this);
-		populateRecentGasList(db, 40);  // LIMIT 40
-		db.close();
+		db = new RDBOpenHelper(this);
+		Vehicle currV = Settings.getCurrentVehicle(db, false);
+		populateRecentGasList(db, currV, 40);  // LIMIT 40
 	}
 
 	/**
-	 * List the recent gas stops for the current vehicle.
+	 * List the recent gas stops for a vehicle.
 	 */
-	private void populateRecentGasList(RDBAdapter db, final int limit)
+	private void populateRecentGasList(RDBAdapter db, Vehicle ve, final int limit)
 	{
+		if (v_id != -1)
+	        setTitle(getResources().getString(R.string.logbook_show__recent_gas) + ": " + ve.toString());
+		else
+			setTitle(getTitle() + ": " + ve.toString());  // first call
+
+		v_id = ve.getID();
+
 		String[] gaslist;
-		Vehicle currV = Settings.getCurrentVehicle(db, false);
 		/**
 		 * 
 sqlite> select g.*, ts.odo_total,ts.time_stop,ts.locid from tstop_gas g, tstop ts where g.vid=2 and g._id=ts._id order by g._id desc limit 5;
@@ -118,11 +137,11 @@ _id|quant|price_per|price_total|fillup|station|vid|gas_brandgrade_id|odo_total|t
 657|12845|3269|4199|1||2|1|373170|1298142953|1
 		 */
 		ArrayList<String> gasRows = null;
-		if (currV != null)
+		if (ve != null)
 		{
-			tvTopText.setText(currV.toString());
+			tvTopText.setText(ve.toString());
 
-			Vector<TStopGas> gstop = TStopGas.recentGasForVehicle(db, currV, limit);
+			Vector<TStopGas> gstop = TStopGas.recentGasForVehicle(db, ve, limit);
 			if (gstop != null)
 			{
 				locCache = new TIntObjectHashMap<Location>();
@@ -160,7 +179,7 @@ _id|quant|price_per|price_total|fillup|station|vid|gas_brandgrade_id|odo_total|t
 					sb.append(ts.getOdo_total() / 10);
 					sb.append(' ');
 
-					sb.append(tsg.toStringBuffer(currV));  // quant @ price-per [totalprice] [gas_brandgrade]
+					sb.append(tsg.toStringBuffer(ve));  // quant @ price-per [totalprice] [gas_brandgrade]
 					if (gradeID != 0)
 						tsg.gas_brandgrade = null;  // clear the reference
 
@@ -182,9 +201,9 @@ _id|quant|price_per|price_total|fillup|station|vid|gas_brandgrade_id|odo_total|t
 					{
 						// TODO pref to specify format: mpg, g/100mi, L/100km, km/L
 						sb.append("\n");
-						tsg.efficToStringBuffer(false, sb, currV);
+						tsg.efficToStringBuffer(false, sb, ve);
 						sb.append(" mpg, ");
-						tsg.efficToStringBuffer(true, sb, currV);
+						tsg.efficToStringBuffer(true, sb, ve);
 						sb.append(" gal/100mi");
 					}
 
@@ -240,9 +259,71 @@ _id|quant|price_per|price_total|fillup|station|vid|gas_brandgrade_id|odo_total|t
 	}
 
 	@Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+		getMenuInflater().inflate(R.menu.logbook_gas_menu, menu);
+		return true;
+	}
+
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+	    switch (item.getItemId()) {
+	    case R.id.menu_logbook_gas_otherv:
+	    	askVehicleChange();
+	        return true;
+
+	    default:
+	        return super.onOptionsItemSelected(item);
+	    }
+	}
+
+	/**
+	 * Pop up an AlertDialog to select the vehicle to display.
+	 * If one is chosen, call {@link #populateRecentGasList(RDBAdapter, Vehicle, int)} on it.
+	 */
+	public final void askVehicleChange()
+	{
+		if (allV == null)
+    		allV = Vehicle.getAll(db);
+
+		// Grab currently-showing vehicle, vehicle names
+		int idx = -1;
+		final String[] vNames = new String[allV.length];
+		for (int i = 0; i < allV.length; ++i)
+		{
+			vNames[i] = allV[i].toString();
+			if (v_id == allV[i].getID())
+				idx = i;
+		}
+
+    	AlertDialog.Builder alert = new AlertDialog.Builder(this);
+    	alert.setTitle(R.string.choose_a_vehicle);
+    	alert.setSingleChoiceItems(vNames, idx, new DialogInterface.OnClickListener() {
+    	    public void onClick(DialogInterface dialog, int item) {
+    	        if ((item < 0) || (item >= allV.length))
+    	        	return;
+    	        Vehicle ve = allV[item];
+    	        if (v_id != ve.getID())
+	    	        populateRecentGasList(db, ve, 40);  // LIMIT 40
+    	        dialog.dismiss();
+    	    }
+    	});
+    	alert.show();
+	}
+
+	@Override
+	public void onPause()
+	{
+		super.onPause();
+		if (db != null)
+			db.close();
+	}
+
+	@Override
 	public void onDestroy()
 	{
 		super.onDestroy();
+		if (db != null)
+			db.close();
 	}
 
 	/** When a gas stop is selected in the list */

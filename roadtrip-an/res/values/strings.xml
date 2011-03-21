@@ -31,6 +31,7 @@
 <string name="change_driver_vehicle">Change Driver / Vehicle</string>
 <string name="choose_a_frequent_trip">Choose a frequent trip</string>
 <string name="choose_a_stop">Choose a stop:</string>
+<string name="choose_a_vehicle">Choose a vehicle:</string>
 <string name="confirm">Confirm</string>
 <string name="continue_from_colon">Continue from:</string>
 <string name="create">Create</string>
@@ -71,6 +72,7 @@
 <string name="not_found">Not found.</string>
 <string name="original_odometer">Original\nodometer</string>
 <string name="other_stop">Other stop...</string>
+<string name="other_vehicle">Other vehicle...</string>
 <string name="please_check_the_total_odometer">Please check the total odometer.</string>
 <string name="please_check_the_trip_odometer">Please check the trip odometer.</string>
 <string name="please_enter_the_description">Please enter the description.</string>

@@ -57,7 +57,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	 * The length of this array determines the number of columns.
 	 */
 	public static final String[] COL_HEADINGS
-	    = { "Date", "Time", "", "Odometer", "Trip-O", "Via", "Notes" };
+	    = { "Date", "Time", "", "Odometer", "Trip-O", "Description", "Via" };
 
 	private static final String[][] TEMPLATE_ADD_SIMPLE
 	   = { { null, null, "/", "Start-odo", null, null, "Start at" },
@@ -369,7 +369,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 			final int odo_end = t.getOdo_end();
 
 			// All well-formed trips have 1 or more TStops.
-			Vector<TStop> stops = t.readAllTStops();  // TODO current trip vs this?		
+			Vector<TStop> stops = t.readAllTStops();	// works for current, if addCommittedTStop was called
 			final TStop lastStop = (stops != null) ? stops.lastElement() : null;
 			if (stops != null)
 			{
@@ -418,6 +418,8 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 						else
 							tr[4] = String.format("%.1f", x / 10.0f);
 					}
+
+					// Via
 					final int viaID = ts.getVia_id();
 					ViaRoute vr = null;
 					if (viaID > 0)
@@ -431,12 +433,13 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 							} catch (Throwable e) { }  // RDBKeyNotFoundException
 					}
 					if (vr == null)
-						tr[5] = ts.getVia_route();
+						tr[6] = ts.getVia_route();
 					else
-						tr[5] = vr.getDescr();
-					if (tr[5] != null)
-						tr[5] = "via " + tr[5];
+						tr[6] = vr.getDescr();
+					if (tr[6] != null)
+						tr[6] = "via " + tr[6];
 
+					// Description
 					StringBuffer desc = new StringBuffer(getTStopLocDescr(ts, conn));
 
 					// Look for a gas tstop
@@ -476,11 +479,11 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 					if ((ts == lastStop) && (desc.length() > 0)
 						&& (odo_end != 0))
 						desc.insert(0, "-> ");  // Very last stop: "-> location"
+					tr[5] = desc.toString();
 
 					// Done with this row
-					tr[6] = desc.toString();
-	    			tText.addElement(tr);
-	
+					tText.addElement(tr);
+
 					// start-time (if present)
 					if (ttcont != 0)
 					{
@@ -512,7 +515,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 				else
 					tr[2] = "\\";
 				tr[3] = Integer.toString((int) (odo_end / 10.0f));
-				tr[6] = t.getComment();
+				tr[5] = t.getComment();
 				tText.addElement(tr);
 			}
 		}

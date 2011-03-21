@@ -1270,6 +1270,9 @@ public class TripTStopEntry extends Activity
 			currTS.setLocationID(locID);
 			currTS.setVia_id(viaID);
 			currTS.setComment(comment);
+			if (currT.isRoadtrip() && (areaLocs_areaID != -1)
+				&& (areaLocs_areaID != currTS.getAreaID()))
+				currTS.setAreaID(areaLocs_areaID);
 			currTS.clearTempFlags();
 			// continue-time
 			if ((! stopEndsTrip) && (contTimeSec != 0))

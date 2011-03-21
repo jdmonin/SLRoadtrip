@@ -56,13 +56,14 @@ public class Location extends RDBRecord
     /**
      * Get the Locations currently in the database, by area.
      * @param db  database connection
-     * @param areaID  area ID to filter, or -1 for all locations in all areas
+     * @param areaID  area ID to filter, or -1 for all locations in all areas;
+     *   use 0 for locations in "no area" on roadtrips
      * @return an array of Location objects from the database, ordered by description, or null if none
      */
     public static Location[] getAll(RDBAdapter db, final int areaID)
     {
     	final String kf = (areaID != -1) ? "a_id" : null;
-    	final String kv = (areaID != -1) ? Integer.toString(areaID) : null;
+    	final String kv = (areaID > 0) ? Integer.toString(areaID) : null;
 		Vector<String[]> locs = db.getRows(TABNAME, kf, kv, FIELDS_AND_ID, "loc_descr", 0);
     	if (locs == null)
     		return null;

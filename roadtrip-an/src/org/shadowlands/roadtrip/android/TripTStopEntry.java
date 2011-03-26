@@ -862,6 +862,27 @@ public class TripTStopEntry extends Activity
 			(currT.getRoadtripEndAreaID(), btnRoadtripAreaEnd.getText().toString(), true, 0);
 	}
 
+	/** Show or hide the Via dropdown if available */
+	public void onClick_BtnViaDropdown(View v)
+	{
+		if (loc.getText().length() == 0)
+		{
+			Toast.makeText(this, R.string.please_enter_the_location, Toast.LENGTH_SHORT).show();
+			return;
+		}
+
+		if (via.getAdapter() == null)
+		{
+			Toast.makeText(this, R.string.trip_tstop_entry_no_vias_entered, Toast.LENGTH_SHORT).show();
+			return;
+		}
+
+		if (via.isPopupShowing())
+			via.dismissDropDown();
+		else
+			via.showDropDown();
+	}
+
 	/**
 	 * Read fields, and record this TStop in the database.
 	 * If continuing from the stop, update {@link Settings#PREV_LOCATION}.

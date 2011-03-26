@@ -114,11 +114,30 @@
 			android:layout_height="wrap_content" />
     </TableRow>
     <TableRow>
-		<TextView  
-		    android:layout_width="wrap_content" 
-		    android:layout_height="fill_parent" 
-		    android:text="@string/via_route"
-		    />
+		<LinearLayout
+			android:orientation="vertical"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_margin="0dp"
+			android:gravity="right"
+			>
+			<TextView android:id="@+id/trip_tstop_via_text"
+				android:layout_width="fill_parent"
+				android:layout_height="fill_parent"
+				android:text="@string/via_route"
+				android:clickable="true"
+				android:onClick="onClick_BtnViaDropdown"
+				/>
+			<ImageButton
+				android:src="@android:drawable/arrow_down_float"
+				android:layout_margin="0dp"
+				android:layout_width="26dp"
+				android:layout_height="26dp"
+				android:onClick="onClick_BtnViaDropdown"
+				android:gravity="right"
+				android:padding="3dp"
+				/>
+		</LinearLayout>
 		<AutoCompleteTextView
 		    android:id="@+id/trip_tstop_via"
 		    android:completionThreshold="1"

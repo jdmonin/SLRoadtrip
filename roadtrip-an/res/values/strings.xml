@@ -139,6 +139,7 @@
 <string name="trip_tstop_entry_clear_location">Clear\nlocation</string>
 <string name="trip_tstop_entry_geo_area">Geographic\narea</string>
 <string name="trip_tstop_entry_keep_location">Keep\nlocation</string>
+<string name="trip_tstop_entry_no_vias_entered">No Via Routes entered between these locations.</string>
 <string name="trip_tstop_entry_prompt">Choose what to record about this stop.</string>
 <string name="trip_tstop_entry_prompt_geoarea_confirm">You\'ve already chosen a location in the previous area.</string>
 <string name="trip_tstop_entry_totalodo_low">The total odometer is lower than %1$d, the previous stop\'s value.</string>

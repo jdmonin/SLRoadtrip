@@ -101,6 +101,8 @@ public class TripBegin extends Activity
 	private RadioGroup rbLocGroup;
 	/** continue from prev location */
 	private RadioButton rbLocContinue;
+	/** previous-location textview */
+	private TextView tvLocContinue;
 	/** new-location textfield */
 	private AutoCompleteTextView etLocNew;
 	/** starting date-time */
@@ -165,6 +167,7 @@ public class TripBegin extends Activity
 		odo.setTenthsVisibility(false);
 		rbLocGroup = (RadioGroup) findViewById(R.id.trip_begin_radio_loc_group);
 		rbLocContinue = (RadioButton) findViewById(R.id.trip_begin_radio_loc_cont);
+		tvLocContinue = (TextView) findViewById(R.id.trip_begin_loc_cont_text);
 		etLocNew = (AutoCompleteTextView) findViewById(R.id.trip_begin_loc_new);
 		etLocNew.addTextChangedListener(this);  // for related radiobutton
 		if (isRoadtrip)
@@ -198,6 +201,17 @@ public class TripBegin extends Activity
 			View rtr_row = findViewById(R.id.trip_begin_roadtrip_desti_row);
 			rtr_row.setVisibility(View.GONE);
 		}
+
+		// Update height of starting-location textview to match
+		// the radio button, once those have been drawn.
+		rbLocContinue.post(new Runnable() {
+			public void run() {
+				final int rbHeight = rbLocContinue.getHeight(),
+				          tvHeight = tvLocContinue.getHeight();
+				if (tvHeight < rbHeight)
+					tvLocContinue.setHeight(rbHeight);
+			}
+		});
 
 		// all this will be set, checked in updateDriverVehTripTextAndButtons():
 		prevVId = 0;
@@ -322,7 +336,7 @@ public class TripBegin extends Activity
 				rbLocContinue.setEnabled(true);
 				rbLocGroup.check(R.id.trip_begin_radio_loc_cont);
 				// rbLocContinue.setChecked(true);
-				rbLocContinue.setText(rbLocContinue.getText() + " " + startingPrevTStop.readLocationText());
+				tvLocContinue.setText(tvLocContinue.getText() + " " + startingPrevTStop.readLocationText());
 			}
 
 			// How recent was that vehicle's most recent trip? (Historical Mode)
@@ -425,6 +439,12 @@ public class TripBegin extends Activity
 			etGeoArea.dismissDropDown();
 		else
 			etGeoArea.showDropDown();
+	}
+
+	/** When the 'continue from' text is clicked, select that radio button. */
+	public void onClick_chooseContRadio(View v)
+	{
+		rbLocGroup.check(R.id.trip_begin_radio_loc_cont);
 	}
 
 	/**

@@ -233,14 +233,13 @@ public class Main extends Activity
 		TStop currTS = ((currT != null) ? Settings.getCurrentTStop(db, false) : null);
 		FreqTrip currFT = Settings.getCurrentFreqTrip(db, false);
 
-		StringBuffer txt = new StringBuffer("Current driver: ");
-		txt.append("Current driver: ");
+		StringBuffer txt = new StringBuffer("Driver: ");
 		txt.append(currD.toString());
-		txt.append("\nCurrent vehicle: ");
+		txt.append("\nVehicle: ");
 		txt.append(currV.toString());
 		if (currT == null)
 		{
-			txt.append("\nCurrent area: ");
+			txt.append("\nArea: ");
 			txt.append(currA.toString());
 			txt.append("\n\nNo current trip.");
 			changeDriverOrVeh.setText(R.string.change_driver_vehicle);
@@ -249,7 +248,7 @@ public class Main extends Activity
 			if ((currT != null) && (destAreaID != 0))
 				txt.append("\nRoadtrip start area: ");
 			else
-				txt.append("\nCurrent area: ");
+				txt.append("\nArea: ");
 			txt.append(currA.toString());
 
 			if (destAreaID == 0)

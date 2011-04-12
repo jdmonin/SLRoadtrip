@@ -195,6 +195,8 @@ public class Location extends RDBRecord
 	public void commit()
         throws IllegalStateException, NullPointerException
 	{
+		if (! dirty)
+			return;
 		dbConn.update(TABNAME, id, FIELDS, buildInsertUpdate());
 		dirty = false;
 	}
@@ -266,6 +268,8 @@ public class Location extends RDBRecord
 	 */
 	public void setLatestGasBrandGradeID(final int gas_brandgrade_id)
 	{
+		if (latest_gas_brandgrade_id == gas_brandgrade_id)
+			return;
 		latest_gas_brandgrade_id = gas_brandgrade_id;
 		dirty = true;
 	}

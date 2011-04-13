@@ -200,13 +200,21 @@ public class TripTStopGas extends Activity
 		if (loadFrom == null)
 			return;
 
-		quant_et.setText(loadFrom.getCharSequence(EXTRAS_FIELD_QUANT));
-		perunit_et.setText(loadFrom.getCharSequence(EXTRAS_FIELD_PERUNIT));
-		totalcost_et.setText(loadFrom.getCharSequence(EXTRAS_FIELD_TOTALCOST));
+		CharSequence cs = loadFrom.getCharSequence(EXTRAS_FIELD_QUANT);
+		if (cs != null)
+			quant_et.setText(cs);
+		cs = loadFrom.getCharSequence(EXTRAS_FIELD_PERUNIT);
+		if (cs != null)
+			perunit_et.setText(cs);
+		cs = loadFrom.getCharSequence(EXTRAS_FIELD_TOTALCOST);
+		if (cs != null)
+			totalcost_et.setText(cs);
 		isFillup_chk.setChecked(loadFrom.getBoolean(EXTRAS_FIELD_ISFILLUP, false));
 		// EXTRAS_FIELD_VEH_ID isn't loaded; use currV instead.
 		// That extra is used in saveDBObjFromBundle.
-		brandGrade_at.setText(loadFrom.getCharSequence(EXTRAS_FIELD_BRANDGRADE));
+		cs = loadFrom.getCharSequence(EXTRAS_FIELD_BRANDGRADE);
+		if (cs != null)
+			brandGrade_at.setText(cs);
 		brandGradeObj = null;
 		gbgCreatedHere = false;
 		final int bgid = loadFrom.getInt(EXTRAS_FIELD_BRANDGRADE_ID, 0);

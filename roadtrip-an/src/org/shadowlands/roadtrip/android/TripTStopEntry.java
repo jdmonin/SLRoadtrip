@@ -1470,6 +1470,25 @@ public class TripTStopEntry extends Activity
     	}
     	if (bundleGas != null)
     		i.putExtras(bundleGas);
+    	else if (locObj != null)
+    	{
+    		// If location has a previous GasBrandGrade ID,
+    		// use that as the default.
+    		final int bgid = locObj.getLatestGasBrandGradeID();
+    		if (bgid != 0)
+    		{
+    			try
+    			{
+    				GasBrandGrade gbg = new GasBrandGrade(db, bgid);
+    				Bundle bu = new Bundle();
+    				bu.putInt(TripTStopGas.EXTRAS_FIELD_BRANDGRADE_ID, bgid);
+    				bu.putCharSequence(TripTStopGas.EXTRAS_FIELD_BRANDGRADE, gbg.getName());
+    				i.putExtras(bu);
+    			}
+    			catch (Throwable th) {}
+    			
+    		}
+    	}	
 		startActivityForResult(i, R.id.trip_tstop_btn_gas);
 	}
 

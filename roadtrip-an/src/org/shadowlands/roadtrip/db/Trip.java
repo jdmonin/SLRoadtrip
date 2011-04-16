@@ -144,7 +144,7 @@ public class Trip extends RDBRecord
     	if (sv == null)
     		return null;
 
-		return tripsForVehicle_parse(db, alsoTStops, sv);
+		return parseStringsToTrips(db, alsoTStops, sv);
     }
 
     /**
@@ -214,7 +214,7 @@ public class Trip extends RDBRecord
     		return null;
     	}
 
-    	Vector<Trip> tv = tripsForVehicle_parse(db, alsoTStops, sv);
+    	Vector<Trip> tv = parseStringsToTrips(db, alsoTStops, sv);
     	if (tv == null)
     		return null;
     	else
@@ -287,8 +287,8 @@ public class Trip extends RDBRecord
 		return sv;
 	}
 
-    /** parse String[] to Trips */
-	private static final Vector<Trip> tripsForVehicle_parse
+    /** parse String[] to Trips, optionally also call {@link #readAllTStops()} */
+	private static final Vector<Trip> parseStringsToTrips
 		(RDBAdapter db, final boolean alsoTStops, Vector<String[]> sv)
 	{
 		Vector<Trip> vv = new Vector<Trip>(sv.size());
@@ -1066,7 +1066,7 @@ public class Trip extends RDBRecord
 		 * Initially null.  Filled by
 		 * {@link org.shadowlands.roadtrip.model.LogbookTableModel LogbookTableModel}
 		 * constructor or
-		 * {@link org.shadowlands.roadtrip.model.LogbookTableModel#addEarlierTripWeeks(RDBAdapter) LogbookTableModel.addEarlierTripWeeks(RDBAdapter)}.
+		 * {@link org.shadowlands.roadtrip.model.LogbookTableModel#addEarlierTripWeeks(RDBAdapter) LogbookTableModel.addEarlierTrips(RDBAdapter)}.
 		 */
 		public Vector<String[]> tText;
 

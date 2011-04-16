@@ -44,7 +44,7 @@ import org.shadowlands.roadtrip.db.Trip.TripListTimeRange;
  * The data is loaded in "ranges" of several weeks.  You can either
  * retrieve them as a grid of cells, or can retrieve the ranges
  * by calling {@link #getRangeCount()} and {@link #getRange(int)}.
- * Load earlier data by calling {@link #addEarlierTripWeeks(RDBAdapter)}.
+ * Load increments of earlier data by calling {@link #addEarlierTrips(RDBAdapter)}.
  *<P>
  * Assumes that data won't change elsewhere while displayed; for example,
  * cached ViaRoute object contents.
@@ -146,7 +146,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	 * Create and populate with the most recent trip data.
 	 *<P>
 	 * You can add earlier trips later by calling
-	 * {@link #addEarlierTripWeeks(RDBAdapter)}.
+	 * {@link #addEarlierTrips(RDBAdapter)}.
 	 * @param veh  Vehicle
 	 * @param weeks  Increment in weeks when loading newer/older trips from the database,
 	 *          or 0 to load all (This may run out of memory).
@@ -224,7 +224,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	 *
 	 * @return true if trips were added, false if none found
 	 */
-	public boolean addEarlierTripWeeks(RDBAdapter conn)
+	public boolean addEarlierTrips(RDBAdapter conn)
 	{
 		final int loadToTime = tData.firstElement().timeStart;
 		int nAdded = addRowsFromDBTrips(loadToTime, weekIncr, true, false, conn);

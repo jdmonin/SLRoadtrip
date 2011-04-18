@@ -25,6 +25,9 @@ import java.util.Vector;
  * In-memory representation, and database access for, a Trip.
  * See schema file for details.
  *<P>
+ * Several static methods of this class select trips from the
+ * database by different criteria, see method list for details.
+ *<P>
  * Some methods related to a trip's {@link TStop}s are static
  * methods in {@link TStop}, so look into that class too.
  *<P>
@@ -79,6 +82,14 @@ public class Trip extends RDBRecord
     /** Where-clause for use in {@link #tripsForVehicle_searchBeyond(RDBAdapter, String, int, int, int, boolean)  */
     private static final String WHERE_TIME_START_BEFORE_AND_VID =
     	"(time_start < ?) and vid = ?";
+
+    /** Where-clause for use in {@link #tripsForLocation(RDBAdapter, int, int, int, boolean)} */
+    private static final String WHERE_LOCID_AND_VID =
+    	"_id in ( select distinct tripid from tstop where locid = ? order by tripid desc limit ? ) and vid = ?";
+
+    /** Where-clause for use in {@link #tripsForLocation(RDBAdapter, int, int, int, boolean)} */
+    private static final String WHERE_LOCID_AND_TRIPID_BEFORE_AND_VID =
+    	"_id in ( select distinct tripid from tstop where locid = ? and tripid < ? order by tripid desc limit ? ) and vid = ?";
 
     private static final int WEEK_IN_SECONDS = 7 * 24 * 60 * 60;
 
@@ -286,6 +297,68 @@ public class Trip extends RDBRecord
 
 		return sv;
 	}
+
+    /**
+     * Retrieve a range of Trips for a Vehicle that include a given Location.
+     * @param db  db connection
+     * @param locID  Location to look for
+     * @param veh  vehicle to look for
+     * @param beforeTripID  Retrieve trips earlier (less than) this trip ID,
+     *                or 0 to get the latest trips.
+     * @param limit  Maximum number of trips to return; cannot be 0, for 'no limit' use a large number.
+     * @param alsoTStops  If true, call {@link #readAllTStops()} for each trip found
+     * @return Trips for this Location, sorted by <tt>time_start</tt>, or null if none
+     * @throws IllegalArgumentException if limit is <= 0
+     * @throws IllegalStateException if db not open
+     */
+    public static TripListTimeRange tripsForLocation
+    	(RDBAdapter db, final int locID, final Vehicle veh,  // TODO allow null veh to get all
+    	 final int beforeTripID, final int limit, 
+    	 final boolean alsoTStops)
+        throws IllegalArgumentException, IllegalStateException
+    {
+    	if (db == null)
+    		throw new IllegalStateException("db null");
+    	if (limit <= 0)
+    		throw new IllegalArgumentException("limit");
+
+    	Vector<String[]> sv = null;
+
+		final String[] whereArgs;  // Length must match number of ? in whereClause
+		if (beforeTripID == 0)
+		{
+			whereArgs = new String[3];
+			// [0] init is below
+			whereArgs[1] = Integer.toString( limit );
+			whereArgs[2] = Integer.toString( veh.getID() );
+		} else {
+			whereArgs = new String[4];
+			// [0] init is below
+			whereArgs[1] = Integer.toString( beforeTripID );
+			whereArgs[2] = Integer.toString( limit );
+			whereArgs[3] = Integer.toString( veh.getID() );
+		}
+		whereArgs[0] = Integer.toString(locID);
+
+		final String whereClause;
+		if (beforeTripID != 0)
+			whereClause = WHERE_LOCID_AND_TRIPID_BEFORE_AND_VID;
+		else
+			whereClause = WHERE_LOCID_AND_VID;
+		sv = db.getRows(TABNAME, whereClause, whereArgs, FIELDS_AND_ID, "time_start", 0);
+
+    	if (sv == null)
+    	{
+    		return null;
+    	}
+
+    	Vector<Trip> tv = parseStringsToTrips(db, alsoTStops, sv);
+    	if (tv == null)
+    		return null;
+    	else
+    		return new TripListTimeRange
+    			(tv.firstElement().getTime_start(), tv.lastElement().getTime_start(), tv);
+    }
 
     /** parse String[] to Trips, optionally also call {@link #readAllTStops()} */
 	private static final Vector<Trip> parseStringsToTrips
@@ -1066,7 +1139,7 @@ public class Trip extends RDBRecord
 		 * Initially null.  Filled by
 		 * {@link org.shadowlands.roadtrip.model.LogbookTableModel LogbookTableModel}
 		 * constructor or
-		 * {@link org.shadowlands.roadtrip.model.LogbookTableModel#addEarlierTripWeeks(RDBAdapter) LogbookTableModel.addEarlierTrips(RDBAdapter)}.
+		 * {@link org.shadowlands.roadtrip.model.LogbookTableModel#addEarlierTrips(RDBAdapter) LogbookTableModel.addEarlierTrips(RDBAdapter)}.
 		 */
 		public Vector<String[]> tText;
 

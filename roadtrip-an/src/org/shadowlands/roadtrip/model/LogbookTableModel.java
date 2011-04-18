@@ -41,7 +41,18 @@ import org.shadowlands.roadtrip.db.Trip.TripListTimeRange;
  * The last row is filled with the empty string; typing in this row
  * creates a new empty row under it.
  *<P>
- * The data is loaded in "ranges" of several weeks.  You can either
+ * Two modes: <UL>
+ *<LI> Week Mode: Contains all trips for the vehicle, in ranges
+ *   (increments) of several weeks.  In some cases, editable.
+ *   Call {@link #getWeekIncrement()} to get the increment.
+ *<LI> Location Mode: Contains only trips which contain a certain location.
+ *   The ranges (increments) are several trips at a time, instead of
+ *   several weeks.  Always read-only.
+ *   Call {@link #getTripIncrement()} to get the increment.
+ * </UL>
+ *<P>
+ * The data is loaded in "ranges" of several weeks or several trips,
+ * depending on the mode.  You can either
  * retrieve them as a grid of cells, or can retrieve the ranges
  * by calling {@link #getRangeCount()} and {@link #getRange(int)}.
  * Load increments of earlier data by calling {@link #addEarlierTrips(RDBAdapter)}.
@@ -78,8 +89,25 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	private Vehicle veh;
 
 	/**
-	 * Increment in weeks when loading newer/older trips into {@link #tData},
+	 * Mode indicator; the location ID to filter by in Location Mode, or 0 to use Week Mode.
+	 * @see #tripIncr
+	 * @see #weekIncr
+	 */
+	private final int filterLocID;
+
+	/**
+	 * For Location Mode, the increment in number of trips when loading older trips
+	 * into {@link #tData}.
+	 * Used only if {@link #filterLocID} != 0.
+	 * @see #weekIncr
+	 */
+	private final int tripIncr;
+
+	/**
+	 * For Week Mode, the increment in weeks when loading newer/older trips into {@link #tData},
 	 * or 0 to load all (This may run out of memory).
+	 * Unused if {@link #filterLocID} != 0.
+	 * @see #tripIncr
 	 */
 	private final int weekIncr;
 
@@ -142,18 +170,8 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	/** {@link #getValue_RangeText}'s low and high row numbers, or -1; Optimization for {@link #getValueAt(int, int)} */
 	private transient int getValue_RangeRow0, getValue_RangeRowN;
 
-	/**
-	 * Create and populate with the most recent trip data.
-	 *<P>
-	 * You can add earlier trips later by calling
-	 * {@link #addEarlierTrips(RDBAdapter)}.
-	 * @param veh  Vehicle
-	 * @param weeks  Increment in weeks when loading newer/older trips from the database,
-	 *          or 0 to load all (This may run out of memory).
-	 *          The vehicle's most recent trips are loaded in this constructor.
-	 * @param conn Add existing rows from this connection, via addRowsFromTrips.
-	 */
-	public LogbookTableModel(Vehicle veh, final int weeks, RDBAdapter conn)
+	/** Common setup to both trip & week constructors */
+	private final void initCommonConstruc(Vehicle veh)
 	{
 		tData = new Vector<TripListTimeRange>();
 		tDataTextRowCount = 0;
@@ -163,10 +181,29 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 		gasCache = new TIntObjectHashMap<GasBrandGrade>();
 
 		this.veh = veh;
-		this.weekIncr = weeks;
 		getValue_RangeRow0 = -1;
 		getValue_RangeRowN = -1;
-		hasCurrT = false;
+		hasCurrT = false;		
+	}
+
+	/**
+	 * Create in Trip Mode, and populate with the most recent trip data.
+	 *<P>
+	 * You can add earlier trips afterwards by calling
+	 * {@link #addEarlierTrips(RDBAdapter)}.
+	 * @param veh  Vehicle
+	 * @param weeks  Increment in weeks when loading newer/older trips from the database,
+	 *          or 0 to load all (This may run out of memory).
+	 *          The vehicle's most recent trips are loaded in this constructor.
+	 * @param conn Add existing rows from this connection, via addRowsFromTrips.
+	 */
+	public LogbookTableModel(Vehicle veh, final int weeks, RDBAdapter conn)
+	{
+		initCommonConstruc(veh);  // set veh, tData, locCache, etc
+
+		filterLocID = 0;  // Week Mode
+		this.weekIncr = weeks;
+		tripIncr = 0;
 
 		if (veh != null)
 		{
@@ -204,6 +241,37 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	}
 
 	/**
+	 * Create in Location Mode, and populate with the most recent trip data.
+	 *<P>
+	 * You can add earlier trips afterwards by calling
+	 * {@link #addEarlierTrips(RDBAdapter)}.
+	 * @param veh  Vehicle
+	 * @param locID  Location ID to filter by
+	 * @param tripIncr  Increment in trips to load (sql <tt>LIMIT</tt>).
+	 *          The vehicle's most recent trips to <tt>locID</tt> are loaded in this constructor.
+	 * @param conn Add existing rows from this connection, via addRowsFromTrips.
+	 * @throws IllegalArgumentException if the required veh, locID or tripIncr are null or &lt;= 0
+	 */
+	public LogbookTableModel(Vehicle veh, final int locID, final int tripIncr, RDBAdapter conn)
+		throws IllegalArgumentException
+	{
+		if (veh == null)
+			throw new IllegalArgumentException("veh");
+		if (locID <= 0)
+			throw new IllegalArgumentException("locID");
+		if (tripIncr <= 0)
+			throw new IllegalArgumentException("tripIncr");
+
+		initCommonConstruc(veh);  // set veh, tData, locCache, etc
+
+		filterLocID = locID;  // Location Mode
+		this.tripIncr = tripIncr;
+		weekIncr = 0;
+
+		addRowsFromDBTrips(0, tripIncr, conn);
+	}
+
+	/**
 	 * Is this vehicle currently on the current trip?
 	 * Determined in constructor, not updated afterwards.
 	 * @return whether this vehicle has the current trip
@@ -214,20 +282,30 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	}
 
 	/**
-	 * Add vehicle trips earlier than the current time range,
-	 * looking back {@link #getWeekIncrement()} weeks.
+	 * Load vehicle trips earlier than those currently in the model.
+	 * In Week Mode, looks back {@link #getWeekIncrement()} weeks.
+	 * In Location Mode, looks back {@link #getTripIncrement()} trips.
 	 *<P>
 	 * The added trips will be a new {@link TripListTimeRange}
 	 * inserted at the start of the range list; keep this
 	 * in mind when calling {@link #getRange(int)} afterwards.
 	 * (If no trips are found, no range is created.)
 	 *
-	 * @return true if trips were added, false if none found
+	 * @return true if trips were added from the database, false if none found
 	 */
 	public boolean addEarlierTrips(RDBAdapter conn)
 	{
-		final int loadToTime = tData.firstElement().timeStart;
-		int nAdded = addRowsFromDBTrips(loadToTime, weekIncr, true, false, conn);
+		int nAdded;
+		if (filterLocID == 0)
+		{
+			// Week Mode
+			final int loadToTime = tData.firstElement().timeStart;
+			nAdded = addRowsFromDBTrips(loadToTime, weekIncr, true, false, conn);
+		} else {
+			// Location Mode
+			final int laterTripID = tData.firstElement().tr.firstElement().getID();
+			nAdded = addRowsFromDBTrips(laterTripID, tripIncr, conn);
+		}
 		// TODO ensure previously-oldest trip doesn't appear twice now
 		if ((nAdded != 0) && (listener != null))
 			listener.fireTableRowsInserted(0, nAdded - 1);
@@ -236,7 +314,39 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	}
 
 	/**
-	 * Add the vehicle's trips in this time range.
+	 * For Location Mode, add the vehicle's trips in this time range.
+	 * Assumes is oldest beginning of previously loaded range,
+	 * or that (when laterTripID == 0) there is no previously loaded range.
+	 *
+	 * @param laterTripID  A trip newer than the ones to load, or 0 to get the latest trips
+	 * @param limit  Retrieve at most this many trips
+	 * @param conn  Add trips from this db connection
+	 * @return Number of rows of text added to the table
+	 */
+	private int addRowsFromDBTrips
+		(final int laterTripID, final int limit, RDBAdapter conn)
+	{
+		TripListTimeRange ttr = Trip.tripsForLocation
+			(conn, filterLocID, veh, laterTripID, limit, true);
+
+		if (ttr == null)
+		{
+			if (! tData.isEmpty())
+				tData.firstElement().noneEarlier = true;
+			return 0;
+		}
+		if (laterTripID == 0)
+			ttr.noneLater = true;
+
+		tData.insertElementAt(ttr, 0);
+		addRowsFromTrips(ttr, conn);
+		getValue_RangeRow0 = -1;  // row#s changing, so reset getValue_* vars
+		getValue_RangeRowN = -1;
+		return ttr.tText.size();
+	}
+
+	/**
+	 * For Week Mode, add the vehicle's trips in this time range.
 	 * Assumes is beginning or ending of previously loaded range.
 	 *<P>
 	 * If not called from the constructor, you must call
@@ -283,6 +393,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 		return ttr.tText.size();
 	}
 
+	/** For Week Mode, add all trip data for this vehicle. */
 	private void addRowsFromDBTrips(RDBAdapter conn)
 	{
 		Vector<Trip> td = veh.readAllTrips(true);
@@ -635,8 +746,11 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 		addMode = false;
 	}
 
-	/** get the week increment when moving to previous/next trips */
+	/** For Week Mode, get the week increment when moving to previous/next trips */
 	public int getWeekIncrement() { return weekIncr; }
+
+	/** For Location Mode, get the trip-count increment when moving to previous trips */
+	public int getTripIncrement() { return tripIncr; }
 
 	/**
 	 * Get the number of ranges currently loaded from the database.

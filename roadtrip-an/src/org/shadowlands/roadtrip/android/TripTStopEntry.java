@@ -1328,15 +1328,18 @@ public class TripTStopEntry extends Activity
 						currTS.setFlagSingle(TStop.FLAG_GAS);
 						currTS.commit();
 					}
-
-					// Update Location's latest_gas_brandgrade_id
-					if (stopGas.gas_brandgrade_id != 0)
-					{
-						locObj.setLatestGasBrandGradeID(stopGas.gas_brandgrade_id);
-						locObj.commit();  // does nothing if unchanged from location's previous bgid
-					}
 				}
 				// TODO else delete?
+			}
+		}  // if (! currently stopped)
+
+		if ((stopGas != null) && (bundleGas != null))
+		{
+			// For gas, update Location's latest_gas_brandgrade_id
+			if (stopGas.gas_brandgrade_id != 0)
+			{
+				locObj.setLatestGasBrandGradeID(stopGas.gas_brandgrade_id);
+				locObj.commit();  // does nothing if unchanged from location's previous bgid
 			}
 		}
 

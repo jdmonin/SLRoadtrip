@@ -75,6 +75,7 @@
 <string name="other_vehicle">Other vehicle...</string>
 <string name="please_check_the_total_odometer">Please check the total odometer.</string>
 <string name="please_check_the_trip_odometer">Please check the trip odometer.</string>
+<string name="please_choose_existing_location">Please choose an existing location.</string>
 <string name="please_enter_the_description">Please enter the description.</string>
 <string name="please_enter_the_location">Please enter the location.</string>
 <string name="please_enter_the_station">Please enter the station.</string>
@@ -100,6 +101,7 @@
 <string name="via">via</string>
 <string name="via_route">Via route</string>
 <string name="via_routes_changed">Via Routes Changed</string>
+<string name="view">View</string>
 <string name="vin">VIN</string>
 <string name="year">Year</string>
 <!--                            -->
@@ -110,7 +112,10 @@
 <string name="logbook_recent_gas_text">Recent Gas Stops for Vehicle</string>
 <string name="logbook_show__title">View Logbook</string>
 <string name="logbook_show__earlier_trips">^ Earlier Trips ^</string>
+<string name="logbook_show__no_locs_in_area">No locations are entered in the current GeoArea.</string>
 <string name="logbook_show__recent_gas">Recent Gas</string>
+<string name="logbook_show__menu_location">Location</string>
+<string name="logbook_show__trips_to_location">Trips to Location</string>
 <string name="main_text">Main Screen</string>
 <string name="main_cancel_are_you_sure">Are you sure you want to cancel the current trip?</string>
 <string name="main_cancel_cannot_with_stops">Cannot cancel a trip with stops; use End Trip instead.</string>

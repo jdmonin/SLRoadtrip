@@ -20,6 +20,8 @@
 package org.shadowlands.roadtrip.android;
 
 import org.shadowlands.roadtrip.R;
+import org.shadowlands.roadtrip.db.GeoArea;
+import org.shadowlands.roadtrip.db.Location;
 import org.shadowlands.roadtrip.db.RDBAdapter;
 import org.shadowlands.roadtrip.db.Settings;
 import org.shadowlands.roadtrip.db.Vehicle;
@@ -27,6 +29,8 @@ import org.shadowlands.roadtrip.db.android.RDBOpenHelper;
 import org.shadowlands.roadtrip.model.LogbookTableModel;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
@@ -34,13 +38,20 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
 import android.widget.LinearLayout;
+import android.widget.ListAdapter;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 /**
  * Present an unformatted view of the current vehicle's trip log.
+ *<P>
+ * Optionally, can filter to show only trips that include a given {@link #EXTRAS_LOCID location ID}
+ * (Location Mode, same as in {@link LogbookTableModel}).
  * @author jdmonin
  */
 public class LogbookShow extends Activity
@@ -48,8 +59,21 @@ public class LogbookShow extends Activity
 	/**
 	 * Increment in weeks when loading newer/older trips from the database,
 	 * or 0 to load all (This may run out of memory).
+	 * @see #LOCID_TRIP_INCREMENT
 	 */
 	public static final int WEEK_INCREMENT = 2;
+
+	/**
+	 * For Location filtering mode, increment in trips when loading from the database.
+	 * @see #WEEK_INCREMENT
+	 */
+	public static final int LOCID_TRIP_INCREMENT = 10;
+
+	/**
+	 * Location Mode: If added to intent extras, show only trips including
+	 * this locID; for {@link Intent#putExtra(String, int)}
+	 */
+	public static final String EXTRAS_LOCID = "LogbokShow.locID";
 
 	/** tag for android logging */
 	private static final String TAG = "RTR.LogbookShow";
@@ -69,12 +93,95 @@ public class LogbookShow extends Activity
 	/** Used by {@link #onClick_BtnEarlier(View)} */
 	private int tripListBtnEarlierPosition = -1;
 
+	/** Used by #askLocationAndShow(Activity, RDBAdapter); null if no location selected. */
+	private static Location askLocationAndShow_locObj = null;
+
+	/**
+	 * Logbook in Location Mode: Show a popup with the current GeoArea's locations, the user picks
+	 * one and the LogbookShow activity is launched for it.
+	 * @param fromActivity  Current activity; will call {@link Activity#startActivity(Intent)} on it
+	 * @param db  Connection to use
+	 * @see #showTripsForLocation(int, Activity)
+	 */
+	public static final void askLocationAndShow(final Activity fromActivity, final RDBAdapter db)
+	{
+		// TODO should be a separate dialog, allow dropdown for another GeoArea
+
+		/** all locations in the current area, or null */
+		final GeoArea currA = Settings.getCurrentArea(db, false);
+		if (currA == null)
+			return;
+		final AutoCompleteTextView loc;
+		Location[] areaLocs = Location.getAll(db, currA.getID());
+		if (areaLocs != null)
+		{
+			loc = new AutoCompleteTextView(fromActivity);
+			ArrayAdapter<Location> adapter = new ArrayAdapter<Location>(fromActivity, R.layout.list_item, areaLocs);
+			loc.setAdapter(adapter);
+			loc.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+				public void onItemClick(AdapterView<?> parent, View clickedOn, int position, long rowID)
+				{
+					ListAdapter la = loc.getAdapter();
+					if (la == null)
+						return;
+					askLocationAndShow_locObj = (Location) la.getItem(position);
+				}
+				});
+		} else {
+			Toast.makeText(fromActivity, R.string.logbook_show__no_locs_in_area, Toast.LENGTH_SHORT).show();
+			return;
+		}
+
+		AlertDialog.Builder alert = new AlertDialog.Builder(fromActivity);
+		alert.setTitle(R.string.logbook_show__trips_to_location);
+		alert.setMessage(R.string.location);
+		alert.setView(loc);
+		alert.setPositiveButton(R.string.view, new DialogInterface.OnClickListener() {
+			public void onClick(DialogInterface dialog, int whichButton)
+			{
+				if (askLocationAndShow_locObj != null)
+				{
+					showTripsForLocation(askLocationAndShow_locObj.getID(), fromActivity);
+				} else {
+					final int text;
+					if (loc.getText().length() == 0)
+						text = R.string.please_enter_the_location;
+					else
+						text = R.string.please_choose_existing_location;
+
+					Toast.makeText(fromActivity, text, Toast.LENGTH_SHORT).show();
+				}
+			}
+		});
+		alert.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+			public void onClick(DialogInterface dialog, int whichButton)
+			{
+				askLocationAndShow_locObj = null;
+			}
+		});
+		askLocationAndShow_locObj = null;
+		areaLocs = null;  // free the reference
+		alert.show();
+	}
+
+	/**
+	 * Start this activity in Location Mode: Only show trips including a given location.
+	 * @param locID  Location ID
+	 * @param fromActivity  Current activity; will call {@link Activity#startActivity(Intent)} on it
+	 */
+	public static final void showTripsForLocation(final int locID, final Activity fromActivity)
+	{
+		Intent i = new Intent(fromActivity, LogbookShow.class);
+		i.putExtra(EXTRAS_LOCID, locID);
+		fromActivity.startActivity(i);
+	}
+
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 	    super.onCreate(savedInstanceState);
 	    setContentView(R.layout.logbook_show);
 
-	    tvHeader = (TextView) findViewById(R.id.logbook_show_header);  // TODO show date range
+	    tvHeader = (TextView) findViewById(R.id.logbook_show_header);  // TODO show date range or location
 	    tvContent = (TextView) findViewById(R.id.logbook_show_textview);
 		db = new RDBOpenHelper(this);
 
@@ -90,12 +197,27 @@ public class LogbookShow extends Activity
 
 		// Read and semi-format the trips for this vehicle.
 		// (The LogbookTableModel constructor calls ltm.addRowsFromTrips.)
-		ltm = new LogbookTableModel(currV, WEEK_INCREMENT, db);
+		int locID = -1;
+		{
+			Intent i = getIntent();
+			if (i != null)
+				locID = i.getIntExtra(EXTRAS_LOCID, -1);
+			// TODO set the title to include that,
+			//      or tvHeader text to include it
+		}
+
+		if (locID == -1)
+			ltm = new LogbookTableModel(currV, WEEK_INCREMENT, db);
+		else
+			ltm = new LogbookTableModel(currV, locID, LOCID_TRIP_INCREMENT, db);
 		StringBuffer sbTrips = new StringBuffer();
 		ltm.getRange(0).appendRowsAsTabbedString(sbTrips);
 		if (sbTrips.length() < 5)
 		{
-			sbTrips.append("\nNo trips found for this Vehicle.");
+			if (locID == -1)
+				sbTrips.append("\nNo trips found for this Vehicle.");
+			else
+				sbTrips.append("\nNo trips found to that Location for this Vehicle.");
 		}
 		if (ltm.hasCurrentTrip())
 		{
@@ -157,6 +279,10 @@ public class LogbookShow extends Activity
 	    	startActivity(new Intent(this, LogbookRecentGas.class));
 	        return true;
 
+		case R.id.menu_logbook_filter_location:
+			askLocationAndShow(this, db);
+			return true;
+
 	    default:
 	        return super.onOptionsItemSelected(item);
 	    }
@@ -169,7 +295,7 @@ public class LogbookShow extends Activity
 	public void onClick_BtnEarlier(View v)
 	{
 		// TODO if too many ranges loaded, consider clear out most recent ones
-		if (! ltm.addEarlierTripWeeks(db))
+		if (! ltm.addEarlierTrips(db))
 		{
 			View btnEarlier = findViewById(R.id.logbook_show_btn_earlier);
 			if (btnEarlier != null)

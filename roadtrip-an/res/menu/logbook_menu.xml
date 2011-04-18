@@ -25,4 +25,8 @@
 	android:title="@string/logbook_show__recent_gas"
 	android:icon="@android:R/drawable/ic_menu_recent_history"
 	/>
+<item android:id="@+id/menu_logbook_filter_location"
+	android:title="@string/logbook_show__menu_location"
+	android:icon="@android:R/drawable/ic_menu_search"
+	/>
 </menu>

@@ -45,16 +45,16 @@ public class GeoArea extends RDBRecord
      */
     public static GeoArea[] getAll(RDBAdapter db, final int exceptID)
     {
-    	String kf, kv;
+    	final Vector<String[]> gas;
     	if (exceptID != -1)
     	{
+    		String kf, kv;
     		kf = "_id<>";
     		kv = Integer.toString(exceptID);
+    		gas = db.getRows(TABNAME, kf, kv, FIELDS_AND_ID, VALFIELD, 0);
     	} else {
-    		kf = null;
-    		kv = null;
+    		gas = db.getRows(TABNAME, null, (String[]) null, FIELDS_AND_ID, VALFIELD, 0);
     	}
-		Vector<String[]> gas = db.getRows(TABNAME, kf, kv, FIELDS_AND_ID, VALFIELD, 0);
     	if (gas == null)
     		return null;
 

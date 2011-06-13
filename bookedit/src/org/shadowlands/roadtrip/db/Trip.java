@@ -25,6 +25,9 @@ import java.util.Vector;
  * In-memory representation, and database access for, a Trip.
  * See schema file for details.
  *<P>
+ * Several static methods of this class select trips from the
+ * database by different criteria, see method list for details.
+ *<P>
  * Some methods related to a trip's {@link TStop}s are static
  * methods in {@link TStop}, so look into that class too.
  *<P>
@@ -79,6 +82,14 @@ public class Trip extends RDBRecord
     /** Where-clause for use in {@link #tripsForVehicle_searchBeyond(RDBAdapter, String, int, int, int, boolean)  */
     private static final String WHERE_TIME_START_BEFORE_AND_VID =
     	"(time_start < ?) and vid = ?";
+
+    /** Where-clause for use in {@link #tripsForLocation(RDBAdapter, int, int, int, boolean)} */
+    private static final String WHERE_LOCID_AND_VID =
+    	"_id in ( select distinct tripid from tstop where locid = ? order by tripid desc limit ? ) and vid = ?";
+
+    /** Where-clause for use in {@link #tripsForLocation(RDBAdapter, int, int, int, boolean)} */
+    private static final String WHERE_LOCID_AND_TRIPID_BEFORE_AND_VID =
+    	"_id in ( select distinct tripid from tstop where locid = ? and tripid < ? order by tripid desc limit ? ) and vid = ?";
 
     private static final int WEEK_IN_SECONDS = 7 * 24 * 60 * 60;
 
@@ -140,11 +151,11 @@ public class Trip extends RDBRecord
     	if (db == null)
     		throw new IllegalStateException("db null");
     	Vector<String[]> sv = db.getRows
-    	    (TABNAME, "vid", Integer.toString(veh.getID()), FIELDS_AND_ID, "time_start");
+    	    (TABNAME, "vid", Integer.toString(veh.getID()), FIELDS_AND_ID, "time_start", 0);
     	if (sv == null)
     		return null;
 
-		return tripsForVehicle_parse(db, alsoTStops, sv);
+		return parseStringsToTrips(db, alsoTStops, sv);
     }
 
     /**
@@ -192,7 +203,7 @@ public class Trip extends RDBRecord
 			final String[] whereArgs = {
 				Integer.toString(t0), Integer.toString(t1), vIDstr
 			};
-			sv = db.getRows(TABNAME, WHERE_TIME_START_AND_VID, whereArgs, FIELDS_AND_ID, "time_start");
+			sv = db.getRows(TABNAME, WHERE_TIME_START_AND_VID, whereArgs, FIELDS_AND_ID, "time_start", 0);
 			if (sv == null)
 			{
 				if (! searchBeyondWeeks)
@@ -214,7 +225,7 @@ public class Trip extends RDBRecord
     		return null;
     	}
 
-    	Vector<Trip> tv = tripsForVehicle_parse(db, alsoTStops, sv);
+    	Vector<Trip> tv = parseStringsToTrips(db, alsoTStops, sv);
     	if (tv == null)
     		return null;
     	else
@@ -282,13 +293,75 @@ public class Trip extends RDBRecord
 			Integer.toString(t0), Integer.toString(t1), vIDstr
 		};
 		Vector<String[]> sv = db.getRows
-			(TABNAME, WHERE_TIME_START_AND_VID, whereArgs, FIELDS_AND_ID, FIELD_TIME_START);
+			(TABNAME, WHERE_TIME_START_AND_VID, whereArgs, FIELDS_AND_ID, FIELD_TIME_START, 0);
 
 		return sv;
 	}
 
-    /** parse String[] to Trips */
-	private static final Vector<Trip> tripsForVehicle_parse
+    /**
+     * Retrieve a range of Trips for a Vehicle that include a given Location.
+     * @param db  db connection
+     * @param locID  Location to look for
+     * @param veh  vehicle to look for
+     * @param beforeTripID  Retrieve trips earlier (less than) this trip ID,
+     *                or 0 to get the latest trips.
+     * @param limit  Maximum number of trips to return; cannot be 0, for 'no limit' use a large number.
+     * @param alsoTStops  If true, call {@link #readAllTStops()} for each trip found
+     * @return Trips for this Location, sorted by <tt>time_start</tt>, or null if none
+     * @throws IllegalArgumentException if limit is <= 0
+     * @throws IllegalStateException if db not open
+     */
+    public static TripListTimeRange tripsForLocation
+    	(RDBAdapter db, final int locID, final Vehicle veh,  // TODO allow null veh to get all
+    	 final int beforeTripID, final int limit, 
+    	 final boolean alsoTStops)
+        throws IllegalArgumentException, IllegalStateException
+    {
+    	if (db == null)
+    		throw new IllegalStateException("db null");
+    	if (limit <= 0)
+    		throw new IllegalArgumentException("limit");
+
+    	Vector<String[]> sv = null;
+
+		final String[] whereArgs;  // Length must match number of ? in whereClause
+		if (beforeTripID == 0)
+		{
+			whereArgs = new String[3];
+			// [0] init is below
+			whereArgs[1] = Integer.toString( limit );
+			whereArgs[2] = Integer.toString( veh.getID() );
+		} else {
+			whereArgs = new String[4];
+			// [0] init is below
+			whereArgs[1] = Integer.toString( beforeTripID );
+			whereArgs[2] = Integer.toString( limit );
+			whereArgs[3] = Integer.toString( veh.getID() );
+		}
+		whereArgs[0] = Integer.toString(locID);
+
+		final String whereClause;
+		if (beforeTripID != 0)
+			whereClause = WHERE_LOCID_AND_TRIPID_BEFORE_AND_VID;
+		else
+			whereClause = WHERE_LOCID_AND_VID;
+		sv = db.getRows(TABNAME, whereClause, whereArgs, FIELDS_AND_ID, "time_start", 0);
+
+    	if (sv == null)
+    	{
+    		return null;
+    	}
+
+    	Vector<Trip> tv = parseStringsToTrips(db, alsoTStops, sv);
+    	if (tv == null)
+    		return null;
+    	else
+    		return new TripListTimeRange
+    			(tv.firstElement().getTime_start(), tv.lastElement().getTime_start(), tv);
+    }
+
+    /** parse String[] to Trips, optionally also call {@link #readAllTStops()} */
+	private static final Vector<Trip> parseStringsToTrips
 		(RDBAdapter db, final boolean alsoTStops, Vector<String[]> sv)
 	{
 		Vector<Trip> vv = new Vector<Trip>(sv.size());
@@ -323,8 +396,8 @@ public class Trip extends RDBRecord
     		throw new IllegalStateException("db null");
     	final String where = (wantsLocal) ? WHERE_VID_AND_NOT_ROADTRIP : WHERE_VID_AND_IS_ROADTRIP;
     	Vector<String[]> sv = db.getRows
-    		(TABNAME, where, new String[]{ Integer.toString(veh.getID()) }, FIELDS_AND_ID, "time_start DESC");
-    	// TODO LIMIT 1 or LIMIT n
+    		(TABNAME, where, new String[]{ Integer.toString(veh.getID()) }, FIELDS_AND_ID, "time_start DESC", 1);
+    		// LIMIT 1
     	if (sv == null)
     		return null;
     	try
@@ -520,6 +593,7 @@ public class Trip extends RDBRecord
      *         don't include the TStop at the destination which ends the trip.
      * @return  ordered list of stops, or null if none
      * @throws IllegalStateException if the db connection is closed
+     * @see #hasIntermediateTStops()
      */
     public Vector<TStop> readAllTStops(boolean ignoreTripEndStop)
 	    throws IllegalStateException
@@ -643,11 +717,12 @@ public class Trip extends RDBRecord
      * @return that stop, or null if none yet on this trip
      * @throws IllegalStateException if the db connection is closed
      * @see #readAllTStops()
+     * @see TStop#latestStopForTrip(RDBAdapter, int, boolean)
      */
     public TStop readLatestTStop()
         throws IllegalStateException
     {
-    	return TStop.latestStopForTrip(dbConn, id);
+    	return TStop.latestStopForTrip(dbConn, id, false);
     }
 
     /** Array to fill and return from readHighestOdometer. */
@@ -735,9 +810,9 @@ public class Trip extends RDBRecord
     	{
     		latest = allStops.lastElement();
     	} else {
-    		latest = TStop.latestStopForTrip(dbConn, id);
+    		latest = TStop.latestStopForTrip(dbConn, id, true);
     	}
-		if (latest == null)  // no stops yet: starting time
+		if ((latest == null) || (latest.getTime_stop() == 0))  // no stops yet: starting time
 			return time_start;
     	int t = latest.getTime_continue();  // continue time
     	if (t == 0)
@@ -885,6 +960,15 @@ public class Trip extends RDBRecord
 	}
 
 	/**
+	 * Is this trip a road trip, between 2 {@link GeoArea}s?
+	 * @return true if {@link #getRoadtripEndAreaID()} != 0
+	 */
+	public boolean isRoadtrip()
+	{
+		return (roadtrip_end_aid != 0);
+	}
+
+	/**
 	 * Is this trip based on a {@link FreqTrip}?
 	 * @see #getFreqTripID()
 	 */
@@ -938,6 +1022,51 @@ public class Trip extends RDBRecord
 	}
 
 	/**
+	 * Delete this trip, if the current trip, from the database.
+	 * Requiring the current trip simplifies the assumptions and
+	 * maintains database history and integrity.
+	 *<P>
+	 * Checks {@link Settings#getCurrentTrip(RDBAdapter, boolean)}, but
+	 * does not clear {@link Settings#CURRENT_TRIP} or other settings.
+	 *
+	 * @throws IllegalStateException if the trip has intermediate stops,
+	 *   other than its start, or isn't the current trip ID,
+	 *   or if the trip has an ending odometer
+	 *   (and thus the trip has ended and isn't current).
+	 */
+	public void cancelAndDeleteCurrentTrip()
+		throws IllegalStateException
+	{
+		if (odo_end != 0)
+			throw new IllegalStateException("Trip has ended");
+		Trip currT = Settings.getCurrentTrip(dbConn, false);
+		if (this.id != currT.id)
+			throw new IllegalStateException("Not current trip");
+
+		// Any intermediate stops? / (TODO) same code as hasIntermediateTStops
+		Vector<TStop> ts = readAllTStops(true);  // TODO can we use allStops field instead?
+		if (ts != null)
+		{
+			int nstop = ts.size();
+			if (tstopid_start == 0)
+			{
+				TStop ts0 = ts.firstElement();
+				if ((ts0.getOdo_trip() == 0) && (ts0.getOdo_total() == odo_start))
+					--nstop;  // ignore the starting tstop
+			}
+			if (nstop > 0)
+				throw new IllegalStateException("Has intermediate stops");
+
+			// Delete starting TStop with our trip ID, if any
+			for (int i = ts.size() - 1; i >= 0; --i)
+				ts.elementAt(i).delete();
+		}
+
+		// Finally, delete the trip
+		this.delete();
+	}
+
+	/**
 	 * A new stop has been added to this trip; now that
 	 * it's committed to the database, add it to our
 	 * cached list of TStops, if we already have that list.
@@ -969,6 +1098,26 @@ public class Trip extends RDBRecord
 	}
 
 	/**
+	 * Does this trip have TStops, other than its start and end?
+	 * <b>Note:</b> Queries the database, not a cached list of stops.
+	 * @return true if any TStops exist in the middle of the trip
+	 */
+	public boolean hasIntermediateTStops()
+	{
+		Vector<TStop> ts = readAllTStops(true);  // TODO can we use allStops instead?
+		if (ts == null)
+			return false;
+		int nstop = ts.size();
+		if (tstopid_start == 0)
+		{
+			TStop ts0 = ts.firstElement();
+			if ((ts0.getOdo_trip() == 0) && (ts0.getOdo_total() == odo_start))
+				--nstop;  // ignore the starting tstop
+		}
+		return (nstop > 0);
+	}
+
+	/**
 	 * Trips within a range of time; used by
 	 * {@link org.shadowlands.model.LogbookTableModel LogbookTableModel} and by
 	 * {@link #tripsForVehicle(RDBAdapter, Vehicle, int, int, boolean, boolean, boolean)}.
@@ -990,7 +1139,7 @@ public class Trip extends RDBRecord
 		 * Initially null.  Filled by
 		 * {@link org.shadowlands.roadtrip.model.LogbookTableModel LogbookTableModel}
 		 * constructor or
-		 * {@link org.shadowlands.roadtrip.model.LogbookTableModel#addEarlierTripWeeks(RDBAdapter) LogbookTableModel.addEarlierTripWeeks(RDBAdapter)}.
+		 * {@link org.shadowlands.roadtrip.model.LogbookTableModel#addEarlierTrips(RDBAdapter) LogbookTableModel.addEarlierTrips(RDBAdapter)}.
 		 */
 		public Vector<String[]> tText;
 

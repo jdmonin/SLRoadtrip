@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  Copyright (C) 2010 Jeremy D Monin <jdmonin@nand.net>
+ *  Copyright (C) 2010-2011 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -41,7 +41,7 @@ public class Location extends RDBRecord
     private static final String[] FIELDS_AND_ID =
 	    { "a_id", "geo_lat", "geo_lon", "loc_descr", "latest_gas_brandgrade_id", "_id" };
 
-    /** may be unused (-1); foreign key to {@link GeoArea}. */
+    /** May be unused (0); foreign key to {@link GeoArea}. */
     private int area_id;
 
     /** may be null */
@@ -56,14 +56,15 @@ public class Location extends RDBRecord
     /**
      * Get the Locations currently in the database, by area.
      * @param db  database connection
-     * @param areaID  area ID to filter, or -1 for all locations in all areas
+     * @param areaID  area ID to filter, or -1 for all locations in all areas;
+     *   use 0 for locations in "no area" on roadtrips
      * @return an array of Location objects from the database, ordered by description, or null if none
      */
     public static Location[] getAll(RDBAdapter db, final int areaID)
     {
     	final String kf = (areaID != -1) ? "a_id" : null;
-    	final String kv = (areaID != -1) ? Integer.toString(areaID) : null;
-		Vector<String[]> locs = db.getRows(TABNAME, kf, kv, FIELDS_AND_ID, "loc_descr");
+    	final String kv = (areaID > 0) ? Integer.toString(areaID) : null;
+		Vector<String[]> locs = db.getRows(TABNAME, kf, kv, FIELDS_AND_ID, "loc_descr", 0);
     	if (locs == null)
     		return null;
 
@@ -122,7 +123,7 @@ public class Location extends RDBRecord
     	if (rec[0] != null)
     		area_id = Integer.parseInt(rec[0]);  // FK
     	else
-    		area_id = -1;
+    		area_id = 0;
     	geo_lat = rec[1];
     	geo_lon = rec[2];
     	if (rec[3] == null)
@@ -143,15 +144,20 @@ public class Location extends RDBRecord
      * call {@link #insert(RDBAdapter)}.
      *<P>
      *
-     * @param area_id    Area id, or -1
+     * @param area_id    Area id, or 0 for unused
      * @param geo_lat    Latitude, or null
      * @param geo_lon    Longitude, or null
      * @param descr      Description of location; not null
+     * @throws IllegalArgumentException if <tt>descr</tt> is null,
+     *   or if <tt>area_id</tt> is &lt; 0
      */
     public Location(final int area_id,
-    		final String geo_lat, final String geo_lon, final String descr)
+		final String geo_lat, final String geo_lon, final String descr)
+    	throws IllegalArgumentException
     {
     	super();
+    	if (area_id < 0)
+    		throw new IllegalArgumentException("area_id");
     	this.area_id = area_id;
     	this.geo_lat = geo_lat;
     	this.geo_lon = geo_lon;
@@ -189,6 +195,8 @@ public class Location extends RDBRecord
 	public void commit()
         throws IllegalStateException, NullPointerException
 	{
+		if (! dirty)
+			return;
 		dbConn.update(TABNAME, id, FIELDS, buildInsertUpdate());
 		dirty = false;
 	}
@@ -202,7 +210,7 @@ public class Location extends RDBRecord
 	{
 		String[] fv =
 		    {
-			Integer.toString(area_id),
+			(area_id != 0) ? Integer.toString(area_id) : null,
 			geo_lat, geo_lon,
 			loc_descr,
 			(latest_gas_brandgrade_id != 0) ? Integer.toString(latest_gas_brandgrade_id) : null
@@ -210,17 +218,21 @@ public class Location extends RDBRecord
 		return fv;
 	}
 
-	/** Get the area ID, or -1 */
+	/** Get the area ID, or 0 if empty/unused. Foreign key to {@link GeoArea}. */
 	public int getAreaID() {
 		return area_id;
 	}
 
 	/**
 	 * Set or clear the area ID.
-	 * @param newArea new area ID, or -1 to clear
+	 * @param newArea new area ID, or 0 to clear
+	 * @throws IllegalArgumentException if <tt>newArea</tt> &lt; 0
 	 */
 	public void setAreaID(final int newArea)
+		throws IllegalArgumentException
 	{
+		if (newArea < 0)
+			throw new IllegalArgumentException();
 		area_id = newArea;
 		dirty = true;
 	}
@@ -256,6 +268,8 @@ public class Location extends RDBRecord
 	 */
 	public void setLatestGasBrandGradeID(final int gas_brandgrade_id)
 	{
+		if (latest_gas_brandgrade_id == gas_brandgrade_id)
+			return;
 		latest_gas_brandgrade_id = gas_brandgrade_id;
 		dirty = true;
 	}

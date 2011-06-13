@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  Copyright (C) 2010 Jeremy D Monin <jdmonin@nand.net>
+ *  Copyright (C) 2010-2011 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -38,6 +38,18 @@ public class TStop extends RDBRecord
     /** Foreign-key field name for TStop.tripID in the database.  Access is package, not private, for Trip's use */
     static final String FIELD_TRIPID = "tripid";
 
+    /** Foreign-key field name for TStop.odo_total in the database.  Access is package, not private, for TStopGas's use */
+    static final String FIELD_ODO_TOTAL = "odo_total";
+
+    /** Foreign-key field name for TStop.time_stop in the database.  Access is package, not private, for TStopGas's use */
+    static final String FIELD_TIME_STOP = "time_stop";
+
+    /** Foreign-key field name for TStop.time_continue in the database.  Access is package, not private, for TStopGas's use */
+    static final String FIELD_TIME_CONTINUE = "time_continue";
+
+    /** Foreign-key field name for TStop.locid in the database.  Access is package, not private, for TStopGas's use */
+    static final String FIELD_LOCID = "locid";
+
     /** Field names/where-clause for use in {@link #readStartingStopWithinTrip(RDBAdapter, Trip)} */
     private static final String WHERE_TRIPID_AND_ODOTRIP = FIELD_TRIPID + " = ? AND odo_trip = 0";
 
@@ -47,12 +59,12 @@ public class TStop extends RDBRecord
      * @see #initFields(String[])
      */
     private static final String[] FIELDS =
-        { FIELD_TRIPID, "odo_total", "odo_trip", "time_stop", "time_continue",
-    	  "locid", "a_id", "geo_lat", "geo_lon", "flag_sides",
+        { FIELD_TRIPID, FIELD_ODO_TOTAL, "odo_trip", FIELD_TIME_STOP, FIELD_TIME_CONTINUE,
+    	  FIELD_LOCID, "a_id", "geo_lat", "geo_lon", "flag_sides",
     	  "descr", "via_route", "via_id", "comment" };
     private static final String[] FIELDS_AND_ID =
-	    { FIELD_TRIPID, "odo_total", "odo_trip", "time_stop", "time_continue",
-		  "locid", "a_id", "geo_lat", "geo_lon", "flag_sides",
+	    { FIELD_TRIPID, FIELD_ODO_TOTAL, "odo_trip", FIELD_TIME_STOP, "time_continue",
+    	  FIELD_LOCID, "a_id", "geo_lat", "geo_lon", "flag_sides",
 		  "descr", "via_route", "via_id", "comment", "_id" };
     private final static String[] FIELD_TIME_CONTINUE_ARR =
     	{ "time_continue" };
@@ -144,7 +156,7 @@ public class TStop extends RDBRecord
     	if (db == null)
     		throw new IllegalStateException("db null");
     	Vector<String[]> sv = db.getRows
-    	    (TABNAME, FIELD_TRIPID, Integer.toString(trip.getID()), FIELDS_AND_ID, "_id");
+    	    (TABNAME, FIELD_TRIPID, Integer.toString(trip.getID()), FIELDS_AND_ID, "_id", 0);
     	if (sv == null)
     		return null;
 
@@ -180,7 +192,7 @@ public class TStop extends RDBRecord
     	Vector<String[]> ts = db.getRows
     		(TABNAME,
     		 WHERE_TRIPID_AND_ODOTRIP, new String[]{ Integer.toString(t.id) },
-    		 FIELDS_AND_ID, "_id");
+    		 FIELDS_AND_ID, "_id", 0);
     	if (ts == null)
     		return null;  // Inconsistency, should not occur; likewise, size > 1 should not occur
 
@@ -202,25 +214,37 @@ public class TStop extends RDBRecord
      * If the trip is completed, it will have an ending TStop,
      * and that will be the one returned.
      *
+     * @param ignoreIfnoTime  Ignore stops which don't have a continue time nor a stopping time
      * @return that stop, or null if none yet on this trip
      * @throws IllegalStateException if the db connection is closed
      * @see #readAllTStops()
+     * 
      */
-    public static TStop latestStopForTrip(RDBAdapter db, final int tripID)
+    public static TStop latestStopForTrip(RDBAdapter db, final int tripID, final boolean ignoreIfNoTime)
     	throws IllegalStateException
 	{
 		if (db == null)
 			throw new IllegalStateException("dbConn null");
 
-		// TODO: "LIMIT 1"
 		Vector<String[]> sv = db.getRows
-		    (TABNAME, FIELD_TRIPID, Integer.toString(tripID), FIELDS_AND_ID, "_id DESC");
+		    (TABNAME, FIELD_TRIPID, Integer.toString(tripID), FIELDS_AND_ID, "_id DESC",
+    		 ignoreIfNoTime ? 0 : 1);  // "LIMIT 1" if not ignoreIfNoTime
 		if (sv == null)
 			return null;
 
 		try
 		{
-			return new TStop(db, sv.firstElement());
+			TStop ts = null;
+			do
+			{
+				ts = new TStop(db, sv.firstElement());
+				if (ignoreIfNoTime && (0 == ts.getTime_continue()) && (0 == ts.getTime_stop()))
+				{
+					ts = null;
+					sv.removeElementAt(0);
+				}
+			} while ((ts == null) && ! sv.isEmpty());
+			return ts;
 		} catch (RDBKeyNotFoundException e)
 		{
 			return null;
@@ -247,6 +271,41 @@ public class TStop extends RDBRecord
     }
 
     /**
+     * Existing record, only some fields, from {@link TStopGas} db query:
+     * Fill our obj fields from db-record string contents.
+     * For use by {@link TStopGas#recentGasForVehicle(RDBAdapter, Vehicle, int)}.
+     * Very limited use, because (for example) the {@link Trip} field isn't filled.
+     * @param db  connection
+     * @param tsg  TStopGas associated with this stop; it must be committed, with a valid ID
+     * @param odo_total  Total odometer
+     * @param time_stop  Stop time, or null
+     * @param time_cont  Continue time, or null
+     * @param locid    LocID
+     * @throws RDBKeyNotFoundException not thrown, but required due to super call
+     * @throws IllegalArgumentException if odo_total or locid is null
+     * @throws NumberFormatException if any non-null field does not parse to an integer
+     * @throws RDBKeyNotFoundException
+     * @throws IllegalArgumentException
+     * @throws NumberFormatException
+     */
+    TStop(RDBAdapter db, final TStopGas tsg, final String odo_total,
+		final String time_stop, final String time_cont, final String locid)
+    	throws RDBKeyNotFoundException, IllegalArgumentException, NumberFormatException
+    {
+    	super(db, tsg.id);
+    	if (odo_total == null)
+    		throw new IllegalArgumentException("null odo_total");
+    	if (locid == null)
+    		throw new IllegalArgumentException("null locid");
+    	this.odo_total = Integer.parseInt(odo_total);
+    	if (time_stop != null)
+    		this.time_stop = Integer.parseInt(time_stop);
+    	if (time_cont != null)
+    		this.time_continue = Integer.parseInt(time_cont);
+    	this.locid = Integer.parseInt(locid);
+    }
+
+    /**
      * Existing record: Fill our obj fields from db-record string contents.
      * @param db  connection
      * @param rec  field contents, as returned by db.getRows(FIELDS_AND_ID); last element is _id
@@ -264,9 +323,10 @@ public class TStop extends RDBRecord
      * Fill our obj fields from db-record string contents.
      * @param rec  field contents, as returned by db.getRow(FIELDS) or db.getRows(FIELDS_AND_ID)
      * @throws IllegalArgumentException if locat is null; locat is rec[10]
+     * @throws NumberFormatException if an integer string can't be parsed
      */
     private void initFields(final String[] rec)
-    	throws IllegalArgumentException
+    	throws IllegalArgumentException, NumberFormatException
     {
 		tripid = Integer.parseInt(rec[0]);  // FK
     	if (rec[1] != null)
@@ -300,7 +360,7 @@ public class TStop extends RDBRecord
      * call {@link #insert(RDBAdapter)}.
      *<P>
      * If this TStop is to begin a new trip (with <tt>trip_odo</tt> == 0),
-     * call {@link #TStop(Trip, int, int, Location, String, String)
+     * call {@link #TStop(Trip, int, int, Location, String, String)}
      * instead of this constructor.
      *
      * @param trip   Trip containing this stop; it must be committed, with a valid tripID
@@ -319,7 +379,7 @@ public class TStop extends RDBRecord
      * @param flag_sides  Side-table flags, or 0
      * @param via_id     Street via_route ID from previous tstop's location, or 0
      * @param comment    Comment/description, or null
-     * @throws IllegalArgumentException if <tt>trip</tt> or <tt>locid</tt> or <tt>locat</tt> is bad
+     * @throws IllegalArgumentException if <tt>trip</tt> or <tt>locid</tt> or <tt>locat</tt> or <tt>areaid</tt> is bad
      */
     public TStop(Trip trip, final int odo_total, final int odo_trip,
 		final int time_stop, final int time_continue, final int locid, final int areaid,
@@ -339,6 +399,8 @@ public class TStop extends RDBRecord
     	if (locid <= 0)
     		throw new IllegalArgumentException("empty locid");
     	this.areaid = areaid;
+    	if (areaid < 0)
+    		throw new IllegalArgumentException("bad areaid");
     	this.geo_lat = geo_lat;
     	this.geo_lon = geo_lon;
     	this.flag_sides = flag_sides;
@@ -591,10 +653,13 @@ public class TStop extends RDBRecord
 	/**
 	 * Set the GeoArea field.
 	 * @param a_id  New GeoArea ID, or 0 for null
+	 * @throws IllegalArgumentException if &lt; 0
 	 */
 	public void setAreaID(final int a_id)
 		throws IllegalArgumentException
 	{
+		if (a_id < 0)
+			throw new IllegalArgumentException();
 		areaid = a_id;
 		dirty = true;
 	}

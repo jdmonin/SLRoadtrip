@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  Copyright (C) 2010 Jeremy D Monin <jdmonin@nand.net>
+ *  Copyright (C) 2010-2011 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -41,7 +41,7 @@ public class VehicleMake extends RDBRecord
      */
     public static Vector<VehicleMake> getAll(RDBAdapter db)
     {
-		Vector<String[]> names = db.getRows(TABNAME, null, (String[]) null, FIELDS_AND_ID, "mname");
+		Vector<String[]> names = db.getRows(TABNAME, null, (String[]) null, FIELDS_AND_ID, "mname", 0);
     	if (names == null)
     		return null;
 

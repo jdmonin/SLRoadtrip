@@ -66,7 +66,7 @@ public interface RDBAdapter
 	 * Returns null if no rows are found.
 	 *<P>
 	 * <tt>kf</tt> must not be null; if you want all rows in the table, use
-	 * {@link #getRows(String, String, String[], String[], String)} instead.
+	 * {@link #getRows(String, String, String[], String[], String, int)} instead.
 	 *
 	 * @param tabname Table to query
 	 * @param kf  Key fieldname; must not be null.
@@ -75,15 +75,16 @@ public interface RDBAdapter
 	 * @param kv  Key value; can be null for "is NULL". For "is not NULL", place &lt;&gt; into kf.
 	 * @param fieldnames  Field names to return
 	 * @param orderby  Order-by field(s), or null; may contain "desc" for sorting
+	 * @param limit  Maximum number of rows to return, or 0 for no limit
 	 * @return  Corresponding field values to field names, or null if errors or if table not found.
 	 *       Field values are returned in the order specified in <tt>fields[]</tt>.
 	 *       If any field is null or not in the table, that element is null.
 	 * @throws IllegalArgumentException if <tt>kf</tt> is null
 	 * @throws IllegalStateException if conn has been closed
-	 * @see #getRows(String, String, String[], String[], String)
+	 * @see #getRows(String, String, String[], String[], String, int)
 	 */
 	public Vector<String[]> getRows
-	    (final String tabname, final String kf, final String kv, final String[] fieldnames, final String orderby)
+	    (final String tabname, final String kf, final String kv, final String[] fieldnames, final String orderby, final int limit)
 	    throws IllegalArgumentException, IllegalStateException;
 
 	/**
@@ -97,15 +98,16 @@ public interface RDBAdapter
 	 * @param whereArgs  Strings to bind against each <tt>?</tt> in <tt>where</tt>, or null if <tt>where</tt> has none of those
 	 * @param fieldnames  Field names to return
 	 * @param orderby  Order-by field(s) sql clause, or null; may contain "desc" for sorting
+	 * @param limit  Maximum number of rows to return, or 0 for no limit
 	 * @return  Corresponding field values to field names, or null if errors or if table not found.
 	 *       Field values are returned in the order specified in <tt>fields[]</tt>.
 	 *       If any field is null or not in the table, that element is null.
 	 * @throws IllegalArgumentException if <tt>whereArgs</tt> != null, but <tt>where</tt> == null
 	 * @throws IllegalStateException if conn has been closed
-	 * @see #getRows(String, String, String, String[], String)
+	 * @see #getRows(String, String, String, String[], String, int)
 	 */
 	public Vector<String[]> getRows
-	    (final String tabname, final String where, final String[] whereArgs, final String[] fieldnames, final String orderby)
+	    (final String tabname, final String where, final String[] whereArgs, final String[] fieldnames, final String orderby, final int limit)
 	    throws IllegalArgumentException, IllegalStateException;
 
 	/**

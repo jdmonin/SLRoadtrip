@@ -85,7 +85,7 @@ public class Vehicle extends RDBRecord
      */
     public static Vehicle[] getAll(RDBAdapter db)
     {
-		Vector<String[]> ves = db.getRows(TABNAME, null, (String[]) null, FIELDS_AND_ID, "nickname");
+		Vector<String[]> ves = db.getRows(TABNAME, null, (String[]) null, FIELDS_AND_ID, "nickname COLLATE NOCASE", 0);
     	if (ves == null)
     		return null;
 
@@ -237,6 +237,7 @@ public class Vehicle extends RDBRecord
 
     /**
      * Retrieve the most recent time of a trip or tstop for this Vehicle.
+     * If the vehicle is currently on a trip, pass that current trip as <tt>tr</tt>.
      * Assumes no current TStop, because you could use that TStop's time instead.
      * @param tr  The vehicle's current trip, if one is in progress, or null.
      *          tr's dbConn should be valid (not closed).

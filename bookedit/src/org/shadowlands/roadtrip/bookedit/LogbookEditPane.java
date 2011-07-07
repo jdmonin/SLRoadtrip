@@ -51,6 +51,7 @@ import org.shadowlands.roadtrip.db.Person;
 import org.shadowlands.roadtrip.db.RDBAdapter;
 import org.shadowlands.roadtrip.db.RDBKeyNotFoundException;
 import org.shadowlands.roadtrip.db.RDBSchema;
+import org.shadowlands.roadtrip.db.RDBVerifier;
 import org.shadowlands.roadtrip.db.Settings;
 import org.shadowlands.roadtrip.db.TStop;
 import org.shadowlands.roadtrip.db.Trip;
@@ -299,7 +300,7 @@ public class LogbookEditPane extends JPanel implements ActionListener, WindowLis
 	}
 
 	// TODO javadoc: meant to be called from Main, will prompt user, etc
-	public static void setupFromMain(final String fname, final String fnshort, final JFrame parentf, final boolean isReadOnly)
+	public static void setupFromMain(final String fname, final String fnshort, final JFrame parentf, boolean isReadOnly)
 	{
 		RDBAdapter conn = null;
 		try
@@ -310,7 +311,42 @@ public class LogbookEditPane extends JPanel implements ActionListener, WindowLis
 			System.err.println("Could not open SQLite db " + fname);
 			System.err.println("Error was: " + t.getClass() + " " + t.getMessage());
 			t.printStackTrace();
+			JOptionPane.showMessageDialog(parentf,
+			    "Could not open this database.\nError was: " + t.getClass() + " " + t.getMessage(),
+			    "Could not open SQLite db",
+			    JOptionPane.ERROR_MESSAGE);
 			System.exit(8);  // <--- Exit(rc 8) ----
+		}
+
+		// Is it physically consistent? (sqlite pragma integrity_check)
+		{
+			RDBVerifier verif = new RDBVerifier(conn);
+			boolean verifOK;
+			try
+			{
+				verifOK = (0 == verif.verify(RDBVerifier.LEVEL_PHYS));
+			} catch (IllegalStateException e) {
+				verifOK = false;
+			}
+			verif.release();
+
+			if (! verifOK)
+			{
+				final String[] upg_exit = { "Continue anyway", "Exit" };
+				final int choice = JOptionPane.showOptionDialog(parentf,
+					"The physical structure of this database has errors.",
+					"DB structure check failed",
+					JOptionPane.DEFAULT_OPTION,
+					JOptionPane.ERROR_MESSAGE,
+					null, upg_exit, upg_exit[1]);
+				if (choice == 1)
+				{
+					conn.close();
+					System.exit(8);  // <--- End program: Don't want to use this db ---
+				} else {
+					isReadOnly = true;
+				}
+			}
 		}
 
 		try
@@ -320,8 +356,15 @@ public class LogbookEditPane extends JPanel implements ActionListener, WindowLis
 		} catch (RDBKeyNotFoundException e)
 		{
 			System.err.println("Not found: " + e.keyString);
+			JOptionPane.showMessageDialog(parentf,
+			    "An important record is missing in the database.",
+			    "Missing required version record",
+			    JOptionPane.ERROR_MESSAGE);
+			conn.close();
+			System.exit(8);  // <--- End program: Version unknown, can't use this db ---
 		}
 
+		// Does it need an upgrade?
 		final int user_version = ((RDBJDBCAdapter) conn).getSchemaVersion();
 		System.out.println("user_version is " + user_version + " (current: " + RDBSchema.DATABASE_VERSION + ")");
 		if (user_version < RDBSchema.DATABASE_VERSION)

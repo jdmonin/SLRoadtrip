@@ -902,6 +902,54 @@ public class RDBJDBCAdapter implements RDBAdapter
 		stat.executeUpdate(sql);  // may throw SQLException
 	}
 
+	/**
+	 * Execute <tt>PRAGMA integrity_check;</tt>
+	 * for use by the db package, <b>not</b> the application.
+	 * Details at <A href="http://www.sqlite.org/pragma.html#pragma_integrity_check">
+	 *    http://www.sqlite.org/pragma.html#pragma_integrity_check</A>.
+	 * @throws IllegalStateException if db has been closed, or a database access error occurs;
+	 *    {@link Throwable#getCause()} might contain more detail, or might be null.
+	 * @return <tt>null</tt>, or the first row of problem text.
+	 *    At the SQLite level, a successful check returns one row containing <tt>"ok"</tt>;
+	 *    this is returned as <tt>null</tt> instead of a single-element array.
+	 * @see RDBVerifier#verify(int)
+	 */
+	public String execPragmaIntegCheck()
+		throws IllegalStateException
+	{
+		if (conn == null)
+			throw new IllegalStateException("conn not open");
+
+		ResultSet rs = null;
+		try
+		{
+			rs = stat.executeQuery("pragma integrity_check;");
+		} catch (SQLException e)
+		{
+			try
+			{
+				if (rs != null)
+					rs.close();
+			} catch (SQLException ee) { }
+			throw new IllegalStateException("SQLException", e);
+		}
+
+		String retval = null;
+		try
+		{
+			if (rs.next())
+				retval = rs.getString(1);
+		} catch (SQLException e) { }
+		try {
+			rs.close();
+		} catch (SQLException ee) { }
+
+		if ((retval != null) && retval.equalsIgnoreCase("ok"))
+			return null;  // ok is good news
+		else
+			return retval;
+	}
+
 	//
 	// misc
 	//

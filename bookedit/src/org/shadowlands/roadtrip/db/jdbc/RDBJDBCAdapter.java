@@ -29,6 +29,7 @@ import java.util.Vector;
 import org.shadowlands.roadtrip.bookedit.LogbookEditPane;
 import org.shadowlands.roadtrip.db.RDBAdapter;
 import org.shadowlands.roadtrip.db.RDBSchema;
+import org.shadowlands.roadtrip.db.RDBVerifier;
 
 /**
  * SQLite connection via JDBC.
@@ -187,7 +188,7 @@ public class RDBJDBCAdapter implements RDBAdapter
 	 * Returns null if no rows are found.
 	 *<P>
 	 * <tt>kf</tt> must not be null; if you want all rows in the table, use
-	 * {@link #getRows(String, String, String[], String[], String)} instead.
+	 * {@link #getRows(String, String, String[], String[], String, int)} instead.
 	 *
 	 * @param tabname Table to query
 	 * @param kf  Key fieldname; must not be null.
@@ -196,15 +197,16 @@ public class RDBJDBCAdapter implements RDBAdapter
 	 * @param kv  Key value; can be null for "is NULL". For "is not NULL", place &lt;&gt; into kf.
 	 * @param fieldnames  Field names to return
 	 * @param orderby  Order-by field(s), or null; may contain "desc" for sorting
+	 * @param limit  Maximum number of rows to return, or 0 for no limit
 	 * @return  Corresponding field values to field names, or null if errors or if table not found.
 	 *       Field values are returned in the order specified in <tt>fields[]</tt>.
 	 *       If any field is null or not in the table, that element is null.
 	 * @throws IllegalArgumentException if <tt>kf</tt> is null
 	 * @throws IllegalStateException if conn has been closed
-	 * @see #getRows(String, String, String[], String[], String)
+	 * @see #getRows(String, String, String[], String[], String, int)
 	 */
 	public Vector<String[]> getRows
-        (final String tabname, final String kf, final String kv, final String[] fieldnames, final String orderby)
+        (final String tabname, final String kf, final String kv, final String[] fieldnames, final String orderby, final int limit)
         throws IllegalArgumentException, IllegalStateException
 	{
 		if (kf == null)
@@ -240,6 +242,11 @@ public class RDBJDBCAdapter implements RDBAdapter
 				sb.append(" order by ");
 				sb.append(orderby);
 			}
+			if (limit != 0)
+			{
+				sb.append(" limit ");
+				sb.append(limit);
+			}
 			sb.append(';');
 			PreparedStatement prep = conn.prepareStatement
 				(sb.toString());
@@ -269,15 +276,16 @@ public class RDBJDBCAdapter implements RDBAdapter
 	 * @param whereArgs  Strings to bind against each <tt>?</tt> in <tt>where</tt>, or null if <tt>where</tt> has none of those
 	 * @param fieldnames  Field names to return
 	 * @param orderby  Order-by field(s) sql clause, or null; may contain "desc" for sorting
+	 * @param limit  Maximum number of rows to return, or 0 for no limit
 	 * @return  Corresponding field values to field names, or null if errors or if table not found.
 	 *       Field values are returned in the order specified in <tt>fields[]</tt>.
 	 *       If any field is null or not in the table, that element is null.
 	 * @throws IllegalArgumentException if <tt>whereArgs</tt> != null, but <tt>where</tt> == null
 	 * @throws IllegalStateException if conn has been closed
-	 * @see #getRows(String, String, String, String[], String)
+	 * @see #getRows(String, String, String, String[], String, int)
 	 */
 	public Vector<String[]> getRows
-	    (final String tabname, final String where, final String[] whereArgs, final String[] fieldnames, final String orderby)
+	    (final String tabname, final String where, final String[] whereArgs, final String[] fieldnames, final String orderby, final int limit)
 	    throws IllegalArgumentException, IllegalStateException
 	{
 		if (conn == null)
@@ -301,6 +309,11 @@ public class RDBJDBCAdapter implements RDBAdapter
 			{
 				sb.append(" order by ");
 				sb.append(orderby);
+			}
+			if (limit != 0)
+			{
+				sb.append(" limit ");
+				sb.append(limit);
 			}
 			sb.append(';');
 			PreparedStatement prep = conn.prepareStatement
@@ -333,7 +346,7 @@ public class RDBJDBCAdapter implements RDBAdapter
 	 * @return Extracted field contents, or null.
 	 * @see #get_extractRowFieldsAndCloseRS(String[], ResultSet)
 	 */
-	private Vector<String[]> get_extractRowsFieldsAndCloseRS
+	private static Vector<String[]> get_extractRowsFieldsAndCloseRS
 		(final String[] fieldnames, ResultSet rs)
 	{
 		Vector<String[]> rv = new Vector<String[]>();
@@ -371,7 +384,7 @@ public class RDBJDBCAdapter implements RDBAdapter
 	 * @return Extracted field contents, or null.
 	 * @see #get_extractRowsFieldsAndCloseRS(String[], ResultSet)
 	 */
-	private String[] get_extractRowFieldsAndCloseRS(final String[] fieldnames, ResultSet rs)
+	private static String[] get_extractRowFieldsAndCloseRS(final String[] fieldnames, ResultSet rs)
 	{
 		String[] res;
 	    try
@@ -896,7 +909,7 @@ public class RDBJDBCAdapter implements RDBAdapter
 	/**
 	 * Get the schema version (sqlite USER_VERSION).
 	 * @return the version, or 0 if a SQL error occurs.
-	 * @throws IllegalStateException if db has been closed 
+	 * @throws IllegalStateException if db has been closed
 	 */
 	public int getSchemaVersion()
 	    throws IllegalStateException 

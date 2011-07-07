@@ -12,11 +12,9 @@ the project wiki at https://code.google.com/p/shadowlands-roadtrip/ .
 For now, please see the 'doc' directory for details, such as README.developer.
 
 Known limitations:
-- No way yet to search for a previous trip
-- The logbook display doesn't yet limit by date
-- Stops during a Roadtrip are assumed to be in no GeoArea
+- No way yet to search by date for a previous trip
 - Can't yet create a Frequent Roadtrip
 - BookEdit can't upgrade a read-only backup copy from a previous version
 
 Jeremy D Monin <jdmonin@nand.net>
-November 2010
+July 2011

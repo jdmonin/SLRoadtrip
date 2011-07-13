@@ -27,6 +27,7 @@ import java.util.Vector;
 import org.shadowlands.roadtrip.R;
 import org.shadowlands.roadtrip.db.RDBAdapter;
 import org.shadowlands.roadtrip.db.RDBSchema;
+import org.shadowlands.roadtrip.db.RDBVerifier;
 
 import android.content.ContentValues;
 import android.content.Context;
@@ -686,6 +687,54 @@ public class RDBOpenHelper
 		} catch (android.database.SQLException e) {
 			throw new java.sql.SQLException(e.getMessage());
 		}
+	}
+
+	/**
+	 * Execute <tt>PRAGMA integrity_check;</tt>
+	 * for use by the db package, <b>not</b> the application.
+	 * Details at <A href="http://www.sqlite.org/pragma.html#pragma_integrity_check">
+	 *    http://www.sqlite.org/pragma.html#pragma_integrity_check</A>.
+	 * @throws IllegalStateException if db has been closed, or a database access error occurs;
+	 *    {@link Throwable#getCause()} might contain more detail, or might be null.
+	 * @return <tt>null</tt>, or the first row of problem text.
+	 *    At the SQLite level, a successful check returns one row containing <tt>"ok"</tt>;
+	 *    this is returned as <tt>null</tt> instead of a single-element array.
+	 * @see RDBVerifier#verify(int)
+	 */
+	public String execPragmaIntegCheck()
+		throws IllegalStateException
+	{
+		if (db == null)
+			db = getWritableDatabase();  // TODO chk exceptions
+
+    	Cursor dbqc = null;
+		try
+		{
+			dbqc = db.rawQuery("pragma integrity_check", null);
+		} catch (Throwable e)  // SQLException has been thrown in the wild, but isn't documented
+		{
+			try
+			{
+				if (dbqc != null)
+					dbqc.close();
+			} catch (Throwable ee) { }
+			throw new IllegalStateException("SQLException", e);
+		}
+
+		String retval = null;
+		try
+		{
+	    	if (dbqc.moveToFirst())
+	    		retval = dbqc.getString(0);
+		} catch (Throwable e) { }
+		try {
+	    	dbqc.close();
+		} catch (Throwable ee) { }
+
+		if ((retval != null) && retval.equalsIgnoreCase("ok"))
+			return null;  // ok is good news
+		else
+			return retval;
 	}
 
 	//

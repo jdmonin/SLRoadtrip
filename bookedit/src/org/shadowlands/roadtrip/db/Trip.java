@@ -139,7 +139,7 @@ public class Trip extends RDBRecord
     /**
      * Retrieve all Trips for a Vehicle.
      * @param db  db connection
-     * @param veh  vehicle to look for
+     * @param veh  vehicle to look for, or null for all trips in database
      * @param alsoTStops  If true, call {@link #readAllTStops()} for each trip found
      * @return Trips for this Vehicle, sorted by time_start, or null if none
      * @throws IllegalStateException if db not open
@@ -150,8 +150,13 @@ public class Trip extends RDBRecord
     {
     	if (db == null)
     		throw new IllegalStateException("db null");
-    	Vector<String[]> sv = db.getRows
+    	Vector<String[]> sv;
+    	if (veh != null)
+    	    sv = db.getRows
     	    (TABNAME, "vid", Integer.toString(veh.getID()), FIELDS_AND_ID, "time_start", 0);
+    	else
+    	    sv = db.getRows
+    	    (TABNAME, null, (String[]) null, FIELDS_AND_ID, "time_start", 0);
     	if (sv == null)
     		return null;
 

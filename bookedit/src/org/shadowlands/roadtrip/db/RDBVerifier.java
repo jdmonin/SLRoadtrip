@@ -83,6 +83,11 @@ public class RDBVerifier
 	private TIntObjectHashMap<Location> locCache;
 
 	/**
+	 * {@link ViaRoute} cache. Each item is its own key.
+	 */
+	private TIntObjectHashMap<ViaRoute> viaCache;
+
+	/**
 	 * {@link GasBrandGrade} cache. Each item is its own key.
 	 */
 	private TIntObjectHashMap<GasBrandGrade> gbgCache;
@@ -236,6 +241,22 @@ public class RDBVerifier
 		return lo;
 	}
 
+	/** Get a ViaRoute from the db or the cache, or null if <tt>id</tt> not found in the cache or database. */
+	private ViaRoute getViaRoute(final int id)
+	{
+		ViaRoute via = viaCache.get(id);
+		if (via == null)
+		{
+			try
+			{
+				via = new ViaRoute(db, id);
+				viaCache.put(id, via);
+			}
+			catch (Throwable th) {}
+		}
+		return via;
+	}
+
 	/** Get a GasBrandGrade from the db or the cache, or null if <tt>id</tt> not found in the cache or database. */
 	private GasBrandGrade getGasBrandGrade(final int id)
 	{
@@ -287,12 +308,15 @@ public class RDBVerifier
 		vehMakeCache = new TIntObjectHashMap<VehicleMake>();
 		geoAreaCache = new TIntObjectHashMap<GeoArea>();
 		locCache = new TIntObjectHashMap<Location>();
+		viaCache = new TIntObjectHashMap<ViaRoute>();
 		gbgCache = new TIntObjectHashMap<GasBrandGrade>();
 		ftCache = new TIntObjectHashMap<FreqTrip>();
 
 		if (! verify_mdata_vehicle())
 			return false;
 		if (! verify_mdata_location())
+			return false;
+		if (! verify_mdata_viaroute())
 			return false;
 		if (! verify_mdata_freqtrip())
 			return false;
@@ -345,6 +369,29 @@ public class RDBVerifier
 				return false;
 			final int gbg = lo.getLatestGasBrandGradeID();
 			if ((gbg != 0) && (null == getGasBrandGrade(gbg)))
+				return false;
+		}
+		return true;
+	}
+
+	/**
+	 * Verify the {@link ViaRoute}s as part of {@link #verify_mdata()}.
+	 * Verify the locid_from and locid_to.
+	 * @return true if OK, false if inconsistencies
+	 */
+	private boolean verify_mdata_viaroute()
+	{
+		final ViaRoute[] all = ViaRoute.getAll(db, -1, -1);
+		if (all == null)
+			return true;
+		for (int i = 0; i < all.length; ++i)
+		{
+			ViaRoute via = all[i];
+			viaCache.put(via.id, via);
+
+			if (null == getLocation(via.getLocID_From()))
+				return false;
+			if (null == getLocation(via.getLocID_To()))
 				return false;
 		}
 		return true;

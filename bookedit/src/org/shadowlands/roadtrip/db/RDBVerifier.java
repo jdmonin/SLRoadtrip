@@ -19,6 +19,10 @@
 
 package org.shadowlands.roadtrip.db;
 
+import java.util.Vector;
+
+import gnu.trove.TIntObjectHashMap;
+
 /**
  * Structural verifier for an open {@link RDBAdapter RDB SQLite database}.
  * See {@link #verify(int)} for the available levels of verification.
@@ -47,6 +51,47 @@ public class RDBVerifier
 
 	private RDBAdapter db;
 
+	///////////////////////////////////////////////////////////
+	// Caches for LEVEL_MDATA, LEVEL_TDATA
+	///////////////////////////////////////////////////////////
+
+	/**
+	 * {@link Vehicle} cache, for {@link #LEVEL_MDATA} verification. Each item is its own key.
+	 * TIntObjectHashMap is from <A href="http://trove4j.sourceforge.net/">trove</A> (LGPL).
+	 * (<A href="http://trove4j.sourceforge.net/javadocs/">javadocs</a>)
+	 */
+	private TIntObjectHashMap<Vehicle> vehCache;
+
+	/**
+	 * {@link Person} and Driver cache. Each item is its own key.
+	 */
+	private TIntObjectHashMap<Person> persCache;
+
+	/**
+	 * {@link VehicleMake} cache. Each item is its own key.
+	 */
+	private TIntObjectHashMap<VehicleMake> vehMakeCache;
+
+	/**
+	 * {@link GeoArea} cache. Each item is its own key.
+	 */
+	private TIntObjectHashMap<GeoArea> geoAreaCache;
+
+	/**
+	 * {@link Location} cache. Each item is its own key.
+	 */
+	private TIntObjectHashMap<Location> locCache;
+
+	/**
+	 * {@link GasBrandGrade} cache. Each item is its own key.
+	 */
+	private TIntObjectHashMap<GasBrandGrade> gbgCache;
+
+	/**
+	 * {@link FreqTrip} cache. Each item is its own key.
+	 */
+	private TIntObjectHashMap<FreqTrip> ftCache;
+
 	/**
 	 * Create a verifier against this open database.
 	 * Next call {@link #verify(int)}.
@@ -69,7 +114,8 @@ public class RDBVerifier
 	}
 
 	/**
-	 * Verify the database to a given level; only {@link #LEVEL_PHYS} is implemented right now.
+	 * Verify the database to a given level; only {@link #LEVEL_PHYS} and
+	 * {@link #LEVEL_MDATA} are implemented right now.
 	 * @param level  Verify to this level:
 	 *     <UL>
 	 *     <LI> {@link #LEVEL_PHYS}: Physical sqlite structure only (fastest)
@@ -106,21 +152,262 @@ public class RDBVerifier
 		return 0;
 	}
 
+	///////////////////////////////////////////////////////////
+	// Cache methods for LEVEL_MDATA, LEVEL_TDATA
+	///////////////////////////////////////////////////////////
+
+	/** Get a vehicle from the db or the cache, or null if <tt>id</tt> not found in the cache or database. */
+	private Vehicle getVehicle(final int id)
+	{
+		Vehicle v = vehCache.get(id);
+		if (v == null)
+		{
+			try
+			{
+				v = new Vehicle(db, id);
+				vehCache.put(id, v);
+			}
+			catch (Throwable th) {}
+		}
+		return v;
+	}
+
+	/** Get a person/driver from the db or the cache, or null if <tt>id</tt> not found in the cache or database. */
+	private Person getPerson(final int id)
+	{
+		Person p = persCache.get(id);
+		if (p == null)
+		{
+			try
+			{
+				p = new Person(db, id);
+				persCache.put(id, p);
+			}
+			catch (Throwable th) {}
+		}
+		return p;
+	}
+
+	/** Get a VehicleMake from the db or the cache, or null if <tt>id</tt> not found in the cache or database. */
+	private VehicleMake getVehicleMake(final int id)
+	{
+		VehicleMake vm = vehMakeCache.get(id);
+		if (vm == null)
+		{
+			try
+			{
+				vm = new VehicleMake(db, id);
+				vehMakeCache.put(id, vm);
+			}
+			catch (Throwable th) {}
+		}
+		return vm;
+	}
+
+	/** Get a Location from the db or the cache, or null if <tt>id</tt> not found in the cache or database. */
+	private GeoArea getGeoArea(final int id)
+	{
+		GeoArea ga = geoAreaCache.get(id);
+		if (ga == null)
+		{
+			try
+			{
+				ga = new GeoArea(db, id);
+				geoAreaCache.put(id, ga);
+			}
+			catch (Throwable th) {}
+		}
+		return ga;
+	}
+
+	/** Get a Location from the db or the cache, or null if <tt>id</tt> not found in the cache or database. */
+	private Location getLocation(final int id)
+	{
+		Location lo = locCache.get(id);
+		if (lo == null)
+		{
+			try
+			{
+				lo = new Location(db, id);
+				locCache.put(id, lo);
+			}
+			catch (Throwable th) {}
+		}
+		return lo;
+	}
+
+	/** Get a GasBrandGrade from the db or the cache, or null if <tt>id</tt> not found in the cache or database. */
+	private GasBrandGrade getGasBrandGrade(final int id)
+	{
+		GasBrandGrade gbg = gbgCache.get(id);
+		if (gbg == null)
+		{
+			try
+			{
+				gbg = new GasBrandGrade(db, id);
+				gbgCache.put(id, gbg);
+			}
+			catch (Throwable th) {}
+		}
+		return gbg;
+	}
+
+	/** Get a FreqTrip from the db or the cache, or null if <tt>id</tt> not found in the cache or database. */
+	private FreqTrip getFreqTrip(final int id)
+	{
+		FreqTrip ft = ftCache.get(id);
+		if (ft == null)
+		{
+			try
+			{
+				ft = new FreqTrip(db, id);
+				ftCache.put(id, ft);
+			}
+			catch (Throwable th) {}
+		}
+		return ft;
+	}
+
+	///////////////////////////////////////////////////////////
+	// LEVEL_MDATA methods
+	///////////////////////////////////////////////////////////
+
 	/**
 	 * Verify to {@link #LEVEL_MDATA}.
 	 * Assumes already verified at {@link #LEVEL_PHYS}.
+	 * Checks foreign keys of the Vehicle, Location, FreqTrip and FreqTripTStop tables.
 	 * @return true if consistent, false if problems found.
 	 * @throws IllegalStateException  if db is closed
 	 */
 	private boolean verify_mdata()
 		throws IllegalStateException
 	{
-		// TODO not implemented yet
+		vehCache = new TIntObjectHashMap<Vehicle>();
+		persCache = new TIntObjectHashMap<Person>();
+		vehMakeCache = new TIntObjectHashMap<VehicleMake>();
+		geoAreaCache = new TIntObjectHashMap<GeoArea>();
+		locCache = new TIntObjectHashMap<Location>();
+		gbgCache = new TIntObjectHashMap<GasBrandGrade>();
+		ftCache = new TIntObjectHashMap<FreqTrip>();
+
+		if (! verify_mdata_vehicle())
+			return false;
+		if (! verify_mdata_location())
+			return false;
+		if (! verify_mdata_freqtrip())
+			return false;
+		if (! verify_mdata_freqtrip_tstop())
+			return false;
+
 		return true;
 	}
 
 	/**
-	 * Verify to {@link #LEVEL_TDATA}.
+	 * Verify the {@link Vehicle}s as part of {@link #verify_mdata()}.
+	 * Verify the driverid and makeid.
+	 * @return true if OK, false if inconsistencies
+	 */
+	private boolean verify_mdata_vehicle()
+	{
+		final Vehicle[] all = Vehicle.getAll(db);
+		if (all == null)
+			return false;  // there must be vehicles
+		for (int i = 0; i < all.length; ++i)
+		{
+			Vehicle v = all[i];
+			vehCache.put(v.id, v);
+
+			if (null == getVehicleMake(v.getMakeID()))
+				return false;
+			if (null == getPerson(v.getDriverID()))
+				return false;
+		}
+		return true;
+	}
+
+	/**
+	 * Verify the {@link Location}s as part of {@link #verify_mdata()}.
+	 * Verify the geoarea and latest_gas_brandgrade_id.
+	 * @return true if OK, false if inconsistencies
+	 */
+	private boolean verify_mdata_location()
+	{
+		final Location[] all = Location.getAll(db, -1);
+		if (all == null)
+			return true;
+		for (int i = 0; i < all.length; ++i)
+		{
+			Location lo = all[i];
+			locCache.put(lo.id, lo);
+
+			final int aid = lo.getAreaID();
+			if ((aid != 0) && (null == getGeoArea(aid)))
+				return false;
+			final int gbg = lo.getLatestGasBrandGradeID();
+			if ((gbg != 0) && (null == getGasBrandGrade(gbg)))
+				return false;
+		}
+		return true;
+	}
+
+	/**
+	 * Verify the {@link FreqTrip}s as part of {@link #verify_mdata()}.
+	 * Verify the start_locid and end_locid, start_aid and end_aid_roadtrip.
+	 * @return true if OK, false if inconsistencies
+	 */
+	private boolean verify_mdata_freqtrip()
+	{
+		final Vector<FreqTrip> all = FreqTrip.getAll(db, false);
+		if (all == null)
+			return true;
+		for (int i = all.size() - 1; i >= 0; --i)
+		{
+			FreqTrip ft = all.elementAt(i);
+			ftCache.put(ft.id, ft);
+
+			if (null == getGeoArea(ft.getStart_aID()))
+				return false;
+			if (null == getLocation(ft.getStart_locID()))
+				return false;
+			if (null == getLocation(ft.getEnd_locID()))
+				return false;
+			final int aid = ft.getEnd_aID_roadtrip();
+			if ((aid != 0) && (null == getGeoArea(aid)))
+				return false;
+			// skip verification of getEnd_ViaRouteID until LEVEL_TDATA.
+		}
+		return true;
+	}
+
+	/**
+	 * Verify the {@link FreqTripTStop}s as part of {@link #verify_mdata()}.
+	 * Verify the freqtripid and locid.
+	 * @return true if OK, false if inconsistencies
+	 */
+	private boolean verify_mdata_freqtrip_tstop()
+	{
+		final Vector<FreqTripTStop> all = FreqTripTStop.stopsForTrip(db, null);
+		if (all == null)
+			return true;
+		for (int i = all.size() - 1; i >= 0; --i)
+		{
+			FreqTripTStop fts = all.elementAt(i);
+
+			if (null == getFreqTrip(fts.getFreqTripID()))
+				return false;
+			if (null == getLocation(fts.getLocationID()))
+				return false;
+			// skip verification of getViaID until LEVEL_TDATA.
+		}
+		return true;
+	}
+
+	///////////////////////////////////////////////////////////
+	// LEVEL_TDATA methods
+	///////////////////////////////////////////////////////////
+
+	/**
+	 * Verify to {@link #LEVEL_TDATA} - Not implemented yet.
 	 * Assumes already verified at {@link #LEVEL_MDATA}.
 	 * @return true if consistent, false if problems found.
 	 * @throws IllegalStateException  if db is closed

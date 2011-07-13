@@ -188,6 +188,9 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	 */
 	public boolean addEarlierTripWeeks(RDBAdapter conn)
 	{
+		if (tData.isEmpty())
+			return false;  // No trips at all were previously found for this vehicle.
+
 		final int loadToTime = tData.firstElement().timeStart;
 		int nAdded = addRowsFromDBTrips(loadToTime, weekIncr, true, false, conn);
 		// TODO ensure previously-oldest trip doesn't appear twice now

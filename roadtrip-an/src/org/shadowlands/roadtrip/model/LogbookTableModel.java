@@ -295,6 +295,9 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	 */
 	public boolean addEarlierTrips(RDBAdapter conn)
 	{
+		if (tData.isEmpty())
+			return false;  // No trips at all were previously found for this vehicle.
+
 		int nAdded;
 		if (filterLocID == 0)
 		{

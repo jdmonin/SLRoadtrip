@@ -423,10 +423,12 @@ public class RDBVerifier
 				return false;
 			if (null == getLocation(ft.getEnd_locID()))
 				return false;
-			final int aid = ft.getEnd_aID_roadtrip();
-			if ((aid != 0) && (null == getGeoArea(aid)))
+			int id = ft.getEnd_aID_roadtrip();
+			if ((id != 0) && (null == getGeoArea(id)))
 				return false;
-			// skip verification of getEnd_ViaRouteID until LEVEL_TDATA.
+			id = ft.getEnd_ViaRouteID();
+			if ((id != 0) && (null == getViaRoute(id)))
+				return false;
 		}
 		return true;
 	}
@@ -449,7 +451,9 @@ public class RDBVerifier
 				return false;
 			if (null == getLocation(fts.getLocationID()))
 				return false;
-			// skip verification of getViaID until LEVEL_TDATA.
+			int id = fts.getViaID();
+			if ((id != 0) && (null == getViaRoute(id)))
+				return false;
 		}
 		return true;
 	}

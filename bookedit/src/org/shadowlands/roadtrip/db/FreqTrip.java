@@ -80,6 +80,25 @@ public class FreqTrip extends RDBRecord
     private transient String toString_descr;
 
     /**
+     * Get the FreqTrips currently in the database.
+     * @param db  database connection
+     * @param alsoTStops  If true, call {@link FreqTrip#readAllTStops()} for each freqtrip found
+     * @return FreqTrips, unsorted, or null if none
+     * @throws IllegalStateException if db not open
+     * @see #tripsForArea(RDBAdapter, int, boolean, boolean)
+     */
+    public static Vector<FreqTrip> getAll(RDBAdapter db, final boolean alsoTStops)
+        throws IllegalStateException
+    {
+    	if (db == null)
+    		throw new IllegalStateException("db null");
+    	Vector<String[]> sv = db.getRows(TABNAME, (String) null, (String[]) null, FIELDS_AND_ID, null, 0);  // TODO sorting
+
+    	Vector<FreqTrip> vv = objVectorFromStrings(db, alsoTStops, sv);
+    	return vv;
+    }
+
+    /**
      * Retrieve all FreqTrips for a starting location.
      * @param db  db connection
      * @param locID   Location ID; should not be 0.
@@ -87,6 +106,7 @@ public class FreqTrip extends RDBRecord
      * @param alsoTStops  If true, call {@link FreqTrip#readAllTStops()} for each freqtrip found
      * @return FreqTrips for this location, unsorted, or null if none
      * @throws IllegalStateException if db not open
+     * @see #tripsForArea(RDBAdapter, int, boolean, boolean)
      */
     public static Vector<FreqTrip> tripsForLocation(RDBAdapter db, final int locID, final boolean nonLocal, final boolean alsoTStops)
         throws IllegalStateException
@@ -96,24 +116,10 @@ public class FreqTrip extends RDBRecord
     	Vector<String[]> sv = db.getRows
     	    (TABNAME, "start_locid", Integer.toString(locID), FIELDS_AND_ID, "_id", 0);  // TODO sorting
     	// TODO nonLocal
-    	if (sv == null)
-    		return null;
 
-    	Vector<FreqTrip> vv = new Vector<FreqTrip>(sv.size());
-		try
-		{
-			FreqTrip t;
-	    	for (int i = 0; i < sv.size(); ++i)
-	    	{
-	    		t = new FreqTrip(db, sv.elementAt(i));
-	    		if (alsoTStops)
-	    			t.readAllTStops();
-	    		vv.addElement(t);
-	    	}
-		} catch (RDBKeyNotFoundException e) { }
+    	Vector<FreqTrip> vv = objVectorFromStrings(db, alsoTStops, sv);
     	return vv;
     }
-
 
     /**
      * Retrieve all local FreqTrips for an area.
@@ -123,6 +129,8 @@ public class FreqTrip extends RDBRecord
      * @param alsoTStops  If true, call {@link FreqTrip#readAllTStops()} for each freqtrip found
      * @return FreqTrips for this location, unsorted, or null if none
      * @throws IllegalStateException if db not open
+     * @see #getAll(RDBAdapter, boolean)
+     * @see #tripsForLocation(RDBAdapter, int, boolean, boolean)
      */
     public static Vector<FreqTrip> tripsForArea(RDBAdapter db, final int areaID, final boolean nonLocal, final boolean alsoTStops)
         throws IllegalStateException
@@ -132,6 +140,21 @@ public class FreqTrip extends RDBRecord
     	Vector<String[]> sv = db.getRows
     	    (TABNAME, "a_id", Integer.toString(areaID), FIELDS_AND_ID, "_id", 0);  // TODO sorting
     	// TODO nonLocal
+
+    	Vector<FreqTrip> vv = objVectorFromStrings(db, alsoTStops, sv);
+    	return vv;
+    }
+
+    /**
+     * Parse and return a vector of FreqTrip objects from db.getRows strings.
+     * @param db  db connection
+     * @param alsoTStops  If true, call {@link FreqTrip#readAllTStops()} for each freqtrip found
+     * @param sv  The string values returned by db.getRows, or null if none
+     * @return Vector of FreqTrips, or null if <tt>sv</tt> is null
+     */
+	private static Vector<FreqTrip> objVectorFromStrings
+		(RDBAdapter db, final boolean alsoTStops, final Vector<String[]> sv)
+	{
     	if (sv == null)
     		return null;
 
@@ -147,8 +170,8 @@ public class FreqTrip extends RDBRecord
 	    		vv.addElement(t);
 	    	}
 		} catch (RDBKeyNotFoundException e) { }
-    	return vv;
-    }
+		return vv;
+	}
 
     /**
      * Create a new, uncommitted FreqTrip from this Trip.

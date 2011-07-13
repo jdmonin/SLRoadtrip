@@ -33,6 +33,9 @@ import org.shadowlands.roadtrip.db.RDBSchema;
 import org.shadowlands.roadtrip.db.android.RDBOpenHelper;
 
 import android.app.Activity;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
 import android.os.Bundle;
 import android.os.Environment;
 import android.text.format.DateFormat;
@@ -218,8 +221,40 @@ public class BackupsMain extends Activity
 	public void onItemClick(AdapterView<?> parent, View view, int position, long id)
 	{
 		// TODO more than this (ask for restore? popup date/time info?)
-		Toast.makeText(this, ((TextView) view).getText(),
-				Toast.LENGTH_SHORT).show();
+		final String bkPath = DBBackup.getDBBackupPath(this) + "/" + ((TextView) view).getText();
+		SQLiteDatabase bkupDB = null;
+		Cursor c = null;
+		try {
+			bkupDB = SQLiteDatabase.openDatabase
+				(bkPath, null, SQLiteDatabase.OPEN_READONLY);
+
+			final String[] cols = { "aivalue" };
+			c = bkupDB.query("appinfo", cols, "aifield = 'DB_BACKUP_THISTIME' or aifield = 'DB_CURRENT_SCHEMAVERSION'",
+					null, null, null, "aifield");
+			if (c.moveToFirst())
+			{
+				java.util.Date bkupDate = new java.util.Date(1000L * c.getLong(0));
+				Toast.makeText(this, "Opened. Backup time was: " + bkupDate.toLocaleString(), Toast.LENGTH_SHORT).show();
+				if (c.moveToNext())
+				{
+					try {
+						Toast.makeText(this, "Schema version: " + Integer.parseInt(c.getString(0)), Toast.LENGTH_SHORT).show();
+					} catch (NumberFormatException e) {
+						Toast.makeText(this, "Cannot read appinfo(DB_CURRENT_SCHEMAVERSION)", Toast.LENGTH_SHORT).show();
+					}
+				} else {
+					Toast.makeText(this, "Cannot read appinfo(DB_CURRENT_SCHEMAVERSION)", Toast.LENGTH_SHORT).show();
+				}
+			} else {
+				Toast.makeText(this, "Opened but cannot read appinfo(DB_BACKUP_THISTIME)", Toast.LENGTH_SHORT).show();
+			}
+		} catch (SQLiteException e) {
+			Toast.makeText(this, "Cannot open: " + e, Toast.LENGTH_SHORT).show();
+		}
+		if (c != null)
+			c.close();
+		if (bkupDB != null)
+			bkupDB.close();
 	}
 
 }

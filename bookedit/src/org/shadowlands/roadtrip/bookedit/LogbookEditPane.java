@@ -93,6 +93,7 @@ public class LogbookEditPane extends JPanel implements ActionListener, WindowLis
 	private JButton bLoadPrevious;  // earlier trips
 	private JPanel pbtns;  // below JTable
 	private JButton bAddSimple, bAddWithStops, bAddDone, bAddCancel, bChgVehicle;
+	private JButton bTmpVerifyDB;  // TODO quick test for db verifier; move to a menu or something
 
 	/**
 	 * Create and show a new scrolling grid, in a new {@link JFrame}, to view or edit this logbook data.
@@ -150,6 +151,10 @@ public class LogbookEditPane extends JPanel implements ActionListener, WindowLis
 		bChgVehicle.setToolTipText("Display a different vehicle in this logbook.");
 		bChgVehicle.addActionListener(this);
 		bChgVehicle.setVisible(true);
+		bTmpVerifyDB = new JButton("Verify DB");
+		bTmpVerifyDB.setToolTipText("Validate the db data. The physical structure is already verified when the DB is opened.");
+		bTmpVerifyDB.addActionListener(this);
+		bTmpVerifyDB.setVisible(true);
 		if (isReadOnly)
 		{
 			bAddSimple.setEnabled(false);
@@ -160,6 +165,7 @@ public class LogbookEditPane extends JPanel implements ActionListener, WindowLis
 		pbtns.add(bAddDone);
 		pbtns.add(bAddCancel);
 		pbtns.add(bChgVehicle);
+		pbtns.add(bTmpVerifyDB);
 		lbef.add(pbtns, BorderLayout.SOUTH);
 
 		lbef.pack();
@@ -191,6 +197,8 @@ public class LogbookEditPane extends JPanel implements ActionListener, WindowLis
 			actionAddTripFinish(false);
 		else if (src == bChgVehicle)
 			actionChangeVehicle();
+		else if (src == bTmpVerifyDB)
+			actionVerifyDB();
 	}
 
 	private void actionLoadPrevious()
@@ -251,6 +259,29 @@ public class LogbookEditPane extends JPanel implements ActionListener, WindowLis
 
 		// show the chooser for vehicles
 		new VehicleChooserDialog(allV, veh.getID());
+	}
+
+	/** Verify the DB consistency with {@link RDBVerifier#verify(int)}, and show a passed/failed message box. */
+	public void actionVerifyDB()
+	{
+		RDBVerifier verif = new RDBVerifier(conn);
+		final int vResult = verif.verify(RDBVerifier.LEVEL_TDATA);
+		verif.release();
+		String optionPaneMsg;
+		int optionPaneLevel;
+		if (vResult == 0)
+		{
+			optionPaneMsg = "Verification passed.";
+			optionPaneLevel = JOptionPane.INFORMATION_MESSAGE;
+		} else {
+			optionPaneMsg = "Verification failed (return code " + vResult + ").";
+			optionPaneLevel = JOptionPane.ERROR_MESSAGE;
+		}
+
+		JOptionPane.showMessageDialog(lbef,
+			optionPaneMsg,
+		    "Verification results",
+		    optionPaneLevel);
 	}
 
 	/** Show this vehicle's trips. Callback from VehicleChooserDialog. */

@@ -65,7 +65,7 @@ public class ViaRoute extends RDBRecord
     /**
      * Retrieve all ViaRoutes between 2 location IDs.
      * @param db  db connection
-     * @param locID_from  Location to start from
+     * @param locID_from  Location to start from, or -1 for all ViaRoutes in the database
      * @param locID_to  Location to go to
      * @return ViaRoutes between these locations, ordered by description, or null if none
      * @throws IllegalStateException if db not open
@@ -75,9 +75,16 @@ public class ViaRoute extends RDBRecord
     {
     	if (db == null)
     		throw new IllegalStateException("db null");
-    	final String[] locIDsFromTo = new String[] { Integer.toString(locID_from), Integer.toString(locID_to) };
-    	Vector<String[]> sv = db.getRows
+    	Vector<String[]> sv;
+    	if (locID_from != -1)
+    	{
+    	    final String[] locIDsFromTo = new String[] { Integer.toString(locID_from), Integer.toString(locID_to) };
+    	    sv = db.getRows
     	    (TABNAME, "locid_from=? and locid_to=?", locIDsFromTo, FIELDS_AND_ID, "via_descr", 0);
+    	} else {
+    	    sv = db.getRows
+    	    (TABNAME, (String) null, (String[]) null, FIELDS_AND_ID, "via_descr", 0);    		
+    	}
     	if (sv == null)
     		return null;
 

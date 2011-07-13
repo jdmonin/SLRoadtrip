@@ -62,9 +62,14 @@ public class Location extends RDBRecord
      */
     public static Location[] getAll(RDBAdapter db, final int areaID)
     {
-    	final String kf = (areaID != -1) ? "a_id" : null;
-    	final String kv = (areaID > 0) ? Integer.toString(areaID) : null;
-		Vector<String[]> locs = db.getRows(TABNAME, kf, kv, FIELDS_AND_ID, "loc_descr", 0);
+    	Vector<String[]> locs;
+    	if (areaID != -1)
+    	{
+    		final String kv = (areaID > 0) ? Integer.toString(areaID) : null;
+    		locs = db.getRows(TABNAME, "a_id", kv, FIELDS_AND_ID, "loc_descr", 0);
+    	} else {
+    		locs = db.getRows(TABNAME, (String) null, (String[]) null, FIELDS_AND_ID, "loc_descr", 0);
+    	}
     	if (locs == null)
     		return null;
 

@@ -29,4 +29,8 @@
 	android:title="@string/logbook_show__menu_location"
 	android:icon="@android:R/drawable/ic_menu_search"
 	/>
+<item android:id="@+id/menu_logbook_validate"
+	android:title="@string/validate"
+	android:icon="@android:R/drawable/ic_menu_manage"
+	/>
 </menu>

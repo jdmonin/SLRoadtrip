@@ -23,6 +23,7 @@ import org.shadowlands.roadtrip.R;
 import org.shadowlands.roadtrip.db.GeoArea;
 import org.shadowlands.roadtrip.db.Location;
 import org.shadowlands.roadtrip.db.RDBAdapter;
+import org.shadowlands.roadtrip.db.RDBVerifier;
 import org.shadowlands.roadtrip.db.Settings;
 import org.shadowlands.roadtrip.db.Vehicle;
 import org.shadowlands.roadtrip.db.android.RDBOpenHelper;
@@ -86,6 +87,15 @@ public class LogbookShow extends Activity
 	private ScrollView sv;
 	private Vehicle currV;
 	private LogbookTableModel ltm;
+
+	/**
+	 * Level for successive manual calls to {@link RDBVerifier}
+	 * on {@link #verifCache} from {@link #doDBValidation()}
+	 */
+	private int verifiedLevel = 0;
+
+	/** Cached verifier object, for successive manual calls from {@link #doDBValidation()} */
+	private RDBVerifier verifCache = null;
 
 	/** Used by {@link #onClick_BtnEarlier(View)} */
 	private LinearLayout tripListParentLayout = null;
@@ -174,6 +184,57 @@ public class LogbookShow extends Activity
 		Intent i = new Intent(fromActivity, LogbookShow.class);
 		i.putExtra(EXTRAS_LOCID, locID);
 		fromActivity.startActivity(i);
+	}
+
+	private void doDBValidation()
+	{
+		int res = 0;
+		final int chkLevel;		
+
+		if (verifiedLevel < RDBVerifier.LEVEL_TDATA)
+		{
+			chkLevel = 1 + verifiedLevel;
+			if (verifCache == null)
+				verifCache = new RDBVerifier(db);
+			res = verifCache.verify(chkLevel);
+			if (res == 0)
+			{
+				verifiedLevel = chkLevel;
+				if (chkLevel == RDBVerifier.LEVEL_TDATA)
+				{
+					verifCache.release();
+					verifCache = null;
+				}
+			}
+		} else {
+			chkLevel = verifiedLevel;
+		}
+
+		String vLevel;
+		switch(chkLevel)
+		{
+		case RDBVerifier.LEVEL_PHYS:
+			vLevel = "Physical (level 1)";
+			break;
+		case RDBVerifier.LEVEL_MDATA:
+			vLevel = "Master-data (level 2)";
+			break;
+		case RDBVerifier.LEVEL_TDATA:
+			vLevel = "Transaction-data (level 3)";
+			break;
+		default:
+			vLevel = "";  // to satisfy compiler
+		}
+		if (res != 0)
+		{
+			vLevel += " validation failed at level " + res;
+		} else {
+			vLevel += " validation successful";
+			if (verifiedLevel < RDBVerifier.LEVEL_TDATA)
+				vLevel += ", run again to validate next level";
+		}
+
+		Toast.makeText(this, vLevel, Toast.LENGTH_SHORT).show();
 	}
 
 	@Override
@@ -283,7 +344,11 @@ public class LogbookShow extends Activity
 			askLocationAndShow(this, db);
 			return true;
 
-	    default:
+		case R.id.menu_logbook_validate:
+			doDBValidation();
+			return true;
+
+		default:
 	        return super.onOptionsItemSelected(item);
 	    }
 	}
@@ -328,6 +393,11 @@ public class LogbookShow extends Activity
 	public void onPause()
 	{
 		super.onPause();
+		if (verifCache != null)
+		{
+			verifCache.release();
+			verifCache = null;
+		}
 		if (db != null)
 			db.close();
 	}
@@ -343,6 +413,11 @@ public class LogbookShow extends Activity
 	public void onDestroy()
 	{
 		super.onDestroy();
+		if (verifCache != null)
+		{
+			verifCache.release();
+			verifCache = null;
+		}
 		if (db != null)
 			db.close();
 	}

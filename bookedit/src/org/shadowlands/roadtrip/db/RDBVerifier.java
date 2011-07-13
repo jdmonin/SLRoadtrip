@@ -22,6 +22,7 @@ package org.shadowlands.roadtrip.db;
 import java.util.Vector;
 
 import gnu.trove.TIntObjectHashMap;
+import gnu.trove.TIntObjectIterator;
 
 /**
  * Structural verifier for an open {@link RDBAdapter RDB SQLite database}.
@@ -98,6 +99,11 @@ public class RDBVerifier
 	private TIntObjectHashMap<FreqTrip> ftCache;
 
 	/**
+	 * {@link Trip} cache, for {@link #LEVEL_TDATA}. Each item is its own key.
+	 */
+	private TIntObjectHashMap<Trip> trCache;
+
+	/**
 	 * Create a verifier against this open database.
 	 * Next call {@link #verify(int)}.
 	 * When done, call {@link #release()} to release the reference to <tt>forDB</tt>.
@@ -119,8 +125,7 @@ public class RDBVerifier
 	}
 
 	/**
-	 * Verify the database to a given level; only {@link #LEVEL_PHYS} and
-	 * {@link #LEVEL_MDATA} are implemented right now.
+	 * Verify the database to a given level.
 	 * @param level  Verify to this level:
 	 *     <UL>
 	 *     <LI> {@link #LEVEL_PHYS}: Physical sqlite structure only (fastest)
@@ -454,7 +459,7 @@ public class RDBVerifier
 	///////////////////////////////////////////////////////////
 
 	/**
-	 * Verify to {@link #LEVEL_TDATA} - Not implemented yet.
+	 * Verify to {@link #LEVEL_TDATA}.
 	 * Assumes already verified at {@link #LEVEL_MDATA}.
 	 * @return true if consistent, false if problems found.
 	 * @throws IllegalStateException  if db is closed
@@ -462,7 +467,105 @@ public class RDBVerifier
 	private boolean verify_tdata()
 		throws IllegalStateException
 	{
-		// TODO not implemented yet
+		trCache = new TIntObjectHashMap<Trip>();
+
+		if (! verify_tdata_trip())
+			return false;
+		if (! verify_tdata_tstop())
+			return false;
+
+		return true;
+	}
+
+	/**
+	 * Verify the {@link Trip}s as part of {@link #verify_tdata()}.
+	 * Verify the vid, did, aid, tstopid_start, freqtripid, and roadtrip_end_aid.
+	 * @return true if OK, false if inconsistencies
+	 */
+	private boolean verify_tdata_trip()
+	{
+		final Vector<Trip> all = Trip.tripsForVehicle(db, null, true);
+		if (all == null)
+			return true;
+		for (int i = all.size() - 1; i >= 0; --i)
+		{
+			Trip tr = all.elementAt(i);
+			trCache.put(tr.id, tr);
+
+			if (null == getVehicle(tr.getVehicleID()))
+				return false;
+			if (null == getPerson(tr.getDriverID()))
+				return false;
+			if (null == getGeoArea(tr.getAreaID()))
+				return false;
+			int id = tr.getFreqTripID();
+			if ((id != 0) && (null == getFreqTrip(id)))
+				return false;
+			id = tr.getRoadtripEndAreaID();
+			if ((id != 0) && (null == getGeoArea(id)))
+				return false;
+			id = tr.getStartTStopID();
+			if (id != 0)
+			{
+				try
+				{
+					TStop ts = new TStop(db, id);
+				}
+				catch (Throwable th) { return false; }
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * Verify the {@link TStop}s as part of {@link #verify_tdata()}.
+	 * Verify the locid a_id via_id ; flag_sides.
+	 * When flag_sides indicates tstop_gas, verify vid and gas_brandgrade_id.
+	 * @return true if OK, false if inconsistencies
+	 */
+	private boolean verify_tdata_tstop()
+	{
+		TIntObjectIterator<Trip> iter = trCache.iterator();
+		while (iter.hasNext())
+		{
+			iter.advance();
+			Trip tr = iter.value();
+			Vector<TStop> vts = tr.readAllTStops();
+			for (int i = vts.size() - 1; i >= 0; --i)
+			{
+				TStop ts = vts.elementAt(i);
+
+				int id = ts.getLocationID();
+				if (id != 0)
+				{
+					if (null == getLocation(id))
+						return false;
+				} else {
+					String loc = ts.getLocationDescr();
+					if ((loc == null) || (loc.length() == 0))
+						return false;
+				}
+				id = ts.getAreaID();
+				if ((id != 0) && (null == getGeoArea(id)))
+					return false;
+				id = ts.getVia_id();
+				if ((id != 0) && (null == getViaRoute(id)))
+					return false;
+				if (ts.isSingleFlagSet(TStop.FLAG_GAS))
+				{
+					try
+					{
+						TStopGas tsg = new TStopGas(db, ts.id);
+						if (tsg.vid != tr.getVehicleID())
+							return false;
+						int gbg = tsg.gas_brandgrade_id;
+						if ((gbg != 0) && (null == getGasBrandGrade(gbg)))
+							return false;
+					}
+					catch (Throwable th) { return false; }
+				}
+			}
+		}
 		return true;
 	}
 

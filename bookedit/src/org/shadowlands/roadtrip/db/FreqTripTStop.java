@@ -58,8 +58,8 @@ public class FreqTripTStop extends RDBRecord
     /**
      * Retrieve all stops for a FreqTrip.
      * @param db  db connection
-     * @param trip  trip to look for
-     * @return TStops for this Trip, ordered by id, or null if none
+     * @param trip  freqtrip to look for, or null for all FreqTripTStops.
+     * @return stops for this FreqTrip, ordered by id, or null if none
      * @throws IllegalStateException if db not open
      */
     public static Vector<FreqTripTStop> stopsForTrip(RDBAdapter db, FreqTrip ftrip)
@@ -67,8 +67,13 @@ public class FreqTripTStop extends RDBRecord
     {
     	if (db == null)
     		throw new IllegalStateException("db null");
-    	Vector<String[]> sv = db.getRows
+    	Vector<String[]> sv;
+    	if (ftrip != null)
+    		sv = db.getRows
     	    (TABNAME, "freqtripid", Integer.toString(ftrip.getID()), FIELDS_AND_ID, "_id", 0);
+    	else
+    		sv = db.getRows
+    		(TABNAME, (String) null, (String[]) null, FIELDS_AND_ID, "_id", 0);
     	if (sv == null)
     		return null;
 

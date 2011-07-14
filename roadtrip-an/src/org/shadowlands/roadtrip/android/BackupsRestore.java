@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  Copyright (C) 2010-2011 Jeremy D Monin <jdmonin@nand.net>
+ *  Copyright (C) 2011 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -30,16 +30,18 @@ import org.shadowlands.roadtrip.db.AppInfo;
 import org.shadowlands.roadtrip.db.RDBAdapter;
 import org.shadowlands.roadtrip.db.RDBKeyNotFoundException;
 import org.shadowlands.roadtrip.db.RDBSchema;
+import org.shadowlands.roadtrip.db.RDBVerifier;
 import org.shadowlands.roadtrip.db.android.RDBOpenHelper;
 
 import android.app.Activity;
-import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.text.format.DateFormat;
+import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
@@ -50,22 +52,31 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 /**
- * Backup and Restore activity.
- * Information and button to back up now, list of previous backups.
+ * Restore file details activity.
+ * Called from {@link BackupsMain}.
+ * Validate the backup, show info about it, and ask the user whether to restore from it.
+ *<P>
+ * The file full path is passed in via <tt>intent.putExtra({@link #KEY_FULLPATH}, value)</tt>.
  *
  * @author jdmonin
  */
-public class BackupsMain extends Activity
-	implements OnItemClickListener
+public class BackupsRestore extends Activity
 {
 	// db is not kept open, so we can backup/restore, so no RDBAdapter field.
 
-	/** Can we write?  Set in {@link #onResume()}. */
-	private boolean isSDCardWritable = false;
+	/** Use this intent bundle key to give the full path (String) to the backup file. */
+	public static final String KEY_FULLPATH = "backupsrestore.fullpath";
 
-	private Button btnBackupNow;
-	private TextView tvTimeOfLast;
-	private ListView lvBackupsList;
+	/** tag for Log debugs */
+	@SuppressWarnings("unused")
+	private static final String TAG = "Roadtrip.BackupsRestore";
+	
+	private String bkupFullPath = null;
+	private boolean alreadyValidated = false;
+	private boolean validatedOK = false;
+	private ValidateDBTask validatingTask = null;
+
+	private Button btnRestore; // , btnRestoreCancel;
 
 	/**
 	 * date formatter for use by {@link DateFormat#format(CharSequence, Calendar)},
@@ -74,6 +85,7 @@ public class BackupsMain extends Activity
 	private StringBuffer fmt_dow_shortdate;
 
 	/** Called when the activity is first created.
+	 * Gets the backup full path via <tt>getIntent().getStringExtra({@link #KEY_FULLPATH})</tt>.
 	 * See {@link #onResume()} for remainder of init work,
 	 * which includes updating the last-backup time,
 	 * checking the SD Card status, etc.
@@ -81,15 +93,22 @@ public class BackupsMain extends Activity
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 	    super.onCreate(savedInstanceState);
-	    setContentView(R.layout.backups_main);
-	    setTitle(R.string.backups_main_title);
+	    setContentView(R.layout.backups_restore);
 
-	    btnBackupNow = (Button) findViewById(R.id.backups_main_btn_backupnow);
-	    tvTimeOfLast = (TextView) findViewById(R.id.backups_main_timeOfLast);
-	    lvBackupsList = (ListView) findViewById(R.id.backups_main_list);
-	    lvBackupsList.setOnItemClickListener(this);
+	    bkupFullPath = getIntent().getStringExtra(KEY_FULLPATH);
+	    if (bkupFullPath == null)
+	    {
+	    	Toast.makeText(this, R.string.internal__missing_required_bundle, Toast.LENGTH_SHORT).show();
+	    	finish();  // <--- End this activity ---
+	    	return;
+	    }
+	    
+	    btnRestore = (Button) findViewById(R.id.backups_restore_btn_restore);
 
-		// see onResume for rest of initialization.
+	    TextView tvPath = (TextView) findViewById(R.id.backups_restore_filepath);
+	    tvPath.setText(bkupFullPath);
+
+	    // see onResume for rest of initialization.
 	}
 
 	/**
@@ -100,39 +119,48 @@ public class BackupsMain extends Activity
 	public void onResume()
 	{
 		super.onResume();
-		RDBAdapter db = new RDBOpenHelper(this);
+//		RDBAdapter db = new RDBOpenHelper(this);
 
-		isSDCardWritable =
-			Environment.MEDIA_MOUNTED.equals
-			(Environment.getExternalStorageState());
-		final boolean isSDCardReadable =
-			isSDCardWritable ||
-			Environment.MEDIA_MOUNTED_READ_ONLY.equals
-			(Environment.getExternalStorageState());
+//		readDBLastBackupTime(db, -1);
 
-		btnBackupNow.setEnabled(isSDCardWritable);
-		readDBLastBackupTime(db, -1);
+//		db.close();
 
-		if (! isSDCardReadable)
+		if (! alreadyValidated)
 		{
-			populateBackupsList(false);
-			Toast.makeText(this, R.string.sdcard_not_mounted, Toast.LENGTH_SHORT).show();
+			btnRestore.setEnabled(false);
+			validatingTask = new ValidateDBTask();
+			validatingTask.execute(bkupFullPath);
+			// task will update the UI when validation is complete.
+
 		} else {
-			if (! isSDCardWritable)
+
+			TextView vfield = (TextView) findViewById(R.id.backups_restore_validating);
+			if (vfield != null)
 			{
-				Toast.makeText(this, R.string.sdcard_read_only, Toast.LENGTH_LONG).show();
-			}
-			if (lvBackupsList.getChildCount() < 2)  // refresh if 1 item (previous error msg)
-				populateBackupsList(true);
+				if (validatedOK)
+					vfield.setText(R.string.backups_restore_validation_ok);
+				else
+					vfield.setText(R.string.backups_restore_validation_error);
+			}	
+			btnRestore.setEnabled(validatedOK);
 		}
-		db.close();
+	}
+
+	/** Set the "validating..." textfield to show % percent */
+	protected void updateValidateProgress(int percent)
+	{
+		TextView vfield = (TextView) findViewById(R.id.backups_restore_validating);
+		if (vfield == null)
+			return;
+		String t = getResources().getString(R.string.backups_restore_validating_file)
+			+ " " + percent + "%";
+		vfield.setText(t);
 	}
 
 	/**
 	 * Look in AppInfo db-table for last backup time, update {@link #tvTimeOfLast}.
 	 * @param db  db conn to read, if <tt>lasttime</tt> == -1
 	 * @param lasttime -1 if want to read db; otherwise the last time if known
-	 */
 	private void readDBLastBackupTime(RDBAdapter db, int lasttime) {
 		if (lasttime == -1)
 		{
@@ -156,31 +184,7 @@ public class BackupsMain extends Activity
 			tvTimeOfLast.setText(sb);
 		}
 	}
-
-	/**
-	 * List the backups currently on the SD card.
-	 * If the card is not readable, just put a dummy entry to that effect.
-	 * @param isSDCardReadable as determined from {@link Environment#getExternalStorageState()}
 	 */
-	private void populateBackupsList(final boolean isSDCardReadable) {
-		String[] bklist;
-		if (! isSDCardReadable)
-		{
-			bklist = new String[1];
-			bklist[0] = getResources().getString(R.string.sdcard_not_mounted);
-		} else {
-			ArrayList<String> bkfiles = DBBackup.getBkFiles(this);
-			if (bkfiles == null)
-			{
-				bklist = new String[1];
-				bklist[0] = getResources().getString(R.string.backups_main_folder_nonefound);
-			} else {
-				bklist = new String[bkfiles.size()];
-				bkfiles.toArray(bklist);
-			}
-		}
-		lvBackupsList.setAdapter(new ArrayAdapter<String>(this, R.layout.list_item, bklist));
-	}
 
 	@Override
 	public void onDestroy()
@@ -188,46 +192,26 @@ public class BackupsMain extends Activity
 		super.onDestroy();
 	}
 
-	/**
-	 * Make a backup to sdcard of the database.
-	 * @param v  ignored
-	 */
-	public void onClick_BtnBackupNow(View v)
-	{
-		StringBuffer sb = new StringBuffer("filename: ");
-		final int bktime = (int) (System.currentTimeMillis() / 1000L);
-		String bkfile = DBBackup.makeDBBackupFilename(bktime); 
-		sb.append(bkfile);
-		Toast.makeText(this, sb, Toast.LENGTH_SHORT).show();
-
-		try
-		{
-			DBBackup.backupCurrentDB(this);
-			Toast.makeText(this, "Backup successful.", Toast.LENGTH_SHORT).show();
-			readDBLastBackupTime(null, bktime);
-			// TODO how to refresh the list of backups?
-		} catch (IOException e)
-		{
-			Toast.makeText(this, "IOException while saving:\n" + e.getMessage(), Toast.LENGTH_LONG).show();
-		}
-	}
-
-	public void onClick_BtnSettings(View v)
+	public void onClick_BtnRestore(View v)
 	{
 		;  // TODO	show settings window instead of just schema-vers popup
-		Toast.makeText(this, "Current db schema version: " + RDBSchema.DATABASE_VERSION, Toast.LENGTH_SHORT).show();
+		Toast.makeText(this, "Clicked Restore for " + bkupFullPath, Toast.LENGTH_SHORT).show();
 	}
 
-	/**
-	 * When a backup is selected in the list, open its file, show basic info,
-	 * close it, and call {@link BackupsRestore} to show more details.
-	 * That intent will validate the backup, and ask the user whether to restore from it.
-	 */
+    public void onClick_BtnCancel(View v)
+    {
+    	setResult(RESULT_CANCELED);
+    	if ((validatingTask != null) && ! validatingTask.isCancelled())
+    		validatingTask.cancel(true);
+    	finish();
+    }
+
+	/** When a backup is selected in the list */
 	public void onItemClick(AdapterView<?> parent, View view, int position, long id)
 	{
+		// TODO move this data-gathering into onResume
 		// TODO more than this (ask for restore? popup date/time info?)
 		final String bkPath = DBBackup.getDBBackupPath(this) + "/" + ((TextView) view).getText();
-		boolean looksOK = false;
 		SQLiteDatabase bkupDB = null;
 		Cursor c = null;
 		try {
@@ -245,7 +229,6 @@ public class BackupsMain extends Activity
 				{
 					try {
 						Toast.makeText(this, "Schema version: " + Integer.parseInt(c.getString(0)), Toast.LENGTH_SHORT).show();
-						looksOK = true;
 					} catch (NumberFormatException e) {
 						Toast.makeText(this, "Cannot read appinfo(DB_CURRENT_SCHEMAVERSION)", Toast.LENGTH_SHORT).show();
 					}
@@ -262,13 +245,49 @@ public class BackupsMain extends Activity
 			c.close();
 		if (bkupDB != null)
 			bkupDB.close();
-
-		if (looksOK)
-		{
-			Intent i = new Intent(this, BackupsRestore.class);
-			i.putExtra(BackupsRestore.KEY_FULLPATH, bkPath);
-			startActivity(i);
-		}
 	}
 
+	/** Run db validation on a separate thread. */
+	private class ValidateDBTask extends AsyncTask<String, Integer, Void>
+	{
+		protected Void doInBackground(final String... bkupFullPath)
+		{
+			RDBAdapter bkupDB = new RDBOpenHelper(BackupsRestore.this, bkupFullPath[0]);
+			//		doSomething(bkupDB);  // TODO.  Gather info for fields. See onItemClick, readDBLastBackupTime.
+
+			RDBVerifier v = new RDBVerifier(bkupDB);
+			int rc = v.verify(RDBVerifier.LEVEL_MDATA);
+			if (rc == 0)
+			{
+				publishProgress(new Integer(30));
+				rc = v.verify(RDBVerifier.LEVEL_TDATA);
+			}
+			final boolean ok = (0 == rc);  // TODO progress bar
+			v.release();
+			bkupDB.close();
+			Log.d(TAG, "verify: rc = " + rc);
+
+			validatedOK = ok;
+			alreadyValidated = true;
+			return null;
+		}
+
+		protected void onProgressUpdate(Integer... progress) {
+			updateValidateProgress(progress[0]);
+	    }
+
+		protected void onPostExecute()
+		{
+			TextView vfield = (TextView) findViewById(R.id.backups_restore_validating);
+			if (vfield != null)
+			{
+				if (validatedOK)
+					vfield.setText(R.string.backups_restore_validation_ok);
+				else
+					vfield.setText(R.string.backups_restore_validation_error);
+			}
+	
+			btnRestore.setEnabled(validatedOK);
+	    }
+	}
 }

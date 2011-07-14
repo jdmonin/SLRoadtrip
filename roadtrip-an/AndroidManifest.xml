@@ -41,6 +41,7 @@
 	<activity android:name=".android.TripTStopGas"  android:label="@string/trip_tstop_gas__title" />
 	<activity android:name=".android.TripTStopChooseFreq"  android:label="@string/choose_a_stop" />
 	<activity android:name=".android.BackupsMain" />
+	<activity android:name=".android.BackupsRestore"  android:label="@string/backups_restore__title" />
 </application>
     <uses-sdk android:minSdkVersion="3" />
 

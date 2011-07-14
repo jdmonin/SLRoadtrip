@@ -52,7 +52,6 @@ import android.util.Log;
  * and {@link RDBSchema#DATABASE_VERSION}.
  */
 public class RDBOpenHelper
-	extends SQLiteOpenHelper
 	implements RDBAdapter
 {
 	/** android log tag */
@@ -65,16 +64,47 @@ public class RDBOpenHelper
 
 	private static final String WHERE_ID = "_id=?";
 
-	private SQLiteDatabase db;  // result of getWritableDatabase()
+	/** SQLite default db, or null when opening a different file path ({@link #dbPath} not null) */
+	private final OpenHelper opener;
+	/** File path to db, or null if {@link #opener} not null. */
+	private final String dbPath;
+	/** Calling {@link #getWritableDatabase()} or {@link #getReadableDatabase()} will set this field. */
+	private SQLiteDatabase db;
 	private Object owner;
 
+	/**
+	 * Open the default database for this context.
+	 *<P>
+	 * Creates a SQLiteOpenHelper, so:
+	 * If the db doesn't exist, {@link #onCreate(SQLiteDatabase)} will be called.
+	 * If the db exists but needs an upgrade, {@link #onUpgrade(SQLiteDatabase, int, int)} will be called.
+	 *
+	 * @param context context to use
+	 */
 	public RDBOpenHelper(Context context) {
-		super(context, DATABASE_DEFAULT_DBNAME, null, RDBSchema.DATABASE_VERSION);
 		owner = context;
+		opener = new OpenHelper(context);  // used by getWritableDatabase(), getReadableDatabase()
+		dbPath = null;
 		db = null;
 	}
 
-	@Override
+	/**
+	 * Open a non-default database, which must exist and be the current version already.
+	 * The SQLiteOpenHelper can't be used for non-default paths;
+	 * {@link #onCreate(SQLiteDatabase)} or {@link #onUpgrade(SQLiteDatabase, int, int)}
+	 * won't be called.
+	 *
+	 * @param context context to use
+	 * @param fullPath  Full path and filename to the database
+	 */
+	public RDBOpenHelper(Context context, final String fullPath) {
+		owner = context;
+		opener = null;
+		dbPath = fullPath;  // used by getWritableDatabase(), getReadableDatabase()
+		db = null;		
+	}
+
+	/** Called from the {@link SQLiteOpenHelper}. */
 	public void onCreate(SQLiteDatabase dbWritable)
 	{
 		db = dbWritable;
@@ -98,7 +128,7 @@ public class RDBOpenHelper
 		}
 	}
 
-	@Override
+	/** Called from the {@link SQLiteOpenHelper}. */
 	public void onUpgrade(SQLiteDatabase dbWritable, int oldVersion, int newVersion) {
 		Log.i(TAG, "Database onUpgrade called: (" + oldVersion + ", " + newVersion + ")");
 		db = dbWritable;
@@ -112,6 +142,41 @@ public class RDBOpenHelper
 			Log.e(TAG, "Database onUpgrade failed: " + e.getMessage(), e);
 			throw new RuntimeException("upgrade failed: " + e.getMessage(), e);
 		}
+	}
+
+	private SQLiteDatabase getReadableDatabase()
+	{
+		if ((db != null) && db.isOpen())
+			return db;
+
+		if (opener != null)
+		{
+			db = opener.getReadableDatabase();
+			return db;
+		}
+		db = SQLiteDatabase.openDatabase
+			(dbPath, null, SQLiteDatabase.OPEN_READONLY);
+		return db;
+	}
+
+	private SQLiteDatabase getWritableDatabase()
+	{
+		if ((db != null) && db.isOpen())
+		{
+			if (! db.isReadOnly())
+				return db;
+			db.close();
+			db = null;
+		}
+
+		if (opener != null)
+		{
+			db = opener.getWritableDatabase();
+			return db;
+		}
+		db = SQLiteDatabase.openDatabase
+			(dbPath, null, SQLiteDatabase.OPEN_READWRITE);
+		return db;
 	}
 
 	//
@@ -584,7 +649,8 @@ public class RDBOpenHelper
 	 */
 	public void close()
 	{
-		super.close();
+		if (opener != null)
+			opener.close();
 		if (db != null)
 		{
 			if (db.isOpen())
@@ -782,5 +848,27 @@ public class RDBOpenHelper
 			Log.e(TAG, "debugLogDescribeTableCols: " + e.toString(), e);
 		}
 	}
+
+	/** Encapsulate SQLiteOpenHelper functions, so we can also open from nonstandard paths. */
+	private class OpenHelper extends SQLiteOpenHelper
+	{
+		public OpenHelper(Context context)
+		{
+			super(context, DATABASE_DEFAULT_DBNAME, null, RDBSchema.DATABASE_VERSION);
+		}
+
+		@Override
+		public void onCreate(SQLiteDatabase dbWritable)
+		{
+			RDBOpenHelper.this.onCreate(dbWritable);
+		}
+
+		@Override
+		public void onUpgrade(SQLiteDatabase dbWritable, int oldVersion, int newVersion)
+		{
+			RDBOpenHelper.this.onUpgrade(dbWritable, oldVersion, newVersion);
+		}
+
+	}  // private class OpenHelper
 
 }

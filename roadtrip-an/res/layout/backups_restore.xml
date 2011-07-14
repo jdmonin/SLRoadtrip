@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+ Backups: Restore file info.
+
+ This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
+
+ Copyright (C) 2011 Jeremy D Monin (jdmonin@nand.net)
+
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with this program.  If not, see http://www.gnu.org/licenses/ .
+ -->
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    >
+<LinearLayout
+    android:orientation="vertical"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    >
+<TextView  
+    android:layout_width="fill_parent" 
+    android:layout_height="wrap_content" 
+    android:text="@string/backups_restore_info__colon"
+    />
+<TableLayout android:layout_height="wrap_content" android:layout_width="fill_parent">
+    <TableRow>
+		<TextView
+		    android:layout_width="wrap_content" 
+		    android:layout_height="wrap_content" 
+		    android:text="@string/quantity"
+		    />
+		<TextView
+		    android:layout_weight="1"
+		    android:layout_width="fill_parent" 
+		    android:layout_height="wrap_content"
+		    android:layout_span="2"
+		    android:text="etc"
+		    />
+    </TableRow>
+    <TableRow>
+		<TextView
+		    android:layout_width="wrap_content" 
+		    android:layout_height="wrap_content" 
+		    android:text="@string/filename"
+		    />
+		<TextView android:id="@+id/backups_restore_filepath"
+		    android:layout_weight="1"
+		    android:layout_width="fill_parent" 
+		    android:layout_height="wrap_content"
+		    android:text="r2c1"
+		    />
+		<TextView
+		    android:layout_width="wrap_content" 
+		    android:layout_height="wrap_content" 
+		    android:text="r2c2"
+		    />
+    </TableRow>
+    <TableRow>
+		<TextView
+		    android:layout_width="wrap_content" 
+		    android:layout_height="wrap_content" 
+		    android:text="@string/backups_restore_backup_time"
+		    />
+		<TextView
+		    android:layout_weight="1"
+		    android:layout_width="fill_parent" 
+		    android:layout_height="wrap_content"
+		    android:text="r2c1"
+		    />
+		<TextView
+		    android:layout_width="wrap_content" 
+		    android:layout_height="wrap_content" 
+		    android:text="r2c2"
+		    />
+    </TableRow>
+    <TableRow>
+		<TextView android:id="@+id/backups_restore_validating"
+		    android:layout_width="fill_parent" 
+		    android:layout_height="wrap_content"
+		    android:layout_span="3"
+		    android:textSize="18sp"
+		    android:textStyle="bold"
+		    android:text="@string/backups_restore_validating_file"
+		    />
+    </TableRow>
+</TableLayout>
+<LinearLayout
+    android:orientation="horizontal"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    >
+	<Button android:id="@+id/backups_restore_btn_restore"
+	    android:text="@string/restore"
+	    android:layout_width="fill_parent" 
+	    android:layout_height="fill_parent"
+	    android:layout_weight="1"
+	    android:onClick="onClick_BtnRestore" />
+	<Button android:id="@+id/backups_restore_btn_cancel"
+	    android:text="@android:R/string/cancel"
+	    android:layout_width="fill_parent" 
+	    android:layout_height="fill_parent"
+	    android:layout_weight="1"
+	    android:onClick="onClick_BtnCancel" />
+</LinearLayout>
+</LinearLayout>
+</ScrollView>

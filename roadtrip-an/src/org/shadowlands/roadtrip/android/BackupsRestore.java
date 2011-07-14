@@ -265,6 +265,7 @@ public class BackupsRestore extends Activity
 			final boolean ok = (0 == rc);  // TODO progress bar
 			v.release();
 			bkupDB.close();
+			publishProgress(new Integer(100));
 			Log.d(TAG, "verify: rc = " + rc);
 
 			validatedOK = ok;

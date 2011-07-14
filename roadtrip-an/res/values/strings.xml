@@ -49,6 +49,7 @@
 <string name="driver">Driver</string>
 <string name="end_trip">End Trip</string>
 <string name="enter_stop">Enter Stop</string>
+<string name="filename">Filename</string>
 <string name="fillup">Fill-up</string>
 <string name="frequent_local">Frequent Local</string>
 <string name="frequent_roadtrip">Frequent Roadtrip</string>
@@ -56,6 +57,7 @@
 <string name="gas__colon_sp">Gas: </string>
 <string name="gas__dots">Gas...</string>
 <string name="home_area">Home area</string>
+<string name="internal__missing_required_bundle">Internal error: Missing required bundle when calling activity.</string>
 <string name="keep_this">Keep this</string>
 <string name="local_trip">Local Trip</string>
 <string name="location">Location</string>
@@ -80,6 +82,7 @@
 <string name="please_enter_the_location">Please enter the location.</string>
 <string name="please_enter_the_station">Please enter the station.</string>
 <string name="quantity">Quantity</string>
+<string name="restore">Restore</string>
 <string name="revert">Revert</string>
 <string name="road_trip">Road Trip</string>
 <string name="road_trip_desti_area">Road Trip\nDestination area:</string>
@@ -130,6 +133,12 @@
 <string name="backups_main_no_previous">Logbook has never been backed up!</string>
 <string name="backups_main_prevlist">Previous Backups on SD card:</string>
 <string name="backups_main_title">Backup and Restore</string>
+<string name="backups_restore_backup_time">Backup time:</string>
+<string name="backups_restore_info__colon">File restore: Info:</string>
+<string name="backups_restore_validating_file">Validating file...</string>
+<string name="backups_restore_validation_error">Error in file validation.</string>
+<string name="backups_restore_validation_ok">File validated.</string>
+<string name="backups_restore__title">Restore from Backup</string>
 <string name="driver_entry_prompt">Enter information about this driver.</string>
 <string name="trip_createfreq__title">Create Frequent Trip</string>
 <string name="trip_createfreq_cancel_are_you_sure">Are you sure you want to cancel?\nThe Frequent Trip will not be created.</string>

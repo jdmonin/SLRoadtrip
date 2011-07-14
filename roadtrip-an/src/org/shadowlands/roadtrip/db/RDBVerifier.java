@@ -513,7 +513,8 @@ public class RDBVerifier
 			{
 				try
 				{
-					TStop ts = new TStop(db, id);
+					@SuppressWarnings("unused")
+					TStop s = new TStop(db, id);
 				}
 				catch (Throwable th) { return false; }
 			}
@@ -535,6 +536,8 @@ public class RDBVerifier
 			iter.advance();
 			Trip tr = iter.value();
 			Vector<TStop> vts = tr.readAllTStops();
+			if (vts == null)
+				continue;
 			for (int i = vts.size() - 1; i >= 0; --i)
 			{
 				TStop ts = vts.elementAt(i);

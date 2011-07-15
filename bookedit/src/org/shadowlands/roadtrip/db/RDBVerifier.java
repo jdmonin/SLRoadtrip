@@ -52,6 +52,12 @@ public class RDBVerifier
 
 	private RDBAdapter db;
 
+	/**
+	 * For iterative calls to {@link #verify(int)}, the level of the
+	 * last call if it was successful.
+	 */
+	private int successfulVerifyLevel = 0;
+
 	///////////////////////////////////////////////////////////
 	// Caches for LEVEL_MDATA, LEVEL_TDATA
 	///////////////////////////////////////////////////////////
@@ -126,6 +132,13 @@ public class RDBVerifier
 
 	/**
 	 * Verify the database to a given level.
+	 *<P>
+	 * You can call <tt>verify</tt> multiple times to iteratively
+	 * verify at higher levels.  That is, if you've already called
+	 * <tt>verify({@link #LEVEL_MDATA})</tt>, then calling <tt>verify({@link #LEVEL_TDATA}}</tt>
+	 * won't re-verify the master data.  It's important to not allow
+	 * changes to the data between iterative calls.
+	 *
 	 * @param level  Verify to this level:
 	 *     <UL>
 	 *     <LI> {@link #LEVEL_PHYS}: Physical sqlite structure only (fastest)
@@ -146,18 +159,30 @@ public class RDBVerifier
 		if (db == null)
 			throw new IllegalStateException("null db");
 
-		if (null != db.execPragmaIntegCheck())
-			return LEVEL_PHYS;
+		if (successfulVerifyLevel < LEVEL_PHYS)
+		{
+			if (null != db.execPragmaIntegCheck())
+				return LEVEL_PHYS;
+			successfulVerifyLevel = LEVEL_PHYS;
+		}
 		if (level <= LEVEL_PHYS)
 			return 0;
 
-		if (! verify_mdata())
-			return LEVEL_MDATA;
+		if (successfulVerifyLevel < LEVEL_MDATA)
+		{
+			if (! verify_mdata())
+				return LEVEL_MDATA;
+			successfulVerifyLevel = LEVEL_MDATA;
+		}
 		if (level <= LEVEL_MDATA)
 			return 0;
 
-		if (! verify_tdata())
-			return LEVEL_TDATA;
+		if (successfulVerifyLevel < LEVEL_TDATA)
+		{
+			if (! verify_tdata())
+				return LEVEL_TDATA;
+			successfulVerifyLevel = LEVEL_TDATA;
+		}
 
 		return 0;
 	}
@@ -514,7 +539,7 @@ public class RDBVerifier
 				try
 				{
 					@SuppressWarnings("unused")
-					TStop s = new TStop(db, id);
+					TStop ts = new TStop(db, id);
 				}
 				catch (Throwable th) { return false; }
 			}

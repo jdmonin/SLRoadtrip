@@ -42,6 +42,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.text.format.DateFormat;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
@@ -198,6 +199,7 @@ public class BackupsRestore extends Activity
 		Toast.makeText(this, "Clicked Restore for " + bkupFullPath, Toast.LENGTH_SHORT).show();
 	}
 
+	/** If Cancel is clicked, cancel the validatingTask and finish the activity. */
     public void onClick_BtnCancel(View v)
     {
     	setResult(RESULT_CANCELED);
@@ -205,6 +207,32 @@ public class BackupsRestore extends Activity
     		validatingTask.cancel(true);
     	finish();
     }
+
+    /** Check with user for {@link KeyEvent#KEYCODE_BACK}, handle it with {@link #onClick_BtnCancel(View)} */
+	@Override
+	public boolean onKeyDown(final int keyCode, KeyEvent event)
+	{
+	    if ((keyCode == KeyEvent.KEYCODE_BACK)
+	    	&& (event.getRepeatCount() == 0))
+	    {
+	    	onClick_BtnCancel(null);
+	        return true;  // Don't pass to next receiver
+	    }
+
+	    return super.onKeyDown(keyCode, event);
+	}
+
+	/** Check with user for {@link KeyEvent#KEYCODE_BACK} */
+	@Override
+	public boolean onKeyUp(final int keyCode, KeyEvent event)
+	{
+	    if (keyCode == KeyEvent.KEYCODE_BACK)
+	    {
+	    	// Deal with this key during onKeyDown, not onKeyUp.
+	        return true;  // Don't pass to next receiver
+	    }
+	    return super.onKeyUp(keyCode, event);
+	}
 
 	/** When a backup is selected in the list */
 	public void onItemClick(AdapterView<?> parent, View view, int position, long id)
@@ -248,9 +276,9 @@ public class BackupsRestore extends Activity
 	}
 
 	/** Run db validation on a separate thread. */
-	private class ValidateDBTask extends AsyncTask<String, Integer, Void>
+	private class ValidateDBTask extends AsyncTask<String, Integer, Boolean>
 	{
-		protected Void doInBackground(final String... bkupFullPath)
+		protected Boolean doInBackground(final String... bkupFullPath)
 		{
 			RDBAdapter bkupDB = new RDBOpenHelper(BackupsRestore.this, bkupFullPath[0]);
 			//		doSomething(bkupDB);  // TODO.  Gather info for fields. See onItemClick, readDBLastBackupTime.
@@ -270,14 +298,14 @@ public class BackupsRestore extends Activity
 
 			validatedOK = ok;
 			alreadyValidated = true;
-			return null;
+			return ok ? Boolean.TRUE : Boolean.FALSE;
 		}
 
 		protected void onProgressUpdate(Integer... progress) {
 			updateValidateProgress(progress[0]);
 	    }
 
-		protected void onPostExecute()
+		protected void onPostExecute(Boolean v)
 		{
 			TextView vfield = (TextView) findViewById(R.id.backups_restore_validating);
 			if (vfield != null)

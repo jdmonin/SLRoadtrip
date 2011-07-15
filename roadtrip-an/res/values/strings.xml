@@ -133,6 +133,7 @@
 <string name="backups_main_no_previous">Logbook has never been backed up!</string>
 <string name="backups_main_prevlist">Previous Backups on SD card:</string>
 <string name="backups_main_title">Backup and Restore</string>
+<string name="backups_restore_are_you_sure">Are you sure you want to replace all current data with this backup?</string>
 <string name="backups_restore_backup_time">Backup time:</string>
 <string name="backups_restore_info__colon">File restore: Info:</string>
 <string name="backups_restore_validating_file">Validating file...</string>

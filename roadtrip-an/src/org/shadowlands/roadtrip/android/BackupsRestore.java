@@ -34,6 +34,8 @@ import org.shadowlands.roadtrip.db.RDBVerifier;
 import org.shadowlands.roadtrip.db.android.RDBOpenHelper;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
@@ -187,6 +189,12 @@ public class BackupsRestore extends Activity
 	}
 	 */
 
+	private void restoreFromBackupFile()
+	{
+		// TODO  bkupFullPath
+	}
+
+
 	@Override
 	public void onDestroy()
 	{
@@ -195,8 +203,19 @@ public class BackupsRestore extends Activity
 
 	public void onClick_BtnRestore(View v)
 	{
-		;  // TODO	show settings window instead of just schema-vers popup
-		Toast.makeText(this, "Clicked Restore for " + bkupFullPath, Toast.LENGTH_SHORT).show();
+    	AlertDialog.Builder alert = new AlertDialog.Builder(this);
+
+    	alert.setTitle(R.string.confirm);
+    	alert.setMessage(R.string.backups_restore_are_you_sure);
+    	alert.setPositiveButton(R.string.restore, new DialogInterface.OnClickListener() {
+			  public void onClick(DialogInterface dialog, int whichButton) {
+				restoreFromBackupFile();
+			  }
+	    	});
+    	alert.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+	    	  public void onClick(DialogInterface dialog, int whichButton) { }
+	    	});
+    	alert.show();
 	}
 
 	/** If Cancel is clicked, cancel the validatingTask and finish the activity. */

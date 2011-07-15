@@ -114,6 +114,8 @@ public class Main extends Activity
 	public boolean onOptionsItemSelected(MenuItem item) {
 	    switch (item.getItemId()) {
 	    case R.id.menu_main_backup:
+			// this activity's onPause will call db.close(),
+	    	// so it's safe if we restore db from BackupsRestore.
 	    	startActivity(new Intent(Main.this, BackupsMain.class));
 	        return true;
 

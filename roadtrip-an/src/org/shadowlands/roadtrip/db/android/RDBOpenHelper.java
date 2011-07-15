@@ -646,6 +646,8 @@ public class RDBOpenHelper
 
 	/**
 	 * Close the connection.
+	 * If our SQLiteHelper is open, {@link SQLiteOpenHelper#close() close()} it too.
+	 * If our underlying db is open, {@link SQLiteDatabase#close() close()} it too.
 	 */
 	public void close()
 	{

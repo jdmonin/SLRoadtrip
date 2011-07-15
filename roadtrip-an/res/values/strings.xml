@@ -49,6 +49,7 @@
 <string name="driver">Driver</string>
 <string name="end_trip">End Trip</string>
 <string name="enter_stop">Enter Stop</string>
+<string name="error">Error</string>
 <string name="filename">Filename</string>
 <string name="fillup">Fill-up</string>
 <string name="frequent_local">Frequent Local</string>
@@ -96,6 +97,7 @@
 <string name="stop_continue">Stop &amp; Continue</string>
 <string name="stop_during_a_trip">Stop during a Trip</string>
 <string name="stopped_at_time">Stopped\nat Time</string>
+<string name="success">Success</string>
 <string name="this_time_must_be_no_earlier_than">This time must be no earlier than the stop time.</string>
 <string name="to__colon">To:</string>
 <string name="total">total</string>
@@ -135,6 +137,7 @@
 <string name="backups_main_title">Backup and Restore</string>
 <string name="backups_restore_are_you_sure">Are you sure you want to replace all current data with this backup?</string>
 <string name="backups_restore_backup_time">Backup time:</string>
+<string name="backups_restore_db_successfully_restored">Database was successfully restored.</string>
 <string name="backups_restore_info__colon">File restore: Info:</string>
 <string name="backups_restore_validating_file">Validating file...</string>
 <string name="backups_restore_validation_error">Error in file validation.</string>

@@ -189,9 +189,39 @@ public class BackupsRestore extends Activity
 	}
 	 */
 
+	/**
+	 * Attempt to restore from {@link #bkupFullPath}.
+	 * Assumes backup is already validated, and already confirmed by the user.
+	 * A popup message will indicate success or failure.
+	 * Either way, this method will {@link #finish()} the activity.
+	 */
 	private void restoreFromBackupFile()
 	{
-		// TODO  bkupFullPath
+		boolean ok = false;
+		String msg;
+		int titleID;
+		try
+		{
+			DBBackup.restoreCurrentDB(this, bkupFullPath);
+			Log.i(TAG, "Restored db from " + bkupFullPath);
+			ok = true;
+			titleID = R.string.success;
+			msg = getResources().getString(R.string.backups_restore_db_successfully_restored);
+		} catch (Throwable e) {
+			Log.e(TAG, "Error restoring " + bkupFullPath, e);
+			titleID = R.string.error;
+			msg = "Error restoring " + bkupFullPath + ": " + e;
+		}
+
+		AlertDialog.Builder alert = new AlertDialog.Builder(this);
+		alert.setTitle(titleID);
+		alert.setMessage(msg);
+		alert.setNeutralButton(android.R.string.ok,  new DialogInterface.OnClickListener() {
+			  public void onClick(DialogInterface dialog, int whichButton) {
+				BackupsRestore.this.finish();
+			  }
+	    	});
+		alert.show();
 	}
 
 

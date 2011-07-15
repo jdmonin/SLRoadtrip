@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  Copyright (C) 2010 Jeremy D Monin <jdmonin@nand.net>
+ *  Copyright (C) 2010-2011 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -242,6 +242,42 @@ public class DBBackup {
 
 			throw e;  // <--- Problem occurred ---
 		}
+	}
+
+	/**
+	 * Restore the current database file from a validated backup.
+	 * Before calling, use RDBVerifier to validate the backup, and confirm
+	 * with the user that it's OK to overwrite the current data.
+	 * The DBs should be closed before calling this method.
+	 *
+	 * @param fromBackupFilePath Full path to source backup-database file; db must not be open.
+	 * @param ctx  Context from which to obtain db info
+	 * @throws IOException if an error occurs
+	 */
+	public static void restoreCurrentDB(Context ctx, final String fromBackupFilePath)
+		throws IOException
+	{
+		/**
+		 * First, briefly open database, to get paths and update backup-related fields.
+		 */
+		RDBAdapter db = new RDBOpenHelper(ctx);
+		final String defaultDbFilePath = db.getFilenameFullPath();
+		db.close();
+		db = null;
+
+		// Confirm backup readable
+		File fbak = new File(fromBackupFilePath);
+		if (! fbak.exists())
+		{
+			throw new IOException("Cannot read " + fromBackupFilePath);
+		}
+
+		/**
+		 * Do the actual restore.
+		 */
+		FileUtils.copyFile(fromBackupFilePath, defaultDbFilePath, true);
+		
+		// May throw IOException
 	}
 
 	/**

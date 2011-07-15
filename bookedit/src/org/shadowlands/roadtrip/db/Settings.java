@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  Copyright (C) 2010 Jeremy D Monin <jdmonin@nand.net>
+ *  Copyright (C) 2010-2011 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -26,7 +26,10 @@ import java.util.Vector;
  * For some common settings, see the schema.
  *<P>
  * Convenience methods: {@link #insertOrUpdate(RDBAdapter, String, int)},
- *  {@link #insertOrUpdate(RDBAdapter, String, String)}
+ *  {@link #insertOrUpdate(RDBAdapter, String, String)}.
+ *<P>
+ * If you restore the database from a backup, call {@link #clearSettingsCache()}
+ * to remove cached references to the overwritten db's settings objects.
  *
  * @see RDBSchema#checkSettings(RDBAdapter, int, boolean)
  * @see AppInfo
@@ -406,6 +409,22 @@ public class Settings extends RDBRecord
 
 	/** cached record for {@link #getPreviousLocation(RDBAdapter, boolean)} */
 	private static Location prevL = null;
+
+	/**
+	 * Clear cached settings records and associated objects (such
+	 * as the Current {@link Vehicle}). Necessary after restoring from a backup.
+	 */
+	public static void clearSettingsCache()
+	{
+		currentA = null;
+		currentD = null;
+		currentV = null;
+		currentT = null;
+		currentFT = null;
+		currentFTS = null;
+		currentTS = null;
+		prevL = null;
+	}
 
 	/**
 	 * For use with <tt>setCurrent*</tt>,

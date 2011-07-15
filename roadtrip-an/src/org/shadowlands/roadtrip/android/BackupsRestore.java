@@ -31,6 +31,7 @@ import org.shadowlands.roadtrip.db.RDBAdapter;
 import org.shadowlands.roadtrip.db.RDBKeyNotFoundException;
 import org.shadowlands.roadtrip.db.RDBSchema;
 import org.shadowlands.roadtrip.db.RDBVerifier;
+import org.shadowlands.roadtrip.db.Settings;
 import org.shadowlands.roadtrip.db.android.RDBOpenHelper;
 
 import android.app.Activity;
@@ -203,6 +204,7 @@ public class BackupsRestore extends Activity
 		try
 		{
 			DBBackup.restoreCurrentDB(this, bkupFullPath);
+			Settings.clearSettingsCache();  // clear currV, etc.
 			Log.i(TAG, "Restored db from " + bkupFullPath);
 			ok = true;
 			titleID = R.string.success;

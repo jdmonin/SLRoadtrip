@@ -128,7 +128,10 @@ public class RDBOpenHelper
 		}
 	}
 
-	/** Called from the {@link SQLiteOpenHelper}. */
+	/**
+	 * Called from the {@link SQLiteOpenHelper}.
+	 * Be sure to set <tt>{@link #dbSQLRsrcs} = getApplicationContext().getResources();</tt> before calling.
+	 */
 	public void onUpgrade(SQLiteDatabase dbWritable, int oldVersion, int newVersion) {
 		Log.i(TAG, "Database onUpgrade called: (" + oldVersion + ", " + newVersion + ")");
 		db = dbWritable;

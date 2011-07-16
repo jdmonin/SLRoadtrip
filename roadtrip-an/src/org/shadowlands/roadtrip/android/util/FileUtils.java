@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  Copyright (C) 2010 Jeremy D Monin <jdmonin@nand.net>
+ *  Copyright (C) 2010-2011 Jeremy D Monin <jdmonin@nand.net>
  *
  *  Portions of this file Copyright (C) 2010 Miklos Keresztes (miklos.keresztes@gmail.com)
  *  via the AndiCar project (GPLv3) - see
@@ -94,7 +94,8 @@ public class FileUtils
      * @param toFilePath    Full path to destination file
      * @param overwriteExisting if true, toFile will be deleted before the copy
      * @return true if OK, false if couldn't copy (SecurityException, etc)
-     * @throws IOException if an error occurred when opening, closing, reading, or writing
+     * @throws IOException if an error occurred when opening, closing, reading, or writing;
+     *     even after an exception, copyFile will close the files before returning.
      */
     public static boolean copyFile
     	(String fromFilePath, String toFilePath, final boolean overwriteExisting)
@@ -115,10 +116,11 @@ public class FileUtils
     /**
      * Copy a file's contents.
      *TODO per API lookup: FileOutputStream(file) will overwrite desti if exists
-     * @param fromFilePath  Full path to source file
-     * @param toFilePath    Full path to destination file
+     * @param fromFilePath  Full path to source file; should not be open.
+     * @param toFilePath    Full path to destination file; should not be open.
      * @return true if OK, false if couldn't copy (SecurityException, etc)
-     * @throws IOException if an error occurred when opening, closing, reading, or writing
+     * @throws IOException if an error occurred when opening, closing, reading, or writing;
+     *     even after an exception, copyFile will close the files before returning.
      */
     public static boolean copyFile(File source, File dest)
     	throws IOException

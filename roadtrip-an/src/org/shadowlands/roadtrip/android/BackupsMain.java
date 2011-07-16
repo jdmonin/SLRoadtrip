@@ -225,7 +225,13 @@ public class BackupsMain extends Activity
 	 */
 	public void onItemClick(AdapterView<?> parent, View view, int position, long id)
 	{
-		final String bkPath = DBBackup.getDBBackupPath(this) + "/" + ((TextView) view).getText();
+		final String basePath = DBBackup.getDBBackupPath(this);
+		if (basePath == null)
+		{
+			Toast.makeText(this, R.string.sdcard_not_mounted, Toast.LENGTH_SHORT).show();
+			return;
+		}
+		final String bkPath = basePath + "/" + ((TextView) view).getText();
 		boolean looksOK = false;
 		SQLiteDatabase bkupDB = null;
 		int bkupSchemaVersion = 0;

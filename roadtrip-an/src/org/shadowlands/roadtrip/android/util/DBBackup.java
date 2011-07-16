@@ -39,15 +39,16 @@ import android.text.format.DateFormat;
 public class DBBackup {
 
 	/**
-	 * generic dir to be placed within SDcard for app backup;
-	 * we'll be using a pkg-named directory within this.
+	 * App-specific dir to be placed within SDcard for app backup.
 	 *<P>
-	 * Value format is "/app_back/" (note trailing slash).
+	 * Value format is <tt>"/app_shortname"</tt> (leading slash, no trailing slash).
+	 * @see #DB_SUBDIR
 	 */
-	public static final String APPS_BACKDIR = "/app_back/";
+	public static final String APP_BACKDIR = "/SLRoadtrip";
 
 	/**
-	 * db backup dir within our pkg-named directory.
+	 * db backup dir within {@link #APP_BACKDIR} directory.
+	 * Used by {@link #getDBBackupPath(Context)}.
 	 *<P>
 	 * Value format is "/db".
 	 */
@@ -56,19 +57,22 @@ public class DBBackup {
 	/**
 	 * Given our app context, determine the backup location, if sdcard and is mounted and writable.
 	 * Does not guarantee this directory exists on the SD Card.
+	 * Uses {@link #APP_BACKDIR} and {@link #DB_SUBDIR}.
 	 *
 	 * @param c app context, from {@link Context#getApplicationContext()}
-	 * @return path to a backup dir, such as "/sdcard/app_back/ourpackagename/db",
+	 * @return path to a backup dir, such as <tt>"/sdcard/SLRoadtrip/db"</tt>,
 	 *   or null if SD isn't mounted or we can't get the information.
+	 *   <BR>
+	 * Early beta versions returned <tt>"/sdcard/app_back/org.shadowlands.roadtrip/db"</tt>.
 	 */
 	public static String getDBBackupPath(Context appc)
 	{
 		if (! Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState()))
-			return null;  // TODO show a Toast?
+			return null;
 		File sddir = Environment.getExternalStorageDirectory();
 		if (sddir == null)
 			return null;
-		return sddir.getAbsolutePath() + APPS_BACKDIR + appc.getPackageName() + DB_SUBDIR;
+		return sddir.getAbsolutePath() + APP_BACKDIR + DB_SUBDIR;
 	}
 
 	/** prefix "db-" */;

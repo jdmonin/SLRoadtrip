@@ -120,11 +120,15 @@ public abstract class RDBSchema
 	 * old version to the current version.
 	 * @param  db  an open database
 	 * @param  oldVersion  The old schema version
-	 * @param  osIsAndroid  Are we running on android?  If so, skip the setVersion pragma.
+	 * @param  skipSetVersion  Are we running on android under SQLiteOpenHelper?  If so, skip the setVersion pragma.
 	 * @see RDBAdapter#getSQLScript(int) 
+	 * @throws IllegalStateException  if <tt>oldVersion</tt> is earlier than 901, thus too old to upgrade.
+	 *      v901 is from 2010-11-16.
+	 * @throws IOException  if a problem occurs locating or opening an upgrade script
+	 * @throws SQLException  if a syntax or database error occurs
 	 */
-	public static void upgradeToCurrent(RDBAdapter db, final int oldVersion, final boolean osIsAndroid)
-		throws IOException, SQLException
+	public static void upgradeToCurrent(RDBAdapter db, final int oldVersion, final boolean skipSetVersion)
+		throws IllegalStateException, IOException, SQLException
 	{
 		// Use switch fallthrough to begin schema changes
 		// from a starting old version.
@@ -154,6 +158,10 @@ public abstract class RDBSchema
 			*
 			*/
 
+		case 906:
+			// Nothing to do, current. Don't set anythingDone.
+			break;
+
 		case 901:  // 901 -> 905
 			upgradeStep(db, 905);
 		case 905:  // 905 -> 906
@@ -161,11 +169,21 @@ public abstract class RDBSchema
 
 		// after all cases, but NOT default case
 			anythingDone = true;
+			break;
+
+		default:
+			// Too old; only very early betas affected. v901 is from 2010-11-16.
+			final String tooOldMsg =
+				"-- Error, old-version minimum is 901, this version too old to upgrade: " + oldVersion;
+			throw new IllegalStateException(tooOldMsg);  // <--- Throw: too old ---
 		}
+
+		if (! anythingDone)
+			return;
 
 		// Need to indicate new db-appvers in the db.
 		String dbvers = Integer.toString(DATABASE_VERSION);
-		if (! osIsAndroid)
+		if (! skipSetVersion)
 		{
 			db.execStrucUpdate("PRAGMA user_version = " + dbvers + " ;");
 		}

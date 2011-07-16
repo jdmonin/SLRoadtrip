@@ -225,11 +225,12 @@ public class BackupsMain extends Activity
 	 */
 	public void onItemClick(AdapterView<?> parent, View view, int position, long id)
 	{
-		// TODO more than this (ask for restore? popup date/time info?)
 		final String bkPath = DBBackup.getDBBackupPath(this) + "/" + ((TextView) view).getText();
 		boolean looksOK = false;
 		SQLiteDatabase bkupDB = null;
+		int bkupSchemaVersion = 0;
 		Cursor c = null;
+
 		try {
 			bkupDB = SQLiteDatabase.openDatabase
 				(bkPath, null, SQLiteDatabase.OPEN_READONLY);
@@ -244,7 +245,8 @@ public class BackupsMain extends Activity
 				if (c.moveToNext())
 				{
 					try {
-						Toast.makeText(this, "Schema version: " + Integer.parseInt(c.getString(0)), Toast.LENGTH_SHORT).show();
+						bkupSchemaVersion = Integer.parseInt(c.getString(0));
+						Toast.makeText(this, "Schema version: " + bkupSchemaVersion, Toast.LENGTH_SHORT).show();
 						looksOK = true;
 					} catch (NumberFormatException e) {
 						Toast.makeText(this, "Cannot read appinfo(DB_CURRENT_SCHEMAVERSION)", Toast.LENGTH_SHORT).show();
@@ -266,7 +268,8 @@ public class BackupsMain extends Activity
 		if (looksOK)
 		{
 			Intent i = new Intent(this, BackupsRestore.class);
-			i.putExtra(BackupsRestore.KEY_FULLPATH, bkPath);
+			i.putExtra(BackupsRestore.KEY_FULL_PATH, bkPath);
+			i.putExtra(BackupsRestore.KEY_SCHEMA_VERS, bkupSchemaVersion);
 			startActivity(i);
 		}
 	}

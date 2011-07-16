@@ -19,16 +19,15 @@
 
 package org.shadowlands.roadtrip.android;
 
+import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Calendar;
 
 import org.shadowlands.roadtrip.R;
 import org.shadowlands.roadtrip.android.util.DBBackup;
+import org.shadowlands.roadtrip.android.util.FileUtils;
 import org.shadowlands.roadtrip.android.util.Misc;
-import org.shadowlands.roadtrip.db.AppInfo;
 import org.shadowlands.roadtrip.db.RDBAdapter;
-import org.shadowlands.roadtrip.db.RDBKeyNotFoundException;
 import org.shadowlands.roadtrip.db.RDBSchema;
 import org.shadowlands.roadtrip.db.RDBVerifier;
 import org.shadowlands.roadtrip.db.Settings;
@@ -42,16 +41,12 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Environment;
 import android.text.format.DateFormat;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.widget.AdapterView;
-import android.widget.AdapterView.OnItemClickListener;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -60,7 +55,12 @@ import android.widget.Toast;
  * Called from {@link BackupsMain}.
  * Validate the backup, show info about it, and ask the user whether to restore from it.
  *<P>
- * The file full path is passed in via <tt>intent.putExtra({@link #KEY_FULLPATH}, value)</tt>.
+ * Required Intent Extras:
+ *<UL>
+ *<LI> The file full path - <tt>intent.putExtra({@link #KEY_FULL_PATH}, String)</tt>.
+ *<LI> The file's schema version - <tt>intent.putExtra({@link #KEY_SCHEMA_VERS}, int)</tt>,
+ *   from <tt>DB_CURRENT_SCHEMAVERSION</tt> in the <tt>appinfo</tt> table of the db.
+ *</UL>
  *
  * @author jdmonin
  */
@@ -69,13 +69,19 @@ public class BackupsRestore extends Activity
 	// db is not kept open, so we can backup/restore, so no RDBAdapter field.
 
 	/** Use this intent bundle key to give the full path (String) to the backup file. */
-	public static final String KEY_FULLPATH = "backupsrestore.fullpath";
+	public static final String KEY_FULL_PATH = "backupsrestore.fullpath";
+
+	public static final String KEY_SCHEMA_VERS = "backupsrestore.schemavers";
 
 	/** tag for Log debugs */
 	@SuppressWarnings("unused")
 	private static final String TAG = "Roadtrip.BackupsRestore";
-	
+
 	private String bkupFullPath = null;
+	/** if true, delete the temp-copy at finish */
+	private boolean bkupIsTempCopy = false;
+	/** Schema version of backup, from {@link RDBSchema}. If -1, too old (very early beta) to restore. */
+	private int bkupSchemaVers = 0;
 	private boolean alreadyValidated = false;
 	private boolean validatedOK = false;
 	private ValidateDBTask validatingTask = null;
@@ -89,18 +95,22 @@ public class BackupsRestore extends Activity
 	private StringBuffer fmt_dow_shortdate;
 
 	/** Called when the activity is first created.
-	 * Gets the backup full path via <tt>getIntent().getStringExtra({@link #KEY_FULLPATH})</tt>.
+	 * Gets the backup full path via <tt>getIntent().getStringExtra({@link #KEY_FULL_PATH})</tt>.
+	 * Gets the backup schema version via <tt>getIntent().getIntExtra({@link #KEY_SCHEMA_VERS})</tt>.
+	 *<P>
+	 * If the backup's schema version is old, it is copied here and upgraded to current before continuing.
+	 *<P>
 	 * See {@link #onResume()} for remainder of init work,
-	 * which includes updating the last-backup time,
-	 * checking the SD Card status, etc.
+	 * which includes updating the fields on-screen, and calling the verifier.
 	 */
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 	    super.onCreate(savedInstanceState);
 	    setContentView(R.layout.backups_restore);
 
-	    bkupFullPath = getIntent().getStringExtra(KEY_FULLPATH);
-	    if (bkupFullPath == null)
+	    bkupFullPath = getIntent().getStringExtra(KEY_FULL_PATH);
+	    bkupSchemaVers = getIntent().getIntExtra(KEY_SCHEMA_VERS, 0);
+	    if ((bkupFullPath == null) || (bkupSchemaVers == 0))
 	    {
 	    	Toast.makeText(this, R.string.internal__missing_required_bundle, Toast.LENGTH_SHORT).show();
 	    	finish();  // <--- End this activity ---
@@ -111,6 +121,13 @@ public class BackupsRestore extends Activity
 
 	    TextView tvPath = (TextView) findViewById(R.id.backups_restore_filepath);
 	    tvPath.setText(bkupFullPath);
+
+	    if (bkupSchemaVers < RDBSchema.DATABASE_VERSION)
+	    {
+	    	// TODO if less than current, copy from bkupFullPath to getCacheDir(),
+	    	//      adj bkupFullPath, and upgrade it after verif(LEVEL_PHYS).
+	    	copyAndUpgradeTempFile();
+	    }
 
 	    // see onResume for rest of initialization.
 	}
@@ -143,11 +160,98 @@ public class BackupsRestore extends Activity
 			{
 				if (validatedOK)
 					vfield.setText(R.string.backups_restore_validation_ok);
-				else
+				else if (bkupSchemaVers != -1)
 					vfield.setText(R.string.backups_restore_validation_error);
+				else
+					vfield.setText(R.string.backups_restore_too_old_beta);
 			}	
 			btnRestore.setEnabled(validatedOK);
 		}
+	}
+
+	/**
+	 * For a backup whose schema version is less than current,
+	 * copy from {@link #bkupFullPath} to the cache directory,
+	 * verify it {@link RDBVerifier#verify(int) verify}({@link RDBVerifier#LEVEL_PHYS LEVEL_PHYS}),
+	 * {@link RDBSchema#upgradeToCurrent(RDBAdapter, int, boolean) upgrade} it,
+	 * and update {@link #bkupFullPath} and {@link #bkupIsTempCopy}.
+	 *<P>
+	 * Called from {@link #onCreate(Bundle)}.
+	 */
+	private void copyAndUpgradeTempFile()
+	{
+		boolean ok = false;
+
+		final File cacheDir = this.getCacheDir();
+    	// TODO Check disk space vs size before copy, sdcard fallback?
+
+		final File srcBkupFile = new File(bkupFullPath);
+		File destTempFile = null;
+    	try
+    	{
+        	destTempFile = File.createTempFile("tmpdb-", ".upg", cacheDir);
+    		FileUtils.copyFile(srcBkupFile, destTempFile);
+    		bkupIsTempCopy = true;
+    		bkupFullPath = destTempFile.getAbsolutePath();
+
+    		// Open db & validate(LEVEL_PHYS)
+			RDBAdapter bkupDB = new RDBOpenHelper(this, bkupFullPath);
+			RDBVerifier v = new RDBVerifier(bkupDB);
+			ok = (0 == v.verify(RDBVerifier.LEVEL_PHYS));
+			if (! ok)
+			{
+				// Maybe it's disk space?
+				// TODO Toast or something
+			}
+			v.release();
+
+    		// upgradeToCurrent
+			if (ok)
+			{
+				try {
+					Log.i(TAG, "Calling upgradeToCurrent(\"" + bkupFullPath + "\", " + bkupSchemaVers + ", true)");
+					if (RDBOpenHelper.dbSQLRsrcs == null)
+				    	RDBOpenHelper.dbSQLRsrcs = getApplicationContext().getResources();
+					RDBSchema.upgradeToCurrent(bkupDB, bkupSchemaVers, false);
+					Log.i(TAG, "Completed upgradeToCurrent");
+				} catch (IllegalStateException e) {
+					Toast.makeText(this, R.string.backups_restore_too_old_beta, Toast.LENGTH_LONG).show();
+					bkupSchemaVers = -1;
+					ok = false;
+					Log.e(TAG, "Failed upgradeToCurrent", e);
+				} catch (Throwable e) {
+					// TODO Toast or something
+					ok = false;
+					Log.e(TAG, "Failed upgradeToCurrent", e);
+				}
+			}
+
+			bkupDB.close();
+    		// next, if ok, continue with validating it in onResume
+
+    	} catch (IOException e)
+    	{
+    		// TODO ?
+    	}
+
+    	if (! ok)
+    	{
+    		alreadyValidated = true;
+    		validatedOK = false;
+    		if (bkupIsTempCopy && (destTempFile != null))
+    		{
+    			try
+    			{
+    				if (destTempFile.exists())
+    					destTempFile.delete();
+    			} catch (Throwable e) {}
+    		}
+
+    		TextView vfield = (TextView) findViewById(R.id.backups_restore_validating);
+    		if (vfield == null)
+    			return;
+    		vfield.setText(R.string.backups_restore_validation_error);
+    	}
 	}
 
 	/** Set the "validating..." textfield to show % percent */
@@ -198,7 +302,6 @@ public class BackupsRestore extends Activity
 	 */
 	private void restoreFromBackupFile()
 	{
-		boolean ok = false;
 		String msg;
 		int titleID;
 		try
@@ -206,7 +309,6 @@ public class BackupsRestore extends Activity
 			DBBackup.restoreCurrentDB(this, bkupFullPath);
 			Settings.clearSettingsCache();  // clear currV, etc.
 			Log.i(TAG, "Restored db from " + bkupFullPath);
-			ok = true;
 			titleID = R.string.success;
 			msg = getResources().getString(R.string.backups_restore_db_successfully_restored);
 		} catch (Throwable e) {
@@ -231,6 +333,15 @@ public class BackupsRestore extends Activity
 	public void onDestroy()
 	{
 		super.onDestroy();
+		if (bkupIsTempCopy)
+		{
+			try
+			{
+				File tf = new File(bkupFullPath);
+				if (tf.exists())
+					tf.delete();
+			} catch (Throwable e) {}
+		}
 	}
 
 	public void onClick_BtnRestore(View v)

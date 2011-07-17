@@ -393,6 +393,7 @@ public class Trip extends RDBRecord
      * @return Most recent Trip for this Vehicle, sorted by time_start descending, or null if none
      * @throws IllegalStateException if db not open
      * @since 0.9.03
+     * @see #recentInDB(RDBAdapter)
      */
     public static Trip recentTripForVehicle(RDBAdapter db, Vehicle veh, final boolean wantsLocal)
     	throws IllegalStateException
@@ -413,6 +414,30 @@ public class Trip extends RDBRecord
     	{
     		return null;
     	}
+    }
+
+    /**
+     * Get the most recent trip in the database, if any.
+     * Does not call {@link #readAllTStops()} on the returned trip.
+     * @param db  db connection
+     * @return the newest trip, or null if none in the database
+     * @throws IllegalStateException if db not open
+     * @see #recentTripForVehicle(RDBAdapter, Vehicle, boolean)
+     * @since 0.9.07
+     */
+    public static Trip recentInDB(RDBAdapter db)
+		throws IllegalStateException
+    {
+    	if (db == null)
+    		throw new IllegalStateException("db null");
+    	final int tripID = db.getRowIntField(TABNAME, "MAX(_id)", null, (String[]) null, 0);
+    	if (tripID == 0)
+    		return null;
+    	try {
+			return new Trip(db, tripID);
+		} catch (RDBKeyNotFoundException e) {
+			return null;  // required by compiler, but we know the ID exists
+		}
     }
 
     /**

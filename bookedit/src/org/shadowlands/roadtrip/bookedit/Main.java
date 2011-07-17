@@ -39,6 +39,21 @@ import org.shadowlands.roadtrip.db.RDBSchema;
 /** Main startup for BookEdit. Prompts whether to use a database or a backup file, etc. */
 public class Main
 {
+	/**
+	 * Application version code; changes with each point release.
+	 * Same format as {@link RDBSchema#DATABASE_VERSION}, but multiple releases may have the same db version.
+	 * @see #APP_VERSION_STRING
+	 * @since 0.9.07
+	 */
+	public static final int APP_VERSION_CODE = 907;
+
+	/**
+	 * Application version as a human-readable string; changes with each point release.
+	 * @see #APP_VERSION_CODE
+	 * @since 0.9.07
+	 */
+	public static final String APP_VERSION_STRING = "0.9.07";
+
 	private String dbFilename = null;
 	private StartupChoiceFrame scf;
 	private RDBAdapter conn = null;
@@ -112,7 +127,8 @@ public class Main
 			bOpen = addBtn("Open...", KeyEvent.VK_O);
 			bOpenBackup = addBtn("View Backup...", KeyEvent.VK_V);
 			bExit = addBtn("Exit", KeyEvent.VK_X);
-			btns.add(new JLabel("Current version code: " + RDBSchema.DATABASE_VERSION));
+			btns.add(new JLabel("Version " + APP_VERSION_STRING
+					+ ", database schema version " + RDBSchema.DATABASE_VERSION));
 
 			getContentPane().add(btns);
 			getRootPane().setDefaultButton(bOpen);

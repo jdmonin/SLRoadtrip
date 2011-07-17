@@ -25,6 +25,10 @@ The SQL scripts (schemas and database upgrade scripts)
 are found in bookedit src/org/shadowlands/roadtrip/db/script/*.sql
 and in android res/raw/*.sql.
 
+The bookedit and roadtrip-an versions should be fairly close to each other.
+roadtrip-an's version is kept in AndroidMainfest.xml.
+bookedit's version is kept in org/shadowlands/roadtrip/bookedit/Main.java.
+
 
 (more sections here)
 

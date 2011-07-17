@@ -357,12 +357,15 @@ public class RDBOpenHelper
 	/**
 	 * Get one field in one row, given a string-type key field name.
 	 * Returns null if key value not found.
+	 *
 	 * @param tabname  Table to query
 	 * @param kf  Key fieldname
 	 * @param kv  Key value
 	 * @param fn  Field name to get
 	 * @return field value, or null if not found
 	 * @throws IllegalStateException if conn has been closed, table not found, etc.
+	 * @see #getRowIntField(String, String, String, String, int)
+	 * @see #getRowLongField(String, String, String, String, int)
 	 */
 	public String getRowField(final String tabname, final String kf, final String kv, final String fn)
 	    throws IllegalStateException
@@ -379,6 +382,7 @@ public class RDBOpenHelper
 	 * The where-clause should match at most one row, or <tt>fn</tt> should
 	 * contain an aggregate function which evaluates the multiple rows.
 	 * Returns null if not found.
+	 *
 	 * @param tabname  Table to query
 	 * @param fn  Field name to get, or aggregate function such as <tt>max(v)</tt>
 	 * @param where  Where-clause, or null for all rows; may contain <tt>?</tt> which will be
@@ -387,10 +391,13 @@ public class RDBOpenHelper
 	 * @param whereArgs  Strings to bind against each <tt>?</tt> in <tt>where</tt>, or null if <tt>where</tt> has none of those
 	 * @return field value, or null if not found; the value may be null.
 	 * @throws IllegalStateException if conn has been closed, table not found, etc.
+	 * @throws IllegalArgumentException  if where is null, but whereArgs is not
 	 * @since 0.9.06
+	 * @see #getRowIntField(String, String, String, String[], int)
+	 * @see #getRowLongField(String, String, String, String[], int)
 	 */
 	public String getRowField(final String tabname, final String fn, final String where, final String[] whereArgs)
-	    throws IllegalStateException
+	    throws IllegalStateException, IllegalArgumentException
     {
 		if (db == null)
 			db = getWritableDatabase();  // TODO chk exceptions
@@ -401,6 +408,126 @@ public class RDBOpenHelper
     		rv = dbqc.getString(0);
     	else
     		rv = null;
+
+		// If fn is aggregate with no matching rows,
+		// moveToFirst is true but getString returns null.
+
+    	dbqc.close();
+    	return rv;
+    }
+
+	/**
+	 * Get one integer field in one row, given a string-type key field name.
+	 * Returns <tt>def</tt> if key value not found.
+	 *
+	 * @param tabname  Table to query
+	 * @param kf  Key fieldname
+	 * @param kv  Key value
+	 * @param fn  Field name to get
+	 * @param def  Value to return if key value not found
+	 * @return field value, or <tt>def</tt> if not found
+	 * @throws IllegalStateException if conn has been closed, table not found, etc.
+	 * @see #getRowField(String, String, String, String)
+	 * @since 0.9.07
+	 */
+	public int getRowIntField(final String tabname, final String kf, final String kv, final String fn, final int def)
+	    throws IllegalStateException
+    {
+		final String[] whereArgs = { kv } ;
+		return getRowIntField(tabname, fn, kf + " = ?", whereArgs, def);
+    }
+
+	/**
+	 * Get one integer field in one row, given a where-clause.
+	 * The where-clause should match at most one row, or <tt>fn</tt> should
+	 * contain an aggregate function which evaluates the multiple rows.
+	 * Returns <tt>def</tt> if not found.
+	 *
+	 * @param tabname  Table to query
+	 * @param fn  Field name to get, or aggregate function such as <tt>max(v)</tt>
+	 * @param where  Where-clause, or null for all rows; may contain <tt>?</tt> which will be
+	 *       filled from <tt>whereArgs</tt> contents, as with PreparedStatements.
+	 *       Do not include the "where" keyword.
+	 * @param whereArgs  Strings to bind against each <tt>?</tt> in <tt>where</tt>, or null if <tt>where</tt> has none of those
+	 * @param def  Value to return if key value not found
+	 * @return field value, or <tt>def</tt> if not found.
+	 * @throws IllegalStateException if conn has been closed, table not found, etc.
+	 * @throws IllegalArgumentException  if where is null, but whereArgs is not
+	 * @see #getRowField(String, String, String, String[])
+	 * @since 0.9.07
+	 */
+	public int getRowIntField(final String tabname, final String fn, final String where, final String[] whereArgs, final int def)
+	    throws IllegalStateException, IllegalArgumentException
+    {
+		if (db == null)
+			db = getWritableDatabase();  // TODO chk exceptions
+
+		Cursor dbqc = db.query(tabname, new String[]{ fn }, where, whereArgs, null, null, null /* ORDERBY */ );
+		int rv;
+    	if (dbqc.moveToFirst())
+    		rv = dbqc.getInt(0);
+    	else
+    		rv = def;
+
+		// If fn is aggregate with no matching rows,
+		// moveToFirst is true but getString returns null.
+
+    	dbqc.close();
+    	return rv;
+    }
+
+	/**
+	 * Get one long-integer field in one row, given a string-type key field name.
+	 * Returns <tt>def</tt> if key value not found.
+	 *
+	 * @param tabname  Table to query
+	 * @param kf  Key fieldname
+	 * @param kv  Key value
+	 * @param fn  Field name to get
+	 * @param def  Value to return if key value not found
+	 * @return field value, or <tt>def</tt> if not found
+	 * @throws IllegalStateException if conn has been closed, table not found, etc.
+	 * @see #getRowField(String, String, String, String)
+	 * @since 0.9.07
+	 */
+	public long getRowLongField(final String tabname, final String kf, final String kv, final String fn, final long def)
+	    throws IllegalStateException
+    {
+		final String[] whereArgs = { kv } ;
+		return getRowLongField(tabname, fn, kf + " = ?", whereArgs, def);
+    }
+
+	/**
+	 * Get one long-integer field in one row, given a where-clause.
+	 * The where-clause should match at most one row, or <tt>fn</tt> should
+	 * contain an aggregate function which evaluates the multiple rows.
+	 * Returns <tt>def</tt> if not found.
+	 *
+	 * @param tabname  Table to query
+	 * @param fn  Field name to get, or aggregate function such as <tt>max(v)</tt>
+	 * @param where  Where-clause, or null for all rows; may contain <tt>?</tt> which will be
+	 *       filled from <tt>whereArgs</tt> contents, as with PreparedStatements.
+	 *       Do not include the "where" keyword.
+	 * @param whereArgs  Strings to bind against each <tt>?</tt> in <tt>where</tt>, or null if <tt>where</tt> has none of those
+	 * @param def  Value to return if key value not found
+	 * @return field value, or <tt>def</tt> if not found.
+	 * @throws IllegalStateException if conn has been closed, table not found, etc.
+	 * @throws IllegalArgumentException  if where is null, but whereArgs is not
+	 * @see #getRowField(String, String, String, String[])
+	 * @since 0.9.07
+	 */
+	public long getRowLongField(final String tabname, final String fn, final String where, final String[] whereArgs, final long def)
+	    throws IllegalStateException, IllegalArgumentException
+    {
+		if (db == null)
+			db = getWritableDatabase();  // TODO chk exceptions
+
+		Cursor dbqc = db.query(tabname, new String[]{ fn }, where, whereArgs, null, null, null /* ORDERBY */ );
+		long rv;
+    	if (dbqc.moveToFirst())
+    		rv = dbqc.getLong(0);
+    	else
+    		rv = def;
 
 		// If fn is aggregate with no matching rows,
 		// moveToFirst is true but getString returns null.
@@ -486,7 +613,7 @@ public class RDBOpenHelper
 	 * @param skipID  If true, <tt>fv[]</tt> does not contain the first (_id) field.
 	 *          This means that insert and update arrays are the same length.
 	 *          So, you can use the same code to build the <tt>fv[]</tt>
-	 *          arrays used in {@link #insert(String, String[], boolean)
+	 *          arrays used in {@link #insert(String, String[], boolean)}
 	 *          and {@link #update(String, int, String[], String[])}.
 	 * @return The new record's row ID (sqlite <tt>last_insert_rowid()</tt>), or -1 on error
 	 * @throws IllegalStateException if conn has been closed, table not found, etc.

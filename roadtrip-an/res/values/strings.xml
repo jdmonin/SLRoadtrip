@@ -139,7 +139,7 @@
 <string name="backups_restore_are_you_sure">Are you sure you want to replace all current data with this backup?</string>
 <string name="backups_restore_backup_time">Backup time:</string>
 <string name="backups_restore_db_successfully_restored">Database was successfully restored.</string>
-<string name="backups_restore_info__colon">File restore: Info:</string>
+<string name="backups_restore_info__colon">Restore From Backup - File Info:</string>
 <string name="backups_restore_more_recent_are_you_sure">More recent trip data exists, which will be lost. Are you sure you want to overwrite all current data with this backup?</string>
 <string name="backups_restore_too_old_beta">This backup file is an early beta version too old to restore.</string>
 <string name="backups_restore_validating_file">Validating file...</string>

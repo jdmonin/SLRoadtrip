@@ -38,32 +38,12 @@
 		<TextView
 		    android:layout_width="wrap_content" 
 		    android:layout_height="wrap_content" 
-		    android:text="@string/quantity"
-		    />
-		<TextView
-		    android:layout_weight="1"
-		    android:layout_width="fill_parent" 
-		    android:layout_height="wrap_content"
-		    android:layout_span="2"
-		    android:text="etc"
-		    />
-    </TableRow>
-    <TableRow>
-		<TextView
-		    android:layout_width="wrap_content" 
-		    android:layout_height="wrap_content" 
 		    android:text="@string/filename"
 		    />
 		<TextView android:id="@+id/backups_restore_filepath"
 		    android:layout_weight="1"
 		    android:layout_width="fill_parent" 
 		    android:layout_height="wrap_content"
-		    android:text="r2c1"
-		    />
-		<TextView
-		    android:layout_width="wrap_content" 
-		    android:layout_height="wrap_content" 
-		    android:text="r2c2"
 		    />
     </TableRow>
     <TableRow>
@@ -76,25 +56,16 @@
 		    android:layout_weight="1"
 		    android:layout_width="fill_parent" 
 		    android:layout_height="wrap_content"
-		    android:text="r2c1"
-		    />
-		<TextView
-		    android:layout_width="wrap_content" 
-		    android:layout_height="wrap_content" 
-		    android:text="r2c2"
-		    />
-    </TableRow>
-    <TableRow>
-		<TextView android:id="@+id/backups_restore_validating"
-		    android:layout_width="fill_parent" 
-		    android:layout_height="wrap_content"
-		    android:layout_span="3"
-		    android:textSize="18sp"
-		    android:textStyle="bold"
-		    android:text="@string/backups_restore_validating_file"
 		    />
     </TableRow>
 </TableLayout>
+<TextView android:id="@+id/backups_restore_validating"
+    android:layout_width="fill_parent" 
+    android:layout_height="wrap_content"
+    android:textSize="18sp"
+    android:textStyle="bold"
+    android:text="@string/backups_restore_validating_file"
+    />
 <LinearLayout
     android:orientation="horizontal"
     android:layout_width="fill_parent"

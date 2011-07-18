@@ -68,7 +68,7 @@ import android.widget.Toast;
  */
 public class BackupsRestore extends Activity
 {
-	// db is not kept open, so we can backup/restore, so no RDBAdapter field.
+	// db is not kept open, so we can restore, so there is no RDBAdapter field in this activity.
 
 	/** Use this intent bundle key to give the full path (String) to the backup file. */
 	public static final String KEY_FULL_PATH = "backupsrestore.fullpath";
@@ -80,7 +80,6 @@ public class BackupsRestore extends Activity
 	public static final String KEY_LAST_TRIPTIME = "backupsrestore.triptime";
 
 	/** tag for Log debugs */
-	@SuppressWarnings("unused")
 	private static final String TAG = "Roadtrip.BackupsRestore";
 
 	private String bkupFullPath = null;
@@ -215,7 +214,8 @@ public class BackupsRestore extends Activity
 			if (! ok)
 			{
 				// Maybe it's disk space?
-				// TODO Toast or something
+				// TODO fallback to sdcard and retry.
+				Toast.makeText(this, R.string.backups_restore_validation_error, Toast.LENGTH_SHORT).show();
 			}
 			v.release();
 
@@ -245,7 +245,9 @@ public class BackupsRestore extends Activity
 
     	} catch (IOException e)
     	{
-    		// TODO ?
+    		// TODO ? Fallback to sdcard and retry?
+			Log.e(TAG, "copyAndUpgradeTempFile ioexception: Failed during copy & validation", e);
+			Toast.makeText(this, R.string.backups_restore_validation_error, Toast.LENGTH_SHORT).show();
     	}
 
     	if (! ok)
@@ -314,7 +316,7 @@ public class BackupsRestore extends Activity
 	 * If none, go ahead and call {@link #restoreFromBackupFile()} now,
 	 * which will {@link #finish()} this activity.
 	 */
-	private void checkActivityAndrestoreFromBackupFile()
+	private void checkActivityAndRestoreFromBackupFile()
 	{
 		final int lastTrip = getIntent().getIntExtra(KEY_LAST_TRIPTIME, 0);
 		if (lastTrip <= bkupAtTime)
@@ -396,7 +398,7 @@ public class BackupsRestore extends Activity
     	alert.setMessage(R.string.backups_restore_are_you_sure);
     	alert.setPositiveButton(R.string.restore, new DialogInterface.OnClickListener() {
 			  public void onClick(DialogInterface dialog, int whichButton) {
-				  checkActivityAndrestoreFromBackupFile();
+				  checkActivityAndRestoreFromBackupFile();
 			  }
 	    	});
     	alert.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {

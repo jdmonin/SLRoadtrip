@@ -36,6 +36,7 @@ import org.shadowlands.roadtrip.db.android.RDBOpenHelper;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
@@ -45,7 +46,6 @@ import android.text.format.DateFormat;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
-import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -60,6 +60,8 @@ import android.widget.Toast;
  *<LI> The file full path - <tt>intent.putExtra({@link #KEY_FULL_PATH}, String)</tt>.
  *<LI> The file's schema version - <tt>intent.putExtra({@link #KEY_SCHEMA_VERS}, int)</tt>,
  *   from <tt>DB_CURRENT_SCHEMAVERSION</tt> in the <tt>appinfo</tt> table of the db.
+ *<LI> The current data's most recent trip time - <tt>intent.putExtra({@link #KEY_LAST_TRIPTIME}, int)</tt>,
+ *   from current data which would be overwritten, NOT from the backup data.
  *</UL>
  *
  * @author jdmonin
@@ -71,17 +73,27 @@ public class BackupsRestore extends Activity
 	/** Use this intent bundle key to give the full path (String) to the backup file. */
 	public static final String KEY_FULL_PATH = "backupsrestore.fullpath";
 
+	/** Schema version of the backup file being restored */
 	public static final String KEY_SCHEMA_VERS = "backupsrestore.schemavers";
+
+	/** Most recent trip timestamp (in current data, not data being restored), or -1 if none */
+	public static final String KEY_LAST_TRIPTIME = "backupsrestore.triptime";
 
 	/** tag for Log debugs */
 	@SuppressWarnings("unused")
 	private static final String TAG = "Roadtrip.BackupsRestore";
 
 	private String bkupFullPath = null;
+
 	/** if true, delete the temp-copy at finish */
 	private boolean bkupIsTempCopy = false;
+
 	/** Schema version of backup, from {@link RDBSchema}. If -1, too old (very early beta) to restore. */
 	private int bkupSchemaVers = 0;
+
+	/** Backup file's timestamp */
+	private int bkupAtTime = -1;
+
 	private boolean alreadyValidated = false;
 	private boolean validatedOK = false;
 	private ValidateDBTask validatingTask = null;
@@ -108,9 +120,11 @@ public class BackupsRestore extends Activity
 	    super.onCreate(savedInstanceState);
 	    setContentView(R.layout.backups_restore);
 
-	    bkupFullPath = getIntent().getStringExtra(KEY_FULL_PATH);
-	    bkupSchemaVers = getIntent().getIntExtra(KEY_SCHEMA_VERS, 0);
-	    if ((bkupFullPath == null) || (bkupSchemaVers == 0))
+	    final Intent in = getIntent(); 
+	    bkupFullPath = in.getStringExtra(KEY_FULL_PATH);
+	    bkupSchemaVers = in.getIntExtra(KEY_SCHEMA_VERS, 0);
+	    if ((bkupFullPath == null) || (bkupSchemaVers == 0)
+	    	|| (0 == in.getIntExtra(KEY_LAST_TRIPTIME, 0)))
 	    {
 	    	Toast.makeText(this, R.string.internal__missing_required_bundle, Toast.LENGTH_SHORT).show();
 	    	finish();  // <--- End this activity ---
@@ -124,8 +138,8 @@ public class BackupsRestore extends Activity
 
 	    if (bkupSchemaVers < RDBSchema.DATABASE_VERSION)
 	    {
-	    	// TODO if less than current, copy from bkupFullPath to getCacheDir(),
-	    	//      adj bkupFullPath, and upgrade it after verif(LEVEL_PHYS).
+	    	// If less than current, copy from bkupFullPath to getCacheDir(),
+	    	//   adjust bkupFullPath, and upgrade it after verif(LEVEL_PHYS).
 	    	copyAndUpgradeTempFile();
 	    }
 
@@ -295,6 +309,36 @@ public class BackupsRestore extends Activity
 	 */
 
 	/**
+	 * Check for recent trip data which would be lost,
+	 * and popup to confirm before calling {@link #restoreFromBackupFile()}.
+	 * If none, go ahead and call {@link #restoreFromBackupFile()} now,
+	 * which will {@link #finish()} this activity.
+	 */
+	private void checkActivityAndrestoreFromBackupFile()
+	{
+		final int lastTrip = getIntent().getIntExtra(KEY_LAST_TRIPTIME, 0);
+		if (lastTrip <= bkupAtTime)
+		{
+			restoreFromBackupFile();
+			return;  // <--- Early return: Go ahead and restore now ---
+		}
+
+    	AlertDialog.Builder alert = new AlertDialog.Builder(this);
+
+    	alert.setTitle(R.string.confirm);
+    	alert.setMessage(R.string.backups_restore_more_recent_are_you_sure);
+    	alert.setPositiveButton(R.string.restore, new DialogInterface.OnClickListener() {
+			  public void onClick(DialogInterface dialog, int whichButton) {
+				  restoreFromBackupFile();
+			  }
+	    	});
+    	alert.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+	    	  public void onClick(DialogInterface dialog, int whichButton) { }
+	    	});
+    	alert.show();
+	}
+
+	/**
 	 * Attempt to restore from {@link #bkupFullPath}.
 	 * Assumes backup is already validated, and already confirmed by the user.
 	 * A popup message will indicate success or failure.
@@ -352,7 +396,7 @@ public class BackupsRestore extends Activity
     	alert.setMessage(R.string.backups_restore_are_you_sure);
     	alert.setPositiveButton(R.string.restore, new DialogInterface.OnClickListener() {
 			  public void onClick(DialogInterface dialog, int whichButton) {
-				restoreFromBackupFile();
+				  checkActivityAndrestoreFromBackupFile();
 			  }
 	    	});
     	alert.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
@@ -396,12 +440,13 @@ public class BackupsRestore extends Activity
 	    return super.onKeyUp(keyCode, event);
 	}
 
-	/** When a backup is selected in the list */
-	public void onItemClick(AdapterView<?> parent, View view, int position, long id)
+	/** Temporary reference code for reading db fields; not used yet in this activity. */
+	@SuppressWarnings("unused")
+	private void temp_readSomeFields()
 	{
 		// TODO move this data-gathering into onResume
 		// TODO more than this (ask for restore? popup date/time info?)
-		final String bkPath = DBBackup.getDBBackupPath(this) + "/" + ((TextView) view).getText();
+		final String bkPath = DBBackup.getDBBackupPath(this) + "/somedb.bak";
 		SQLiteDatabase bkupDB = null;
 		Cursor c = null;
 		try {
@@ -443,7 +488,12 @@ public class BackupsRestore extends Activity
 		protected Boolean doInBackground(final String... bkupFullPath)
 		{
 			RDBAdapter bkupDB = new RDBOpenHelper(BackupsRestore.this, bkupFullPath[0]);
-			//		doSomething(bkupDB);  // TODO.  Gather info for fields. See onItemClick, readDBLastBackupTime.
+
+			// TODO encapsulate this into AppInfo:
+			final int bktime = bkupDB.getRowIntField("appinfo", "aifield", "DB_BACKUP_THISTIME", "aivalue", -1);
+			if (bktime != -1)
+				bkupAtTime = bktime;
+			// TODO else, something's missing from the backup.
 
 			RDBVerifier v = new RDBVerifier(bkupDB);
 			int rc = v.verify(RDBVerifier.LEVEL_MDATA);
@@ -478,6 +528,14 @@ public class BackupsRestore extends Activity
 					vfield.setText(R.string.backups_restore_validation_error);
 			}
 	
+			vfield = (TextView) findViewById(R.id.backups_restore_bkuptime);
+			if (vfield != null)
+			{
+				if (fmt_dow_shortdate == null)
+					fmt_dow_shortdate = Misc.buildDateFormatDOWShort(BackupsRestore.this, false);
+				vfield.setText(DateFormat.format(fmt_dow_shortdate, bkupAtTime * 1000L));
+			}
+
 			btnRestore.setEnabled(validatedOK);
 	    }
 	}

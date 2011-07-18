@@ -239,6 +239,9 @@ public class Trip extends RDBRecord
 
 	/**
 	 * Search for trips beyond this range.
+	 * Uses min or max to ensure any newer or older data is found,
+	 * no matter how long the time difference is.
+	 *
 	 * @param db  db connection
 	 * @param vIDstr   Vehicle ID to look for, as Integer.toString (for sql)
 	 * @param tt0  Early end of time range

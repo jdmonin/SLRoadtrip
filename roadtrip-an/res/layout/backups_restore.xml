@@ -72,7 +72,7 @@
 		    android:layout_height="wrap_content" 
 		    android:text="@string/backups_restore_backup_time"
 		    />
-		<TextView
+		<TextView android:id="@+id/backups_restore_bkuptime"
 		    android:layout_weight="1"
 		    android:layout_width="fill_parent" 
 		    android:layout_height="wrap_content"

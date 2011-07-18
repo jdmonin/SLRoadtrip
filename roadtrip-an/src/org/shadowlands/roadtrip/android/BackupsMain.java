@@ -30,6 +30,7 @@ import org.shadowlands.roadtrip.db.AppInfo;
 import org.shadowlands.roadtrip.db.RDBAdapter;
 import org.shadowlands.roadtrip.db.RDBKeyNotFoundException;
 import org.shadowlands.roadtrip.db.RDBSchema;
+import org.shadowlands.roadtrip.db.Trip;
 import org.shadowlands.roadtrip.db.android.RDBOpenHelper;
 
 import android.app.Activity;
@@ -63,8 +64,11 @@ public class BackupsMain extends Activity
 	/** Can we write?  Set in {@link #onResume()}. */
 	private boolean isSDCardWritable = false;
 
+	/** Most recent trip timestamp in current data, or -1 if none; set in {@link #readDBLastTripTime(RDBAdapter)} */
+	private int lastTripDataChange = -1;
+
 	private Button btnBackupNow;
-	private TextView tvTimeOfLast;
+	private TextView tvTimeOfLastBkup, tvTimeOfLastTrip;
 	private ListView lvBackupsList;
 
 	/**
@@ -85,7 +89,8 @@ public class BackupsMain extends Activity
 	    setTitle(R.string.backups_main_title);
 
 	    btnBackupNow = (Button) findViewById(R.id.backups_main_btn_backupnow);
-	    tvTimeOfLast = (TextView) findViewById(R.id.backups_main_timeOfLast);
+	    tvTimeOfLastBkup = (TextView) findViewById(R.id.backups_main_timeOfLastBkup);
+	    tvTimeOfLastTrip = (TextView) findViewById(R.id.backups_main_timeOfLastTrip);
 	    lvBackupsList = (ListView) findViewById(R.id.backups_main_list);
 	    lvBackupsList.setOnItemClickListener(this);
 
@@ -112,6 +117,7 @@ public class BackupsMain extends Activity
 
 		btnBackupNow.setEnabled(isSDCardWritable);
 		readDBLastBackupTime(db, -1);
+		readDBLastTripTime(db);
 
 		if (! isSDCardReadable)
 		{
@@ -129,7 +135,7 @@ public class BackupsMain extends Activity
 	}
 
 	/**
-	 * Look in AppInfo db-table for last backup time, update {@link #tvTimeOfLast}.
+	 * Look in AppInfo db-table for last backup time, update {@link #tvTimeOfLastBkup}.
 	 * @param db  db conn to read, if <tt>lasttime</tt> == -1
 	 * @param lasttime -1 if want to read db; otherwise the last time if known
 	 */
@@ -146,15 +152,35 @@ public class BackupsMain extends Activity
 
 		if (lasttime == -1)
 		{
-			tvTimeOfLast.setText(R.string.backups_main_no_previous);
+			tvTimeOfLastBkup.setText(R.string.backups_main_no_previous);
 		} else {
 			if (fmt_dow_shortdate == null)
 				fmt_dow_shortdate = Misc.buildDateFormatDOWShort(this, false);
 			StringBuffer sb = new StringBuffer(getResources().getString(R.string.backups_main_last_bkuptime));
 			sb.append(' ');
 			sb.append(DateFormat.format(fmt_dow_shortdate, lasttime * 1000L));
-			tvTimeOfLast.setText(sb);
+			tvTimeOfLastBkup.setText(sb);
 		}
+	}
+
+	/**
+	 * Read most recent current trip, update {@link #lastTripDataChange}.
+	 */
+	private void readDBLastTripTime(RDBAdapter db) {
+		final Trip mostRecent = Trip.recentInDB(db);
+		if (mostRecent == null)
+		{
+			// lastTripDataChange remains -1.
+			return;
+		}
+
+		lastTripDataChange = mostRecent.readLatestTime();
+		if (fmt_dow_shortdate == null)
+			fmt_dow_shortdate = Misc.buildDateFormatDOWShort(this, false);
+		StringBuffer sb = new StringBuffer(getResources().getString(R.string.backups_main_last_triptime));
+		sb.append(' ');
+		sb.append(DateFormat.format(fmt_dow_shortdate, lastTripDataChange * 1000L));
+		tvTimeOfLastTrip.setText(sb);
 	}
 
 	/**
@@ -241,6 +267,7 @@ public class BackupsMain extends Activity
 			bkupDB = SQLiteDatabase.openDatabase
 				(bkPath, null, SQLiteDatabase.OPEN_READONLY);
 
+			// TODO encapsulate this into AppInfo if possible:
 			final String[] cols = { "aivalue" };
 			c = bkupDB.query("appinfo", cols, "aifield = 'DB_BACKUP_THISTIME' or aifield = 'DB_CURRENT_SCHEMAVERSION'",
 					null, null, null, "aifield");
@@ -276,6 +303,7 @@ public class BackupsMain extends Activity
 			Intent i = new Intent(this, BackupsRestore.class);
 			i.putExtra(BackupsRestore.KEY_FULL_PATH, bkPath);
 			i.putExtra(BackupsRestore.KEY_SCHEMA_VERS, bkupSchemaVersion);
+			i.putExtra(BackupsRestore.KEY_LAST_TRIPTIME, lastTripDataChange);
 			startActivity(i);
 		}
 	}

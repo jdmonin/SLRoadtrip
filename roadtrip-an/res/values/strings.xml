@@ -131,7 +131,8 @@
 <string name="main_no_recent_roadtrips_for_vehicle">No recent roadtrips found for this vehicle.</string>
 <string name="main_trip_based_on_frequent">This trip is based on another frequent trip.</string>
 <string name="backups_main_folder_nonefound">No backups found in the backup folder.</string>
-<string name="backups_main_last_bkuptime">Last backup time: </string> 
+<string name="backups_main_last_bkuptime">Last backup time: </string>
+<string name="backups_main_last_triptime">Last trip time: </string>
 <string name="backups_main_no_previous">Logbook has never been backed up!</string>
 <string name="backups_main_prevlist">Previous Backups on SD card:</string>
 <string name="backups_main_title">Backup and Restore</string>
@@ -139,6 +140,8 @@
 <string name="backups_restore_backup_time">Backup time:</string>
 <string name="backups_restore_db_successfully_restored">Database was successfully restored.</string>
 <string name="backups_restore_info__colon">File restore: Info:</string>
+<string name="backups_restore_more_recent_are_you_sure">More recent trip data exists, which will be lost. Are you sure you want to overwrite all current data with this backup?</string>
+<string name="backups_restore_too_old_beta">This backup file is an early beta version too old to restore.</string>
 <string name="backups_restore_validating_file">Validating file...</string>
 <string name="backups_restore_validation_error">Error in file validation.</string>
 <string name="backups_restore_validation_ok">File validated.</string>

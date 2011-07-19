@@ -84,12 +84,12 @@ public class Trip extends RDBRecord
     	"(time_start < ?) and vid = ?";
 
     /** Where-clause for use in {@link #tripsForLocation(RDBAdapter, int, int, int, boolean)} */
-    private static final String WHERE_LOCID_AND_VID =
-    	"_id in ( select distinct tripid from tstop where locid = ? order by tripid desc limit ? ) and vid = ?";
+    private static final String WHERE_LOCID =
+    	"_id in ( select distinct tripid from tstop where locid = ? order by tripid desc limit ? )";
 
     /** Where-clause for use in {@link #tripsForLocation(RDBAdapter, int, int, int, boolean)} */
-    private static final String WHERE_LOCID_AND_TRIPID_BEFORE_AND_VID =
-    	"_id in ( select distinct tripid from tstop where locid = ? and tripid < ? order by tripid desc limit ? ) and vid = ?";
+    private static final String WHERE_LOCID_AND_TRIPID_BEFORE =
+    	"_id in ( select distinct tripid from tstop where locid = ? and tripid < ? order by tripid desc limit ? )";
 
     private static final int WEEK_IN_SECONDS = 7 * 24 * 60 * 60;
 
@@ -307,10 +307,10 @@ public class Trip extends RDBRecord
 	}
 
     /**
-     * Retrieve a range of Trips for a Vehicle that include a given Location.
+     * Retrieve a range of Trips that include a given Location.
      * @param db  db connection
      * @param locID  Location to look for
-     * @param veh  vehicle to look for
+     * @param veh  vehicle to look for, or null for all vehicles
      * @param beforeTripID  Retrieve trips earlier (less than) this trip ID,
      *                or 0 to get the latest trips.
      * @param limit  Maximum number of trips to return; cannot be 0, for 'no limit' use a large number.
@@ -320,7 +320,7 @@ public class Trip extends RDBRecord
      * @throws IllegalStateException if db not open
      */
     public static TripListTimeRange tripsForLocation
-    	(RDBAdapter db, final int locID, final Vehicle veh,  // TODO allow null veh to get all
+    	(RDBAdapter db, final int locID, final Vehicle veh,
     	 final int beforeTripID, final int limit, 
     	 final boolean alsoTStops)
         throws IllegalArgumentException, IllegalStateException
@@ -335,24 +335,28 @@ public class Trip extends RDBRecord
 		final String[] whereArgs;  // Length must match number of ? in whereClause
 		if (beforeTripID == 0)
 		{
-			whereArgs = new String[3];
+			whereArgs = new String[ (veh != null) ? 3 : 2 ];
 			// [0] init is below
 			whereArgs[1] = Integer.toString( limit );
-			whereArgs[2] = Integer.toString( veh.getID() );
+			if (veh != null)
+				whereArgs[2] = Integer.toString( veh.getID() );
 		} else {
-			whereArgs = new String[4];
+			whereArgs = new String[ (veh != null) ? 4 : 3 ];
 			// [0] init is below
 			whereArgs[1] = Integer.toString( beforeTripID );
 			whereArgs[2] = Integer.toString( limit );
-			whereArgs[3] = Integer.toString( veh.getID() );
+			if (veh != null)
+				whereArgs[3] = Integer.toString( veh.getID() );
 		}
 		whereArgs[0] = Integer.toString(locID);
 
-		final String whereClause;
+		String whereClause;
 		if (beforeTripID != 0)
-			whereClause = WHERE_LOCID_AND_TRIPID_BEFORE_AND_VID;
+			whereClause = WHERE_LOCID_AND_TRIPID_BEFORE;
 		else
-			whereClause = WHERE_LOCID_AND_VID;
+			whereClause = WHERE_LOCID;
+		if (veh != null)
+			whereClause = whereClause + " and vid = ?";
 		sv = db.getRows(TABNAME, whereClause, whereArgs, FIELDS_AND_ID, "time_start", 0);
 
     	if (sv == null)

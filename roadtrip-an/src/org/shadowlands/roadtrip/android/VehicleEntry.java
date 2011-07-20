@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  Copyright (C) 2010 Jeremy D Monin <jdmonin@nand.net>
+ *  Copyright (C) 2010-2011 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -107,7 +107,15 @@ public class VehicleEntry extends Activity
 	    	vmake.setAdapter(vaa);
 	    }
 
-	    SpinnerDataFactory.setupDriversSpinner(db, this, driver, -1);
+	    int currentDriverID = -1;
+	    if (cameFromAskNew)
+	    {
+	    	Person dr = Settings.getCurrentDriver(db, false);
+	    	if (dr != null)
+	    		currentDriverID = dr.getID();
+	    }
+	    SpinnerDataFactory.setupDriversSpinner
+	    	(db, this, driver, currentDriverID);
 	}
 
 	@Override

@@ -37,6 +37,7 @@ import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.Spinner;
+import android.widget.Toast;
 
 /**
  * Enter the new vehicle.
@@ -140,11 +141,22 @@ public class VehicleEntry extends Activity
 		// TODO blank -> null, not 0-length
 		// TODO look for null getSelectedItem in spinners
 
+		final int yr;
+		try
+		{
+			yr = Integer.parseInt(year.getText().toString());
+		}
+		catch (NumberFormatException e)
+		{
+			year.requestFocus();
+			Toast.makeText(this, R.string.vehicle_entry_year, Toast.LENGTH_SHORT).show();
+			return;
+		}
 		Vehicle nv = new Vehicle
 		  (nickname.getText().toString(),
 		   (Person) driver.getSelectedItem(), ((VehicleMake) vmake.getSelectedItem()).getID(),
 		   vmodel.getText().toString(),
-		   Integer.parseInt(year.getText().toString()),
+		   yr,
 		   0, 0, vin.getText().toString(),
 		   odo_orig.getCurrent10d(), odo_curr.getCurrent10d(),
 		   comment.getText().toString());

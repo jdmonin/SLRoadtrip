@@ -178,4 +178,5 @@
 <string name="trip_tstop_gas__title">Trip Stop: Gas</string>
 <string name="vehicle_entry_prompt">Enter information about this vehicle.</string>
 <string name="vehicle_make">Make (Brand)</string>
+<string name="vehicle_entry_year">Please enter the year.</string>
 </resources>

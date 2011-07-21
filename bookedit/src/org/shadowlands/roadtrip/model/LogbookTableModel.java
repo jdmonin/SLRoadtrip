@@ -137,17 +137,10 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	private transient int getValue_RangeRow0, getValue_RangeRowN;
 
 	/**
-	 * Create and populate with the most recent trip data.
-	 *<P>
-	 * You can add earlier trips later by calling
-	 * {@link #addEarlierTripWeeks(RDBAdapter)}.
-	 * @param veh  Vehicle
-	 * @param weeks  Increment in weeks when loading newer/older trips from the database,
-	 *          or 0 to load all (This may run out of memory).
-	 *          The vehicle's most recent trips are loaded in this constructor.
-	 * @param conn Add existing rows from this connection, via addRowsFromTrips.
+	 * Common setup to all constructors.
+	 * Set veh, tData, locCache, etc.
 	 */
-	public LogbookTableModel(Vehicle veh, final int weeks, RDBAdapter conn)
+	private void initCommonConstruc(Vehicle veh)
 	{
 		tData = new Vector<TripListTimeRange>();
 		tDataTextRowCount = 0;
@@ -157,6 +150,23 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 		gasCache = new TIntObjectHashMap<GasBrandGrade>();
 
 		this.veh = veh;
+	}
+
+	/**
+	 * Create and populate with the most recent trip data.
+	 *<P>
+	 * You can add earlier trips later by calling
+	 * {@link #addEarlierTripWeeks(RDBAdapter)}.
+	 * @param veh  Vehicle
+	 * @param weeks  Increment in weeks when loading newer/older trips from the database,
+	 *          or 0 to load all (This may run out of memory).
+	 *          The vehicle's most recent trips are loaded in this constructor.
+	 * @param conn Add existing rows from this connection, via addRowsFromTrips.
+	 * @see #LogbookTableModel(Vehicle, int, int, boolean, RDBAdapter)
+	 */
+	public LogbookTableModel(Vehicle veh, final int weeks, RDBAdapter conn)
+	{
+		initCommonConstruc(veh);  // set veh, tData, locCache, etc
 		this.weekIncr = weeks;
 		getValue_RangeRow0 = -1;
 		getValue_RangeRowN = -1;
@@ -173,6 +183,39 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 				addRowsFromDBTrips(conn);
 			}
 		}
+	}
+
+	/**
+	 * Create and populate with trip data around the specified starting time.
+	 *<P>
+	 * You can add earlier trips afterwards by calling
+	 * {@link #addEarlierTrips(RDBAdapter)}.
+	 * @param veh  Vehicle
+	 * @param timeStart  Starting date/time of trip range, in Unix format.
+	 *          If no trips found within <tt>weeks</tt> of this date,
+	 *          keep searching until a trip is found.
+	 * @param weeks  Increment in weeks when loading newer/older trips from the database.
+	 *          Must be greater than 0.
+	 * @param towardsNewer  If true, retrieve <tt>timeStart</tt> and newer;
+	 *          otherwise retrieve <tt>timeStart</tt> and older.
+	 * @param conn Add existing rows from this connection, via addRowsFromTrips.
+	 * @throws IllegalArgumentException if veh is null, or weeks is &lt; 1
+	 * @see #LogbookTableModel(Vehicle, int, RDBAdapter)
+	 */
+	public LogbookTableModel
+		(Vehicle veh, final int timeStart, final int weeks, final boolean towardsNewer, RDBAdapter conn)
+		throws IllegalArgumentException
+	{
+		if (veh == null)
+			throw new IllegalArgumentException("veh");
+		if (weeks <= 0)
+			throw new IllegalArgumentException("weeks");
+		initCommonConstruc(veh);  // set veh, tData, locCache, etc
+		this.weekIncr = weeks;
+		getValue_RangeRow0 = -1;
+		getValue_RangeRowN = -1;
+
+		addRowsFromDBTrips(timeStart, weekIncr, true, towardsNewer, conn);
 	}
 
 	/**

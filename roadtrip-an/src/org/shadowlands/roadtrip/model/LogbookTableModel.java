@@ -180,7 +180,8 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	private transient int getValue_RangeRow0, getValue_RangeRowN;
 
 	/**
-	 * Common setup to both constructors (trip mode, week mode).
+	 * Common setup to all constructors (location mode, week mode).
+	 * Set veh, tData, locCache, etc.
 	 * @throws IllegalArgumentException if veh is null
 	 */
 	private final void initCommonConstruc(Vehicle veh)
@@ -202,7 +203,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	}
 
 	/**
-	 * Create in Trip Mode, and populate with the most recent trip data.
+	 * Create in Week Mode, and populate with the most recent trip data.
 	 *<P>
 	 * You can add earlier trips afterwards by calling
 	 * {@link #addEarlierTrips(RDBAdapter)}.
@@ -212,6 +213,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	 *          The vehicle's most recent trips are loaded in this constructor.
 	 * @param conn Add existing rows from this connection, via addRowsFromTrips.
 	 * @throws IllegalArgumentException if veh is null
+	 * @see #LogbookTableModel(Vehicle, int, int, boolean, RDBAdapter)
 	 */
 	public LogbookTableModel(Vehicle veh, final int weeks, RDBAdapter conn)
 		throws IllegalArgumentException
@@ -256,6 +258,39 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 				addRowsFromDBTrips(conn);
 			}
 		}
+	}
+
+	/**
+	 * Create in Week Mode, and populate with trip data around the specified starting time.
+	 *<P>
+	 * You can add earlier trips afterwards by calling
+	 * {@link #addEarlierTrips(RDBAdapter)}.
+	 * @param veh  Vehicle
+	 * @param timeStart  Starting date/time of trip range, in Unix format.
+	 *          If no trips found within <tt>weeks</tt> of this date,
+	 *          keep searching until a trip is found.
+	 * @param weeks  Increment in weeks when loading newer/older trips from the database.
+	 *          Must be greater than 0.
+	 * @param towardsNewer  If true, retrieve <tt>timeStart</tt> and newer;
+	 *          otherwise retrieve <tt>timeStart</tt> and older.
+	 * @param conn Add existing rows from this connection, via addRowsFromTrips.
+	 * @throws IllegalArgumentException if veh is null, or weeks is &lt; 1
+	 * @see #LogbookTableModel(Vehicle, int, RDBAdapter)
+	 */
+	public LogbookTableModel
+		(Vehicle veh, final int timeStart, final int weeks, final boolean towardsNewer, RDBAdapter conn)
+		throws IllegalArgumentException
+	{
+		initCommonConstruc(veh);  // set veh, tData, locCache, etc
+		if (weeks <= 0)
+			throw new IllegalArgumentException("weeks");
+
+		filterLocID = 0;  // Week Mode
+		filterLoc_showAllV = false;  // this field not used in Week Mode
+		this.weekIncr = weeks;
+		tripIncr = 0;
+
+		addRowsFromDBTrips(timeStart, weekIncr, true, towardsNewer, conn);
 	}
 
 	/**
@@ -398,8 +433,8 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 			(conn, veh, timeStart, weeks, searchBeyondWeeks, towardsNewer, true);
 		if (ttr == null)
 		{
-			if (searchBeyondWeeks)
-				if (towardsNewer && ! tData.isEmpty())
+			if (searchBeyondWeeks && ! tData.isEmpty())
+				if (towardsNewer)
 					tData.lastElement().noneLater = true;
 				else
 					tData.firstElement().noneEarlier = true;

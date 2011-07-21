@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  Copyright (C) 2010 Jeremy D Monin <jdmonin@nand.net>
+ *  Copyright (C) 2010-2011 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,6 +19,7 @@
 
 package org.shadowlands.roadtrip.android;
 
+import org.shadowlands.roadtrip.db.GeoArea;
 import org.shadowlands.roadtrip.db.Person;
 import org.shadowlands.roadtrip.db.RDBAdapter;
 import org.shadowlands.roadtrip.db.Vehicle;
@@ -61,6 +62,37 @@ public class SpinnerDataFactory
     	{
     		for (int i = drivers.length - 1; i >= 0; --i)
     			if (currentID == drivers[i].getID())
+    			{
+    				sp.setSelection(i);
+    				break;
+    			}
+    	}
+
+    	return true;
+	}
+
+	/**
+	 * Populate a spinner from the {@link GeoArea}s in the database.
+	 * @param db  connection to use
+	 * @param ctx  the calling Activity or Context
+	 * @param sp  spinner to fill with the areas
+	 * @param currentID  If not -1, the area _id to select in the Spinner. 
+	 * @return true on success, false if could not populate from database
+	 */
+	public static boolean setupGeoAreasSpinner(RDBAdapter db, Context ctx, Spinner sp, final int currentID)
+	{
+		GeoArea[] areas = populateGeoAreasList(db);
+	    if (areas == null)
+	    	return false;
+
+    	ArrayAdapter<GeoArea> daa = new ArrayAdapter<GeoArea>(ctx, android.R.layout.simple_spinner_item, areas);
+    	daa.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+    	sp.setAdapter(daa);
+
+    	if (currentID != -1)
+    	{
+    		for (int i = areas.length - 1; i >= 0; --i)
+    			if (currentID == areas[i].getID())
     			{
     				sp.setSelection(i);
     				break;
@@ -120,6 +152,27 @@ public class SpinnerDataFactory
     	{}
 
     	return drivers;
+	}
+
+	/**
+	 * For {@link #setupGeoAreasSpinner(RDBAdapter, Context, Spinner, int)},
+	 * gather the list of GeoAreas from the database.
+	 *
+	 * @param db  connection to use
+	 * @return array of areas, or null
+	 */
+	private static GeoArea[] populateGeoAreasList(RDBAdapter db)
+	{
+		GeoArea[] areas = null; 
+
+    	try
+    	{
+    		areas = GeoArea.getAll(db, -1);
+    	}
+    	catch (SQLiteException e)
+    	{}
+
+    	return areas;
 	}
 
 	/**

@@ -399,10 +399,11 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 		if (ttr == null)
 		{
 			if (searchBeyondWeeks)
-				if (towardsNewer)
+				if (towardsNewer && ! tData.isEmpty())
 					tData.lastElement().noneLater = true;
 				else
 					tData.firstElement().noneEarlier = true;
+
 			return 0;  // <--- nothing found ---
 		}
 		if (towardsNewer)

@@ -85,7 +85,10 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	   { null , "End-Time", null, null, "Trip-odo", "via", "End at" },
 	   { null, null, "\\", "End-odo" } };
 
-	/** the vehicle being displayed */
+	/**
+	 * The vehicle being displayed, or when {@link #filterLoc_showAllV}, being used for units and formatting.
+	 * @see #filterLoc_showAllV
+	 */
 	private Vehicle veh;
 
 	/**
@@ -94,6 +97,12 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	 * @see #weekIncr
 	 */
 	private final int filterLocID;
+
+	/**
+	 * In Location Mode, if true, show trips of all vehicles, not just {@link #veh}.
+	 * <tt>Veh</tt> is still needed for unit-of-measurement preferences and formatting.
+	 */
+	private final boolean filterLoc_showAllV;
 
 	/**
 	 * For Location Mode, the increment in number of trips when loading older trips
@@ -170,9 +179,15 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	/** {@link #getValue_RangeText}'s low and high row numbers, or -1; Optimization for {@link #getValueAt(int, int)} */
 	private transient int getValue_RangeRow0, getValue_RangeRowN;
 
-	/** Common setup to both trip & week constructors */
+	/**
+	 * Common setup to both constructors (trip mode, week mode).
+	 * @throws IllegalArgumentException if veh is null
+	 */
 	private final void initCommonConstruc(Vehicle veh)
+		throws IllegalArgumentException
 	{
+		if (veh == null)
+			throw new IllegalArgumentException("veh");
 		tData = new Vector<TripListTimeRange>();
 		tDataTextRowCount = 0;
 		tAddedRows = null;
@@ -196,12 +211,15 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	 *          or 0 to load all (This may run out of memory).
 	 *          The vehicle's most recent trips are loaded in this constructor.
 	 * @param conn Add existing rows from this connection, via addRowsFromTrips.
+	 * @throws IllegalArgumentException if veh is null
 	 */
 	public LogbookTableModel(Vehicle veh, final int weeks, RDBAdapter conn)
+		throws IllegalArgumentException
 	{
 		initCommonConstruc(veh);  // set veh, tData, locCache, etc
 
 		filterLocID = 0;  // Week Mode
+		filterLoc_showAllV = false;  // this field not used in Week Mode
 		this.weekIncr = weeks;
 		tripIncr = 0;
 
@@ -245,18 +263,18 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	 *<P>
 	 * You can add earlier trips afterwards by calling
 	 * {@link #addEarlierTrips(RDBAdapter)}.
-	 * @param veh  Vehicle
+	 * @param veh  Show this vehicle's trips.  Even if <tt>showAllV</tt> is true,
+	 *          you must supply a vehicle for unit-of-measurement preferences and formatting.
+	 * @param showAllV  If true, show trips of all vehicles, not just <tt>veh</tt>.
 	 * @param locID  Location ID to filter by
 	 * @param tripIncr  Increment in trips to load (sql <tt>LIMIT</tt>).
 	 *          The vehicle's most recent trips to <tt>locID</tt> are loaded in this constructor.
 	 * @param conn Add existing rows from this connection, via addRowsFromTrips.
 	 * @throws IllegalArgumentException if the required veh, locID or tripIncr are null or &lt;= 0
 	 */
-	public LogbookTableModel(Vehicle veh, final int locID, final int tripIncr, RDBAdapter conn)
+	public LogbookTableModel(Vehicle veh, final boolean showAllV, final int locID, final int tripIncr, RDBAdapter conn)
 		throws IllegalArgumentException
 	{
-		if (veh == null)
-			throw new IllegalArgumentException("veh");
 		if (locID <= 0)
 			throw new IllegalArgumentException("locID");
 		if (tripIncr <= 0)
@@ -265,6 +283,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 		initCommonConstruc(veh);  // set veh, tData, locCache, etc
 
 		filterLocID = locID;  // Location Mode
+		filterLoc_showAllV = showAllV;
 		this.tripIncr = tripIncr;
 		weekIncr = 0;
 
@@ -330,7 +349,8 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 		(final int laterTripID, final int limit, RDBAdapter conn)
 	{
 		TripListTimeRange ttr = Trip.tripsForLocation
-			(conn, filterLocID, veh, laterTripID, limit, true);
+			(conn, filterLocID, (filterLoc_showAllV ? null : veh),
+			 laterTripID, limit, true);
 
 		if (ttr == null)
 		{
@@ -754,6 +774,12 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 
 	/** For Location Mode, get the trip-count increment when moving to previous trips */
 	public int getTripIncrement() { return tripIncr; }
+
+	/** For Location Mode, get the location ID; for Week Mode, returns 0. */
+	public int getLocationModeLocID() { return filterLocID; }
+
+	/** For Location Mode, are we showing trips for all vehicles? */
+	public boolean isLocationModeAllVehicles() { return filterLoc_showAllV; }
 
 	/**
 	 * Get the number of ranges currently loaded from the database.

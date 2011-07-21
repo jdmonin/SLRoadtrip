@@ -111,7 +111,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	private TIntObjectHashMap<ViaRoute> viaCache;
 
 	/**
-	 * {@link ViaRoute} cache. Each item is its own key.
+	 * {@link GasBrandGrade} cache. Each item is its own key.
 	 */
 	private TIntObjectHashMap<GasBrandGrade> gasCache;
 
@@ -184,7 +184,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	 * in mind when calling {@link #getRange(int)} afterwards.
 	 * (If no trips are found, no range is created.)
 	 *
-	 * @return true if trips were added, false if none found
+	 * @return true if trips were added from the database, false if none found
 	 */
 	public boolean addEarlierTripWeeks(RDBAdapter conn)
 	{
@@ -230,8 +230,8 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 			(conn, veh, timeStart, weeks, searchBeyondWeeks, towardsNewer, true);
 		if (ttr == null)
 		{
-			if (searchBeyondWeeks)
-				if (towardsNewer && ! tData.isEmpty())
+			if (searchBeyondWeeks && ! tData.isEmpty())
+				if (towardsNewer)
 					tData.lastElement().noneLater = true;
 				else
 					tData.firstElement().noneEarlier = true;
@@ -335,7 +335,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 			final int odo_end = t.getOdo_end();
 
 			// All well-formed trips have 1 or more TStops.
-			Vector<TStop> stops = t.readAllTStops();  // TODO current trip vs this?		
+			Vector<TStop> stops = t.readAllTStops();	// works for current, if addCommittedTStop was called
 			final TStop lastStop = (stops != null) ? stops.lastElement() : null;
 			if (stops != null)
 			{
@@ -384,6 +384,8 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 						else
 							tr[4] = String.format("%.1f", x / 10.0f);
 					}
+
+					// Via
 					final int viaID = ts.getVia_id();
 					ViaRoute vr = null;
 					if (viaID > 0)
@@ -403,6 +405,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 					if (tr[5] != null)
 						tr[5] = "via " + tr[5];
 
+					// Description
 					StringBuffer desc = new StringBuffer(getTStopLocDescr(ts, conn));
 
 					// Look for a gas tstop
@@ -489,11 +492,12 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	/**
 	 * Read this TStop's location description from text or from its associated Location.
 	 * Attempts to read or fill {@link #locCache}.
+	 * A copy of this method is in org.shadowlands.roadtrip.android.LogbookRecentGas.
 	 * @param conn  db connection to use
 	 * @param ts  TStop to look at
 	 * @return Location text, or null
 	 */
-	private String getTStopLocDescr(TStop ts, RDBAdapter conn)
+	private final String getTStopLocDescr(TStop ts, RDBAdapter conn)
 	{
 		String locDescr = ts.getLocationDescr();
 		if (locDescr == null)

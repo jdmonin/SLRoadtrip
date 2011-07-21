@@ -42,9 +42,11 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
+import android.widget.CheckBox;
 import android.widget.LinearLayout;
 import android.widget.ListAdapter;
 import android.widget.ScrollView;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -72,9 +74,17 @@ public class LogbookShow extends Activity
 
 	/**
 	 * Location Mode: If added to intent extras, show only trips including
-	 * this locID; for {@link Intent#putExtra(String, int)}
+	 * this locID; for {@link Intent#putExtra(String, int)}.
+	 * @see #EXTRAS_LOCMODE_ALLV
 	 */
 	public static final String EXTRAS_LOCID = "LogbokShow.locID";
+
+	/**
+	 * Location Mode: Optional flag for intent extras to indicate all vehicles' trips
+	 * should be shown; for {@link Intent#putExtra(String, boolean)}.
+	 * Requires {@link #EXTRAS_LOCID}.
+	 */
+	public static final String EXTRAS_LOCMODE_ALLV = "LogbookShow.locAllV";
 
 	/** tag for android logging */
 	private static final String TAG = "RTR.LogbookShow";
@@ -106,52 +116,118 @@ public class LogbookShow extends Activity
 	/** Used by #askLocationAndShow(Activity, RDBAdapter); null if no location selected. */
 	private static Location askLocationAndShow_locObj = null;
 
+	/** Used by #askLocationAndShow(Activity, RDBAdapter); show trips for all vehicles? */
+	private static boolean askLocationAndShow_allV = false;
+
+	/** Used by #askLocationAndShow(Activity, RDBAdapter); geoarea */
+	private static int askLocationAndShow_areaID = 0;
+
 	/**
 	 * Logbook in Location Mode: Show a popup with the current GeoArea's locations, the user picks
 	 * one and the LogbookShow activity is launched for it.
 	 * @param fromActivity  Current activity; will call {@link Activity#startActivity(Intent)} on it
 	 * @param db  Connection to use
-	 * @see #showTripsForLocation(int, Activity)
+	 * @see #showTripsForLocation(int, boolean, Activity)
 	 */
 	public static final void askLocationAndShow(final Activity fromActivity, final RDBAdapter db)
 	{
-		// TODO should be a separate dialog, allow dropdown for another GeoArea
-
-		/** all locations in the current area, or null */
-		final GeoArea currA = Settings.getCurrentArea(db, false);
-		if (currA == null)
-			return;
-		final AutoCompleteTextView loc;
-		Location[] areaLocs = Location.getAll(db, currA.getID());
-		if (areaLocs != null)
+		if (askLocationAndShow_areaID == 0)
 		{
-			loc = new AutoCompleteTextView(fromActivity);
-			ArrayAdapter<Location> adapter = new ArrayAdapter<Location>(fromActivity, R.layout.list_item, areaLocs);
-			loc.setAdapter(adapter);
-			loc.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-				public void onItemClick(AdapterView<?> parent, View clickedOn, int position, long rowID)
-				{
-					ListAdapter la = loc.getAdapter();
-					if (la == null)
-						return;
-					askLocationAndShow_locObj = (Location) la.getItem(position);
-				}
-				});
-		} else {
+			final GeoArea currA = Settings.getCurrentArea(db, false);
+			if (currA == null)
+				return;
+			askLocationAndShow_areaID = currA.getID();
+		}
+
+		/** Find all locations in the current area, or null */
+		Location[] areaLocs = Location.getAll(db, askLocationAndShow_areaID);
+		if (areaLocs == null)
+		{
 			Toast.makeText(fromActivity, R.string.logbook_show__no_locs_in_area, Toast.LENGTH_SHORT).show();
 			return;
 		}
 
+		final View askItems = fromActivity.getLayoutInflater().inflate(R.layout.logbook_show_popup_locsearch, null);
+		final AutoCompleteTextView loc =
+			(AutoCompleteTextView) askItems.findViewById(R.id.logbook_show_popup_locs_loc);
+
+		if (askLocationAndShow_locObj != null)
+		{
+			if (askLocationAndShow_locObj.getAreaID() == askLocationAndShow_areaID)
+				loc.setText(askLocationAndShow_locObj.toString());
+			else
+				askLocationAndShow_locObj = null;
+		}
+		if (askLocationAndShow_allV)
+		{
+			CheckBox cb = (CheckBox) askItems.findViewById(R.id.logbook_show_popup_locs_allv);
+			if (cb != null)
+				cb.setChecked(true);
+		}
+
+		ArrayAdapter<Location> adapter = new ArrayAdapter<Location>(fromActivity, R.layout.list_item, areaLocs);
+		loc.setAdapter(adapter);
+		loc.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+			public void onItemClick(AdapterView<?> parent, View clickedOn, int position, long rowID)
+			{
+				ListAdapter la = loc.getAdapter();
+				if (la == null)
+					return;
+				askLocationAndShow_locObj = (Location) la.getItem(position);
+			}
+			});
+
+		if (askLocationAndShow_allV)
+		{
+			CheckBox cb = (CheckBox) askItems.findViewById(R.id.logbook_show_popup_locs_allv);
+			if (cb != null)
+				cb.setChecked(askLocationAndShow_allV);
+		}
+
+		/** When GeoArea spinner selection changes, query for locations in that area: */
+		final Spinner areas = (Spinner) askItems.findViewById(R.id.logbook_show_popup_locs_areas);
+		SpinnerDataFactory.setupGeoAreasSpinner(db, fromActivity, areas, askLocationAndShow_areaID);
+		areas.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+			public void onItemSelected
+				(AdapterView<?> ctx, View view, int pos, long id)
+			{
+				final int newAreaID = ((GeoArea) areas.getSelectedItem()).getID();
+				if (newAreaID == askLocationAndShow_areaID)
+					return;
+				askLocationAndShow_areaID = newAreaID;
+				if ((askLocationAndShow_locObj != null)
+					&& (newAreaID != askLocationAndShow_locObj.getAreaID()))
+				{
+					loc.setText("");
+					askLocationAndShow_locObj = null;
+				}
+				Location[] areaLocs = Location.getAll(db, newAreaID);
+				if (areaLocs == null)
+				{
+					Toast.makeText(fromActivity, R.string.logbook_show__no_locs_in_area, Toast.LENGTH_SHORT).show();
+					loc.setAdapter((ArrayAdapter<Location>) null);
+					return;
+				}
+				loc.setAdapter(new ArrayAdapter<Location>(fromActivity, R.layout.list_item, areaLocs));
+			}
+
+			public void onNothingSelected(AdapterView<?> parent) { } // Required stub
+		});
+
 		AlertDialog.Builder alert = new AlertDialog.Builder(fromActivity);
 		alert.setTitle(R.string.logbook_show__trips_to_location);
-		alert.setMessage(R.string.location);
-		alert.setView(loc);
-		alert.setPositiveButton(R.string.view, new DialogInterface.OnClickListener() {
+		alert.setMessage(R.string.logbook_show__enter_location_to_search_trips);
+		alert.setView(askItems);
+		alert.setPositiveButton(android.R.string.search_go, new DialogInterface.OnClickListener() {
 			public void onClick(DialogInterface dialog, int whichButton)
 			{
+				CheckBox cb = (CheckBox) askItems.findViewById(R.id.logbook_show_popup_locs_allv);
+				if (cb != null)
+					askLocationAndShow_allV = cb.isChecked();
+
 				if (askLocationAndShow_locObj != null)
 				{
-					showTripsForLocation(askLocationAndShow_locObj.getID(), fromActivity);
+					showTripsForLocation(askLocationAndShow_locObj.getID(), askLocationAndShow_allV, fromActivity);
 				} else {
 					final int text;
 					if (loc.getText().length() == 0)
@@ -169,7 +245,6 @@ public class LogbookShow extends Activity
 				askLocationAndShow_locObj = null;
 			}
 		});
-		askLocationAndShow_locObj = null;
 		areaLocs = null;  // free the reference
 		alert.show();
 	}
@@ -177,12 +252,15 @@ public class LogbookShow extends Activity
 	/**
 	 * Start this activity in Location Mode: Only show trips including a given location.
 	 * @param locID  Location ID
+	 * @param allV  If true, show all vehicles' trips, not just the current vehicle
 	 * @param fromActivity  Current activity; will call {@link Activity#startActivity(Intent)} on it
 	 */
-	public static final void showTripsForLocation(final int locID, final Activity fromActivity)
+	public static final void showTripsForLocation(final int locID, final boolean allV, final Activity fromActivity)
 	{
 		Intent i = new Intent(fromActivity, LogbookShow.class);
 		i.putExtra(EXTRAS_LOCID, locID);
+		if (allV)
+			i.putExtra(EXTRAS_LOCMODE_ALLV, true);
 		fromActivity.startActivity(i);
 	}
 
@@ -254,25 +332,35 @@ public class LogbookShow extends Activity
 	    	finish();
 	    	return;  // <--- early ret: no vehicle ---
 		}
-		setTitle(getTitle() + ": " + currV.toString());
 
 		// Read and semi-format the trips for this vehicle.
 		// (The LogbookTableModel constructor calls ltm.addRowsFromTrips.)
 		int locID = -1;
+		boolean locMode_allV = false;
 		{
 			Intent i = getIntent();
 			if (i != null)
+			{
 				locID = i.getIntExtra(EXTRAS_LOCID, -1);
+				if (locID != -1)
+					locMode_allV = i.getBooleanExtra(EXTRAS_LOCMODE_ALLV, false);
+			}
 			// TODO set the title to include that,
 			//      or tvHeader text to include it
 		}
 
+		if (! locMode_allV)
+			setTitle(getTitle() + ": " + currV.toString());
+		else
+			setTitle(getTitle() + ": " + getResources().getString(R.string.all_vehicles));
+
 		if (locID == -1)
 			ltm = new LogbookTableModel(currV, WEEK_INCREMENT, db);
 		else
-			ltm = new LogbookTableModel(currV, locID, LOCID_TRIP_INCREMENT, db);
+			ltm = new LogbookTableModel(currV, locMode_allV, locID, LOCID_TRIP_INCREMENT, db);
 		StringBuffer sbTrips = new StringBuffer();
-		ltm.getRange(0).appendRowsAsTabbedString(sbTrips);
+		if (ltm.getRangeCount() > 0)
+			ltm.getRange(0).appendRowsAsTabbedString(sbTrips);
 		if (sbTrips.length() < 5)
 		{
 			if (locID == -1)

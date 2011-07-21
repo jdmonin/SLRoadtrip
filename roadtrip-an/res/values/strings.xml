@@ -19,9 +19,11 @@
  -->
 <resources>
 <string name="app_name">Shadowlands RoadTrip</string>
+<string name="all_vehicles">All vehicles</string>
 <string name="androidstartup_pleaseCreate">Welcome!\n\nPlease begin by entering your name and vehicle.</string>
 <string name="androidstartup_verifyCurrD">Please verify the current driver.</string>
 <string name="androidstartup_verifyCurrV">Please verify the current vehicle.</string>
+<string name="area__colon">Area:</string>
 <string name="backups">Backups</string>
 <string name="backup_now">Backup Now</string>
 <string name="begin__initcap">Begin</string>
@@ -121,6 +123,7 @@
 <string name="logbook_show__no_locs_in_area">No locations are entered in the current GeoArea.</string>
 <string name="logbook_show__recent_gas">Recent Gas</string>
 <string name="logbook_show__menu_location">Location</string>
+<string name="logbook_show__enter_location_to_search_trips">Enter the location to search trips for.</string>
 <string name="logbook_show__trips_to_location">Trips to Location</string>
 <string name="main_text">Main Screen</string>
 <string name="main_cancel_are_you_sure">Are you sure you want to cancel the current trip?</string>

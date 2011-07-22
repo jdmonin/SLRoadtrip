@@ -91,6 +91,10 @@ public class Trip extends RDBRecord
     private static final String WHERE_LOCID_AND_TRIPID_BEFORE =
     	"_id in ( select distinct tripid from tstop where locid = ? and tripid < ? order by tripid desc limit ? )";
 
+    /** Where-clause for use in {@link #tripsForLocation(RDBAdapter, int, int, int, boolean)} */
+    private static final String WHERE_LOCID_AND_TRIPID_AFTER =
+    	"_id in ( select distinct tripid from tstop where locid = ? and tripid > ? order by tripid desc limit ? )";
+
     private static final int WEEK_IN_SECONDS = 7 * 24 * 60 * 60;
 
     private int vehicleid;
@@ -311,20 +315,25 @@ public class Trip extends RDBRecord
      * @param db  db connection
      * @param locID  Location to look for
      * @param veh  vehicle to look for, or null for all vehicles
-     * @param beforeTripID  Retrieve trips earlier (less than) this trip ID,
-     *                or 0 to get the latest trips.
+     * @param prevTripID  Previous end of trip range: A trip newer or older than the
+     *          ones to load, or 0 to get the latest trips
+     * @param towardsNewer  If true, retrieve newer than <tt>prevTripID</tt>;
+     *          otherwise retrieve older than <tt>prevTripID</tt>.
      * @param limit  Maximum number of trips to return; cannot be 0, for 'no limit' use a large number.
      * @param alsoTStops  If true, call {@link #readAllTStops()} for each trip found
      * @return Trips for this Location, sorted by <tt>time_start</tt>, or null if none
-     * @throws IllegalArgumentException if limit is <= 0
+     * @throws IllegalArgumentException if limit is &lt;= 0,
+     *           or if <tt>towardsNewer</tt> true, but <tt>laterTripID</tt> == 0
      * @throws IllegalStateException if db not open
      */
     public static TripListTimeRange tripsForLocation
     	(RDBAdapter db, final int locID, final Vehicle veh,
-    	 final int beforeTripID, final int limit, 
+    	 final int prevTripID, final boolean towardsNewer, final int limit, 
     	 final boolean alsoTStops)
         throws IllegalArgumentException, IllegalStateException
     {
+		if (towardsNewer && (prevTripID == 0))
+			throw new IllegalArgumentException("towardsNewer, prevTripID 0");
     	if (db == null)
     		throw new IllegalStateException("db null");
     	if (limit <= 0)
@@ -333,7 +342,7 @@ public class Trip extends RDBRecord
     	Vector<String[]> sv = null;
 
 		final String[] whereArgs;  // Length must match number of ? in whereClause
-		if (beforeTripID == 0)
+		if (prevTripID == 0)
 		{
 			whereArgs = new String[ (veh != null) ? 3 : 2 ];
 			// [0] init is below
@@ -343,7 +352,7 @@ public class Trip extends RDBRecord
 		} else {
 			whereArgs = new String[ (veh != null) ? 4 : 3 ];
 			// [0] init is below
-			whereArgs[1] = Integer.toString( beforeTripID );
+			whereArgs[1] = Integer.toString( prevTripID );
 			whereArgs[2] = Integer.toString( limit );
 			if (veh != null)
 				whereArgs[3] = Integer.toString( veh.getID() );
@@ -351,10 +360,15 @@ public class Trip extends RDBRecord
 		whereArgs[0] = Integer.toString(locID);
 
 		String whereClause;
-		if (beforeTripID != 0)
-			whereClause = WHERE_LOCID_AND_TRIPID_BEFORE;
-		else
+		if (prevTripID != 0)
+		{
+			if (towardsNewer)
+				whereClause = WHERE_LOCID_AND_TRIPID_AFTER;
+			else
+				whereClause = WHERE_LOCID_AND_TRIPID_BEFORE;
+		} else {
 			whereClause = WHERE_LOCID;
+		}
 		if (veh != null)
 			whereClause = whereClause + " and vid = ?";
 		sv = db.getRows(TABNAME, whereClause, whereArgs, FIELDS_AND_ID, "time_start", 0);

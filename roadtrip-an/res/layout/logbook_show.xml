@@ -46,7 +46,12 @@
 		    android:layout_width="fill_parent" 
 		    android:layout_height="wrap_content"
 		    />
-	    <!--  TODO buttons for next-dates -->
+		<Button android:id="@+id/logbook_show_btn_later"
+	        android:layout_width="fill_parent"
+	        android:layout_height="wrap_content"
+	        android:text="@string/logbook_show__later_trips"
+	        android:visibility="gone"
+	        android:onClick="onClick_BtnLater" />
 	    </LinearLayout>
     </ScrollView>
 </LinearLayout>

@@ -19,6 +19,8 @@
 
 package org.shadowlands.roadtrip.android;
 
+import java.util.Calendar;
+
 import org.shadowlands.roadtrip.R;
 import org.shadowlands.roadtrip.db.GeoArea;
 import org.shadowlands.roadtrip.db.Location;
@@ -31,6 +33,8 @@ import org.shadowlands.roadtrip.model.LogbookTableModel;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.DatePickerDialog;
+import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
@@ -43,6 +47,7 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.CheckBox;
+import android.widget.DatePicker;
 import android.widget.LinearLayout;
 import android.widget.ListAdapter;
 import android.widget.ScrollView;
@@ -55,6 +60,10 @@ import android.widget.Toast;
  *<P>
  * Optionally, can filter to show only trips that include a given {@link #EXTRAS_LOCID location ID}
  * (Location Mode, same as in {@link LogbookTableModel}).
+ *<P>
+ * Or, can set the starting date to {@link #EXTRAS_DATE}; this date and 2 weeks of newer trips are
+ * shown, with buttons to show older and newer trips.
+ *
  * @author jdmonin
  */
 public class LogbookShow extends Activity
@@ -86,6 +95,15 @@ public class LogbookShow extends Activity
 	 */
 	public static final String EXTRAS_LOCMODE_ALLV = "LogbookShow.locAllV";
 
+	/**
+	 * Go To Date: If added to intent extras, show trips starting at or after this time.
+	 * Unix time format (seconds, same epoch as {@link System#currentTimeMillis()});
+	 * use {@link Intent#putExtra(String, int)}.
+	 * Ignored if {@link #EXTRAS_LOCID} is set.
+	 * @see #goToDate
+	 */
+	public static final String EXTRAS_DATE = "LogbookShow.dateUnix";
+
 	/** tag for android logging */
 	private static final String TAG = "RTR.LogbookShow";
 
@@ -99,6 +117,11 @@ public class LogbookShow extends Activity
 	private LogbookTableModel ltm;
 
 	/**
+	 * Starting date for "Go To Date" mode ({@link #EXTRAS_DATE}); 0 otherwise.
+	 */
+	private int goToDate = 0;
+
+	/**
 	 * Level for successive manual calls to {@link RDBVerifier}
 	 * on {@link #verifCache} from {@link #doDBValidation()}
 	 */
@@ -107,11 +130,14 @@ public class LogbookShow extends Activity
 	/** Cached verifier object, for successive manual calls from {@link #doDBValidation()} */
 	private RDBVerifier verifCache = null;
 
-	/** Used by {@link #onClick_BtnEarlier(View)} */
+	/** Used by {@link #onClick_BtnEarlier(View)}, {@link #onClick_BtnLater(View)} */
 	private LinearLayout tripListParentLayout = null;
 
 	/** Used by {@link #onClick_BtnEarlier(View)} */
 	private int tripListBtnEarlierPosition = -1;
+
+	/** Used by {@link #onClick_BtnLater(View)} */
+	private int tripListBtnLaterPosition = -1;
 
 	/** Used by #askLocationAndShow(Activity, RDBAdapter); null if no location selected. */
 	private static Location askLocationAndShow_locObj = null;
@@ -121,6 +147,14 @@ public class LogbookShow extends Activity
 
 	/** Used by #askLocationAndShow(Activity, RDBAdapter); geoarea */
 	private static int askLocationAndShow_areaID = 0;
+
+	/**
+	 * Used for Go To Date menu item.
+	 * Initialized in {@link #setupGoToDateListener()}, including
+	 * the <tt>onDateSet</tt> method that launches a new LogbookShow activity
+	 * with {@link #EXTRAS_DATE}.
+	 */
+	private DatePickerDialog.OnDateSetListener goToDateListener = null;
 
 	/**
 	 * Logbook in Location Mode: Show a popup with the current GeoArea's locations, the user picks
@@ -344,9 +378,9 @@ public class LogbookShow extends Activity
 				locID = i.getIntExtra(EXTRAS_LOCID, -1);
 				if (locID != -1)
 					locMode_allV = i.getBooleanExtra(EXTRAS_LOCMODE_ALLV, false);
+				else if (i.hasExtra(EXTRAS_DATE))
+					goToDate = i.getIntExtra(EXTRAS_DATE, 0);
 			}
-			// TODO set the title to include that,
-			//      or tvHeader text to include it
 		}
 
 		if (! locMode_allV)
@@ -355,9 +389,14 @@ public class LogbookShow extends Activity
 			setTitle(getTitle() + ": " + getResources().getString(R.string.all_vehicles));
 
 		if (locID == -1)
-			ltm = new LogbookTableModel(currV, WEEK_INCREMENT, db);
-		else
+		{
+			if (goToDate == 0)
+				ltm = new LogbookTableModel(currV, WEEK_INCREMENT, db);
+			else
+				ltm = new LogbookTableModel(currV, goToDate, WEEK_INCREMENT, true, db);
+		} else {
 			ltm = new LogbookTableModel(currV, locMode_allV, locID, LOCID_TRIP_INCREMENT, db);
+		}
 		StringBuffer sbTrips = new StringBuffer();
 		if (ltm.getRangeCount() > 0)
 			ltm.getRange(0).appendRowsAsTabbedString(sbTrips);
@@ -382,6 +421,9 @@ public class LogbookShow extends Activity
 			View v = findViewById(R.id.logbook_show_btn_earlier);
 			if (v != null)
 				tripListBtnEarlierPosition = tripListParentLayout.indexOfChild(v);
+			v = findViewById(R.id.logbook_show_btn_later);
+			if (v != null)
+				tripListBtnLaterPosition = tripListParentLayout.indexOfChild(v);
 		}
 		if ((tripListBtnEarlierPosition == -1) || (tripListParentLayout == null))
 		{
@@ -393,6 +435,14 @@ public class LogbookShow extends Activity
 				btnEarlier.setVisibility(View.GONE);
 		}
 
+		// If we're in Go To Date Mode, un-hide the "newer trips" button.
+		if ((goToDate != 0) && (ltm.getRangeCount() > 0))
+		{
+			View btnLater = findViewById(R.id.logbook_show_btn_later);
+			if (btnLater != null)
+				btnLater.setVisibility(View.VISIBLE);
+		}
+
 		// Scroll to bottom (most recent)
 		sv = (ScrollView) findViewById(R.id.logbook_show_triplist_scroll);
 		if (sv != null)
@@ -401,6 +451,31 @@ public class LogbookShow extends Activity
 					sv.fullScroll(ScrollView.FOCUS_DOWN);
 				}
 			});
+	}
+
+	/** Show the DatePickerDialog leading to "Go To Date" mode. */
+	@Override
+	protected Dialog onCreateDialog(int id)
+	{
+	    switch (id) {
+		    case R.id.menu_logbook_go_to_date:
+		    {
+				if (goToDateListener == null)
+					setupGoToDateListener();				
+	        	final Calendar cal = Calendar.getInstance();
+	        	if (goToDate != 0)
+	        		cal.setTimeInMillis(1000L * goToDate);
+	        	else
+	        		cal.setTimeInMillis(System.currentTimeMillis());
+
+	        	return new DatePickerDialog(this,
+	        		goToDateListener,
+	        		cal.get(Calendar.YEAR),
+	        		cal.get(Calendar.MONTH),
+	        		cal.get(Calendar.DAY_OF_MONTH));
+		    }
+	    }
+	    return null;
 	}
 
 	/**
@@ -432,6 +507,12 @@ public class LogbookShow extends Activity
 			askLocationAndShow(this, db);
 			return true;
 
+		case R.id.menu_logbook_go_to_date:
+			if (goToDateListener == null)
+				setupGoToDateListener();
+			showDialog(R.id.menu_logbook_go_to_date);
+			return true;
+
 		case R.id.menu_logbook_validate:
 			doDBValidation();
 			return true;
@@ -439,6 +520,32 @@ public class LogbookShow extends Activity
 		default:
 	        return super.onOptionsItemSelected(item);
 	    }
+	}
+
+	/**
+	 * Initialize {@link #goToDateListener}, including the <tt>onDateSet</tt> method that
+	 * launches a new LogbookShow activity with {@link #EXTRAS_DATE}.
+	 */
+	private void setupGoToDateListener()
+	{
+		goToDateListener = new DatePickerDialog.OnDateSetListener()
+		{
+	        public void onDateSet
+	        	(DatePicker view, final int year, final int month, final int monthday)
+	        {
+	        	Calendar cal = Calendar.getInstance();
+	        	cal.setTimeInMillis(System.currentTimeMillis());
+	        	cal.set(Calendar.YEAR, year);
+	        	cal.set(Calendar.MONTH, month);
+	        	cal.set(Calendar.DAY_OF_MONTH, monthday);
+	        	cal.set(Calendar.HOUR_OF_DAY, 0);
+	        	cal.set(Calendar.MINUTE, 0);
+
+	    		Intent i = new Intent(LogbookShow.this, LogbookShow.class);
+	    		i.putExtra(EXTRAS_DATE, (int) (cal.getTimeInMillis() / 1000L));
+	    		LogbookShow.this.startActivity(i);
+	        }
+	    };
 	}
 
 	/**
@@ -476,6 +583,35 @@ public class LogbookShow extends Activity
 				}
 			});
 	}
+
+	/**
+	 * Load a few weeks of later trips from the database.
+	 * @param v  ignored
+	 */
+	public void onClick_BtnLater(View v)
+	{
+		// TODO if too many ranges loaded, consider clear out oldest ones
+		if (! ltm.addLaterTrips(db))
+		{
+			View btnLater = findViewById(R.id.logbook_show_btn_later);
+			if (btnLater != null)
+				btnLater.setVisibility(View.GONE);
+			Toast.makeText
+				(this, R.string.no_later_trips_found, Toast.LENGTH_SHORT).show();
+			return;
+		}
+		StringBuffer sbTrips = new StringBuffer();
+		ltm.getRange(ltm.getRangeCount()-1).appendRowsAsTabbedString(sbTrips);
+
+		if (TS_ROW_LP == null)
+			TS_ROW_LP = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.FILL_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+		final TextView tv = new TextView(this);
+		tv.setLayoutParams(TS_ROW_LP);
+		tv.setText(sbTrips);
+		tripListParentLayout.addView(tv, tripListBtnLaterPosition);
+		++tripListBtnLaterPosition;
+	}
+
 
 	@Override
 	public void onPause()

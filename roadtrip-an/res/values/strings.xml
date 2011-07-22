@@ -73,6 +73,7 @@
 <string name="new_vehicle">New vehicle...</string>
 <string name="no_earlier_trips_found">No earlier trips were found.</string>
 <string name="no_frequent_trips_found">No frequent trips were found.</string>
+<string name="no_later_trips_found">No later trips were found.</string>
 <string name="none">none</string>
 <string name="not_found">Not found.</string>
 <string name="original_odometer">Original\nodometer</string>
@@ -120,9 +121,11 @@
 <string name="logbook_recent_gas_text">Recent Gas Stops for Vehicle</string>
 <string name="logbook_show__title">View Logbook</string>
 <string name="logbook_show__earlier_trips">^ Earlier Trips ^</string>
+<string name="logbook_show__later_trips">v  Later Trips  v</string>
 <string name="logbook_show__no_locs_in_area">No locations are entered in the current GeoArea.</string>
 <string name="logbook_show__recent_gas">Recent Gas</string>
 <string name="logbook_show__menu_location">Location</string>
+<string name="logbook_show__go_to_date">Go to Date</string>
 <string name="logbook_show__enter_location_to_search_trips">Enter the location to search trips for.</string>
 <string name="logbook_show__trips_to_location">Trips to Location</string>
 <string name="main_text">Main Screen</string>
@@ -177,6 +180,6 @@
 <string name="trip_tstop_gas_prompt">Enter the gas stop details.</string>
 <string name="trip_tstop_gas__title">Trip Stop: Gas</string>
 <string name="vehicle_entry_prompt">Enter information about this vehicle.</string>
-<string name="vehicle_make">Make (Brand)</string>
 <string name="vehicle_entry_year">Please enter the year.</string>
+<string name="vehicle_make">Make (Brand)</string>
 </resources>

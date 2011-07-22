@@ -133,6 +133,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 
 	/**
 	 * Rows being newly added (manual typing/edit mode), or null
+	 * @see #addMode
 	 */
 	private Vector<String[]> tAddedRows;
 
@@ -156,6 +157,8 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	/**
 	 * Are we adding a new trip right now?
 	 * @see #maxRowBeforeAdd
+	 * @see #tAddedRows
+	 * @see #beginAdd(boolean)
 	 */
 	private boolean addMode;
 
@@ -322,7 +325,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 		this.tripIncr = tripIncr;
 		weekIncr = 0;
 
-		addRowsFromDBTrips(0, tripIncr, conn);
+		addRowsFromDBTrips(0, false, tripIncr, conn);
 	}
 
 	/**
@@ -361,7 +364,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 		} else {
 			// Location Mode
 			final int laterTripID = tData.firstElement().tr.firstElement().getID();
-			nAdded = addRowsFromDBTrips(laterTripID, tripIncr, conn);
+			nAdded = addRowsFromDBTrips(laterTripID, false, tripIncr, conn);
 		}
 		// TODO ensure previously-oldest trip doesn't appear twice now
 		if ((nAdded != 0) && (listener != null))
@@ -371,32 +374,86 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	}
 
 	/**
-	 * For Location Mode, add the vehicle's trips in this time range.
-	 * Assumes is oldest beginning of previously loaded range,
-	 * or that (when laterTripID == 0) there is no previously loaded range.
+	 * Load vehicle trips later than those currently in the model.
+	 * In Week Mode, looks forward {@link #getWeekIncrement()} weeks.
+	 * In Location Mode, looks forward {@link #getTripIncrement()} trips.
+	 *<P>
+	 * The added trips will be a new {@link TripListTimeRange}
+	 * inserted at the end of the range list; keep this
+	 * in mind when calling {@link #getRange(int)} afterwards.
+	 * (If no trips are found, no range is created.)
 	 *
-	 * @param laterTripID  A trip newer than the ones to load, or 0 to get the latest trips
+	 * @return true if trips were added from the database, false if none found
+	 * @throws IllegalStateException if {@link #beginAdd(boolean)} (add mode) is active.
+	 */
+	public boolean addLaterTrips(RDBAdapter conn)
+		throws IllegalStateException
+	{
+		if (addMode)
+			throw new IllegalStateException();
+		if (tData.isEmpty())
+			return false;  // No trips at all were previously found for this vehicle.
+
+		int nAdded;
+		if (filterLocID == 0)
+		{
+			// Week Mode
+			final int loadToTime = tData.lastElement().timeEnd;
+			nAdded = addRowsFromDBTrips(loadToTime, weekIncr, true, true, conn);
+		} else {
+			// Location Mode
+			final int earlierTripID = tData.lastElement().tr.lastElement().getID();
+			nAdded = addRowsFromDBTrips(earlierTripID, true, tripIncr, conn);
+		}
+		// TODO Week mode: ensure previously-newest trip doesn't appear twice now
+		if ((nAdded != 0) && (listener != null))
+			listener.fireTableRowsInserted(tDataTextRowCount - nAdded, tDataTextRowCount - 1);
+
+		return (nAdded != 0);
+	}
+
+	/**
+	 * For Location Mode, add the vehicle's trips in this time range.
+	 * Assumes is an end of previously loaded range (oldest beginning or newest end),
+	 * or that (when prevTripID == 0) there is no previously loaded range.
+	 *
+	 * @param prevTripID  Previous end of trip range: A trip newer or older than the
+	 *          ones to load, or 0 to get the latest trips
+	 * @param towardsNewer  If true, retrieve newer than <tt>prevTripID</tt>;
+	 *          otherwise retrieve older than <tt>prevTripID</tt>.
 	 * @param limit  Retrieve at most this many trips
 	 * @param conn  Add trips from this db connection
 	 * @return Number of rows of text added to the table
+	 * @throws IllegalArgumentException  if <tt>towardsNewer</tt> true, but <tt>prevTripID</tt> == 0
 	 */
 	private int addRowsFromDBTrips
-		(final int laterTripID, final int limit, RDBAdapter conn)
+		(final int prevTripID, final boolean towardsNewer, final int limit, RDBAdapter conn)
+		throws IllegalArgumentException
 	{
+		if (towardsNewer && (prevTripID == 0))
+			throw new IllegalArgumentException();
+
 		TripListTimeRange ttr = Trip.tripsForLocation
 			(conn, filterLocID, (filterLoc_showAllV ? null : veh),
-			 laterTripID, limit, true);
+			 prevTripID, towardsNewer, limit, true);
 
 		if (ttr == null)
 		{
 			if (! tData.isEmpty())
-				tData.firstElement().noneEarlier = true;
-			return 0;
+				if (towardsNewer)
+					tData.lastElement().noneLater = true;
+				else
+					tData.firstElement().noneEarlier = true;
+
+			return 0;  // <--- nothing found ---
 		}
-		if (laterTripID == 0)
+		if (prevTripID == 0)
 			ttr.noneLater = true;
 
-		tData.insertElementAt(ttr, 0);
+		if (towardsNewer)
+			tData.add(ttr);
+		else
+			tData.insertElementAt(ttr, 0);
 		addRowsFromTrips(ttr, conn);
 		getValue_RangeRow0 = -1;  // row#s changing, so reset getValue_* vars
 		getValue_RangeRowN = -1;

@@ -150,12 +150,14 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 		gasCache = new TIntObjectHashMap<GasBrandGrade>();
 
 		this.veh = veh;
+		getValue_RangeRow0 = -1;
+		getValue_RangeRowN = -1;
 	}
 
 	/**
 	 * Create and populate with the most recent trip data.
 	 *<P>
-	 * You can add earlier trips later by calling
+	 * You can add earlier trips afterwards by calling
 	 * {@link #addEarlierTripWeeks(RDBAdapter)}.
 	 * @param veh  Vehicle
 	 * @param weeks  Increment in weeks when loading newer/older trips from the database,
@@ -168,8 +170,6 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	{
 		initCommonConstruc(veh);  // set veh, tData, locCache, etc
 		this.weekIncr = weeks;
-		getValue_RangeRow0 = -1;
-		getValue_RangeRowN = -1;
 
 		if (veh != null)
 		{
@@ -212,8 +212,6 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 			throw new IllegalArgumentException("weeks");
 		initCommonConstruc(veh);  // set veh, tData, locCache, etc
 		this.weekIncr = weeks;
-		getValue_RangeRow0 = -1;
-		getValue_RangeRowN = -1;
 
 		addRowsFromDBTrips(timeStart, weekIncr, true, towardsNewer, conn);
 	}
@@ -239,6 +237,34 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 		// TODO ensure previously-oldest trip doesn't appear twice now
 		if ((nAdded != 0) && (listener != null))
 			listener.fireTableRowsInserted(0, nAdded - 1);
+
+		return (nAdded != 0);
+	}
+
+	/**
+	 * Add vehicle trips earlier than the current time range,
+	 * looking back {@link #getWeekIncrement()} weeks.
+	 *<P>
+	 * The added trips will be a new {@link TripListTimeRange}
+	 * inserted at the start of the range list; keep this
+	 * in mind when calling {@link #getRange(int)} afterwards.
+	 * (If no trips are found, no range is created.)
+	 *
+	 * @return true if trips were added from the database, false if none found
+	 * @throws IllegalStateException if {@link #beginAdd(boolean)} (add mode) is active.
+	 */
+	public boolean addLaterTrips(RDBAdapter conn)
+	{
+		if (addMode)
+			throw new IllegalStateException();
+		if (tData.isEmpty())
+			return false;  // No trips at all were previously found for this vehicle.
+
+		final int loadToTime = tData.lastElement().timeEnd;
+		int nAdded = addRowsFromDBTrips(loadToTime, weekIncr, true, true, conn);
+		// TODO ensure previously-newest trip doesn't appear twice now
+		if ((nAdded != 0) && (listener != null))
+			listener.fireTableRowsInserted(tDataTextRowCount - nAdded, tDataTextRowCount - 1);
 
 		return (nAdded != 0);
 	}

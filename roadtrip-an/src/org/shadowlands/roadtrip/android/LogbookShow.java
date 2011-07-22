@@ -443,14 +443,17 @@ public class LogbookShow extends Activity
 				btnLater.setVisibility(View.VISIBLE);
 		}
 
-		// Scroll to bottom (most recent)
-		sv = (ScrollView) findViewById(R.id.logbook_show_triplist_scroll);
-		if (sv != null)
-			sv.post(new Runnable() {
-				public void run() {
-					sv.fullScroll(ScrollView.FOCUS_DOWN);
-				}
-			});
+		// Scroll to bottom (most recent), unless in Go To Date mode.
+		if (goToDate == 0)
+		{
+			sv = (ScrollView) findViewById(R.id.logbook_show_triplist_scroll);
+			if (sv != null)
+				sv.post(new Runnable() {
+					public void run() {
+						sv.fullScroll(ScrollView.FOCUS_DOWN);
+					}
+				});
+		}
 	}
 
 	/** Show the DatePickerDialog leading to "Go To Date" mode. */

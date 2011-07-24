@@ -111,7 +111,11 @@ public class LogbookShow extends Activity
 	private static ViewGroup.LayoutParams TS_ROW_LP = null;
 
 	private RDBAdapter db = null;
-	private TextView tvHeader, tvContent;
+	private TextView tvHeader;
+
+	/** Message that no trips were found in {@link #onCreate(Bundle)}, or null */
+	private TextView tvNoTripsFound = null;
+
 	private ScrollView sv;
 	private Vehicle currV;
 	private LogbookTableModel ltm;
@@ -355,7 +359,7 @@ public class LogbookShow extends Activity
 	    setContentView(R.layout.logbook_show);
 
 	    tvHeader = (TextView) findViewById(R.id.logbook_show_header);  // TODO show date range or location
-	    tvContent = (TextView) findViewById(R.id.logbook_show_textview);
+	    TextView tvContent = (TextView) findViewById(R.id.logbook_show_textview);
 		db = new RDBOpenHelper(this);
 
 		if ( ! checkCurrentVehicleSetting())
@@ -402,10 +406,13 @@ public class LogbookShow extends Activity
 			ltm.getRange(0).appendRowsAsTabbedString(sbTrips);
 		if (sbTrips.length() < 5)
 		{
-			if (locID == -1)
-				sbTrips.append("\nNo trips found for this Vehicle.");
-			else
+			tvNoTripsFound = tvContent;
+			if (locID != -1)
 				sbTrips.append("\nNo trips found to that Location for this Vehicle.");
+			else if (goToDate != 0)
+				sbTrips.append("\nNo trips on or after that date for this vehicle.");
+			else
+				sbTrips.append("\nNo trips found for this Vehicle.");
 		}
 		if (ltm.hasCurrentTrip())
 		{
@@ -435,7 +442,7 @@ public class LogbookShow extends Activity
 				btnEarlier.setVisibility(View.GONE);
 		}
 
-		// If we're in Go To Date Mode, un-hide the "newer trips" button.
+		// If we're in Go To Date Mode, show the hidden "newer trips" button.
 		if ((goToDate != 0) && (ltm.getRangeCount() > 0))
 		{
 			View btnLater = findViewById(R.id.logbook_show_btn_later);
@@ -570,14 +577,24 @@ public class LogbookShow extends Activity
 		StringBuffer sbTrips = new StringBuffer();
 		ltm.getRange(0).appendRowsAsTabbedString(sbTrips);
 
-		if (TS_ROW_LP == null)
-			TS_ROW_LP = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.FILL_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-		final TextView tv = new TextView(this);
-		tv.setLayoutParams(TS_ROW_LP);
-		tv.setText(sbTrips);
-		tripListParentLayout.addView(tv, tripListBtnEarlierPosition + 1);
+		final TextView tv;
+		if (tvNoTripsFound != null)
+		{
+			// replace that with the trip text
+			tv = tvNoTripsFound;
+			tv.setText(sbTrips);
+			tvNoTripsFound = null;
+		} else {
+			// create a new textview
+			if (TS_ROW_LP == null)
+				TS_ROW_LP = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.FILL_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+			tv = new TextView(this);
+			tv.setLayoutParams(TS_ROW_LP);
+			tv.setText(sbTrips);
+			tripListParentLayout.addView(tv, tripListBtnEarlierPosition + 1);
+		}
 
-		// Once layout is done, scroll to the bottom of the newly added tv
+		// Once layout is done, scroll to the bottom of the newly added text
 		// so that what's currently visible, stays visible.
 		if (sv != null)
 			sv.post(new Runnable() {

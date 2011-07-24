@@ -117,8 +117,19 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	 * or 0 to load all (This may run out of memory).
 	 * Unused if {@link #filterLocID} != 0.
 	 * @see #tripIncr
+	 * @see #filterWeekModeStartDate
 	 */
 	private final int weekIncr;
+
+	/**
+	 * For Week Mode, the date (unix format) if filtering by start date; otherwise 0.
+	 * Only used if {@link #tData} is empty in {@link #addEarlierTrips(RDBAdapter)};
+	 * if {@link #tData} contains trips, they might be from dates earlier than this field.
+	 * Unused in Location Mode.
+	 * @see #LogbookTableModel(Vehicle, int, int, boolean, RDBAdapter)
+	 * @since 0.9.07
+	 */
+	private final int filterWeekModeStartDate;
 
 	/**
 	 * Holds each time range of trips; sorted from earliest to latest.
@@ -225,8 +236,9 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 
 		filterLocID = 0;  // Week Mode
 		filterLoc_showAllV = false;  // this field not used in Week Mode
-		this.weekIncr = weeks;
+		weekIncr = weeks;
 		tripIncr = 0;
+		filterWeekModeStartDate = 0;
 
 		if (veh != null)
 		{
@@ -290,8 +302,9 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 
 		filterLocID = 0;  // Week Mode
 		filterLoc_showAllV = false;  // this field not used in Week Mode
-		this.weekIncr = weeks;
+		weekIncr = weeks;
 		tripIncr = 0;
+		filterWeekModeStartDate = timeStart;
 
 		addRowsFromDBTrips(timeStart, weekIncr, true, towardsNewer, conn);
 	}
@@ -324,6 +337,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 		filterLoc_showAllV = showAllV;
 		this.tripIncr = tripIncr;
 		weekIncr = 0;
+		filterWeekModeStartDate = 0;
 
 		addRowsFromDBTrips(0, false, tripIncr, conn);
 	}
@@ -352,21 +366,25 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	 */
 	public boolean addEarlierTrips(RDBAdapter conn)
 	{
-		if (tData.isEmpty())
+		final boolean tDataIsEmpty = tData.isEmpty();
+		if (tDataIsEmpty && (filterWeekModeStartDate == 0))
 			return false;  // No trips at all were previously found for this vehicle.
 
 		int nAdded;
 		if (filterLocID == 0)
 		{
 			// Week Mode
-			final int loadToTime = tData.firstElement().timeStart;
+			final int loadToTime;
+			if (tDataIsEmpty)
+				loadToTime = filterWeekModeStartDate;
+			else
+				loadToTime = tData.firstElement().timeStart;
 			nAdded = addRowsFromDBTrips(loadToTime, weekIncr, true, false, conn);
 		} else {
 			// Location Mode
 			final int laterTripID = tData.firstElement().tr.firstElement().getID();
 			nAdded = addRowsFromDBTrips(laterTripID, false, tripIncr, conn);
 		}
-		// TODO ensure previously-oldest trip doesn't appear twice now
 		if ((nAdded != 0) && (listener != null))
 			listener.fireTableRowsInserted(0, nAdded - 1);
 
@@ -482,10 +500,16 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	 * @return Number of rows of text added to the table
 	 */
 	private int addRowsFromDBTrips
-		(final int timeStart, final int weeks,
+		(int timeStart, final int weeks,
     	 final boolean searchBeyondWeeks, final boolean towardsNewer, RDBAdapter conn)
 	{
 		// TODO check tData for this time range already present
+
+		// Adjust time because our range is exclusive, but tripsForVehicle range is inclusive
+		if (towardsNewer)
+			++timeStart;
+		else
+			--timeStart;
 		TripListTimeRange ttr = Trip.tripsForVehicle
 			(conn, veh, timeStart, weeks, searchBeyondWeeks, towardsNewer, true);
 		if (ttr == null)

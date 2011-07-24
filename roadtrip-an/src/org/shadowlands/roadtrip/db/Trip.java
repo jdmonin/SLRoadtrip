@@ -225,9 +225,15 @@ public class Trip extends RDBRecord
 			}
 		}
 
+		final boolean searchedBeyond;
 		if ((sv == null) && searchBeyondWeeks)
+		{
 			sv = tripsForVehicle_searchBeyond
 				(db, vIDstr, t0, t1, weeks, towardsNewer);
+			searchedBeyond = true;
+		} else {
+			searchedBeyond = false;
+		}
 
     	if (sv == null)
     	{
@@ -236,9 +242,19 @@ public class Trip extends RDBRecord
 
     	Vector<Trip> tv = parseStringsToTrips(db, alsoTStops, sv);
     	if (tv == null)
+    	{
     		return null;
-    	else
+    	} else {
+    		if (searchedBeyond)
+    		{
+    			// Make sure the range covers the actual trip times
+    			if (towardsNewer)
+    				t1 = tv.lastElement().readLatestTime();
+    			else
+    				t0 = tv.firstElement().getTime_start();
+    		}
     		return new TripListTimeRange(t0, t1, tv);
+    	}
     }
 
 	/**
@@ -978,7 +994,10 @@ public class Trip extends RDBRecord
 		return time_start;
 	}
 
-	/** Trip's optional ending time (unix format) if set, or 0; 0 if still in progress */
+	/**
+	 * Trip's optional ending time (unix format) if set, or 0; 0 if still in progress.
+	 * @see #readLatestTime()
+	 */
 	public int getTime_end()
 	{
 		return time_end;

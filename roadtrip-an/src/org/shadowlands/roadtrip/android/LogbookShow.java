@@ -33,7 +33,6 @@ import org.shadowlands.roadtrip.model.LogbookTableModel;
 
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.DatePickerDialog;
 import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -100,9 +99,17 @@ public class LogbookShow extends Activity
 	 * Unix time format (seconds, same epoch as {@link System#currentTimeMillis()});
 	 * use {@link Intent#putExtra(String, int)}.
 	 * Ignored if {@link #EXTRAS_LOCID} is set.
+	 * Optionally, can also use with {@link #EXTRAS_VEHICLE_ID}.
 	 * @see #goToDate
 	 */
 	public static final String EXTRAS_DATE = "LogbookShow.dateUnix";
+
+	/**
+	 * Go To Date: If added to intent extras, show trips of this vehicle
+	 * instead of the current vehicle.
+	 * Requires {@link #EXTRAS_DATE}.
+	 */
+	public static final String EXTRAS_VEHICLE_ID = "LogbookShow.vid";
 
 	/** tag for android logging */
 	private static final String TAG = "RTR.LogbookShow";
@@ -117,6 +124,7 @@ public class LogbookShow extends Activity
 	private TextView tvNoTripsFound = null;
 
 	private ScrollView sv;
+	/** see also {@link #showV} */
 	private Vehicle currV;
 	private LogbookTableModel ltm;
 
@@ -124,6 +132,12 @@ public class LogbookShow extends Activity
 	 * Starting date for "Go To Date" mode ({@link #EXTRAS_DATE}); 0 otherwise.
 	 */
 	private int goToDate = 0;
+
+	/**
+	 * Vehicle for "Go To Date" mode ({@link #EXTRAS_DATE}, {@link #EXTRAS_VEHICLE_ID});
+	 * or {@link #currV}.
+	 */
+	private Vehicle showV = null;
 
 	/**
 	 * Level for successive manual calls to {@link RDBVerifier}
@@ -151,14 +165,6 @@ public class LogbookShow extends Activity
 
 	/** Used by #askLocationAndShow(Activity, RDBAdapter); geoarea */
 	private static int askLocationAndShow_areaID = 0;
-
-	/**
-	 * Used for Go To Date menu item.
-	 * Initialized in {@link #setupGoToDateListener()}, including
-	 * the <tt>onDateSet</tt> method that launches a new LogbookShow activity
-	 * with {@link #EXTRAS_DATE}.
-	 */
-	private DatePickerDialog.OnDateSetListener goToDateListener = null;
 
 	/**
 	 * Logbook in Location Mode: Show a popup with the current GeoArea's locations, the user picks
@@ -383,23 +389,36 @@ public class LogbookShow extends Activity
 				if (locID != -1)
 					locMode_allV = i.getBooleanExtra(EXTRAS_LOCMODE_ALLV, false);
 				else if (i.hasExtra(EXTRAS_DATE))
+				{
 					goToDate = i.getIntExtra(EXTRAS_DATE, 0);
+					final int vid = i.getIntExtra(EXTRAS_VEHICLE_ID, 0);
+					if (vid != 0)
+					{
+						try
+						{
+							showV = new Vehicle(db, vid);
+						}
+						catch (Throwable e) { }
+					}
+				}
 			}
 		}
 
+		if (showV == null)
+			showV = currV;
 		if (! locMode_allV)
-			setTitle(getTitle() + ": " + currV.toString());
+			setTitle(getTitle() + ": " + showV.toString());
 		else
 			setTitle(getTitle() + ": " + getResources().getString(R.string.all_vehicles));
 
 		if (locID == -1)
 		{
 			if (goToDate == 0)
-				ltm = new LogbookTableModel(currV, WEEK_INCREMENT, db);
+				ltm = new LogbookTableModel(showV, WEEK_INCREMENT, db);
 			else
-				ltm = new LogbookTableModel(currV, goToDate, WEEK_INCREMENT, true, db);
+				ltm = new LogbookTableModel(showV, goToDate, WEEK_INCREMENT, true, db);
 		} else {
-			ltm = new LogbookTableModel(currV, locMode_allV, locID, LOCID_TRIP_INCREMENT, db);
+			ltm = new LogbookTableModel(showV, locMode_allV, locID, LOCID_TRIP_INCREMENT, db);
 		}
 		StringBuffer sbTrips = new StringBuffer();
 		if (ltm.getRangeCount() > 0)
@@ -478,8 +497,6 @@ public class LogbookShow extends Activity
 	/** Show the DatePickerDialog leading to "Go To Date" mode. */
 	private Dialog onCreateGoToDateDialog()
 	{
-		if (goToDateListener == null)
-			setupGoToDateListener();
 		final Calendar cal = Calendar.getInstance();
 		if (goToDate != 0)
 			cal.setTimeInMillis(1000L * goToDate);
@@ -489,7 +506,7 @@ public class LogbookShow extends Activity
 		final View askItems = getLayoutInflater().inflate(R.layout.logbook_show_popup_date_veh, null);
 		final Spinner vehs =
 			(Spinner) askItems.findViewById(R.id.logbook_show_popup_date_vehs);
-		SpinnerDataFactory.setupVehiclesSpinner(db, this, vehs, currV.getID());
+		SpinnerDataFactory.setupVehiclesSpinner(db, this, vehs, showV.getID());
 		final DatePicker dpick =
 			(DatePicker) askItems.findViewById(R.id.logbook_show_popup_date_picker);
 		dpick.updateDate(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH));
@@ -509,10 +526,13 @@ public class LogbookShow extends Activity
 	        	cal.set(Calendar.HOUR_OF_DAY, 0);
 	        	cal.set(Calendar.MINUTE, 0);
 
-	        	// TODO consider the vehicle spinner
 	        	// TODO consider re-use this one, instead of a new activity, if same vehicle
+	    		Vehicle v = (Vehicle) vehs.getSelectedItem();
+	    		if (v == null)
+	    			return;  // shouldn't happen
 	    		Intent i = new Intent(LogbookShow.this, LogbookShow.class);
 	    		i.putExtra(EXTRAS_DATE, (int) (cal.getTimeInMillis() / 1000L));
+	    		i.putExtra(EXTRAS_VEHICLE_ID, v.getID());
 	    		LogbookShow.this.startActivity(i);
 			}
 		});
@@ -553,8 +573,6 @@ public class LogbookShow extends Activity
 			return true;
 
 		case R.id.menu_logbook_go_to_date:
-			if (goToDateListener == null)
-				setupGoToDateListener();
 			showDialog(R.id.menu_logbook_go_to_date);
 			return true;
 
@@ -565,32 +583,6 @@ public class LogbookShow extends Activity
 		default:
 	        return super.onOptionsItemSelected(item);
 	    }
-	}
-
-	/**
-	 * Initialize {@link #goToDateListener}, including the <tt>onDateSet</tt> method that
-	 * launches a new LogbookShow activity with {@link #EXTRAS_DATE}.
-	 */
-	private void setupGoToDateListener()
-	{
-		goToDateListener = new DatePickerDialog.OnDateSetListener()
-		{
-	        public void onDateSet
-	        	(DatePicker view, final int year, final int month, final int monthday)
-	        {
-	        	Calendar cal = Calendar.getInstance();
-	        	cal.setTimeInMillis(System.currentTimeMillis());
-	        	cal.set(Calendar.YEAR, year);
-	        	cal.set(Calendar.MONTH, month);
-	        	cal.set(Calendar.DAY_OF_MONTH, monthday);
-	        	cal.set(Calendar.HOUR_OF_DAY, 0);
-	        	cal.set(Calendar.MINUTE, 0);
-
-	    		Intent i = new Intent(LogbookShow.this, LogbookShow.class);
-	    		i.putExtra(EXTRAS_DATE, (int) (cal.getTimeInMillis() / 1000L));
-	    		LogbookShow.this.startActivity(i);
-	        }
-	    };
 	}
 
 	/**

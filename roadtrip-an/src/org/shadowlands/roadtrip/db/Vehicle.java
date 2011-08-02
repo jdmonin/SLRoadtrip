@@ -45,31 +45,48 @@ public class Vehicle extends RDBRecord
     private static final String[] FIELDS_ODO_LASTTRIP =
     	{ "odo_curr", "last_tripid" }; 
 
+    /** optional nickname or color */
     private String nickname;
+
     private int driverid;
     private int makeid;
     private String model;
+
+    /** model year */
     private int year;
+
     /** see sql schema for date fmt.  0 is assumed empty/unused. */
     private int date_from, date_to;
+
+    /** optional VIN */
     private String vin;
+
     private int odo_orig, odo_curr;
+
     /** 0 for empty/unused */
     private int last_tripid;
+
     /** 'M' for miles, 'K' for km */
 	public char distance_storage;
+
 	/** 'USD', 'CAD', etc */
 	public String expense_currency;
+
 	/** '$', etc */
 	public String expense_curr_sym;
+
 	/** decimal digits for expenses */
 	public int expense_curr_deci;
+
 	/** decimal digits for fuel per-unit cost */
 	public int fuel_curr_deci;
+
 	/** 'G' for gas, 'D' for diesel */
 	public char fuel_type;
+
 	/** 'G' for gallon, 'L' for liter */
 	public char fuel_qty_unit;
+
 	/** decimal digits for fuel quantity */
 	public int fuel_qty_deci;
 
@@ -337,10 +354,12 @@ public class Vehicle extends RDBRecord
 		dirty = false;
 	}
 
+	/** @return the optional nickname or color */
 	public String getNickname() {
 		return nickname;
 	}
 
+	/** Set the optional nickname or color */
 	public void setNickname(String nickname) {
 		this.nickname = nickname;
 		dirty = true;
@@ -377,10 +396,12 @@ public class Vehicle extends RDBRecord
 		dirty = true;
 	}
 
+	/** @return the model year */
 	public int getYear() {
 		return year;
 	}
 
+	/** Set the model year */
 	public void setYear(int year) {
 		this.year = year;
 		dirty = true;
@@ -465,9 +486,15 @@ public class Vehicle extends RDBRecord
 		dirty = true;
 	}
 
-	/** year and model */
+	/** format is: [ nickname - ] year model */
 	public String toString() {
-		return nickname + " - " + Integer.toString(year) + " " + model;
+		final String nick_dash;
+		if ((nickname != null) && (nickname.length() > 0))
+			nick_dash = nickname + " - ";
+		else
+			nick_dash = "";
+
+		return nick_dash + Integer.toString(year) + " " + model;
 	}
 
 	/**

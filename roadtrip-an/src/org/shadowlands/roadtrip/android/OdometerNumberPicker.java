@@ -40,7 +40,7 @@ import android.widget.LinearLayout;
  * Optionally, a checkbox can be checked when the user changes the value.
  * Use {@link #setCheckboxOnChanges(CheckBox)}.
  *<P>
- * Optionaly, another odometer control can be 'related' to this one (a trip and
+ * Optionally, another odometer control can be 'related' to this one (a trip and
  * total odometer pair).  Use {@link #setRelatedUncheckedOdoOnChanges(OdometerNumberPicker, CheckBox)}.
  *
  * @author jdmonin
@@ -71,12 +71,12 @@ public class OdometerNumberPicker extends LinearLayout implements OnChangedListe
     private boolean tenthsCleared = false;
 
     /**
-     * adj this on user changes, if not null.
+     * update this odometer's value on user value changes, if not null.
      * @see #relatedCheckOnChanges
      */
-    private OdometerNumberPicker relatedChangeOnChanges;
+    private OdometerNumberPicker relatedOdoOnChanges;
 
-    /** if non-null, and checked, don't adj relatedChangeOnChanges */
+    /** if non-null, and checked, don't update {@link #relatedOdoOnChanges} */
     private CheckBox relatedCheckOnChanges;
 
     // TODO javadoc
@@ -222,7 +222,7 @@ public class OdometerNumberPicker extends LinearLayout implements OnChangedListe
     public void setRelatedUncheckedOdoOnChanges
         (OdometerNumberPicker related, CheckBox relatedCB)
     {
-    	relatedChangeOnChanges = related;
+    	relatedOdoOnChanges = related;
     	relatedCheckOnChanges = relatedCB;
     }
 
@@ -241,19 +241,18 @@ public class OdometerNumberPicker extends LinearLayout implements OnChangedListe
      */
 	public void onChanged(NumberPicker picker, int oldVal, int newVal)
 	{
-		if (checkOnChanges == null)
-			return;
-		checkOnChanges.setChecked(true);
+		if (checkOnChanges != null)
+			checkOnChanges.setChecked(true);
 
-		if ((relatedChangeOnChanges == null)
-		    || ((relatedCheckOnChanges != null) && relatedCheckOnChanges.isChecked()))
+		if ((relatedOdoOnChanges == null)
+		    || relatedCheckOnChanges.isChecked())
 			return;
 
 		final int delta = newVal - oldVal;
 		if (picker == mWholeNum)
-			relatedChangeOnChanges.changeCurrentWhole(delta);
+			relatedOdoOnChanges.changeCurrentWhole(delta);
 		else
-			relatedChangeOnChanges.changeCurrentTenths(delta);
+			relatedOdoOnChanges.changeCurrentTenths(delta);
 	}
 
 	/**

@@ -404,7 +404,11 @@ public class LogbookShow extends Activity
 		StringBuffer sbTrips = new StringBuffer();
 		if (ltm.getRangeCount() > 0)
 			ltm.getRange(0).appendRowsAsTabbedString(sbTrips);
-		if (sbTrips.length() < 5)
+		if (ltm.hasCurrentTrip())
+		{
+			sbTrips.append("\n\t\t(Current Trip in progress)");
+		}
+		else if (sbTrips.length() < 5)
 		{
 			tvNoTripsFound = tvContent;
 			if (locID != -1)
@@ -413,10 +417,6 @@ public class LogbookShow extends Activity
 				sbTrips.append("\nNo trips on or after that date for this vehicle.");
 			else
 				sbTrips.append("\nNo trips found for this Vehicle.");
-		}
-		if (ltm.hasCurrentTrip())
-		{
-			sbTrips.append("\n\t\t(Current Trip in progress)");
 		}
 
 		tvContent.setText(sbTrips);

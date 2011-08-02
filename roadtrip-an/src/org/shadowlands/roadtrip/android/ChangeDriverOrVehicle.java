@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  Copyright (C) 2010 Jeremy D Monin <jdmonin@nand.net>
+ *  Copyright (C) 2010-2011 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -157,18 +157,15 @@ public class ChangeDriverOrVehicle extends Activity
 		{
 	    	if (isDriver)
 	    	{
-				Person p = new Person(db, newID);
-	    		ArrayAdapter<Person> aa = (ArrayAdapter<Person>) sp.getAdapter();
-	    		aa.add(p);
+				currDID = Settings.getCurrentDriver(db, false).getID();
+				SpinnerDataFactory.setupDriversSpinner(db, this, driver, currDID);
 			} else {
-				Vehicle v = new Vehicle(db, newID);
-	    		ArrayAdapter<Vehicle> aa = (ArrayAdapter<Vehicle>) sp.getAdapter();
-	    		aa.add(v);
+				currVID = Settings.getCurrentVehicle(db, false).getID();
+				SpinnerDataFactory.setupVehiclesSpinner(db, this, veh, currVID);
 			}
 		} catch (Throwable th) {
 			return;
     	}
-    	sp.setSelection(sp.getCount() - 1);		
 	}
 
 	@Override

@@ -469,23 +469,28 @@ public class LogbookShow extends Activity
 	{
 	    switch (id) {
 		    case R.id.menu_logbook_go_to_date:
-		    {
-				if (goToDateListener == null)
-					setupGoToDateListener();				
-	        	final Calendar cal = Calendar.getInstance();
-	        	if (goToDate != 0)
-	        		cal.setTimeInMillis(1000L * goToDate);
-	        	else
-	        		cal.setTimeInMillis(System.currentTimeMillis());
+				return onCreateGoToDateDialog();
 
-	        	return new DatePickerDialog(this,
-	        		goToDateListener,
-	        		cal.get(Calendar.YEAR),
-	        		cal.get(Calendar.MONTH),
-	        		cal.get(Calendar.DAY_OF_MONTH));
-		    }
 	    }
 	    return null;
+	}
+
+	/** Show the DatePickerDialog leading to "Go To Date" mode. */
+	private Dialog onCreateGoToDateDialog()
+	{
+		if (goToDateListener == null)
+			setupGoToDateListener();				
+		final Calendar cal = Calendar.getInstance();
+		if (goToDate != 0)
+			cal.setTimeInMillis(1000L * goToDate);
+		else
+			cal.setTimeInMillis(System.currentTimeMillis());
+
+		return new DatePickerDialog(this,
+			goToDateListener,
+			cal.get(Calendar.YEAR),
+			cal.get(Calendar.MONTH),
+			cal.get(Calendar.DAY_OF_MONTH));
 	}
 
 	/**

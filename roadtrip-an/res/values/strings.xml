@@ -60,6 +60,7 @@
 <string name="gas__colon_sp">Gas: </string>
 <string name="gas__dots">Gas...</string>
 <string name="home_area">Home area</string>
+<string name="internal__current_notfound_area_driver_veh_trip">Internal error: Current area/driver/vehicle/trip not found in db</string>
 <string name="internal__missing_required_bundle">Internal error: Missing required bundle when calling activity.</string>
 <string name="keep_this">Keep this</string>
 <string name="local_trip">Local Trip</string>

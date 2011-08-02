@@ -298,11 +298,12 @@ public class TripTStopEntry extends Activity
 		btnContTimeDate = (Button) findViewById(R.id.trip_tstop_btn_cont_date);
 		btnGas = (Button) findViewById(R.id.trip_tstop_btn_gas);
 
-		// set currA, currV, currT, maybe currTS and prevLocObj
+		// get currA, currV, currT, maybe currTS and prevLocObj
 		if (! checkCurrentDriverVehicleTripSettings())
 		{
+			// Internal error: Current area/driver/vehicle/trip not found in db
         	Toast.makeText(getApplicationContext(),
-                "Current area/driver/vehicle/trip not found in db",
+                R.string.internal__current_notfound_area_driver_veh_trip,
                 Toast.LENGTH_SHORT).show();
 	    	startActivity(new Intent(TripTStopEntry.this, AndroidStartup.class));
 	    	finish();
@@ -416,7 +417,7 @@ public class TripTStopEntry extends Activity
 				    && (Math.abs(latestVehTime - timeNow) >= TIMEDIFF_HISTORICAL_MILLIS))
 				{
 					Toast.makeText(this,
-						getResources().getString(R.string.using_old_date_due_to_previous),
+						R.string.using_old_date_due_to_previous,
 						Toast.LENGTH_SHORT).show();
 				} else {
 					latestVehTime = timeNow;
@@ -919,8 +920,8 @@ public class TripTStopEntry extends Activity
 		if (locat == null)
 		{
 			loc.requestFocus();
-        	Toast.makeText(getApplicationContext(),
-    			getResources().getString(R.string.please_enter_the_location),
+        	Toast.makeText(this,
+    			R.string.please_enter_the_location,
                 Toast.LENGTH_SHORT).show();
         	return;  // <--- Early return: missing field ---
 		}
@@ -936,8 +937,8 @@ public class TripTStopEntry extends Activity
 			(stopEndsTrip || (bundleGas != null)))
 		{
 			odo_total.requestFocus();
-        	Toast.makeText(getApplicationContext(),
-    			getResources().getString(R.string.please_check_the_total_odometer),
+        	Toast.makeText(this,
+    			R.string.please_check_the_total_odometer,
                 Toast.LENGTH_SHORT).show();
         	return;  // <--- Early return: missing required field ---
 		}
@@ -954,8 +955,8 @@ public class TripTStopEntry extends Activity
 		if (mkFreqTrip && (odoTrip == 0))
 		{
 			odo_trip.requestFocus();
-        	Toast.makeText(getApplicationContext(),
-    			getResources().getString(R.string.please_check_the_trip_odometer),
+        	Toast.makeText(this,
+    			R.string.please_check_the_trip_odometer,
                 Toast.LENGTH_SHORT).show();
         	return;  // <--- Early return: missing required field ---
 		}
@@ -1011,8 +1012,8 @@ public class TripTStopEntry extends Activity
 			if ((stopTimeSec != 0) && (contTimeSec < stopTimeSec)) 
 			{
 				tp_time_cont.requestFocus();
-	        	Toast.makeText(getApplicationContext(),
-        			getResources().getString(R.string.this_time_must_be_no_earlier_than),
+	        	Toast.makeText(this,
+        			R.string.this_time_must_be_no_earlier_than,
                     Toast.LENGTH_LONG).show();
 				return;  // <--- inconsistent time ---
 			}
@@ -1116,6 +1117,7 @@ public class TripTStopEntry extends Activity
 		} else if ((viaRouteObj != null) && viaRouteObj.getDescr().equalsIgnoreCase(via_route))
 		{
 			viaID = viaRouteObj.getID();
+
 			// if isCurrentlyStopped, or ending the trip,
 			// and we don't yet have odo_dist for
 			// this ViaRoute, set it from this tstop:
@@ -1161,7 +1163,6 @@ public class TripTStopEntry extends Activity
 				viaRouteObj = new ViaRoute(prevLocObj.getID(), locID, odo_dist, via_route);
 				viaID = viaRouteObj.insert(db);
 				createdVia = true;
-				Toast.makeText(this, "set new viaRoute odo_dist = " + odo_dist, Toast.LENGTH_SHORT).show();
 			} else {
 				// re-use it
 				viaRouteObj = viaRouteObjCreatedHere;
@@ -1211,7 +1212,6 @@ public class TripTStopEntry extends Activity
 						stopGas.gas_brandgrade_id = bgid;
 						stopGas.gas_brandgrade = bg;
 					}
-					Toast.makeText(this, "L912: Made new GBG " + bg.getName(), Toast.LENGTH_SHORT).show();
 				} else {
 					createdGasBrandGrade = false;  // null or 0-length name
 					if (gbgCreatedHere)
@@ -1238,7 +1238,6 @@ public class TripTStopEntry extends Activity
 				{
 					stopGas.gas_brandgrade.setName(gbName);
 					stopGas.gas_brandgrade.commit();
-					Toast.makeText(this, "L936: Updated GBG name " + gbName, Toast.LENGTH_SHORT).show();
 				}
 			}
 

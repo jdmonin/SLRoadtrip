@@ -108,6 +108,7 @@
 <string name="trip_odometer">Trip\nodometer</string>
 <string name="using_old_date_due_to_previous">Historical Mode:\nUsing an old date because of the previous date entered for this vehicle.</string>
 <string name="validate">Validate</string>
+<string name="vehicle">Vehicle</string>
 <string name="via">via</string>
 <string name="via_route">Via route</string>
 <string name="via_routes_changed">Via Routes Changed</string>

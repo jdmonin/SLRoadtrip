@@ -479,18 +479,48 @@ public class LogbookShow extends Activity
 	private Dialog onCreateGoToDateDialog()
 	{
 		if (goToDateListener == null)
-			setupGoToDateListener();				
+			setupGoToDateListener();
 		final Calendar cal = Calendar.getInstance();
 		if (goToDate != 0)
 			cal.setTimeInMillis(1000L * goToDate);
 		else
 			cal.setTimeInMillis(System.currentTimeMillis());
 
-		return new DatePickerDialog(this,
-			goToDateListener,
-			cal.get(Calendar.YEAR),
-			cal.get(Calendar.MONTH),
-			cal.get(Calendar.DAY_OF_MONTH));
+		final View askItems = getLayoutInflater().inflate(R.layout.logbook_show_popup_date_veh, null);
+		final Spinner vehs =
+			(Spinner) askItems.findViewById(R.id.logbook_show_popup_date_vehs);
+		SpinnerDataFactory.setupVehiclesSpinner(db, this, vehs, currV.getID());
+		final DatePicker dpick =
+			(DatePicker) askItems.findViewById(R.id.logbook_show_popup_date_picker);
+		dpick.updateDate(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH));
+
+		AlertDialog.Builder alert = new AlertDialog.Builder(this);
+		alert.setTitle(R.string.logbook_show__go_to_date);
+		alert.setView(askItems);
+		alert.setPositiveButton(android.R.string.search_go, new DialogInterface.OnClickListener()
+		{
+			public void onClick(DialogInterface dialog, int whichButton)
+			{
+	        	Calendar cal = Calendar.getInstance();
+	        	cal.setTimeInMillis(System.currentTimeMillis());
+	        	cal.set(Calendar.YEAR, dpick.getYear());
+	        	cal.set(Calendar.MONTH, dpick.getMonth());
+	        	cal.set(Calendar.DAY_OF_MONTH, dpick.getDayOfMonth());
+	        	cal.set(Calendar.HOUR_OF_DAY, 0);
+	        	cal.set(Calendar.MINUTE, 0);
+
+	        	// TODO consider the vehicle spinner
+	        	// TODO consider re-use this one, instead of a new activity, if same vehicle
+	    		Intent i = new Intent(LogbookShow.this, LogbookShow.class);
+	    		i.putExtra(EXTRAS_DATE, (int) (cal.getTimeInMillis() / 1000L));
+	    		LogbookShow.this.startActivity(i);
+			}
+		});
+		alert.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+			public void onClick(DialogInterface dialog, int whichButton) {}
+		});
+
+		return alert.create();
 	}
 
 	/**

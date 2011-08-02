@@ -39,6 +39,9 @@ import android.widget.LinearLayout;
  *<P>
  * Optionally, a checkbox can be checked when the user changes the value.
  * Use {@link #setCheckboxOnChanges(CheckBox)}.
+ *<P>
+ * Optionaly, another odometer control can be 'related' to this one (a trip and
+ * total odometer pair).  Use {@link #setRelatedUncheckedOdoOnChanges(OdometerNumberPicker, CheckBox)}.
  *
  * @author jdmonin
  */
@@ -133,7 +136,7 @@ public class OdometerNumberPicker extends LinearLayout implements OnChangedListe
     }
 
     /**
-     * TODO javadoc...
+     * Get the current value in 10ths of a unit.
      * @return current value, as fixed-decimal 10ths of a unit
      */
     public int getCurrent10d()
@@ -145,6 +148,8 @@ public class OdometerNumberPicker extends LinearLayout implements OnChangedListe
 
     /**
      * Set the current value, and optionally make it the minimum.
+     *<P>
+     * Does not change the related odometer.
      * @param newValue  New value in 10ths of a unit
      * @param setMinimumToo  Also make this the minimum;
      *    note that only the whole-number field gets this minimum,
@@ -165,7 +170,10 @@ public class OdometerNumberPicker extends LinearLayout implements OnChangedListe
     /**
      * Change our whole-number part by this amount.
      * If {@link #setTenthsVisibility(boolean) setTenthsVisibility(false)}, clear tenths to 0.
+     *<P>
+     * Does not change the related odometer.
      * @param wholeChange amount to increase (positive) or decrease (negative).
+     * @see #setCurrent10d(int, boolean)
      */
     public void changeCurrentWhole(final int wholeChange)
     {
@@ -181,6 +189,8 @@ public class OdometerNumberPicker extends LinearLayout implements OnChangedListe
      * Change our tenths part by this amount.
      * If the tenths would wrap around, also change the whole,
      * so that the entire odometer changes by the correct amount.
+     *<P>
+     * Does not change the related odometer.
      * @param tenthsChange amount to increase (positive) or decrease (negative).
      * @see #setCurrent10d(int, boolean)
      */
@@ -201,8 +211,9 @@ public class OdometerNumberPicker extends LinearLayout implements OnChangedListe
     }
 
     /**
-     * Set a related odometer's value; that value can be changed when this one changes.
-     * If relatedCB is not null, only change <tt>related</tt> if it's not checked.
+     * Set our related odometer; its value can be changed when this one changes.
+     * If <tt>relatedCB</tt> is not null, only change <tt>related</tt>'s value when
+     * this checkbox is unchecked.
      *
      * @param related  The related odometer, or null
      * @param relatedCB  The related odometer's checkbox, or null
@@ -215,7 +226,7 @@ public class OdometerNumberPicker extends LinearLayout implements OnChangedListe
     	relatedCheckOnChanges = relatedCB;
     }
 
-    /** When the user changes the value, check this checkbox. */
+    /** When the user changes the value, set this checkbox to 'checked'. */
     public void setCheckboxOnChanges(CheckBox cb)
     {
     	checkOnChanges = cb;

@@ -266,6 +266,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 				ltime = veh.readLatestTime(currT);  // don't call if we have currTS
 			if ((ltime != 0) && (weekIncr != 0))
 			{
+				++ltime;  // addRowsFromDBTrips range is exclusive; make it include ltime
 				addRowsFromDBTrips(ltime, weekIncr, true, false, conn);
 				if (! tData.isEmpty())
 					tData.lastElement().noneLater = true;  // we know it's the newest trip
@@ -488,13 +489,16 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	 * and remember that {@link #tDataTextRowCount} will already
 	 * include the inserted rows.
 	 * 
-     * @param timeStart  Starting date/time of trip range, in Unix format
+     * @param timeStart  Starting exclusive date/time of trip range, in Unix format.
+     *          The range will start just before or just after this date/time.
+     *          To include <tt>timeStart</tt> in the range, increment or decrement
+     *          it before calling this method.
      * @param weeks   Retrieve this many weeks past timeStart
      * @param searchBeyondWeeks  If true, and if no trips found within
      *          <tt>weeks</tt>, keep searching until a trip is found
-     * @param towardsNewer  If true, retrieve <tt>timeStart</tt> and newer,
+     * @param towardsNewer  If true, retrieve newer than <tt>timeStart</tt>,
      *          and assume adding at the end of {@link #tData};
-     *          otherwise retrieve <tt>timeStart</tt> and older,
+     *          otherwise retrieve older than <tt>timeStart</tt>,
      *          and add at the start of {@link #tData}.
 	 * @param conn Add existing rows from this connection
 	 * @return Number of rows of text added to the table

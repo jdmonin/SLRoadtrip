@@ -225,7 +225,13 @@ public class OdometerNumberPicker extends LinearLayout implements OnChangedListe
     public void setRelatedUncheckedOdoOnChanges
         (OdometerNumberPicker related, CheckBox relatedCB)
     {
-    	relatedOdoOnChanges = related;
+    	if (relatedOdoOnChanges != related)
+    	{
+	    	if (relatedOdoOnChanges != null)
+	    		relatedOdoOnChanges.mTenths.setRelatedWholePicker(null);    		
+	    	relatedOdoOnChanges = related;
+	    	relatedOdoOnChanges.mTenths.setRelatedWholePicker(mWholeNum);
+    	}
     	relatedCheckOnChanges = relatedCB;
     }
 

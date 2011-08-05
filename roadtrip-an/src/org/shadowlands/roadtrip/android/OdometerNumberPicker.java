@@ -160,11 +160,14 @@ public class OdometerNumberPicker extends LinearLayout implements OnChangedListe
      */
     public void setCurrent10d(final int newValue, final boolean setMinimumToo)
     {
-    	mTenths.setCurrent((int) (newValue % 10));
-    	int whole = (int) (newValue / 10);
+    	final int whole = (int) (newValue / 10);
     	if (setMinimumToo)
     		mWholeNum.setRange(whole, RANGE_MAX_WHOLE);
     	mWholeNum.setCurrent(whole);
+    	final int tenths = (int) (newValue % 10);
+    	mTenths.setCurrent(tenths);
+    	if (tenthsCleared && (tenths != 0) && ! tenthsVisible)
+    		tenthsCleared = false;
     }
 
     /**

@@ -34,8 +34,12 @@ import org.shadowlands.roadtrip.db.android.RDBOpenHelper;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.Bundle;
 import android.view.ContextMenu;
 import android.view.Menu;
@@ -123,6 +127,10 @@ public class Main extends Activity
 	    	confirmCancelCurrentTrip();
 	    	return true;
 
+	    case R.id.menu_main_about:
+        	showDialog(R.id.menu_main_about);
+	    	return true;
+
 	    default:
 	        return super.onOptionsItemSelected(item);
 	    }
@@ -156,6 +164,54 @@ public class Main extends Activity
 		}
 		return true;
 	}
+
+	/** Create the About dialog. */
+    @Override
+    protected Dialog onCreateDialog(int id)
+    {
+        Dialog dialog;
+        switch(id)
+        {
+        case R.id.menu_main_about:
+	        {
+	        	AlertDialog.Builder aboutBuilder = new AlertDialog.Builder(this);
+	        	aboutBuilder.setMessage(R.string.app_about)
+		        .setCancelable(true)
+	        	.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+	                public void onClick(DialogInterface dialog, int id) {
+	                     dialog.dismiss();
+	                }
+	            });
+
+	        	// get our version dynamically.
+	        	// title format: About Shadowlands Roadtrip v0.9.07
+	        	StringBuffer title = new StringBuffer(getResources().getString(R.string.about));
+	        	title.append(' ');
+	        	title.append(getResources().getString(R.string.app_name));
+	        	try {
+					PackageInfo pInfo = getPackageManager().getPackageInfo("org.shadowlands.roadtrip", PackageManager.GET_META_DATA);
+					if (pInfo != null)
+					{
+						String versName = pInfo.versionName;
+						if (versName != null)
+						{
+							title.append(" v");
+							title.append(versName);
+						}
+					}
+				} catch (NameNotFoundException e) { }
+
+				aboutBuilder.setTitle(title);
+	        	dialog = aboutBuilder.create();
+	        }
+        	break;
+
+        default:
+        	dialog = null;
+		}
+
+        return dialog;
+    }
 
 	/**
 	 * Prompt user if wants to cancel the current trip (if that's possible).

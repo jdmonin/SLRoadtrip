@@ -18,7 +18,9 @@
  along with this program.  If not, see http://www.gnu.org/licenses/ .
  -->
 <resources>
+<string name="app_about">Shadowlands RoadTrip, a handy app to keep track of your vehicles\' mileage, trips, gas, and service.\n\nSource: https://code.google.com/p/shadowlands-roadtrip/\nCopyright 2010-2011 Jeremy D Monin\nLicense: GPLv3 (http://www.gnu.org/licenses/gpl-3.0.html)\n</string>
 <string name="app_name">Shadowlands RoadTrip</string>
+<string name="about">About</string>
 <string name="all_vehicles">All vehicles</string>
 <string name="androidstartup_pleaseCreate">Welcome!\n\nPlease begin by entering your name and vehicle.</string>
 <string name="androidstartup_verifyCurrD">Please verify the current driver.</string>
@@ -124,9 +126,9 @@
 <string name="logbook_show__title">View Logbook</string>
 <string name="logbook_show__earlier_trips">^ Earlier Trips ^</string>
 <string name="logbook_show__later_trips">v  Later Trips  v</string>
+<string name="logbook_show__menu_location">Location</string>
 <string name="logbook_show__no_locs_in_area">No locations are entered in the current GeoArea.</string>
 <string name="logbook_show__recent_gas">Recent Gas</string>
-<string name="logbook_show__menu_location">Location</string>
 <string name="logbook_show__go_to_date">Go to Date</string>
 <string name="logbook_show__enter_location_to_search_trips">Enter the location to search trips for.</string>
 <string name="logbook_show__trips_to_location">Trips to Location</string>
@@ -177,12 +179,12 @@
 <string name="trip_tstop_entry_roadtrip_end_geoarea">To end the roadtrip, this stop must be within the ending geo area.</string>
 <string name="trip_tstop_gas_atprice"> \@ Price</string>
 <string name="trip_tstop_gas_brand_grade">Brand/\nGrade</string>
-<string name="trip_tstop_gas_perunit">/ unit</string>
 <string name="trip_tstop_gas_equalscost"> = Cost</string>
+<string name="trip_tstop_gas_perunit">/ unit</string>
 <string name="trip_tstop_gas_prompt">Enter the gas stop details.</string>
 <string name="trip_tstop_gas__title">Trip Stop: Gas</string>
-<string name="vehicle_entry_hint_year">Model year</string>
 <string name="vehicle_entry_hint_nickname">Optional nickname or color</string>
+<string name="vehicle_entry_hint_year">Model year</string>
 <string name="vehicle_entry_prompt">Enter information about this vehicle.</string>
 <string name="vehicle_entry_year">Please enter the year.</string>
 <string name="vehicle_make">Make (Brand)</string>

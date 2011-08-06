@@ -27,4 +27,8 @@
 	android:title="@string/cancel_trip"
 	android:icon="@android:R/drawable/ic_menu_close_clear_cancel"
 	/>
+<item android:id="@+id/menu_main_about"
+	android:title="@string/about"
+	android:icon="@android:R/drawable/ic_menu_info_details"
+	/>
 </menu>

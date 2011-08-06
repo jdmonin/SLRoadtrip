@@ -1072,7 +1072,7 @@ public class TripTStopEntry extends Activity
 		    && ((odoTotal % 10) >= 5))
 		{
 			// Since odoTotal != 0, the user set the total checkmark or manually changed it.
-			// Check if they also changed the trip-odo.
+			// Also check if they also changed the trip-odo.
 			final int tripdiff;
 			if ((odoTrip != 0) && (odosAreSetFrom_trip != 0))
 				tripdiff = odoTrip - odosAreSetFrom_trip;
@@ -1081,12 +1081,21 @@ public class TripTStopEntry extends Activity
 
 			if ((odoTotal / 10) != ((odosAreSetFrom_total + tripdiff) / 10))
 			{
-				odoTotal -= 5;
+				// If possible, make the adjustment.
 				// Since we know odoTotal's tenths >= 5, this subtraction only affects
 				// the hidden tenths digit, not the visible whole part of odoTotal.
-				Toast.makeText
-					(this, "L1087: odoTotal drift corrected: " + (odoTotal+5) + " -> " + odoTotal,
-					 Toast.LENGTH_LONG).show();
+				// To avoid inconsistencies when stops are close together,
+				// first check the previous highest recorded total-odo for this trip.
+
+				final int odoHighest = currT.readHighestOdoTotal();
+				final int odoAdjTotal = odoTotal - 5;
+				if (odoAdjTotal > odoHighest)
+					// assert: (odoTotal - odoHighest) > 5
+					odoTotal = odoAdjTotal;
+				else if ((odoTotal - odoHighest) > 1)
+					// assert: (odoTotal - odoHighest) <= 5 and odoTotal > odoHighest
+					odoTotal = odoHighest + 1;  // gives -4 -3 -2 or -1 to odoTotal
+				Toast.makeText(this, "L1087 odoTotal drift corrected to " + odoTotal, Toast.LENGTH_LONG).show();
 			}
 		}
 

@@ -166,29 +166,29 @@ public class Main extends Activity
 	}
 
 	/** Create the About dialog. */
-    @Override
-    protected Dialog onCreateDialog(int id)
-    {
-        Dialog dialog;
-        switch(id)
-        {
-        case R.id.menu_main_about:
-	        {
-	        	AlertDialog.Builder aboutBuilder = new AlertDialog.Builder(this);
-	        	aboutBuilder.setMessage(R.string.app_about)
-		        .setCancelable(true)
-	        	.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-	                public void onClick(DialogInterface dialog, int id) {
-	                     dialog.dismiss();
-	                }
-	            });
+	@Override
+	protected Dialog onCreateDialog(int id)
+	{
+		Dialog dialog;
+		switch(id)
+		{
+		case R.id.menu_main_about:
+			{
+				AlertDialog.Builder aboutBuilder = new AlertDialog.Builder(this);
+				aboutBuilder.setMessage(R.string.app_about)
+				  .setCancelable(true)
+				  .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int id) {
+						dialog.dismiss();
+					}
+				});
 
-	        	// get our version dynamically.
-	        	// title format: About Shadowlands Roadtrip v0.9.07
-	        	StringBuffer title = new StringBuffer(getResources().getString(R.string.about));
-	        	title.append(' ');
-	        	title.append(getResources().getString(R.string.app_name));
-	        	try {
+				// get our version dynamically.
+				// title format: About Shadowlands Roadtrip v0.9.07
+				StringBuffer title = new StringBuffer(getResources().getString(R.string.about));
+				title.append(' ');
+				title.append(getResources().getString(R.string.app_name));
+				try {
 					PackageInfo pInfo = getPackageManager().getPackageInfo("org.shadowlands.roadtrip", PackageManager.GET_META_DATA);
 					if (pInfo != null)
 					{
@@ -202,16 +202,16 @@ public class Main extends Activity
 				} catch (NameNotFoundException e) { }
 
 				aboutBuilder.setTitle(title);
-	        	dialog = aboutBuilder.create();
-	        }
-        	break;
+				dialog = aboutBuilder.create();
+			}
+			break;
 
-        default:
-        	dialog = null;
+		default:
+			dialog = null;
 		}
 
-        return dialog;
-    }
+		return dialog;
+	}
 
 	/**
 	 * Prompt user if wants to cancel the current trip (if that's possible).

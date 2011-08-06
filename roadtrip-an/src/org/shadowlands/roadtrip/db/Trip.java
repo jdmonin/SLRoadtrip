@@ -800,6 +800,11 @@ public class Trip extends RDBRecord
      * most current odometer values.
      * Where possible, use the highest trip-odo (more accurate) to drive the total-odo.
      * If the trip has no stops yet, "total" is the starting value and "trip" is 0.
+     * To read the total odometer without calculation, use {@link #readHighestOdoTotal()} instead.
+     *<P>
+     * Uses and re-uses an array which is private to the trip; not thread-safe when sharing the same
+     * Trip object, but safe when different threads use different Trips.
+     *
      * @return array of [total,trip] odometer; the array is reused,
      *     so copy out the values before calling this again.
      * @see #readHighestOdometers(TStop)
@@ -814,6 +819,11 @@ public class Trip extends RDBRecord
      * most current odometer values.
      * Where possible, use the highest trip-odo (more accurate) to drive the total-odo.
      * If the trip has no stops yet, "total" is the starting value and "trip" is 0.
+     * To read the total odometer without calculation, use {@link #readHighestOdoTotal()} instead.
+     *<P>
+     * Uses and re-uses an array which is private to the trip; not thread-safe when sharing the same
+     * Trip object, but safe when different threads use different Trips.
+     *
      * @param ignoreStop  a TStop to ignore if found, or null;
      *     this allows the latest stop (for example) to be ignored during the calculation.
      * @return array of [total,trip] odometer; the array is reused,
@@ -854,6 +864,25 @@ public class Trip extends RDBRecord
     	readhighest_ret[1] = oTrip;
     	return readhighest_ret;
     }
+
+    /**
+     * Retrieve this Trip's maximum recorded odo_total within a stop.
+     * If no TStops on this trip yet with a recorded odo_total, returns odo_start.
+     * Unlike {@link #readHighestOdometers()}, no odo_trip addition is done if latest tstops are missing odo_total.
+     * @return that total-odometer value, in tenths of a unit
+     * @throws IllegalStateException if the db connection is closed
+     * @see TStop#readHighestTStopOdoTotalWithinTrip(RDBAdapter, int)
+     * @since 0.9.07
+     */
+    public int readHighestOdoTotal()
+    	throws IllegalStateException
+	{
+    	final int totalFromOdo = TStop.readHighestTStopOdoTotalWithinTrip(dbConn, id);
+    	if (totalFromOdo != 0)
+    		return totalFromOdo;
+    	else
+    		return odo_start;
+	}
 
     /**
      * Read the latest timestamp of this trip.

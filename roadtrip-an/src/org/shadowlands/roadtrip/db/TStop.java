@@ -53,6 +53,12 @@ public class TStop extends RDBRecord
     /** Field names/where-clause for use in {@link #readStartingStopWithinTrip(RDBAdapter, Trip)} */
     private static final String WHERE_TRIPID_AND_ODOTRIP = FIELD_TRIPID + " = ? AND odo_trip = 0";
 
+    /** Where-clause for use in {@link #readHighestTStopOdoTotalWithinTrip(RDBAdapter, int)} */
+    private static final String WHERE_TRIPID = FIELD_TRIPID + " = ?";
+
+    /** max(odo_total) for use in {@link #readHighestTStopOdoTotalWithinTrip(RDBAdapter, int)} */
+    private static final String MAX_FIELD_ODO_TOTAL = "max(" + FIELD_ODO_TOTAL + ")";
+
     /** db table fields.
      * The "descr" field is now used for the "location" of the stop.
      * @see #buildInsertUpdate()
@@ -250,6 +256,25 @@ public class TStop extends RDBRecord
 			return null;
 		}
 	}
+
+    /**
+     * Retrieve this trip's maximum recorded odo_total within its TStops, if any.
+     * If the trip has no intermediate stops yet, 0 is returned; the Trip record is not checked.
+     *
+     * @param tripid  Trip ID
+     * @return that total-odometer value, or 0 if no TStops on this trip yet with a recorded odo_total
+     * @throws IllegalStateException if the db connection is closed
+     * @see Trip#readHighestOdoTotal()
+     * @since 0.9.07
+     */
+    public static int readHighestTStopOdoTotalWithinTrip(RDBAdapter db, final int tripid)
+		throws IllegalStateException
+    {
+    	if (db == null)
+    		throw new IllegalStateException("db null");
+    	final String[] whereArgs = { Integer.toString(tripid) };
+    	return db.getRowIntField(TABNAME, MAX_FIELD_ODO_TOTAL, WHERE_TRIPID, whereArgs, 0);
+    }
 
     /**
      * Retrieve an existing trip stop, by id, from the database.

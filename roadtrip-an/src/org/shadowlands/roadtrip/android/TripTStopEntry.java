@@ -382,6 +382,8 @@ public class TripTStopEntry extends Activity
 		// adjust date/time fields, now that we know if we have currTS
 		// and know if stopEndsTrip.
 		final long timeNow = System.currentTimeMillis();
+
+		// Continue Time:
 		if (stopEndsTrip || (currTS == null))
 		{
 			contTime = null;
@@ -394,6 +396,8 @@ public class TripTStopEntry extends Activity
 			contTime.setTimeInMillis(timeNow);
 			tp_time_cont_chk.setChecked(true);
 		}
+
+		// Stop Time:
 		stopTime = Calendar.getInstance();
 		boolean setTimeStopCheckbox;
 		if (isCurrentlyStopped)
@@ -403,16 +407,17 @@ public class TripTStopEntry extends Activity
 			{
 				setTimeStopCheckbox = true;
 				stopTime.setTimeInMillis(1000L * stoptime_sec);
-			} else {			
+
+				if ((contTime != null)
+					&& (Math.abs(timeNow - (1000L * stoptime_sec)) >= TIMEDIFF_HISTORICAL_MILLIS))
+				{
+					// Historical Mode: continue from that date & time, not from today
+					contTime.setTimeInMillis(1000L * (stoptime_sec + 60));  // 1 minute later
+				}
+
+			} else {
 				setTimeStopCheckbox = false;
 				stopTime.setTimeInMillis(timeNow);
-			}
-
-			// Historical Mode: continue from that date & time, not from today
-			if ((contTime != null)
-				&& (Math.abs(timeNow - (1000L * stoptime_sec)) >= TIMEDIFF_HISTORICAL_MILLIS))
-			{
-				contTime.setTimeInMillis(1000L * (stoptime_sec + 60));  // 1 minute later
 			}
 
 			// Focus on continue-time, to scroll the screen down
@@ -428,12 +433,13 @@ public class TripTStopEntry extends Activity
 					Toast.makeText(this,
 						R.string.using_old_date_due_to_previous,
 						Toast.LENGTH_SHORT).show();
+					setTimeStopCheckbox = false;
 				} else {
 					latestVehTime = timeNow;
+					setTimeStopCheckbox = true;
 				}
 				stopTime.setTimeInMillis(latestVehTime);
 			}
-			setTimeStopCheckbox = true;
 		}
 		tp_time_stop_chk.setChecked(setTimeStopCheckbox);
 		updateDateButtons(0);

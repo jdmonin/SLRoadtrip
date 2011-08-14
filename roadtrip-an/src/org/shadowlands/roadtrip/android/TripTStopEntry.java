@@ -422,25 +422,26 @@ public class TripTStopEntry extends Activity
 
 			// Focus on continue-time, to scroll the screen down
 			tp_time_cont.requestFocus();
+
 		} else {
+
 			// It's a new stop.
 			// How recent was that vehicle's most recent trip? (Historical Mode)
+			long latestVehTime = 1000L * currV.readLatestTime(currT);
+			if ((latestVehTime != 0L)
+			    && (Math.abs(latestVehTime - timeNow) >= TIMEDIFF_HISTORICAL_MILLIS))
 			{
-				long latestVehTime = 1000L * currV.readLatestTime(currT);
-				if ((latestVehTime != 0L)
-				    && (Math.abs(latestVehTime - timeNow) >= TIMEDIFF_HISTORICAL_MILLIS))
-				{
-					Toast.makeText(this,
-						R.string.using_old_date_due_to_previous,
-						Toast.LENGTH_SHORT).show();
-					setTimeStopCheckbox = false;
-				} else {
-					latestVehTime = timeNow;
-					setTimeStopCheckbox = true;
-				}
-				stopTime.setTimeInMillis(latestVehTime);
+				Toast.makeText(this,
+					R.string.using_old_date_due_to_previous,
+					Toast.LENGTH_SHORT).show();
+				setTimeStopCheckbox = false;
+			} else {
+				latestVehTime = timeNow;
+				setTimeStopCheckbox = true;
 			}
+			stopTime.setTimeInMillis(latestVehTime);
 		}
+
 		tp_time_stop_chk.setChecked(setTimeStopCheckbox);
 		updateDateButtons(0);
 		initTimePicker(stopTime, tp_time_stop);

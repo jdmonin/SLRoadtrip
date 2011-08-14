@@ -189,7 +189,7 @@ public class Main extends Activity
 				title.append(' ');
 				title.append(getResources().getString(R.string.app_name));
 				try {
-					PackageInfo pInfo = getPackageManager().getPackageInfo("org.shadowlands.roadtrip", PackageManager.GET_META_DATA);
+					PackageInfo pInfo = getPackageManager().getPackageInfo(getPackageName(), PackageManager.GET_META_DATA);
 					if (pInfo != null)
 					{
 						String versName = pInfo.versionName;

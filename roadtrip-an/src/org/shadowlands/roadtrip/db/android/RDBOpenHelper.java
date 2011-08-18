@@ -470,7 +470,7 @@ public class RDBOpenHelper
     		rv = def;
 
 		// If fn is aggregate with no matching rows,
-		// moveToFirst is true but getString returns null.
+		// moveToFirst is true but getInt returns 0.
 
     	dbqc.close();
     	return rv;

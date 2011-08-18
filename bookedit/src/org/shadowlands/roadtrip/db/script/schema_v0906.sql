@@ -165,6 +165,7 @@ create index "tstopgas~v" ON tstop_gas(vid);
 create table gas_brandgrade ( _id integer PRIMARY KEY AUTOINCREMENT not null, name varchar(255) not null );
 
 -- Used for TStop description auto-fill, and freqtrip.
+--    a_id is the geoarea ID, or null for roadtrip locations between areas. 
 --    latest_gas_brandgrade_id is for the auto-fill default at gas stop locations.
 create table location ( _id integer PRIMARY KEY AUTOINCREMENT not null, a_id int, geo_lat float, geo_lon float, loc_descr varchar(255) not null, latest_gas_brandgrade_id int );
 

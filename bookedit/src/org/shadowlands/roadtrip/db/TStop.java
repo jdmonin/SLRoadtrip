@@ -75,6 +75,9 @@ public class TStop extends RDBRecord
     private final static String[] FIELD_TIME_CONTINUE_ARR =
     	{ "time_continue" };
 
+    /** Maximum length (255) of comment field. */
+    public static final int MAXLEN = 255;  // The value 255 is also hardcoded into trip_tstop_entry.xml
+
     // All temporary flags have values 0x80 or lower,
     // and are cleared before continuing the trip from the stop
     // (or, if this stop ends the trip, before ending it).
@@ -405,6 +408,7 @@ public class TStop extends RDBRecord
      * @param via_id     Street via_route ID from previous tstop's location, or 0
      * @param comment    Comment/description, or null
      * @throws IllegalArgumentException if <tt>trip</tt> or <tt>locid</tt> or <tt>locat</tt> or <tt>areaid</tt> is bad
+     *     or if comment.length > {@link #MAXLEN}
      */
     public TStop(Trip trip, final int odo_total, final int odo_trip,
 		final int time_stop, final int time_continue, final int locid, final int areaid,
@@ -413,6 +417,9 @@ public class TStop extends RDBRecord
     	throws IllegalArgumentException
     {
     	super();
+    	if ((comment != null) && (comment.length() > MAXLEN))
+    		throw new IllegalArgumentException("comment length");
+
     	tripid = trip.getID();
     	if (tripid <= 0)
     		throw new IllegalArgumentException("empty trip.id");
@@ -832,8 +839,13 @@ public class TStop extends RDBRecord
 	/**
 	 * Set the description/comment field.
 	 * @param comment new value, or null
+	 * @throws IllegalArgumentException if comment.length > {@link #MAXLEN}
 	 */
-	public void setComment(final String comment) {
+	public void setComment(final String comment)
+		throws IllegalArgumentException
+	{
+		if ((comment != null) && (comment.length() > MAXLEN))
+			throw new IllegalArgumentException("comment length");
 		this.comment = comment;
 		dirty = true;
 		if (toString_descr != null)

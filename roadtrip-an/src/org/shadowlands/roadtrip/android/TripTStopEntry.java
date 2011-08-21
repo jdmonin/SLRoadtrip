@@ -66,6 +66,7 @@ import android.widget.ListView;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.TimePicker;
+import android.widget.TimePicker.OnTimeChangedListener;
 import android.widget.Toast;
 
 /**
@@ -92,7 +93,7 @@ import android.widget.Toast;
  * @author jdmonin
  */
 public class TripTStopEntry extends Activity
-	implements OnDateSetListener, OnItemClickListener, TextWatcher
+	implements OnDateSetListener, OnItemClickListener, TextWatcher, OnTimeChangedListener
 {
 	/** Flag for ending the entire trip (not just stopping), for {@link Intent#putExtra(String, boolean)} */
 	public static final String EXTRAS_FLAG_ENDTRIP = "endtrip";
@@ -342,6 +343,8 @@ public class TripTStopEntry extends Activity
 			tp_time_stop.setIs24HourView(pref24hr);
 			tp_time_cont.setIs24HourView(pref24hr);
 		}
+		tp_time_cont.setOnTimeChangedListener(this);  // onTimeChanged
+
 		btnStopTimeDate = (Button) findViewById(R.id.trip_tstop_btn_stop_date);
 		btnContTimeDate = (Button) findViewById(R.id.trip_tstop_btn_cont_date);
 		btnGas = (Button) findViewById(R.id.trip_tstop_btn_gas);
@@ -663,7 +666,7 @@ public class TripTStopEntry extends Activity
 					tp_time_cont.setCurrentMinute(mn);
 
 					contTimeRunningHandler.removeCallbacks(this);
-					contTimeRunningHandler.postDelayed(this, 1000L);
+					contTimeRunningHandler.postDelayed(this, 60L * 1000L);  // again in 1 minute
 
 					// toast if first time doing so
 					if (! contTimeRunningAlreadyToasted)
@@ -2014,6 +2017,22 @@ public class TripTStopEntry extends Activity
 		} else {
 			via.setAdapter((ArrayAdapter<ViaRoute>) null);
 		}
+	}
+
+	/** Callback when {@link #tp_time_cont} is updated by the user or by {@link #contTimeRunningRunnable} */
+	public void onTimeChanged(TimePicker view, final int hour, final int minute)
+	{
+		if (contTimeRunningHourMinute == -1)
+		{
+			return;
+		}
+		if ((minute == (contTimeRunningHourMinute & 0xFF))
+			&& (hour == (contTimeRunningHourMinute >> 8)))
+		{
+			return;
+		}
+		Toast.makeText(this, "L2170 onTimeChanged", Toast.LENGTH_SHORT).show();
+		// TODO if really changed by the user, set contTimeRunningHourMinute = -1
 	}
 
 	/**

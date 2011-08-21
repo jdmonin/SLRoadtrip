@@ -48,6 +48,7 @@ import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.text.format.DateFormat;
@@ -138,6 +139,43 @@ public class TripTStopEntry extends Activity
 	 * @see #stopEndsTrip
 	 */
 	private boolean isCurrentlyStopped;
+
+	/** If true, not paused yet; used by onResume to prevent initializing things twice right after onCreate. */
+	private boolean neverPaused;
+
+	/**
+	 * If the {@link #tp_time_cont Continue Time} is the current time, and
+	 * we're updating it as the time changes, the hour and minute of
+	 * the last update. <BR>
+	 * Format is -1 if unused, or (Hour << 8) | Minute.
+	 * @see #contTimeRunningHandler
+	 * @see #initContTimeRunning(Calendar, long)
+	 */
+	private int contTimeRunningHourMinute = -1;
+
+	/**
+	 * If we're updating {@link #tp_time_cont} as the time changes, the handler for that.
+	 * Otherwise null.
+	 * @see #contTimeRunningHourMinute
+	 * @see #initContTimeRunning(Calendar, long)
+	 * @see #contTimeRunningRunnable
+	 * @see http://developer.android.com/resources/articles/timed-ui-updates.html
+	 */
+	private Handler contTimeRunningHandler = null;
+
+	/**
+	 * If we're updating {@link #tp_time_cont} as the time changes, the Runnable for that.
+	 * Otherwise null.
+	 * @see #contTimeRunningHandler
+	 */
+	private Runnable contTimeRunningRunnable = null;
+
+	/**
+	 * If we're updating {@link #tp_time_cont} as the time changes, true if we've already
+	 * put up a Toast with the <tt>trip_tstop_entry_time_cont_update</tt> string.
+	 * @see #contTimeRunningHandler
+	 */
+	private boolean contTimeRunningAlreadyToasted = false;
 
 	/**
 	 * Frequent TStop chosen by user, if we'e on a freq trip and
@@ -281,6 +319,7 @@ public class TripTStopEntry extends Activity
 	    super.onCreate(savedInstanceState);
 	    db = new RDBOpenHelper(this);
 	    setContentView(R.layout.trip_tstop_entry);
+	    neverPaused = true;
 
 		odo_total_chk = (CheckBox) findViewById(R.id.trip_tstop_odo_total_chk);
 		odo_total = (OdometerNumberPicker) findViewById(R.id.trip_tstop_odo_total);
@@ -395,6 +434,7 @@ public class TripTStopEntry extends Activity
 			contTime = Calendar.getInstance();
 			contTime.setTimeInMillis(timeNow);
 			tp_time_cont_chk.setChecked(true);
+			initContTimeRunning(contTime);  // keep cont_time current
 		}
 
 		// Stop Time:
@@ -555,6 +595,90 @@ public class TripTStopEntry extends Activity
 	{
 		tp.setCurrentHour(c.get(Calendar.HOUR_OF_DAY));
 		tp.setCurrentMinute(c.get(Calendar.MINUTE));
+	}
+
+	/**
+	 * Set up to update {@link #tp_time_cont} as the time changes.
+	 * Sets up {@link #contTimeRunningHourMinute}, {@link #contTimeRunningHandler}
+	 * and related variables.
+	 * @param cNow   A Calendar initialized with {@link System#currentTimeMillis()};
+	 *   {@link #tp_time_cont} must already be set to its hour and minute.
+	 *   <BR>
+	 *   Or, if <tt>cNow</tt> is null, also initialize the timepicker.
+	 */
+	private final void initContTimeRunning(Calendar cNow)
+	{
+		final boolean setTimePicker;
+		if (cNow == null)
+		{
+			cNow = Calendar.getInstance();
+			cNow.setTimeInMillis(System.currentTimeMillis());
+			setTimePicker = true;
+		} else {
+			setTimePicker = false;
+		}
+
+		// given the current time, and the time until next minute (from calendar),
+		// set up the handler and the time until it.
+		final int millisUntilNextMinute =
+			(1000 * (60 - cNow.get(Calendar.SECOND)))
+			+ (1000 - cNow.get(Calendar.MILLISECOND));
+		final int nowHr = cNow.get(Calendar.HOUR_OF_DAY);
+		final int nowMn = cNow.get(Calendar.MINUTE);
+		contTimeRunningHourMinute = (nowHr << 8) | nowMn;
+		if (setTimePicker &&
+			((nowMn != tp_time_cont.getCurrentMinute()) || (nowHr != tp_time_cont.getCurrentHour())))
+		{
+			tp_time_cont.setCurrentHour(nowHr);
+			tp_time_cont.setCurrentMinute(nowMn);
+
+			// toast if first time doing so
+			if (! contTimeRunningAlreadyToasted)
+			{
+				contTimeRunningAlreadyToasted = true;
+				Toast.makeText(this, R.string.trip_tstop_entry_time_cont_update, Toast.LENGTH_LONG).show();
+			}
+		}
+
+		if (contTimeRunningHandler == null)
+			contTimeRunningHandler = new Handler();
+
+		if (contTimeRunningRunnable == null)
+		{
+			contTimeRunningRunnable = new Runnable()
+			{
+				private Calendar cal = Calendar.getInstance();
+
+				public void run()
+				{
+					if (contTimeRunningHourMinute == -1)
+						return;
+
+					final long now = System.currentTimeMillis();
+					cal.setTimeInMillis(now);
+					final int hr = cal.get(Calendar.HOUR_OF_DAY);
+					final int mn = cal.get(Calendar.MINUTE);
+					contTimeRunningHourMinute = (hr << 8) | mn;
+					tp_time_cont.setCurrentHour(hr);
+					tp_time_cont.setCurrentMinute(mn);
+
+					contTimeRunningHandler.removeCallbacks(this);
+					contTimeRunningHandler.postDelayed(this, 1000L);
+
+					// toast if first time doing so
+					if (! contTimeRunningAlreadyToasted)
+					{
+						contTimeRunningAlreadyToasted = true;
+						Toast.makeText(TripTStopEntry.this, R.string.trip_tstop_entry_time_cont_update, Toast.LENGTH_LONG).show();
+					}
+				}
+			};
+		} else {
+			contTimeRunningHandler.removeCallbacks(contTimeRunningRunnable);
+		}
+
+		// Fire when the next minute begins.
+		contTimeRunningHandler.postDelayed(contTimeRunningRunnable, millisUntilNextMinute);
 	}
 
 	/**
@@ -847,6 +971,9 @@ public class TripTStopEntry extends Activity
 	public void onPause()
 	{
 		super.onPause();
+		neverPaused = false;
+		if (contTimeRunningHandler != null)
+			contTimeRunningHandler.removeCallbacks(contTimeRunningRunnable);
 		if (db != null)
 			db.close();
 	}
@@ -1908,6 +2035,8 @@ public class TripTStopEntry extends Activity
 		outState.putBoolean("TCC", tp_time_cont_chk.isChecked());
 		outState.putInt("TSV", (tp_time_stop.getCurrentHour() << 8) | tp_time_stop.getCurrentMinute() );
 		outState.putInt("TCV", (tp_time_cont.getCurrentHour() << 8) | tp_time_cont.getCurrentMinute() );
+		outState.putInt("TCR", contTimeRunningHourMinute);
+		outState.putBoolean("TCRT", contTimeRunningAlreadyToasted);
 		outState.putInt("AID", areaLocs_areaID);
 	}
 
@@ -1939,7 +2068,23 @@ public class TripTStopEntry extends Activity
 		hhmm = inState.getInt("TCV");
 		tp_time_cont.setCurrentHour(hhmm >> 8);
 		tp_time_cont.setCurrentMinute(hhmm & 0xFF);
+		contTimeRunningHourMinute = inState.getInt("TCR");
+		contTimeRunningAlreadyToasted = inState.getBoolean("TCRT");
 		areaLocs_areaID = inState.getInt("AID", -1);
+
+		if (contTimeRunningHourMinute != -1)
+			initContTimeRunning(null);
+	}
+
+	@Override
+	public void onResume()
+	{
+		super.onResume();
+		if (neverPaused)
+			return;  // Don't init twice, we just now finished onCreate.
+
+		if (contTimeRunningHourMinute != -1)
+			initContTimeRunning(null);
 	}
 
 	/**

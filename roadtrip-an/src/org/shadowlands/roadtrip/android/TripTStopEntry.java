@@ -424,6 +424,7 @@ public class TripTStopEntry extends Activity
 		// adjust date/time fields, now that we know if we have currTS
 		// and know if stopEndsTrip.
 		final long timeNow = System.currentTimeMillis();
+		boolean contTimeIsNow = false;
 
 		// Continue Time:
 		if (stopEndsTrip || (currTS == null))
@@ -437,7 +438,7 @@ public class TripTStopEntry extends Activity
 			contTime = Calendar.getInstance();
 			contTime.setTimeInMillis(timeNow);
 			tp_time_cont_chk.setChecked(true);
-			initContTimeRunning(contTime);  // keep cont_time current
+			contTimeIsNow = true;
 		}
 
 		// Stop Time:
@@ -456,6 +457,7 @@ public class TripTStopEntry extends Activity
 				{
 					// Historical Mode: continue from that date & time, not from today
 					contTime.setTimeInMillis(1000L * (stoptime_sec + 60));  // 1 minute later
+					contTimeIsNow = false;
 				}
 
 			} else {
@@ -488,8 +490,12 @@ public class TripTStopEntry extends Activity
 		tp_time_stop_chk.setChecked(setTimeStopCheckbox);
 		updateDateButtons(0);
 		initTimePicker(stopTime, tp_time_stop);
-		if (contTime != null) 
+		if (contTime != null)
+		{
 			initTimePicker(contTime, tp_time_cont);
+			if (contTimeIsNow)
+				initContTimeRunning(contTime);  // keep tp_time_cont current
+		}
 		btnRoadtripArea_chosen = null;  // Will soon be set by calling hilightRoadtripAreaButton
 
 		// Give status, read odometer, etc;
@@ -625,15 +631,16 @@ public class TripTStopEntry extends Activity
 		// set up the handler and the time until it.
 		final int millisUntilNextMinute =
 			(1000 * (60 - cNow.get(Calendar.SECOND)))
-			+ (1000 - cNow.get(Calendar.MILLISECOND));
+			+ (1000 - cNow.get(Calendar.MILLISECOND)) + 25;
 		final int nowHr = cNow.get(Calendar.HOUR_OF_DAY);
 		final int nowMn = cNow.get(Calendar.MINUTE);
 		contTimeRunningHourMinute = (nowHr << 8) | nowMn;
+
 		if (setTimePicker &&
 			((nowMn != tp_time_cont.getCurrentMinute()) || (nowHr != tp_time_cont.getCurrentHour())))
 		{
-			tp_time_cont.setCurrentHour(nowHr);
 			tp_time_cont.setCurrentMinute(nowMn);
+			tp_time_cont.setCurrentHour(nowHr);
 
 			// toast if first time doing so
 			if (! contTimeRunningAlreadyToasted)
@@ -662,8 +669,8 @@ public class TripTStopEntry extends Activity
 					final int hr = cal.get(Calendar.HOUR_OF_DAY);
 					final int mn = cal.get(Calendar.MINUTE);
 					contTimeRunningHourMinute = (hr << 8) | mn;
-					tp_time_cont.setCurrentHour(hr);
 					tp_time_cont.setCurrentMinute(mn);
+					tp_time_cont.setCurrentHour(hr);
 
 					contTimeRunningHandler.removeCallbacks(this);
 					contTimeRunningHandler.postDelayed(this, 60L * 1000L);  // again in 1 minute
@@ -2019,20 +2026,46 @@ public class TripTStopEntry extends Activity
 		}
 	}
 
-	/** Callback when {@link #tp_time_cont} is updated by the user or by {@link #contTimeRunningRunnable} */
+	/**
+	 * Callback when {@link #tp_time_cont} is updated by the
+	 * user or by {@link #contTimeRunningRunnable}.
+	 * Called twice for each time change: First for {@link TimePicker#setCurrentMinute(Integer)},
+	 * then for {@link TimePicker#setCurrentHour(Integer)}.
+	 * {@link #contTimeRunningHourMinute} must be updated before calling those set methods.
+	 */
 	public void onTimeChanged(TimePicker view, final int hour, final int minute)
 	{
 		if (contTimeRunningHourMinute == -1)
 		{
-			return;
+			return;  // Not active
 		}
-		if ((minute == (contTimeRunningHourMinute & 0xFF))
-			&& (hour == (contTimeRunningHourMinute >> 8)))
+
+		final int contTimeMinute = contTimeRunningHourMinute & 0xFF,
+		          contTimeHour = contTimeRunningHourMinute >> 8;
+		if ((minute == contTimeMinute)
+			&& (hour == contTimeHour))
 		{
-			return;
+			return;  // Same time as contTimeRunningHourMinute
 		}
-		Toast.makeText(this, "L2170 onTimeChanged", Toast.LENGTH_SHORT).show();
-		// TODO if really changed by the user, set contTimeRunningHourMinute = -1
+
+		// If contTimeRunningHourMinute's hour changes,
+		// the first of the two onTimeChanged calls will appear to
+		// be off by 1 hour:
+		//   6,59 -> 6,00 (1hr less than contTimeRunningHourMinute) -> 7,00
+		//   or 23,59 -> 23,00 (when contTimeRunningHourMinute==0) -> 0,00
+		// So, check this before assuming it's been manually
+		// changed by the user.
+		if ((minute == 0) && (contTimeMinute == 0)
+			&& ( ((hour + 1) == contTimeHour))
+			     || ((hour == 23) && (contTimeHour == 0))) 
+		{
+			return;  // Hour wrapped, assuming not user
+		}
+
+		// Changed by the user, so cancel the recurring contTime
+		contTimeRunningHourMinute = -1;
+		if ((contTimeRunningHandler != null) && (contTimeRunningRunnable != null))
+			contTimeRunningHandler.removeCallbacks(contTimeRunningRunnable);
 	}
 
 	/**

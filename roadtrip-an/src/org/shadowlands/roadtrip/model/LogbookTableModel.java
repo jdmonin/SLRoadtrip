@@ -35,6 +35,7 @@ import org.shadowlands.roadtrip.db.Trip;
 import org.shadowlands.roadtrip.db.Vehicle;
 import org.shadowlands.roadtrip.db.ViaRoute;
 import org.shadowlands.roadtrip.db.Trip.TripListTimeRange;
+import org.shadowlands.roadtrip.util.RTRDateTimeFormatter;
 
 /**
  * Renders and holds data for display or editing.
@@ -566,8 +567,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 			return;  // <--- nothing found ---
 		}
 
-		DateFormat dfd = DateFormat.getDateInstance(DateFormat.MEDIUM);
-		DateFormat dft = DateFormat.getTimeInstance(DateFormat.SHORT);
+		RTRDateTimeFormatter dtf = new RTRDateTimeFormatter();
 		final int tRowCount;  // rows in tText before add
 		if (ttr.tText == null)
 		{
@@ -597,7 +597,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 			    || (prevTripStart.getMonth() != tstart.getMonth()))
 			{
 				tr = new String[COL_HEADINGS.length];
-				tr[0] = dfd.format(tstart);
+				tr[0] = dtf.formatDate(tstart);
 				tText.addElement(tr);
 			}
 			prevTripStart = tstart;
@@ -618,7 +618,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 
 			// next row of trip: time
 			tr = new String[COL_HEADINGS.length];
-			tr[1] = dft.format(tstart);
+			tr[1] = dtf.formatTime(tstart);
 			tText.addElement(tr);
 
 			final int odo_end = t.getOdo_end();
@@ -645,7 +645,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 					if (ttstop != 0)
 					{
 						tr = new String[COL_HEADINGS.length];
-		    			tr[1] = dft.format(new Date(ttstop * 1000L));
+		    			tr[1] = dtf.formatTime(ttstop * 1000L);
 		    			tText.addElement(tr);
 					}
 	
@@ -748,7 +748,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 					if (ttcont != 0)
 					{
 						tr = new String[COL_HEADINGS.length];
-		    			tr[1] = dft.format(new Date(ttcont * 1000L));
+		    			tr[1] = dtf.formatTime(ttcont * 1000L);
 		    			tText.addElement(tr);
 					}
 				}

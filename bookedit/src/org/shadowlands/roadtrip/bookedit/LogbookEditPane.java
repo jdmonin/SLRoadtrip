@@ -598,7 +598,7 @@ public class LogbookEditPane extends JPanel implements ActionListener, WindowLis
     	public LBSwingTableModel(Vehicle veh, final int weeks, RDBAdapter conn, final boolean isReadOnly)
     	{
     		this.isReadOnly = isReadOnly;
-    		ltm = new LogbookTableModel(veh, weeks, conn);
+    		ltm = new LogbookTableModel(veh, weeks, null, conn);
     		ltm.setListener(this);
     	}
 

@@ -21,7 +21,6 @@ package org.shadowlands.roadtrip.model;
 
 import gnu.trove.TIntObjectHashMap;
 
-import java.text.DateFormat;
 import java.util.Date;
 import java.util.Vector;
 
@@ -89,7 +88,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	 * Only used if {@link #tData} is empty in {@link #addEarlierTripWeeks(RDBAdapter)}.
 	 * if {@link #tData} contains trips, they might be from dates earlier than this field.
 	 * Unused in Location Mode.
-	 * @see #LogbookTableModel(Vehicle, int, int, boolean, RDBAdapter)
+	 * @see #LogbookTableModel(Vehicle, int, int, boolean, RTRDateTimeFormatter, RDBAdapter)
 	 * @since 0.9.07
 	 */
 	private final int filterWeekModeStartDate;
@@ -149,10 +148,18 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	private transient int getValue_RangeRow0, getValue_RangeRowN;
 
 	/**
+	 * Our date & time format, for {@link #addRowsFromTrips(TripListTimeRange, RDBAdapter)}.
+	 * May be null; initialized in <tt>addRowsFromTrips</tt>.
+	 */
+	private transient RTRDateTimeFormatter dtf;
+
+	/**
 	 * Common setup to all constructors.
 	 * Set veh, tData, locCache, etc.
+	 * @param veh  vehicle
+	 * @param dtFmt  date-time format for {@link #addRowsFromTrips(TripListTimeRange, RDBAdapter)}, or null for default
 	 */
-	private void initCommonConstruc(Vehicle veh)
+	private void initCommonConstruc(Vehicle veh, RTRDateTimeFormatter dtFmt)
 	{
 		tData = new Vector<TripListTimeRange>();
 		tDataTextRowCount = 0;
@@ -160,6 +167,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 		locCache = new TIntObjectHashMap<Location>();
 		viaCache = new TIntObjectHashMap<ViaRoute>();
 		gasCache = new TIntObjectHashMap<GasBrandGrade>();
+		dtf = dtFmt;
 
 		this.veh = veh;
 		getValue_RangeRow0 = -1;
@@ -175,12 +183,13 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	 * @param weeks  Increment in weeks when loading newer/older trips from the database,
 	 *          or 0 to load all (This may run out of memory).
 	 *          The vehicle's most recent trips are loaded in this constructor.
+	 * @param dtf  date-time format for {@link #addRowsFromTrips(TripListTimeRange, RDBAdapter)}, or null for default
 	 * @param conn Add existing rows from this connection, via addRowsFromTrips.
-	 * @see #LogbookTableModel(Vehicle, int, int, boolean, RDBAdapter)
+	 * @see #LogbookTableModel(Vehicle, int, int, boolean, RTRDateTimeFormatter, RDBAdapter)
 	 */
-	public LogbookTableModel(Vehicle veh, final int weeks, RDBAdapter conn)
+	public LogbookTableModel(Vehicle veh, final int weeks, RTRDateTimeFormatter dtf, RDBAdapter conn)
 	{
-		initCommonConstruc(veh);  // set veh, tData, locCache, etc
+		initCommonConstruc(veh, dtf);  // set veh, tData, locCache, etc
 		weekIncr = weeks;
 		filterWeekModeStartDate = 0;
 
@@ -212,19 +221,20 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	 *          Must be greater than 0.
 	 * @param towardsNewer  If true, retrieve <tt>timeStart</tt> and newer;
 	 *          otherwise retrieve <tt>timeStart</tt> and older.
+	 * @param dtf  date-time format for {@link #addRowsFromTrips(TripListTimeRange, RDBAdapter)}, or null for default
 	 * @param conn Add existing rows from this connection, via addRowsFromTrips.
 	 * @throws IllegalArgumentException if veh is null, or weeks is &lt; 1
-	 * @see #LogbookTableModel(Vehicle, int, RDBAdapter)
+	 * @see #LogbookTableModel(Vehicle, int, RTRDateTimeFormatter, RDBAdapter)
 	 */
 	public LogbookTableModel
-		(Vehicle veh, final int timeStart, final int weeks, final boolean towardsNewer, RDBAdapter conn)
+		(Vehicle veh, final int timeStart, final int weeks, final boolean towardsNewer, RTRDateTimeFormatter dtf, RDBAdapter conn)
 		throws IllegalArgumentException
 	{
 		if (veh == null)
 			throw new IllegalArgumentException("veh");
 		if (weeks <= 0)
 			throw new IllegalArgumentException("weeks");
-		initCommonConstruc(veh);  // set veh, tData, locCache, etc
+		initCommonConstruc(veh, dtf);  // set veh, tData, locCache, etc
 		weekIncr = weeks;
 		filterWeekModeStartDate = timeStart;
 
@@ -374,7 +384,8 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 			return;  // <--- nothing found ---
 		}
 
-		RTRDateTimeFormatter dtf = new RTRDateTimeFormatter();
+		if (dtf == null)
+			dtf = new RTRDateTimeFormatter();
 		final int tRowCount;  // rows in tText before add
 		if (ttr.tText == null)
 		{

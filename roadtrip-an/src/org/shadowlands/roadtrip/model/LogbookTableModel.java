@@ -21,7 +21,6 @@ package org.shadowlands.roadtrip.model;
 
 import gnu.trove.TIntObjectHashMap;
 
-import java.text.DateFormat;
 import java.util.Date;
 import java.util.Vector;
 
@@ -195,6 +194,12 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	private transient int getValue_RangeRow0, getValue_RangeRowN;
 
 	/**
+	 * Our date & time format, for {@link #addRowsFromTrips(TripListTimeRange, RDBAdapter)}.
+	 * May be null; initialized in <tt>addRowsFromTrips</tt>.
+	 */
+	private transient RTRDateTimeFormatter dtf;
+
+	/**
 	 * Common setup to all constructors (location mode, week mode).
 	 * Set veh, tData, locCache, etc.
 	 * @throws IllegalArgumentException if veh is null
@@ -210,6 +215,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 		locCache = new TIntObjectHashMap<Location>();
 		viaCache = new TIntObjectHashMap<ViaRoute>();
 		gasCache = new TIntObjectHashMap<GasBrandGrade>();
+		dtf = null;
 
 		this.veh = veh;
 		getValue_RangeRow0 = -1;
@@ -567,7 +573,8 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 			return;  // <--- nothing found ---
 		}
 
-		RTRDateTimeFormatter dtf = new RTRDateTimeFormatter();
+		if (dtf == null)
+			dtf = new RTRDateTimeFormatter();
 		final int tRowCount;  // rows in tText before add
 		if (ttr.tText == null)
 		{
@@ -1107,6 +1114,17 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	public void setListener(TableChangeListener tcl)
 	{
 		listener = tcl;
+	}
+
+	/**
+	 * Set our date/time formatter for future calls to
+	 *   {@link #addRowsFromTrips(TripListTimeRange, RDBAdapter)},
+	 *   or clear it to use the default.
+	 * @param dtfmt  Formatter, or null to use default
+	 */
+	public void setDateTimeFormatter(RTRDateTimeFormatter dtfmt)
+	{
+		dtf = dtfmt;
 	}
 
 }  // public class LogbookTableModel

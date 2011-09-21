@@ -30,6 +30,8 @@ import org.shadowlands.roadtrip.db.Settings;
 import org.shadowlands.roadtrip.db.Vehicle;
 import org.shadowlands.roadtrip.db.android.RDBOpenHelper;
 import org.shadowlands.roadtrip.model.LogbookTableModel;
+import org.shadowlands.roadtrip.util.RTRDateTimeFormatter;
+import org.shadowlands.roadtrip.util.android.RTRAndroidDateTimeFormatter;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -411,14 +413,16 @@ public class LogbookShow extends Activity
 		else
 			setTitle(getTitle() + ": " + getResources().getString(R.string.all_vehicles));
 
+		// Choose an LTM mode based on our intent extras
+		final RTRDateTimeFormatter dtf = new RTRAndroidDateTimeFormatter(getApplicationContext());
 		if (locID == -1)
 		{
 			if (goToDate == 0)
-				ltm = new LogbookTableModel(showV, WEEK_INCREMENT, db);
+				ltm = new LogbookTableModel(showV, WEEK_INCREMENT, dtf, db);
 			else
-				ltm = new LogbookTableModel(showV, goToDate, WEEK_INCREMENT, true, db);
+				ltm = new LogbookTableModel(showV, goToDate, WEEK_INCREMENT, true, dtf, db);
 		} else {
-			ltm = new LogbookTableModel(showV, locMode_allV, locID, LOCID_TRIP_INCREMENT, db);
+			ltm = new LogbookTableModel(showV, locMode_allV, locID, LOCID_TRIP_INCREMENT, dtf, db);
 		}
 		StringBuffer sbTrips = new StringBuffer();
 		if (ltm.getRangeCount() > 0)

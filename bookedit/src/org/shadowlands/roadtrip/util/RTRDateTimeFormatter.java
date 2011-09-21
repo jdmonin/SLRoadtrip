@@ -24,69 +24,44 @@ import java.util.Date;        // for JavaImpl
 
 /**
  * Wrapper around Java-type or Android-specific date/time formatting.
+ * For android-specific date/time formats, use child class util.android.RTRAndroidDateTimeFormatter instead.
  * @author jdmonin
  */
 public class RTRDateTimeFormatter
 {
-	private final Impl imp;
+	/** Format for date */
+	protected java.text.DateFormat dfd;
 
+	/** Format for time of day */
+	protected java.text.DateFormat dft;
+
+	/**
+	 * Constructor for java locale-generic formatting.
+	 * For android-specific date/time formats, use child class util.android.RTRAndroidDateTimeFormatter instead.
+	 */
 	public RTRDateTimeFormatter()
 	{
-		// TODO android platform check here
-		imp = new JavaImpl();
+		dfd = java.text.DateFormat.getDateInstance(DateFormat.MEDIUM);
+		dft = java.text.DateFormat.getTimeInstance(DateFormat.SHORT);
 	}
 
 	public String formatDate(final long millis)
 	{
-		return imp.formatDate(millis);
+		return dfd.format(new Date(millis));
 	}
 
-	public String formatDate(Date dt)
+	public String formatDate(final Date dt)
 	{
-		return imp.formatDate(dt);
+		return dfd.format(dt);
 	}
 
 	public String formatTime(final long millis)
 	{
-		return imp.formatTime(millis);
+		return dft.format(new Date(millis));
 	}
 
 	public String formatTime(final Date tm)
 	{
-		return imp.formatTime(tm);
-	}
-
-	public static abstract class Impl
-	{
-		public abstract String formatDate(final long millis);
-		public abstract String formatDate(final Date dt);
-		public abstract String formatTime(final long millis);
-		public abstract String formatTime(final Date tm);
-	}
-
-	private static class JavaImpl extends Impl
-	{
-		private DateFormat dfd = java.text.DateFormat.getDateInstance(DateFormat.MEDIUM);
-		private DateFormat dft = java.text.DateFormat.getTimeInstance(DateFormat.SHORT);
-		
-		public String formatDate(final long millis)
-		{
-			return dfd.format(new Date(millis));
-		}
-
-		public String formatDate(final Date dt)
-		{
-			return dfd.format(dt);
-		}
-
-		public String formatTime(final long millis)
-		{
-			return dft.format(new Date(millis));
-		}
-
-		public String formatTime(final Date tm)
-		{
-			return dft.format(tm);
-		}
+		return dft.format(tm);
 	}
 }

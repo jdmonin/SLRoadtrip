@@ -41,15 +41,27 @@ public class RTRDateTimeFormatter
 		return imp.formatDate(millis);
 	}
 
+	public String formatDate(Date dt)
+	{
+		return imp.formatDate(dt);
+	}
+
 	public String formatTime(final long millis)
 	{
 		return imp.formatTime(millis);
 	}
 
+	public String formatTime(final Date tm)
+	{
+		return imp.formatTime(tm);
+	}
+
 	public static abstract class Impl
 	{
 		public abstract String formatDate(final long millis);
+		public abstract String formatDate(final Date dt);
 		public abstract String formatTime(final long millis);
+		public abstract String formatTime(final Date tm);
 	}
 
 	private static class JavaImpl extends Impl
@@ -62,9 +74,19 @@ public class RTRDateTimeFormatter
 			return dfd.format(new Date(millis));
 		}
 
+		public String formatDate(final Date dt)
+		{
+			return dfd.format(dt);
+		}
+
 		public String formatTime(final long millis)
 		{
 			return dft.format(new Date(millis));
+		}
+
+		public String formatTime(final Date tm)
+		{
+			return dft.format(tm);
 		}
 	}
 }

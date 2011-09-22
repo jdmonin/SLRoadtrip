@@ -150,6 +150,7 @@ public class OdometerNumberPicker extends LinearLayout implements OnChangedListe
      * Set the current value, and optionally make it the minimum.
      *<P>
      * Does not change the related odometer.
+     * Does not change our checkbox's value.
      * @param newValue  New value in 10ths of a unit
      * @param setMinimumToo  Also make this the minimum;
      *    note that only the whole-number field gets this minimum,
@@ -157,6 +158,7 @@ public class OdometerNumberPicker extends LinearLayout implements OnChangedListe
      *    That is, setting the minimum to 1234 is the same to 1230.
      * @see #changeCurrentTenths(int)
      * @see #changeCurrentWhole(int)
+     * @see #setCurrent10dAndRelated(int)
      */
     public void setCurrent10d(final int newValue, final boolean setMinimumToo)
     {
@@ -171,12 +173,34 @@ public class OdometerNumberPicker extends LinearLayout implements OnChangedListe
     }
 
     /**
+     * Change the current value and the related odometer.
+     * Also sets our checkbox.
+     * @param newValue  New value in 10ths of a unit
+     * @see #setCurrent10d(int, boolean)
+     */
+    public void setCurrent10dAndRelated(final int newValue)
+    {
+		if (checkOnChanges != null)
+			checkOnChanges.setChecked(true);
+
+		final int delta = newValue - getCurrent10d();
+		setCurrent10d(newValue, false);
+
+		if ((relatedOdoOnChanges == null)
+		    || relatedCheckOnChanges.isChecked())
+			return;
+		relatedOdoOnChanges.setCurrent10d
+		  (relatedOdoOnChanges.getCurrent10d() + delta, false);
+    }
+
+    /**
      * Change our whole-number part by this amount.
      * If {@link #setTenthsVisibility(boolean) setTenthsVisibility(false)}, clear tenths to 0.
      *<P>
      * Does not change the related odometer.
      * @param wholeChange amount to increase (positive) or decrease (negative).
      * @see #setCurrent10d(int, boolean)
+     * @see #setCurrent10dAndRelated(int)
      */
     public void changeCurrentWhole(final int wholeChange)
     {
@@ -196,6 +220,7 @@ public class OdometerNumberPicker extends LinearLayout implements OnChangedListe
      * Does not change the related odometer.
      * @param tenthsChange amount to increase (positive) or decrease (negative).
      * @see #setCurrent10d(int, boolean)
+     * @see #setCurrent10dAndRelated(int)
      */
     public void changeCurrentTenths(final int tenthsChange)
     {

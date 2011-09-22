@@ -37,6 +37,7 @@ public abstract class Misc
 	 * @param ctx calling context, to get user's current date format
 	 * @param twoLines  If true, format includes <tt>\n</tt> between day of week and short date.
 	 * @return a StringBuffer usable in <tt>DateFormat.format</tt>
+	 * @see org.shadowlands.roadtrip.util.android.RTRAndroidDateTimeFormatter
 	 */
 	public static StringBuffer buildDateFormatDOWShort(Context ctx, final boolean twoLines)
 	{
@@ -69,6 +70,53 @@ public abstract class Misc
 			}
 			if (c != ymd_order[2])
 				fmt_dow_shortdate.append("/");
+		}
+
+		return fmt_dow_shortdate;
+	}
+
+	/**
+	 * DateFormatter (day-of-week + medium date) for use by {@link DateFormat#format(CharSequence, long)}.
+	 * Format will be: Sat 9 Jun 2001 (YMD order depends on user settings).
+	 *<P>
+	 * @param ctx calling context, to get user's current date format
+	 * @return a StringBuffer usable in <tt>DateFormat.format</tt>
+	 * @see org.shadowlands.roadtrip.util.android.RTRAndroidDateTimeFormatter
+	 */
+	public static StringBuffer buildDateFormatDOWMed(Context ctx)
+	{
+		// note use of android.text.format.DateFormat,
+		// not java.text.DateFormat, throughout.
+
+		StringBuffer fmt_dow_shortdate = new StringBuffer();
+		final char da = DateFormat.DAY;
+		final char qu = DateFormat.QUOTE;
+		fmt_dow_shortdate.append(da);
+		fmt_dow_shortdate.append(qu);
+		fmt_dow_shortdate.append(' ');
+		fmt_dow_shortdate.append(qu);
+		// year-month-date will be 3 chars: yMd, Mdy, etc
+		final char[] ymd_order = DateFormat.getDateFormatOrder(ctx);
+		for (char c : ymd_order)
+		{
+			fmt_dow_shortdate.append(c);
+			if (c == DateFormat.MONTH)
+			{
+				fmt_dow_shortdate.append(c);  // for MMM
+				fmt_dow_shortdate.append(c);
+			}
+			else if (c == DateFormat.YEAR)
+			{
+				fmt_dow_shortdate.append(c);  // for YYYY
+				fmt_dow_shortdate.append(c);
+				fmt_dow_shortdate.append(c);
+			}
+			if (c != ymd_order[2])
+			{
+				fmt_dow_shortdate.append(qu);
+				fmt_dow_shortdate.append(' ');
+				fmt_dow_shortdate.append(qu);
+			}
 		}
 
 		return fmt_dow_shortdate;

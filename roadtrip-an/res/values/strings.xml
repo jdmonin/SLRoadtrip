@@ -169,6 +169,8 @@
 <string name="trip_tstart_geoarea_prompt">Please enter the destination\'s geographic area.</string>
 <string name="trip_tstart_loc_not_freq">If the location changes, you won\'t be using the frequent trip. Do you want to go back to the frequent trip\'s location?</string>
 <string name="trip_tstart_loc_prompt">Please enter the starting location.</string>
+<string name="trip_tstop_entry_calc_total_odo">Calculator: Total odometer</string>
+<string name="trip_tstop_entry_calc_trip_odo">Calculator: Trip odometer</string>
 <string name="trip_tstop_entry_clear_location">Clear\nlocation</string>
 <string name="trip_tstop_entry_geo_area">Geographic\narea</string>
 <string name="trip_tstop_entry_keep_location">Keep\nlocation</string>

@@ -307,18 +307,47 @@ public class TripTStopEntry extends Activity
 	 */
 	private Button btnRoadtripArea_chosen;
 
+	///////////////////////////////
+	// Start of calculator fields
+	///////////////////////////////
+
+	private static final int CALC_OP_NONE = 0, CALC_OP_ADD = 1,
+	  CALC_OP_SUB = 2, CALC_OP_MUL = 3, CALC_OP_DIV = 4;
+
 	/**
 	 * Non-null, for callbacks, when the odometer editor calculator is showing.
 	 * @see #onClickEditOdo(OdometerNumberPicker, boolean)
 	 */
 	private View popupCalcItems = null;
 
+	/** If displayed, is the calculator for {@link #odo_trip} and not {@link #odo_total}? */ 
+	private boolean calcOdoIsTrip;
+
 	/** Calculator's current value, for {@link #onClickEditOdo(OdometerNumberPicker, boolean)} callbacks */
 	private EditText calcValue;
 
-	/** Buttons 0-9 and '.' for {@link #onClickEditOdo(OdometerNumberPicker, boolean)} callbacks */
+	/** Calculator's memory register (M+ M- MR MC buttons) */
+	private float calcMemory = 0.0f;
+
+	/** If true, the next button press clears {@link #calcValue} */
+	private boolean calcNextPressClears;
+
+	/** Calculator's previous value */
+	private float calcPrevOperand;
+
+	/**
+	 * Calculator's operation: {@link #CALC_OP_ADD}, {@link #CALC_OP_SUB},
+	 * {@link #CALC_OP_MUL}, {@link #CALC_OP_DIV} or {@link #CALC_OP_NONE}.
+	 */
+	private int calcOperation;
+
+	/** Digit buttons 0-9 and '.' for {@link #onClickEditOdo(OdometerNumberPicker, boolean)} callbacks */
 	private View calc0, calc1, calc2, calc3, calc4, calc5,
 	 calc6, calc7, calc8, calc9, calcDeci;
+
+	///////////////////////////////
+	// End of calculator fields
+	///////////////////////////////
 
 	/** Called when the activity is first created.
 	 * See {@link #updateTextAndButtons()} for remainder of init work,
@@ -1053,13 +1082,13 @@ public class TripTStopEntry extends Activity
 	/** Bring up the trip-odometer editor (calculator) dialog */
 	public void onClick_BtnEditOdoTrip(View v)
 	{
-		onClickEditOdo(odo_trip, false);
+		onClickEditOdo(odo_trip, true);
 	}
 
 	/** Bring up the total-odometer editor (calculator) dialog */
 	public void onClick_BtnEditOdoTotal(View v)
 	{
-		onClickEditOdo(odo_total, true);
+		onClickEditOdo(odo_total, false);
 	}
 
 	/**
@@ -2098,13 +2127,18 @@ public class TripTStopEntry extends Activity
 	///////////////////////////////
 
 	/** Bring up an odometer's editor (calculator) dialog */
-	private void onClickEditOdo(final OdometerNumberPicker odo, final boolean isOdoTotal)
+	private void onClickEditOdo(final OdometerNumberPicker odo, final boolean isOdoTrip)
 	{
 		// TODO managed dialog lifecycle: onCreateDialog etc
-		// TODO activity int field for memory, bool for isTotal, bool for if any key pressed, int for prev value for + - * /
+		// fields: bool for isTotal, bool for if any key pressed, int for prev value, op for + - * /
+		// TODO activity int field for memory, 
 		//   TODO and load/save them with rest of fields
 		final View calcItems = getLayoutInflater().inflate(R.layout.trip_tstop_popup_odo_calc, null);
 		popupCalcItems = calcItems;
+		calcOdoIsTrip = isOdoTrip;
+		calcOperation = CALC_OP_NONE;
+		calcPrevOperand = 0;
+		calcNextPressClears = false;
 
 		calcValue = (EditText) calcItems.findViewById(R.id.trip_tstop_popup_odo_calc_value);
 		calc0 = calcItems.findViewById(R.id.trip_tstop_popup_odo_calc_0);
@@ -2118,17 +2152,14 @@ public class TripTStopEntry extends Activity
 		calc8 = calcItems.findViewById(R.id.trip_tstop_popup_odo_calc_8);
 		calc9 = calcItems.findViewById(R.id.trip_tstop_popup_odo_calc_9);
 		calcDeci = calcItems.findViewById(R.id.trip_tstop_popup_odo_calc_deci);
-		{
-			final int ov = odo.getCurrent10d();
-			if (isOdoTotal)
-				calcValue.setText(Integer.toString(ov / 10));
-			else
-				calcValue.setText( Integer.toString(ov / 10) + "." + Integer.toString(ov % 10) );
-			calcValue.setSelection(calcValue.getText().length());  // move cursor to end
-		}
+		calcDeci.setEnabled(isOdoTrip);
+		calcLoadValueFromOdo();
 
 		AlertDialog.Builder alert = new AlertDialog.Builder(this);
-		alert.setTitle("mockup only: edit odo");  // TODO adj: total or trip
+		if (isOdoTrip)
+			alert.setTitle(R.string.trip_tstop_entry_calc_trip_odo);  // Calculator: Trip odometer
+		else
+			alert.setTitle(R.string.trip_tstop_entry_calc_total_odo);  // Calculator: Total odometer
 		alert.setView(calcItems);
 		alert.setPositiveButton(R.string.save, new DialogInterface.OnClickListener() {
 			public void onClick(DialogInterface dialog, int whichButton)
@@ -2143,7 +2174,7 @@ public class TripTStopEntry extends Activity
 				{
 					return;
 				}
-				odo.setCurrent10d( (int) (ov * 10), false);
+				odo.setCurrent10dAndRelated((int) (ov * 10));
 			}
 		});
 		alert.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
@@ -2155,16 +2186,36 @@ public class TripTStopEntry extends Activity
 		alert.show();
 	}
 
+	/** Load the calculator's {@link #calcValue} field from the odometer ({@link #calcOdoIsTrip} flag) */
+	private void calcLoadValueFromOdo()
+	{
+		final OdometerNumberPicker odo = (calcOdoIsTrip) ? odo_trip : odo_total;
+		final int ov = odo.getCurrent10d();
+		if (calcOdoIsTrip)
+			calcValue.setText( Integer.toString(ov / 10) + "." + Integer.toString(ov % 10) );
+		else
+			calcValue.setText( Integer.toString(ov / 10) );
+		calcValue.setSelection(calcValue.getText().length());  // move cursor to end
+		calcNextPressClears = false;
+	}
+
 	public void onClick_CalcBtnDigit(View v)
 	{
-		// TODO if this is 1st button pressed, clear current value
+		if (calcNextPressClears)
+		{
+			calcValue.setText("");
+			calcNextPressClears = false;
+		}
+
 		// TODO max length, and/or max deci places?
 		final Editable tx = calcValue.getText();
 
 		if (v == calcDeci)
 		{
+			if (! calcOdoIsTrip)
+				return;
+
 			// Make sure there's not already a decimal point
-			// TODO disallow deci for odo_total
 			for (int i = tx.length()-1; i>=0; --i)
 				if (tx.charAt(i) == '.')
 					return;
@@ -2193,11 +2244,10 @@ public class TripTStopEntry extends Activity
 			calcValue.append("9");
 	}
 
+	/** The calculator Clear button loads {@link #calcValue} from the odometer's current value */
 	public void onClick_CalcBtnClear(View v)
 	{
-		// TODO clear it to the odo's value instead
-		calcValue.setText("0");
-		calcValue.setSelection(1);  // move cursor to end
+		calcLoadValueFromOdo();
 	}
 
 	public void onClick_CalcBtnBackspace(View v)
@@ -2211,42 +2261,137 @@ public class TripTStopEntry extends Activity
 		}
 	}
 
+	/**
+	 * Handle pressing an odometer calculator operation button:
+	 * Store {@link #calcPrevOperand} and {@link #calcOperation}.
+	 * @param calcOp {@link #CALC_OP_ADD}, {@link #CALC_OP_SUB}, etc
+	 */
+	private void calcOpBtnClicked(final int calcOp)
+	{
+		float cv;  // current value
+		try
+		{
+			cv = Float.parseFloat(calcValue.getText().toString());
+		}
+		catch (NumberFormatException e)
+		{
+			// TODO error toast
+			return;
+		}
+
+		calcPrevOperand = cv;
+		calcOperation = calcOp;
+		calcNextPressClears = true;
+		// TODO visually indicate the op somewhere
+	}
+
 	public void onClick_CalcBtnDiv(View v)
 	{
-		// TODO
+		calcOpBtnClicked(CALC_OP_DIV);
 	}
+
 	public void onClick_CalcBtnMul(View v)
 	{
-		// TODO
+		calcOpBtnClicked(CALC_OP_MUL);
 	}
+
 	public void onClick_CalcBtnSub(View v)
 	{
-		// TODO
+		calcOpBtnClicked(CALC_OP_SUB);
 	}
+
 	public void onClick_CalcBtnAdd(View v)
 	{
-		// TODO
+		calcOpBtnClicked(CALC_OP_ADD);
 	}
+
 	public void onClick_CalcBtnEquals(View v)
 	{
-		// TODO
+		float cv;  // current value
+		try
+		{
+			cv = Float.parseFloat(calcValue.getText().toString());
+		}
+		catch (NumberFormatException e)
+		{
+			// TODO error toast
+			return;
+		}
+
+		float nv;  // new value
+
+		if (calcNextPressClears)
+		{
+			// handle repetitive '=' presses,
+			//  by swapping cv & calcPrevOperand
+			nv = cv;
+			cv = calcPrevOperand;
+			calcPrevOperand = nv;
+		}
+
+		switch (calcOperation)
+		{
+		case CALC_OP_ADD:
+			nv = calcPrevOperand + cv;
+			break;
+		case CALC_OP_SUB:
+			nv = calcPrevOperand - cv;
+			break;
+		case CALC_OP_MUL:
+			nv = calcPrevOperand * cv;
+			break;
+		case CALC_OP_DIV:
+			nv = calcPrevOperand / cv;
+			break;
+		default:  // CALC_OP_NONE
+			calcPrevOperand = cv;
+			return;
+		}
+		calcPrevOperand = cv;
+		calcValue.setText(Float.toString(nv));
+		calcNextPressClears = true;
+	}
+
+	/** Handle the calculator M+, M- buttons */
+	private void calcMemButtonClicked(final boolean addNotSub)
+	{
+		float cv;  // current value
+		try
+		{
+			cv = Float.parseFloat(calcValue.getText().toString());
+		}
+		catch (NumberFormatException e)
+		{
+			// TODO error toast
+			return;
+		}
+		// TODO is there a visual indicator?
+		if (addNotSub)
+			calcMemory += cv;
+		else
+			calcMemory -= cv;
 	}
 
 	public void onClick_CalcBtnMemPlus(View v)
 	{
-		// TODO
+		calcMemButtonClicked(true);
 	}
+
 	public void onClick_CalcBtnMemMinus(View v)
 	{
-		// TODO
+		calcMemButtonClicked(false);
 	}
+
 	public void onClick_CalcBtnMemClear(View v)
 	{
-		// TODO
+		calcMemory = 0.0f;
+		// TODO is there a visual indicator?
 	}
+
 	public void onClick_CalcBtnMemRecall(View v)
 	{
-		// TODO
+		if (calcMemory != 0.0f)
+			calcValue.setText(Float.toString(calcMemory));
 	}
 
 	/////////////////////////////

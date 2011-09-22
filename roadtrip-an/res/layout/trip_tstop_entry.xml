@@ -134,7 +134,7 @@
 				android:layout_width="26dp"
 				android:layout_height="26dp"
 				android:onClick="onClick_BtnViaDropdown"
-				android:gravity="right"
+				android:layout_gravity="right"
 				android:padding="3dp"
 				/>
 		</LinearLayout>
@@ -152,11 +152,26 @@
 	        android:paddingTop="12sp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
-		<TextView  
-		    android:layout_width="wrap_content" 
-		    android:layout_height="fill_parent" 
-		    android:text="@string/trip_odometer"
-		    />
+        <LinearLayout
+	        android:orientation="vertical"
+			android:layout_width="wrap_content" 
+			android:layout_height="fill_parent" 
+            android:padding="0dp">
+			<TextView  
+			    android:layout_width="wrap_content" 
+			    android:layout_height="wrap_content" 
+			    android:text="@string/trip_odometer"
+			    />
+			<ImageButton
+				android:src="@android:drawable/ic_menu_edit"
+				android:layout_margin="0dp"
+				android:layout_width="50dp"
+				android:layout_height="50dp"
+				android:onClick="onClick_BtnEditOdoTrip"
+				android:layout_gravity="right"
+				android:padding="1dp"
+				/>
+	    </LinearLayout>
 		<org.shadowlands.roadtrip.android.OdometerNumberPicker
 		    android:id="@+id/trip_tstop_odo_trip"
 			android:layout_width="fill_parent"
@@ -168,11 +183,26 @@
 	        android:paddingTop="12sp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
-		<TextView  
-		    android:layout_width="wrap_content" 
-		    android:layout_height="fill_parent" 
-		    android:text="@string/current_total_odometer"
-		    />
+        <LinearLayout
+	        android:orientation="vertical"
+			android:layout_width="wrap_content" 
+			android:layout_height="fill_parent" 
+            android:padding="0dp">
+			<TextView  
+			    android:layout_width="wrap_content" 
+			    android:layout_height="wrap_content" 
+			    android:text="@string/current_total_odometer"
+			    />
+			<ImageButton
+				android:src="@android:drawable/ic_menu_edit"
+				android:layout_margin="0dp"
+				android:layout_width="50dp"
+				android:layout_height="50dp"
+				android:onClick="onClick_BtnEditOdoTotal"
+				android:layout_gravity="right"
+				android:padding="1dp"
+				/>
+	    </LinearLayout>
 		<org.shadowlands.roadtrip.android.OdometerNumberPicker
 		    android:id="@+id/trip_tstop_odo_total"
 			android:layout_width="fill_parent"

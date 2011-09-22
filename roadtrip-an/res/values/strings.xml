@@ -93,6 +93,7 @@
 <string name="revert">Revert</string>
 <string name="road_trip">Road Trip</string>
 <string name="road_trip_desti_area">Road Trip\nDestination area:</string>
+<string name="save">Save</string>
 <string name="sdcard_not_mounted">The SD card is not mounted.</string>
 <string name="sdcard_read_only">The SD card is read-only.</string>
 <string name="settings">Settings...</string>

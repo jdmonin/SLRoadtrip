@@ -307,6 +307,19 @@ public class TripTStopEntry extends Activity
 	 */
 	private Button btnRoadtripArea_chosen;
 
+	/**
+	 * Non-null, for callbacks, when the odometer editor calculator is showing.
+	 * @see #onClickEditOdo(OdometerNumberPicker, boolean)
+	 */
+	private View popupCalcItems = null;
+
+	/** Calculator's current value, for {@link #onClickEditOdo(OdometerNumberPicker, boolean)} callbacks */
+	private EditText calcValue;
+
+	/** Buttons 0-9 and '.' for {@link #onClickEditOdo(OdometerNumberPicker, boolean)} callbacks */
+	private View calc0, calc1, calc2, calc3, calc4, calc5,
+	 calc6, calc7, calc8, calc9, calcDeci;
+
 	/** Called when the activity is first created.
 	 * See {@link #updateTextAndButtons()} for remainder of init work,
 	 * which includes checking the current driver/vehicle/trip
@@ -1035,6 +1048,18 @@ public class TripTStopEntry extends Activity
 			via.dismissDropDown();
 		else
 			via.showDropDown();
+	}
+
+	/** Bring up the trip-odometer editor (calculator) dialog */
+	public void onClick_BtnEditOdoTrip(View v)
+	{
+		onClickEditOdo(odo_trip, false);
+	}
+
+	/** Bring up the total-odometer editor (calculator) dialog */
+	public void onClick_BtnEditOdoTotal(View v)
+	{
+		onClickEditOdo(odo_total, true);
 	}
 
 	/**
@@ -2067,6 +2092,166 @@ public class TripTStopEntry extends Activity
 		if ((contTimeRunningHandler != null) && (contTimeRunningRunnable != null))
 			contTimeRunningHandler.removeCallbacks(contTimeRunningRunnable);
 	}
+
+	///////////////////////////////
+	// Start of calculator methods
+	///////////////////////////////
+
+	/** Bring up an odometer's editor (calculator) dialog */
+	private void onClickEditOdo(final OdometerNumberPicker odo, final boolean isOdoTotal)
+	{
+		// TODO managed dialog lifecycle: onCreateDialog etc
+		// TODO activity int field for memory, bool for isTotal, bool for if any key pressed, int for prev value for + - * /
+		//   TODO and load/save them with rest of fields
+		final View calcItems = getLayoutInflater().inflate(R.layout.trip_tstop_popup_odo_calc, null);
+		popupCalcItems = calcItems;
+
+		calcValue = (EditText) calcItems.findViewById(R.id.trip_tstop_popup_odo_calc_value);
+		calc0 = calcItems.findViewById(R.id.trip_tstop_popup_odo_calc_0);
+		calc1 = calcItems.findViewById(R.id.trip_tstop_popup_odo_calc_1);
+		calc2 = calcItems.findViewById(R.id.trip_tstop_popup_odo_calc_2);
+		calc3 = calcItems.findViewById(R.id.trip_tstop_popup_odo_calc_3);
+		calc4 = calcItems.findViewById(R.id.trip_tstop_popup_odo_calc_4);
+		calc5 = calcItems.findViewById(R.id.trip_tstop_popup_odo_calc_5);
+		calc6 = calcItems.findViewById(R.id.trip_tstop_popup_odo_calc_6);
+		calc7 = calcItems.findViewById(R.id.trip_tstop_popup_odo_calc_7);
+		calc8 = calcItems.findViewById(R.id.trip_tstop_popup_odo_calc_8);
+		calc9 = calcItems.findViewById(R.id.trip_tstop_popup_odo_calc_9);
+		calcDeci = calcItems.findViewById(R.id.trip_tstop_popup_odo_calc_deci);
+		{
+			final int ov = odo.getCurrent10d();
+			if (isOdoTotal)
+				calcValue.setText(Integer.toString(ov / 10));
+			else
+				calcValue.setText( Integer.toString(ov / 10) + "." + Integer.toString(ov % 10) );
+			calcValue.setSelection(calcValue.getText().length());  // move cursor to end
+		}
+
+		AlertDialog.Builder alert = new AlertDialog.Builder(this);
+		alert.setTitle("mockup only: edit odo");  // TODO adj: total or trip
+		alert.setView(calcItems);
+		alert.setPositiveButton(R.string.save, new DialogInterface.OnClickListener() {
+			public void onClick(DialogInterface dialog, int whichButton)
+			{
+				popupCalcItems = null;
+				float ov;
+				try
+				{
+					ov = Float.parseFloat(calcValue.getText().toString());
+				}
+				catch (NumberFormatException e)
+				{
+					return;
+				}
+				odo.setCurrent10d( (int) (ov * 10), false);
+			}
+		});
+		alert.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+			public void onClick(DialogInterface dialog, int whichButton)
+			{
+				popupCalcItems = null;
+			}
+		});
+		alert.show();
+	}
+
+	public void onClick_CalcBtnDigit(View v)
+	{
+		// TODO if this is 1st button pressed, clear current value
+		// TODO max length, and/or max deci places?
+		final Editable tx = calcValue.getText();
+
+		if (v == calcDeci)
+		{
+			// Make sure there's not already a decimal point
+			// TODO disallow deci for odo_total
+			for (int i = tx.length()-1; i>=0; --i)
+				if (tx.charAt(i) == '.')
+					return;
+			calcValue.append(".");
+			return;
+		}
+		else if (v == calc0)
+			calcValue.append("0");
+		else if (v == calc1)
+			calcValue.append("1");
+		else if (v == calc2)
+			calcValue.append("2");
+		else if (v == calc3)
+			calcValue.append("3");
+		else if (v == calc4)
+			calcValue.append("4");
+		else if (v == calc5)
+			calcValue.append("5");
+		else if (v == calc6)
+			calcValue.append("6");
+		else if (v == calc7)
+			calcValue.append("7");
+		else if (v == calc8)
+			calcValue.append("8");
+		else if (v == calc9)
+			calcValue.append("9");
+	}
+
+	public void onClick_CalcBtnClear(View v)
+	{
+		// TODO clear it to the odo's value instead
+		calcValue.setText("0");
+		calcValue.setSelection(1);  // move cursor to end
+	}
+
+	public void onClick_CalcBtnBackspace(View v)
+	{
+		final Editable tx = calcValue.getText();
+		final int L = tx.length(); 
+		if (L > 0)
+		{
+			calcValue.setText(tx.subSequence(0, L - 1));
+			calcValue.setSelection(L-1);  // move cursor to end
+		}
+	}
+
+	public void onClick_CalcBtnDiv(View v)
+	{
+		// TODO
+	}
+	public void onClick_CalcBtnMul(View v)
+	{
+		// TODO
+	}
+	public void onClick_CalcBtnSub(View v)
+	{
+		// TODO
+	}
+	public void onClick_CalcBtnAdd(View v)
+	{
+		// TODO
+	}
+	public void onClick_CalcBtnEquals(View v)
+	{
+		// TODO
+	}
+
+	public void onClick_CalcBtnMemPlus(View v)
+	{
+		// TODO
+	}
+	public void onClick_CalcBtnMemMinus(View v)
+	{
+		// TODO
+	}
+	public void onClick_CalcBtnMemClear(View v)
+	{
+		// TODO
+	}
+	public void onClick_CalcBtnMemRecall(View v)
+	{
+		// TODO
+	}
+
+	/////////////////////////////
+	// End of calculator methods
+	/////////////////////////////
 
 	/**
 	 * Save our state before an Android pause or stop.

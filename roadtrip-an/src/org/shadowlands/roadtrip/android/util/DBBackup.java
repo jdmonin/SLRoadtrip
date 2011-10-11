@@ -50,9 +50,9 @@ public class DBBackup {
 	 * db backup dir within {@link #APP_BACKDIR} directory.
 	 * Used by {@link #getDBBackupPath(Context)}.
 	 *<P>
-	 * Value format is "/db".
+	 * Value format is "/backup".
 	 */
-	public static final String DB_SUBDIR = "/db";
+	public static final String DB_SUBDIR = "/backup";
 
 	/**
 	 * Given our app context, determine the backup location, if sdcard and is mounted and writable.

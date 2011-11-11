@@ -142,6 +142,15 @@ public class LogbookShow extends Activity
 	private Vehicle showV = null;
 
 	/**
+	 * If true, the most recent "earlier trips" or "later trips" button
+	 * click was on "earlier trips" ({@link #onClick_BtnEarlier(View)}).
+	 * If false, {@link #onClick_BtnLater(View)} or neither was clicked.
+	 * Used with {@link #onCreateGoToDateVehicleDialog(boolean)} to show the
+	 * most recently viewed date range for another vehicle.
+	 */
+	private boolean rangeEarlierClicked = false;
+
+	/**
 	 * Level for successive manual calls to {@link RDBVerifier}
 	 * on {@link #verifCache} from {@link #doDBValidation()}
 	 */
@@ -486,7 +495,7 @@ public class LogbookShow extends Activity
 		}
 	}
 
-	/** Show the DatePickerDialog or "Other Vehicle" dialog, leading to "Go To Date"  mode. */
+	/** Show the DatePickerDialog or "Other Vehicle" dialog, leading to "Go To Date" mode. */
 	@Override
 	protected Dialog onCreateDialog(int id)
 	{
@@ -539,7 +548,13 @@ public class LogbookShow extends Activity
 				final int calGoToDate;
 				if (vehicleOnly)
 				{
-					calGoToDate = goToDate;
+					final int rcount = ltm.getRangeCount();
+					if (rcount == 0)
+						calGoToDate = goToDate;  // keep current date
+					else if (rangeEarlierClicked)
+						calGoToDate = ltm.getRange(0).timeStart;
+					else						
+						calGoToDate = ltm.getRange(rcount-1).timeStart;
 				} else {
 		        	Calendar cal = Calendar.getInstance();
 		        	cal.setTimeInMillis(System.currentTimeMillis());
@@ -630,6 +645,7 @@ public class LogbookShow extends Activity
 				(this, R.string.no_earlier_trips_found, Toast.LENGTH_SHORT).show();
 			return;
 		}
+		rangeEarlierClicked = true;
 		StringBuffer sbTrips = new StringBuffer();
 		ltm.getRange(0).appendRowsAsTabbedString(sbTrips);
 
@@ -676,6 +692,7 @@ public class LogbookShow extends Activity
 				(this, R.string.no_later_trips_found, Toast.LENGTH_SHORT).show();
 			return;
 		}
+		rangeEarlierClicked = false;
 		StringBuffer sbTrips = new StringBuffer();
 		ltm.getRange(ltm.getRangeCount()-1).appendRowsAsTabbedString(sbTrips);
 

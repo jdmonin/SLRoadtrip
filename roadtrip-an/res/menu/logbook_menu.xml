@@ -33,6 +33,10 @@
 	android:title="@string/logbook_show__go_to_date"
 	android:icon="@android:R/drawable/ic_menu_month"
 	/>
+<item android:id="@+id/menu_logbook_other_veh"
+	android:title="@string/logbook_show__other_vehicle"
+	android:icon="@android:R/drawable/ic_menu_set_as"
+	/>
 <item android:id="@+id/menu_logbook_validate"
 	android:title="@string/validate"
 	android:icon="@android:R/drawable/ic_menu_manage"

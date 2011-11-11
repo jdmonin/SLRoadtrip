@@ -486,20 +486,26 @@ public class LogbookShow extends Activity
 		}
 	}
 
-	/** Show the DatePickerDialog leading to "Go To Date" mode. */
+	/** Show the DatePickerDialog or "Other Vehicle" dialog, leading to "Go To Date"  mode. */
 	@Override
 	protected Dialog onCreateDialog(int id)
 	{
 	    switch (id) {
 		    case R.id.menu_logbook_go_to_date:
-				return onCreateGoToDateDialog();
+				return onCreateGoToDateVehicleDialog(false);
 
+		    case R.id.menu_logbook_other_veh:
+				return onCreateGoToDateVehicleDialog(true);
 	    }
 	    return null;
 	}
 
-	/** Show the DatePickerDialog leading to "Go To Date" mode. */
-	private Dialog onCreateGoToDateDialog()
+	/**
+	 * Show the DatePickerDialog and Vehicle chooser leading to "Go To Date" mode.
+	 * @param vehicleOnly  If true, show the vehicle chooser
+	 *            but hide the datepicker (keep current date)
+	 */
+	private Dialog onCreateGoToDateVehicleDialog(final boolean vehicleOnly)
 	{
 		final Calendar cal = Calendar.getInstance();
 		if (goToDate != 0)
@@ -513,29 +519,44 @@ public class LogbookShow extends Activity
 		SpinnerDataFactory.setupVehiclesSpinner(db, this, vehs, showV.getID());
 		final DatePicker dpick =
 			(DatePicker) askItems.findViewById(R.id.logbook_show_popup_date_picker);
-		dpick.updateDate(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH));
+		if (vehicleOnly)
+			dpick.setVisibility(View.GONE);
+		else
+			dpick.updateDate(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH));
 
 		AlertDialog.Builder alert = new AlertDialog.Builder(this);
-		alert.setTitle(R.string.logbook_show__go_to_date);
+		alert.setTitle(vehicleOnly
+				? R.string.logbook_show__other_vehicle
+				: R.string.logbook_show__go_to_date);
 		alert.setView(askItems);
-		alert.setPositiveButton(android.R.string.search_go, new DialogInterface.OnClickListener()
+		alert.setPositiveButton( (vehicleOnly
+				? android.R.string.ok
+				: android.R.string.search_go ),
+				new DialogInterface.OnClickListener()
 		{
 			public void onClick(DialogInterface dialog, int whichButton)
 			{
-	        	Calendar cal = Calendar.getInstance();
-	        	cal.setTimeInMillis(System.currentTimeMillis());
-	        	cal.set(Calendar.YEAR, dpick.getYear());
-	        	cal.set(Calendar.MONTH, dpick.getMonth());
-	        	cal.set(Calendar.DAY_OF_MONTH, dpick.getDayOfMonth());
-	        	cal.set(Calendar.HOUR_OF_DAY, 0);
-	        	cal.set(Calendar.MINUTE, 0);
+				final int calGoToDate;
+				if (vehicleOnly)
+				{
+					calGoToDate = goToDate;
+				} else {
+		        	Calendar cal = Calendar.getInstance();
+		        	cal.setTimeInMillis(System.currentTimeMillis());
+		        	cal.set(Calendar.YEAR, dpick.getYear());
+		        	cal.set(Calendar.MONTH, dpick.getMonth());
+		        	cal.set(Calendar.DAY_OF_MONTH, dpick.getDayOfMonth());
+		        	cal.set(Calendar.HOUR_OF_DAY, 0);
+		        	cal.set(Calendar.MINUTE, 0);
+		        	calGoToDate = (int) (cal.getTimeInMillis() / 1000L);
+				}
 
 	        	// TODO consider re-use this one, instead of a new activity, if same vehicle
 	    		Vehicle v = (Vehicle) vehs.getSelectedItem();
 	    		if (v == null)
 	    			return;  // shouldn't happen
 	    		Intent i = new Intent(LogbookShow.this, LogbookShow.class);
-	    		i.putExtra(EXTRAS_DATE, (int) (cal.getTimeInMillis() / 1000L));
+	    		i.putExtra(EXTRAS_DATE, calGoToDate);
 	    		i.putExtra(EXTRAS_VEHICLE_ID, v.getID());
 	    		LogbookShow.this.startActivity(i);
 			}
@@ -578,6 +599,10 @@ public class LogbookShow extends Activity
 
 		case R.id.menu_logbook_go_to_date:
 			showDialog(R.id.menu_logbook_go_to_date);
+			return true;
+
+		case R.id.menu_logbook_other_veh:
+			showDialog(R.id.menu_logbook_other_veh);
 			return true;
 
 		case R.id.menu_logbook_validate:

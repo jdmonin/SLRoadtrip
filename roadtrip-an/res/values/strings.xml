@@ -129,6 +129,7 @@
 <string name="logbook_show__later_trips">v  Later Trips  v</string>
 <string name="logbook_show__menu_location">Location</string>
 <string name="logbook_show__no_locs_in_area">No locations are entered in the current GeoArea.</string>
+<string name="logbook_show__other_vehicle">Other Vehicle</string>
 <string name="logbook_show__recent_gas">Recent Gas</string>
 <string name="logbook_show__go_to_date">Go to Date</string>
 <string name="logbook_show__enter_location_to_search_trips">Enter the location to search trips for.</string>

@@ -189,15 +189,10 @@ public class Trip extends RDBRecord
     {
     	if (db == null)
     		throw new IllegalStateException("db null");
-    	int t0, t1;
-    	if (towardsNewer)
-    	{
-    		t0 = timeStart;
-    		t1 = timeStart + (weeks * WEEK_IN_SECONDS);
-    	} else {
-    		t1 = timeStart;
-    		t0 = timeStart - (weeks * WEEK_IN_SECONDS);
-    	}
+
+    	// Start and end of time_start search range;
+    	// will expand the range in loop before querying.
+    	int t0 = timeStart, t1 = timeStart;
 
     	Vector<String[]> sv = null;
     	final String vIDstr = Integer.toString(veh.getID());
@@ -207,23 +202,17 @@ public class Trip extends RDBRecord
     	 * If searchBeyondWeeks, try 2 more times
     	 * by moving further into the past/future.
     	 */
-    	for (int tries = 0; (sv == null) && (tries < 2); ++tries)
+    	for (int tries = 0; (sv == null) && (tries <= 2) && searchBeyondWeeks; ++tries)
     	{
+			if (towardsNewer)
+				t1 += (weeks * WEEK_IN_SECONDS);
+			else
+				t0 -= (weeks * WEEK_IN_SECONDS);    			
 			final String[] whereArgs = {
 				Integer.toString(t0), Integer.toString(t1), vIDstr
 			};
 			sv = db.getRows(TABNAME, WHERE_TIME_START_AND_VID, whereArgs, FIELDS_AND_ID, "time_start", 0);
-			if (sv == null)
-			{
-				if (! searchBeyondWeeks)
-					break;
-
-				if (towardsNewer)
-					t1 += (weeks * WEEK_IN_SECONDS);
-				else
-					t0 -= (weeks * WEEK_IN_SECONDS);
-			}
-		}
+    	}
 
 		final boolean searchedBeyond;
 		if ((sv == null) && searchBeyondWeeks)

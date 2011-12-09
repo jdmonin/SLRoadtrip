@@ -2186,16 +2186,24 @@ public class TripTStopEntry extends Activity
 		alert.show();
 	}
 
-	/** Load the calculator's {@link #calcValue} field from the odometer ({@link #calcOdoIsTrip} flag) */
+	/** Load the calculator's {@link #calcValue} field from the
+	 *  odometer ({@link #calcOdoIsTrip} flag),
+	 *  or clear to blank if the odo is 0.
+	 */
 	private void calcLoadValueFromOdo()
 	{
 		final OdometerNumberPicker odo = (calcOdoIsTrip) ? odo_trip : odo_total;
 		final int ov = odo.getCurrent10d();
-		if (calcOdoIsTrip)
-			calcValue.setText( Integer.toString(ov / 10) + "." + Integer.toString(ov % 10) );
-		else
-			calcValue.setText( Integer.toString(ov / 10) );
-		calcValue.setSelection(calcValue.getText().length());  // move cursor to end
+		if (ov == 0)
+		{
+			calcValue.setText("");
+		} else {
+			if (calcOdoIsTrip)
+				calcValue.setText( Integer.toString(ov / 10) + "." + Integer.toString(ov % 10) );
+			else
+				calcValue.setText( Integer.toString(ov / 10) );
+			calcValue.setSelection(calcValue.getText().length());  // move cursor to end
+		}
 		calcNextPressClears = false;
 	}
 
@@ -2208,7 +2216,6 @@ public class TripTStopEntry extends Activity
 		}
 
 		// TODO max length, and/or max deci places?
-		final Editable tx = calcValue.getText();
 
 		if (v == calcDeci)
 		{
@@ -2216,6 +2223,7 @@ public class TripTStopEntry extends Activity
 				return;
 
 			// Make sure there's not already a decimal point
+			final Editable tx = calcValue.getText();
 			for (int i = tx.length()-1; i>=0; --i)
 				if (tx.charAt(i) == '.')
 					return;

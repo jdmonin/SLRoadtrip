@@ -56,7 +56,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	 * The length of this array determines the number of columns.
 	 */
 	public static final String[] COL_HEADINGS
-	    = { "Date", "Time", "", "Odometer", "Trip-O", "Via", "Notes" };
+	    = { "Date", "Time", "", "Odometer", "Trip-O", "Via", "Notes", "Comment" };
 
 	private static final String[][] TEMPLATE_ADD_SIMPLE
 	   = { { null, null, "/", "Start-odo", null, null, "Start at" },
@@ -553,8 +553,14 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 						&& (odo_end != 0))
 						desc.insert(0, "-> ");  // Very last stop: "-> location"
 
-					// Done with this row
 					tr[6] = desc.toString();
+
+					// Comment, if any
+					String stopc = ts.getComment();
+					if (stopc != null)
+						tr[7] = "[" + stopc + "]";
+
+					// Done with this row
 	    			tText.addElement(tr);
 	
 					// start-time (if present)

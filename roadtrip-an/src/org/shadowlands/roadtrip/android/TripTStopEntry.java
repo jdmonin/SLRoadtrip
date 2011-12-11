@@ -206,6 +206,11 @@ public class TripTStopEntry extends Activity
 	/** if true, the odometer values were adjusted using FreqTrip data. */
 	private boolean odosAreSetFromFreq = false;
 
+	/** if true, {@link #onClick_BtnEnterTStop(View)} has already asked the user to
+	 *  confirm continuing from the stop without entering any odometer.
+	 */
+	private boolean askedConfirmEmptyOdos = false;
+
 	private CheckBox odo_total_chk, odo_trip_chk, tp_time_stop_chk, tp_time_cont_chk;
 	private TimePicker tp_time_stop, tp_time_cont;
 
@@ -1158,6 +1163,30 @@ public class TripTStopEntry extends Activity
     			R.string.please_check_the_trip_odometer,
                 Toast.LENGTH_SHORT).show();
         	return;  // <--- Early return: missing required field ---
+		}
+
+		// If about to continue the trip, and neither odo_trip nor odo_total
+		// are entered, ask to confirm.
+		if ((odoTrip == 0) && (odoTotal == 0) && isCurrentlyStopped && ! askedConfirmEmptyOdos)
+		{
+			AlertDialog.Builder alert = new AlertDialog.Builder(this);
+
+			alert.setTitle(R.string.confirm);
+			alert.setMessage(R.string.trip_tstop_entry_no_odos_are_you_sure);
+			alert.setPositiveButton(android.R.string.no, new DialogInterface.OnClickListener() {
+				public void onClick(DialogInterface dialog, int whichButton)
+				{ }
+			});
+			alert.setNegativeButton(R.string.continu, new DialogInterface.OnClickListener() {
+				public void onClick(DialogInterface dialog, int whichButton)
+				{
+					onClick_BtnEnterTStop(null);
+				}
+			});
+			askedConfirmEmptyOdos = true;
+			alert.show();
+
+			return;  // <--- Early return: asked about odometers ---
 		}
 
 		// Make sure odometers don't run backwards

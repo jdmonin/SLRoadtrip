@@ -206,14 +206,6 @@ public class TripTStopEntry extends Activity
 	/** if true, the odometer values were adjusted using FreqTrip data. */
 	private boolean odosAreSetFromFreq = false;
 
-	/**
-	 * If {@link #odosAreSetFromVia} or {@link #odosAreSetFromFreq}, the value when they were set;
-	 * read in {@link #onClick_BtnEnterTStop(View)} to determine if the calculated total is "drifting"
-	 * because of rounding.  Otherwise 0.  If total is 0, ignore trip.  For vias, the total is set
-	 * non-zero only if its checkbox wasn't checked when the via was selected.
-	 */
-	private int odosAreSetFrom_total = 0, odosAreSetFrom_trip = 0;
-
 	private CheckBox odo_total_chk, odo_trip_chk, tp_time_stop_chk, tp_time_cont_chk;
 	private TimePicker tp_time_stop, tp_time_cont;
 
@@ -1260,43 +1252,6 @@ public class TripTStopEntry extends Activity
 		 */
 		final int tsid;
 
-		// If our total-odo was calculated by a via's distance, or by a freqtrip's distance,
-		// see if the user changed it from the calculated value.
-		// Adjust the hidden tenths digit value if needed.
-		// This should help avoid "rounding error" accumulating from the hidden tenths digit
-		// of the total odometer, which should mean fewer such manual changes.
-		if ((odosAreSetFrom_total != 0)
-		    && (odoTotal > odosAreSetFrom_total)
-		    && ((odoTotal % 10) >= 5))
-		{
-			// Since odoTotal != 0, the user set the total checkmark or manually changed it.
-			// Also check if they also changed the trip-odo.
-			final int tripdiff;
-			if ((odoTrip != 0) && (odosAreSetFrom_trip != 0))
-				tripdiff = odoTrip - odosAreSetFrom_trip;
-			else
-				tripdiff = 0;
-
-			if ((odoTotal / 10) != ((odosAreSetFrom_total + tripdiff) / 10))
-			{
-				// If possible, make the adjustment.
-				// Since we know odoTotal's tenths >= 5, this subtraction only affects
-				// the hidden tenths digit, not the visible whole part of odoTotal.
-				// To avoid inconsistencies when stops are close together,
-				// first check the previous highest recorded total-odo for this trip.
-
-				final int odoHighest = currT.readHighestOdoTotal();
-				final int odoAdjTotal = odoTotal - 5;
-				if (odoAdjTotal > odoHighest)
-					// assert: (odoTotal - odoHighest) > 5
-					odoTotal = odoAdjTotal;
-				else if ((odoTotal - odoHighest) > 1)
-					// assert: (odoTotal - odoHighest) <= 5 and odoTotal > odoHighest
-					odoTotal = odoHighest + 1;  // gives -4 -3 -2 or -1 to odoTotal
-				Toast.makeText(this, "L1087 odoTotal drift corrected to " + odoTotal, Toast.LENGTH_LONG).show();
-			}
-		}
-
 		// Get or create the Location db record,
 		// if we don't already have it
 		if ((locObj == null)
@@ -1640,15 +1595,13 @@ public class TripTStopEntry extends Activity
 		final int odoDiff = odoStop - odo_trip.getCurrent10d();
 		if (odoDiff > 0)
 		{
-			odosAreSetFrom_trip = odoStop;
-			odosAreSetFrom_total = odo_total.getCurrent10d() + odoDiff;
+			final int odosAreSetFrom_total = odo_total.getCurrent10d() + odoDiff;
 			odo_trip.setCurrent10d(odoStop, false);
 			odo_trip_chk.setChecked(true);
 			odo_total.setCurrent10d(odosAreSetFrom_total, false);
 			odosAreSetFromFreq = true;
 		} else {
 			odosAreSetFromFreq = false;
-			odosAreSetFrom_total = 0;
 		}
 
 		// Set location from this, and requery/re-filter via IDs
@@ -2497,20 +2450,10 @@ public class TripTStopEntry extends Activity
 				odosAreSetFromVia = true;
 
 				if (! odo_trip_chk.isChecked())
-				{
-					odosAreSetFrom_trip = odoTripOrig + odo_dist;
-					odo_trip.setCurrent10d(odosAreSetFrom_trip, false);
-				} else {
-					odosAreSetFrom_trip = 0;
-				}
+					odo_trip.setCurrent10d(odoTripOrig + odo_dist, false);
 
 				if (! odo_total_chk.isChecked())
-				{
-					odosAreSetFrom_total = odoTotalOrig + odo_dist;
-					odo_total.setCurrent10d(odosAreSetFrom_total, false);
-				} else {
-					odosAreSetFrom_total = 0;
-				}
+					odo_total.setCurrent10d(odoTotalOrig + odo_dist, false);
 			}
 		}		
 
@@ -2535,7 +2478,6 @@ public class TripTStopEntry extends Activity
 					if (! odo_total_chk.isChecked())
 						odo_total.setCurrent10d(odoTotalOrig, false);
 					odosAreSetFromVia = false;
-					odosAreSetFrom_total = 0;
 				}
 			}
 		}

@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+ logbook_loc_vias_search.xml - Activity to search for two locations' Via Routes.
+ Reuses components from TripBegin, keeping their prefix for code reuse.
+
+ This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
+
+ Copyright (C) 2012 Jeremy D Monin (jdmonin@nand.net)
+
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with this program.  If not, see http://www.gnu.org/licenses/ .
+ -->
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    >
+<LinearLayout
+    android:orientation="vertical"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    >
+<TextView
+    android:text="@string/starting_location"
+    android:layout_width="fill_parent" 
+    android:layout_height="wrap_content"    
+    />
+<!-- Trip start location: 2 rows, 2 cols, radio buttons on left, text view/entry on right -->
+<RelativeLayout
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    >
+	<RadioGroup
+		android:id="@+id/trip_begin_radio_loc_group"
+		android:layout_alignParentLeft="true"
+		android:orientation="vertical"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		>
+		<RadioButton android:id="@+id/trip_begin_radio_loc_cont"
+		    android:layout_width="wrap_content"
+		    android:layout_height="wrap_content"
+		    android:text="" />
+		<RadioButton android:id="@+id/trip_begin_radio_loc_new"
+		    android:layout_width="wrap_content"
+		    android:layout_height="wrap_content"
+		    android:text="" />
+	</RadioGroup>
+	<!-- Once the layout's inflated and calculated, -->
+	<!-- code will set textview heights to the same -->
+	<!-- as the RadioButtons, so they line up.      -->
+	<TextView android:id="@+id/trip_begin_loc_cont_text"
+		android:text="@string/continue_from_colon"
+		android:clickable="true"
+		android:onClick="onClick_chooseContRadio"
+	    android:layout_width="wrap_content"
+	    android:layout_height="wrap_content"
+	    android:gravity="center_vertical"
+	    android:paddingLeft="4dp"
+	    android:layout_toRightOf="@id/trip_begin_radio_loc_group"
+	    android:layout_alignTop="@id/trip_begin_radio_loc_group"
+		/>
+	<AutoCompleteTextView
+	    android:id="@+id/trip_begin_loc_new"
+	    android:layout_width="fill_parent"
+	    android:layout_height="wrap_content"
+	    android:singleLine="true"
+	    android:layout_below="@id/trip_begin_loc_cont_text"
+	    android:layout_alignLeft="@id/trip_begin_loc_cont_text"
+	    />
+</RelativeLayout>
+<TextView
+	android:text="@string/to__colon"
+    android:layout_width="fill_parent" 
+    android:layout_height="wrap_content" 
+    />
+<!-- GeoArea and location; we'll hide the "All vehicles" checkbox -->
+<include layout="@layout/logbook_show_popup_locsearch"
+    android:layout_height="fill_parent"
+    android:layout_width="fill_parent" />
+<Button android:id="@+id/loc_search_btn_search"
+    android:text="@android:R/string/search_go"
+    android:layout_width="fill_parent" 
+    android:layout_height="wrap_content"
+    android:onClick="onClick_BtnSearch"/>
+</LinearLayout>
+</ScrollView>

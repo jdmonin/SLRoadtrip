@@ -450,6 +450,15 @@ public class TripTStopEntry extends Activity
 			}
 		}
 
+		// Change title if needed; default title label is stop_during_a_trip
+		if (stopEndsTrip)
+		{
+			setTitle(getResources().getString(R.string.end_trip));
+		} else if (isCurrentlyStopped) {			
+			setTitle(getResources().getString(R.string.continu_from_stop));
+		}
+
+		// Set up autocompletes
 		loc = (AutoCompleteTextView) findViewById(R.id.trip_tstop_loc);
 		loc.addTextChangedListener(this);
 		areaLocs_areaID = -1;

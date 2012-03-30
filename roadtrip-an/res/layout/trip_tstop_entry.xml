@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
+ Layout for stop during trip / resume trip / end trip; default title label is stop_during_a_trip.
 
  Copyright (C) 2010-2011 Jeremy D Monin (jdmonin@nand.net)
 

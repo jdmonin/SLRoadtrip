@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  Copyright (C) 2010-2011 Jeremy D Monin <jdmonin@nand.net>
+ *  Copyright (C) 2010-2012 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -1774,6 +1774,7 @@ public class TripTStopEntry extends Activity
 		{
 			currentDateToPick = contTime;
 		} else {
+			// == trip_tstop_btn_stop_date
 			currentDateToPick = stopTime;
 		}
         return new DatePickerDialog
@@ -1783,19 +1784,30 @@ public class TripTStopEntry extends Activity
 			currentDateToPick.get(Calendar.DAY_OF_MONTH));
 	}
 
-	/** Callback from {@link DatePickerDialog} for TStop stop-date or continue-date. */
+	/**
+	 * Callback from {@link DatePickerDialog} for TStop stop-date or continue-date.
+	 * Updates {@link #stopTime} or {@link #contTime}, calls {@link #updateDateButtons(int)}.
+	 */
 	public void onDateSet(DatePicker dp, final int year, final int month, final int monthday)
 	{
 		if (currentDateToPick == null)
 			return;  // shouldn't happen
+
 		currentDateToPick.set(Calendar.YEAR, year);
 		currentDateToPick.set(Calendar.MONTH, month);
 		currentDateToPick.set(Calendar.DAY_OF_MONTH, monthday);
 
+		CheckBox dateCB;
 		if (currentDateToPick == stopTime)
+		{
 			updateDateButtons(1);
-		else
+			dateCB = tp_time_stop_chk;
+		} else {
 			updateDateButtons(2);
+			dateCB = tp_time_cont_chk;
+		}
+		if (! dateCB.isChecked())
+			dateCB.setChecked(true);
 	}
 
 	/**

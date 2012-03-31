@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  Copyright (C) 2010-2011 Jeremy D Monin <jdmonin@nand.net>
+ *  Copyright (C) 2010-2012 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -45,9 +45,8 @@ import android.util.Log;
  * Calling any insert/update/query method will call {@link #getWritableDatabase()}.
  * Be sure to call {@link #close()} when you are done.
  *<P>
- * The schema is stored in <tt> res/raw/schema_v0810.sql </tt>.
- * At startup, the {@link org.shadowlands.roadtrip.android.AndroidStartup AndroidStartup} class
- * gives us its location, by setting {@link #dbSchema}.
+ * The schema is stored in <tt> res/raw/schema_v0906.sql </tt>.
+ * This location is hardcoded in {@link #getSQLScript(int)}.
  * If you update the schema, please update {@link #getSQLScript(int)}
  * and {@link RDBSchema#DATABASE_VERSION}.
  */
@@ -57,7 +56,11 @@ public class RDBOpenHelper
 	/** android log tag */
 	public static final String TAG = "Roadtrip.RDBOpenHelper";
 
-	public static Resources dbSQLRsrcs = null;  // TODO docu; set & cleared in AndroidStartup
+	/**
+	 * Must be set to <tt>Activity.getApplicationContext().getResources()</tt>.
+	 * This app sets it in AndroidStartup.  Also use in BackupsRestore.
+	 */
+	public static Resources dbSQLRsrcs = null;
 
 	/** the filename will be "roadtrip", without an extension */
 	public static final String DATABASE_DEFAULT_DBNAME = "roadtrip";
@@ -805,11 +808,17 @@ public class RDBOpenHelper
 	 * Retrieve a SQL create script or upgrade script.
 	 * Please close the returned stream as soon as possible.
 	 * For use by {@link RDBSchema}.
+	 *<P>
+	 * Be sure to set <tt>{@link #dbSQLRsrcs} = getApplicationContext().getResources();</tt> before calling.
+	 *<P>
+	 * The schema script and upgrade script filenames are
+	 * hardcoded here as resource names under res/raw/ .
 	 *
 	 * @param upgScriptToVersion  0 for the create script,
 	 *    otherwise a db version number, to get the script to upgrade
 	 *    from the previous version.
 	 * @return the sql as a stream, or null if the version is unknown or needs no upgrade script
+	 *    or if {@link #dbSQLRsrcs} is null
 	 * @see RDBSchema#upgradeToCurrent(RDBAdapter, int, boolean)
 	 */
 	public InputStream getSQLScript(final int upgScriptToVersion)

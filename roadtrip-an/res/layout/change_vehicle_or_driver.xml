@@ -52,7 +52,9 @@
 </TableLayout>
 <TableLayout
     android:layout_height="wrap_content"
-    android:layout_width="fill_parent" >
+    android:layout_width="fill_parent"
+    android:stretchColumns="*"
+    >
     <TableRow>
 		<Button 
 		    android:id="@+id/change_cvd_driver_new"
@@ -60,7 +62,6 @@
 		    android:onClick="onClick_BtnDriverNew"
 		    android:layout_width="wrap_content" 
 		    android:layout_height="fill_parent"
-		    android:layout_gravity="right" 
 		    />
 	    <Button
 		    android:id="@+id/change_cvd_drivers_edit"
@@ -77,7 +78,6 @@
 		    android:onClick="onClick_BtnVehicleNew"
 		    android:layout_width="wrap_content" 
 		    android:layout_height="fill_parent"
-		    android:layout_gravity="right" 
 		    />
 	    <Button
 		    android:id="@+id/change_cvd_vehicles_edit"
@@ -92,24 +92,25 @@
     android:layout_height="wrap_content"
     android:layout_width="fill_parent"
     >
-    <!-- Cancel on right, then OK to left of it -->
-	<Button android:id="@+id/change_cvd_btn_cancel"
-	        android:layout_width="wrap_content"
-	        android:layout_height="wrap_content"
-	        android:layout_weight="0.5"
-	        android:text="@android:R/string/cancel"
-	        android:onClick="onClick_BtnCancel"
-	        android:layout_alignParentBottom="true"
-	        android:layout_alignParentRight="true"
-	        />
-	<Button android:id="@+id/change_cvd_btn_ok"
-	        android:layout_width="wrap_content"
-	        android:layout_height="wrap_content"
-	        android:layout_weight="0.5"
-	        android:text="@android:R/string/ok"
-	        android:onClick="onClick_BtnOK"
-	        android:layout_alignParentBottom="true"
-	        android:layout_toLeftOf="@id/change_cvd_btn_cancel"
-	        />
+    <LinearLayout
+	    android:layout_height="wrap_content"
+	    android:layout_width="fill_parent"
+		android:layout_alignParentBottom="true"
+	    android:orientation="horizontal" >
+		<Button android:id="@+id/change_cvd_btn_ok"
+		        android:layout_width="wrap_content"
+		        android:layout_height="wrap_content"
+		        android:layout_weight="0.5"
+		        android:text="@android:R/string/ok"
+		        android:onClick="onClick_BtnOK"
+		        />
+		<Button android:id="@+id/change_cvd_btn_cancel"
+		        android:layout_width="wrap_content"
+		        android:layout_height="wrap_content"
+		        android:layout_weight="0.5"
+		        android:text="@android:R/string/cancel"
+		        android:onClick="onClick_BtnCancel"
+		        />
+	</LinearLayout>
 </RelativeLayout>
 </LinearLayout>

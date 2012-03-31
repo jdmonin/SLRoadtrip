@@ -19,6 +19,9 @@
 
 package org.shadowlands.roadtrip.android;
 
+import java.io.DataInputStream;
+import java.io.InputStream;
+
 import org.shadowlands.roadtrip.AndroidStartup;
 import org.shadowlands.roadtrip.R;
 import org.shadowlands.roadtrip.db.FreqTrip;
@@ -165,7 +168,12 @@ public class Main extends Activity
 		return true;
 	}
 
-	/** Create the About dialog. */
+	/**
+	 * Create the About dialog.
+	 * The version number is determined from app resources.
+	 * The build number is read from res/raw/svnversion.txt which is manually
+	 * updated by the developer before building an APK.
+	 */
 	@Override
 	protected Dialog onCreateDialog(int id)
 	{
@@ -188,18 +196,46 @@ public class Main extends Activity
 				StringBuffer title = new StringBuffer(getResources().getString(R.string.about));
 				title.append(' ');
 				title.append(getResources().getString(R.string.app_name));
+				boolean hadVersName = false;
 				try {
 					PackageInfo pInfo = getPackageManager().getPackageInfo(getPackageName(), PackageManager.GET_META_DATA);
 					if (pInfo != null)
 					{
 						String versName = pInfo.versionName;
-						if (versName != null)
+						if ((versName != null) && (versName.length() > 0))
 						{
 							title.append(" v");
 							title.append(versName);
+							hadVersName = true;
 						}
 					}
 				} catch (NameNotFoundException e) { }
+
+				// Now try to get build number, from res/raw/svnversion.txt ; ignore "?"
+				InputStream s = null;
+				try {
+					s = getApplicationContext().getResources().openRawResource(R.raw.svnversion);
+					DataInputStream dsql = new DataInputStream(s);
+					String svnversion = dsql.readLine();
+					dsql.close();
+					s.close();
+					if ((svnversion != null)
+						&& (svnversion.length() > 0)
+						&& (! svnversion.equals("?")))
+					{
+						if (hadVersName)
+							title.append('.');
+						else
+							title.append(" build ");
+						title.append(svnversion);
+					}
+				} catch (Throwable th) {
+					if (s != null)
+					{
+						try {  s.close(); }
+						catch (Throwable t2 ) {}
+					}
+				}
 
 				aboutBuilder.setTitle(title);
 				dialog = aboutBuilder.create();

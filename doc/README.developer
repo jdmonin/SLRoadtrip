@@ -30,7 +30,19 @@ roadtrip-an's version is kept in AndroidMainfest.xml.
 bookedit's version is kept in org/shadowlands/roadtrip/bookedit/Main.java.
 
 
+
 (more sections here)
+
+
+
+How to build:
+
+(more details here)
+
+Android: If you want the svn revision to show in the About box, then before
+building, you must first manually edit res/raw/svnversion.txt and refresh
+
+
 
 Coding style:
    (more here)

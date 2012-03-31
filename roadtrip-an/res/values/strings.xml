@@ -50,7 +50,10 @@
 <string name="description">Description</string>
 <string name="destination">Destination</string>
 <string name="destination_within_the_area">Destination\nwithin the area</string>
+<string name="done">Done</string><!-- done editing a list of drivers or vehicles -->
 <string name="driver">Driver</string>
+<string name="edit_drivers">Edit drivers</string>
+<string name="edit_vehicles">Edit vehicles</string>
 <string name="end_trip">End Trip</string>
 <string name="enter_stop">Enter Stop</string>
 <string name="error">Error</string>
@@ -158,8 +161,6 @@
 <string name="backups_restore_validation_error">Error in file validation.</string>
 <string name="backups_restore_validation_ok">File validated.</string>
 <string name="backups_restore__title">Restore from Backup</string>
-<string name="change_veh_or_driv__edit_drivers">Edit drivers</string>
-<string name="change_veh_or_driv__edit_vehicles">Edit vehicles</string>
 <string name="driver_entry_prompt">Enter information about this driver.</string>
 <string name="trip_createfreq__title">Create Frequent Trip</string>
 <string name="trip_createfreq_cancel_are_you_sure">Are you sure you want to cancel?\nThe Frequent Trip will not be created.</string>

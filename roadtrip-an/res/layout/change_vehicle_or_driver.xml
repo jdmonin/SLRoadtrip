@@ -65,7 +65,7 @@
 		    />
 	    <Button
 		    android:id="@+id/change_cvd_drivers_edit"
-		    android:text="@string/change_veh_or_driv__edit_drivers"
+		    android:text="@string/edit_drivers"
 		    android:onClick="onClick_BtnDriversEdit"
 		    android:layout_width="wrap_content" 
 		    android:layout_height="fill_parent"
@@ -81,7 +81,7 @@
 		    />
 	    <Button
 		    android:id="@+id/change_cvd_vehicles_edit"
-		    android:text="@string/change_veh_or_driv__edit_vehicles"
+		    android:text="@string/edit_vehicles"
 		    android:onClick="onClick_BtnVehiclesEdit"
 		    android:layout_width="wrap_content" 
 		    android:layout_height="fill_parent"

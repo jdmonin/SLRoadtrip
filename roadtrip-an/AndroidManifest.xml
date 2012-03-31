@@ -2,7 +2,7 @@
 <!--
  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
 
- Copyright (C) 2010-2011 Jeremy D Monin (jdmonin@nand.net)
+ Copyright (C) 2010-2012 Jeremy D Monin (jdmonin@nand.net)
 
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
@@ -40,6 +40,7 @@
 	<activity android:name=".android.TripTStopEntry"  android:label="@string/stop_during_a_trip" />
 	<activity android:name=".android.TripTStopGas"  android:label="@string/trip_tstop_gas__title" />
 	<activity android:name=".android.TripTStopChooseFreq"  android:label="@string/choose_a_stop" />
+	<activity android:name=".android.VehiclesEdit"  android:label="@string/edit_vehicles" />
 	<activity android:name=".android.BackupsMain" />
 	<activity android:name=".android.BackupsRestore"  android:label="@string/backups_restore__title" />
 </application>

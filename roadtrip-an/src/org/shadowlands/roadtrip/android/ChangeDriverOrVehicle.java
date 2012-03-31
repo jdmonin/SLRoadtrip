@@ -47,6 +47,11 @@ import android.widget.Toast;
  */
 public class ChangeDriverOrVehicle extends Activity
 {
+	/**
+	 * Activity result to indicate changes were made; used in callback from {@link VehiclesEdit} to here.
+	 */
+	public static final int RESULT_CHANGES_MADE = Activity.RESULT_FIRST_USER;
+
 	private RDBAdapter db = null;
 	private Spinner driver, veh;
 	private int currDID = 0, currVID = 0;
@@ -141,11 +146,8 @@ public class ChangeDriverOrVehicle extends Activity
 
     public void onClick_BtnVehiclesEdit(View v)
     {
-    	Toast.makeText(this, "Stub: Edit vehicles", Toast.LENGTH_SHORT).show();
-    	// TODO.
-    	// Intent i = new Intent(this, VehiclesEdit.class);
-    	// startActivityForResult(i, R.id.change_cvd_vehicles_edit);
-    	// TODO update onActivityResult
+    	Intent i = new Intent(this, VehiclesEdit.class);
+    	startActivityForResult(i, R.id.change_cvd_vehicles_edit);
     }
 
     /**
@@ -171,7 +173,13 @@ public class ChangeDriverOrVehicle extends Activity
 			// TODO requery all-drivers spinner;     break;
 
 		case R.id.change_cvd_vehicles_edit:
-			// TODO requery all-vehicles spinner;    break;
+			if (resultCode == RESULT_CHANGES_MADE)
+			{
+				if (db == null)
+					db = new RDBOpenHelper(this);
+				SpinnerDataFactory.setupVehiclesSpinner(db, this, veh, currVID);
+			}
+			break;
 		}
 	}
 

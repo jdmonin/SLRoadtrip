@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  Copyright (C) 2010-2011 Jeremy D Monin <jdmonin@nand.net>
+ *  Copyright (C) 2010-2012 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -38,10 +38,17 @@ import java.util.Vector;
 public class Vehicle extends RDBRecord
 {
     private static final String TABNAME = "vehicle";
+
     private static final String[] FIELDS =
         { "nickname", "driverid", "makeid", "model", "year", "date_from", "date_to", "vin", "odo_orig", "odo_curr", "last_tripid", "distance_storage", "expense_currency", "expense_curr_sym", "expense_curr_deci", "fuel_curr_deci", "fuel_type", "fuel_qty_unit", "fuel_qty_deci", "comment" };
     private static final String[] FIELDS_AND_ID =
     	{ "nickname", "driverid", "makeid", "model", "year", "date_from", "date_to", "vin", "odo_orig", "odo_curr", "last_tripid", "distance_storage", "expense_currency", "expense_curr_sym", "expense_curr_deci", "fuel_curr_deci", "fuel_type", "fuel_qty_unit", "fuel_qty_deci", "comment", "_id" };
+    /**
+     * Basic fields only, for commit.  Omits:
+     * "distance_storage", "expense_currency", "expense_curr_sym", "expense_curr_deci", "fuel_curr_deci", "fuel_type", "fuel_qty_unit", "fuel_qty_deci"
+     */
+    private static final String[] FIELDS_BASIC =
+    	{ "nickname", "driverid", "makeid", "model", "year", "date_from", "date_to", "vin", "odo_orig", "odo_curr", "last_tripid", "comment" };
     private static final String[] FIELDS_ODO_LASTTRIP =
     	{ "odo_curr", "last_tripid" }; 
 
@@ -278,11 +285,6 @@ public class Vehicle extends RDBRecord
     	return tr.readLatestTime();
     }
 
-    public String getNickame()
-	{
-		return nickname;
-	}
-
 	/**
      * Insert a new record based on field and value.
 	 * Clears dirty field; sets id and dbConn fields.
@@ -310,7 +312,7 @@ public class Vehicle extends RDBRecord
             { nickname, Integer.toString(driverid), Integer.toString(makeid),
     		  model, Integer.toString(year), dte_f, dte_t, vin,
     		  Integer.toString(odo_orig), Integer.toString(odo_curr), last_tid,
-    		  // TODO construc/gui, not hardcoded, for these:
+    		  // TODO construc/gui, not hardcoded, for these:  (also getters/setters/commit)
     		  //    "distance_storage", "expense_currency", "expense_curr_sym", "expense_curr_deci", "fuel_curr_deci", "fuel_type", "fuel_qty_unit", "fuel_qty_deci"
     		  "MI", "USD", "$", "2", "3", "G", "ga", "3",
     		  comment };
@@ -350,7 +352,7 @@ public class Vehicle extends RDBRecord
             { nickname, Integer.toString(driverid), Integer.toString(makeid),
     		  model, Integer.toString(year), dte_f, dte_t, vin,
     		  Integer.toString(odo_orig), Integer.toString(odo_curr), l_tripid, comment };
-		dbConn.update(TABNAME, id, FIELDS, fv);
+		dbConn.update(TABNAME, id, FIELDS_BASIC, fv);
 		dirty = false;
 	}
 

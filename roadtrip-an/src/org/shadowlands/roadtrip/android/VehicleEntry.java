@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  Copyright (C) 2010-2011 Jeremy D Monin <jdmonin@nand.net>
+ *  Copyright (C) 2010-2012 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -40,10 +40,9 @@ import android.widget.Spinner;
 import android.widget.Toast;
 
 /**
- * Enter the new vehicle.
- * TODO allow edit too
+ * Enter a new vehicle, or edit a vehicle.
  *<P>
- * <b>When {@link #EXTRAS_FLAG_ASKED_NEW} is not used:</b><BR>
+ * <b>When no intent extra is used:</b><BR>
  * will next go to Main.
  *<P>
  * <b>When {@link #EXTRAS_FLAG_ASKED_NEW} is set:</b><BR>
@@ -51,6 +50,12 @@ import android.widget.Toast;
  * Finish this activity and return to what the user was previously doing.
  * The Result code will be set to RESULT_OK, and the Intent will get
  * an int extra called "_id" with the ID of the newly added vehicle.
+ *<P>
+ * <b>When {@link #EXTRAS_INT_EDIT_ID} is set:</b><BR>
+ * Edit the specified vehicle.
+ * Finish this activity and return to what the user was previously doing.
+ * The Result code will be set to RESULT_OK, and the Intent will get
+ * an int extra called "_id" with the ID of the edited vehicle.
  */
 public class VehicleEntry extends Activity
 {
@@ -60,12 +65,24 @@ public class VehicleEntry extends Activity
 	 */
 	public static final String EXTRAS_FLAG_ASKED_NEW = "new";
 
+	/**
+	 * Int extra for a vehicle ID to edit here;
+	 * for {@link Intent#putExtra(String, int)}.
+	 */
+	public static final String EXTRAS_INT_EDIT_ID = "edit";
+
 	private static VehicleMake[] VEHICLEMAKES = null;
 
 	/**
 	 * If true, {@link #EXTRAS_FLAG_ASKED_NEW} was set.
 	 */
 	private boolean cameFromAskNew;
+
+	/**
+	 * If not null, {@link #EXTRAS_INT_EDIT_ID} was set to this vehicle's ID,
+	 * it was in the database, and we're editing that vehicle.
+	 */
+	private Vehicle cameFromEdit_veh;
 
 	private RDBAdapter db = null;
 
@@ -79,12 +96,15 @@ public class VehicleEntry extends Activity
 	    super.onCreate(savedInstanceState);
         setContentView(R.layout.vehicle_entry);
  
+        int cameFromEdit_id;
 		Intent i = getIntent();
 		if (i != null)
 		{
 			cameFromAskNew = i.getBooleanExtra(EXTRAS_FLAG_ASKED_NEW, false);
+			cameFromEdit_id = i.getIntExtra(EXTRAS_INT_EDIT_ID, 0);
 		} else {
 	        cameFromAskNew = false;
+	        cameFromEdit_id = 0;
 		}
 
 		nickname = (EditText) findViewById(R.id.vehicle_entry_name);
@@ -100,12 +120,28 @@ public class VehicleEntry extends Activity
 	    odo_curr.setTenthsVisibility(false);
 
 	    db = new RDBOpenHelper(this);
+
 	    populateVehMakesList();
 	    if (VEHICLEMAKES != null)
 	    {
 	    	ArrayAdapter<VehicleMake> vaa = new ArrayAdapter<VehicleMake>(this, android.R.layout.simple_spinner_item, VEHICLEMAKES);
 	    	vaa.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 	    	vmake.setAdapter(vaa);
+	    }
+
+        cameFromEdit_veh = null;
+	    if (cameFromEdit_id != 0)
+	    {
+	    	try {
+				cameFromEdit_veh = new Vehicle(db, cameFromEdit_id);
+				updateScreenFieldsFromVehicle();
+			} catch (Throwable e) {
+				// should not happen
+				Toast.makeText(this, R.string.not_found, Toast.LENGTH_SHORT).show();
+				setResult(Activity.RESULT_CANCELED);
+				finish();
+				return;   // <--- Early return: Could lot load from db to view fields ---
+			}
 	    }
 
 	    int currentDriverID = -1;
@@ -115,8 +151,41 @@ public class VehicleEntry extends Activity
 	    	if (dr != null)
 	    		currentDriverID = dr.getID();
 	    }
+	    else if (cameFromEdit_veh != null)
+	    {
+	    	currentDriverID = cameFromEdit_veh.getDriverID();
+	    }
 	    SpinnerDataFactory.setupDriversSpinner
 	    	(db, this, driver, currentDriverID);
+	}
+
+	/**
+	 * During onCreate, show this vehicle's fields, except the Driver spinner.
+	 * Spinners are set in {@link #onCreate(Bundle)}.
+	 * @param veh  Always {@link #cameFromEdit_veh}
+	 */
+	private void updateScreenFieldsFromVehicle()
+	{
+		final Vehicle veh = cameFromEdit_veh;
+		
+		nickname.setText(veh.getNickname());
+		// driver is already set
+		vmodel.setText(veh.getModel());
+		year.setText(Integer.toString(veh.getYear()));
+		vin.setText(veh.getVin());
+		odo_orig.setCurrent10d(veh.getOdometerOriginal(), true);
+		odo_orig.setEnabled(false);
+		odo_curr.setCurrent10d(veh.getOdometerCurrent(), true);
+		comment.setText(veh.getComment());
+
+		// set vmake spinner:
+		final int id = veh.getMakeID();
+		for (int i = VEHICLEMAKES.length - 1; i >= 0; --i)
+			if (id == VEHICLEMAKES[i].getID())
+			{
+				vmake.setSelection(i);
+				break;
+			}
 	}
 
 	@Override
@@ -152,15 +221,31 @@ public class VehicleEntry extends Activity
 			Toast.makeText(this, R.string.vehicle_entry_year, Toast.LENGTH_SHORT).show();
 			return;
 		}
-		Vehicle nv = new Vehicle
-		  (nickname.getText().toString(),
-		   (Person) driver.getSelectedItem(), ((VehicleMake) vmake.getSelectedItem()).getID(),
-		   vmodel.getText().toString(),
-		   yr,
-		   0, 0, vin.getText().toString(),
-		   odo_orig.getCurrent10d(), odo_curr.getCurrent10d(),
-		   comment.getText().toString());
-		nv.insert(db);
+
+		Vehicle nv;
+		if (cameFromEdit_veh == null)
+		{
+			nv = new Vehicle
+			  (nickname.getText().toString(),
+			   (Person) driver.getSelectedItem(), ((VehicleMake) vmake.getSelectedItem()).getID(),
+			   vmodel.getText().toString(),
+			   yr,
+			   0, 0, vin.getText().toString(),
+			   odo_orig.getCurrent10d(), odo_curr.getCurrent10d(),
+			   comment.getText().toString());
+			nv.insert(db);
+		} else {
+			nv = cameFromEdit_veh;
+			nv.setNickname(nickname.getText().toString());
+			nv.setDriverID((Person) driver.getSelectedItem());
+			nv.setMakeID(((VehicleMake) vmake.getSelectedItem()).getID());
+			nv.setModel(vmodel.getText().toString());
+			nv.setYear(yr);
+			nv.setVin(vin.getText().toString());
+			nv.setOdometerCurrent(odo_curr.getCurrent10d());
+			nv.setComment(comment.getText().toString());
+			nv.commit();
+		}
 
     	if (! Settings.exists(db, Settings.CURRENT_VEHICLE))  // TODO also popup to ask user, if no curr_trip
     	{
@@ -168,7 +253,7 @@ public class VehicleEntry extends Activity
     		Settings.setPreviousLocation(db, null);
     	}
 
-    	if (! cameFromAskNew)
+    	if ((cameFromEdit_veh == null) && ! cameFromAskNew)
 		{
 	    	startActivity(new Intent(VehicleEntry.this, Main.class));
 		} else {

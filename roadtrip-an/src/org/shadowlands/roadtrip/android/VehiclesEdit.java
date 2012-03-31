@@ -121,8 +121,6 @@ public class VehiclesEdit extends Activity
 		if (allV == null)
 			return false;
 		lvVeh.setAdapter(new ArrayAdapter<Vehicle>(this, R.layout.list_item, allV));
-		Toast.makeText(this, "Got " + veh.length + " vehicles", Toast.LENGTH_SHORT).show();
-		Toast.makeText(this, "Last veh str is '" + veh[veh.length-1].toString() + "'", Toast.LENGTH_SHORT).show();
 		return true;
 	}
 

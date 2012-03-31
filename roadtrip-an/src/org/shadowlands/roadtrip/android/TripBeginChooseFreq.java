@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  Copyright (C) 2010 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010,2012 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -44,7 +44,7 @@ import android.widget.Toast;
  *<P>
  * Called from {@link TripBegin} with {@link Activity#startActivityForResult(android.content.Intent, int)}.
  * When it returns to <tt>TripBegin</tt> with the result, its intent should contain
- * an int extra, with key = "_id", that's the chosen FreqTrip.
+ * an int extra, with key = <tt>"_id"</tt>, that's the chosen FreqTrip.
  * If there are no available freqtrips, a Toast is presented to tell the user,
  * and {@link Activity#RESULT_CANCELED} is returned.
  *<P>
@@ -75,8 +75,7 @@ public class TripBeginChooseFreq extends Activity
 
 	/** Called when the activity is first created.
 	 * See {@link #onResume()} for remainder of init work,
-	 * which includes updating the last-backup time,
-	 * checking the SD Card status, etc.
+	 * which includes {@link #populateTripsList(RDBAdapter)}.
 	 */
 	@Override
 	public void onCreate(Bundle savedInstanceState)
@@ -110,7 +109,7 @@ public class TripBeginChooseFreq extends Activity
 
 	/**
 	 * Populate freq-stops list.
-	 * If there are none, set our result to {@link #RESULT_CANCELED} and finish this activity.
+	 * If there are none: Toast, set our result to {@link #RESULT_CANCELED} and finish this activity.
 	 */
 	@Override
 	public void onResume()

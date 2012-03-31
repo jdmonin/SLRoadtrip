@@ -4,13 +4,14 @@
 -- make all code changes listed in RDBSchema's class javadoc, and
 -- add the upgrade script to RtrDBOpenHelper.getSQLScript().
 -- Remember: Any schema changes must also be made
--- within the java accessor classes.
+-- within the java accessor classes.  Changes to important tables
+-- or transactional tables should also be changed in RDBVerifier.
 
 PRAGMA user_version = 0906;
 
 -- This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
 -- 
---  Copyright (C) 2010 Jeremy D Monin (jdmonin@nand.net)
+--  This file Copyright (C) 2010-2012 Jeremy D Monin (jdmonin@nand.net)
 -- 
 --  This program is free software: you can redistribute it and/or modify
 --  it under the terms of the GNU General Public License as published by
@@ -142,6 +143,10 @@ create table tstop ( _id integer PRIMARY KEY AUTOINCREMENT not null, tripid int 
 	--       Other stops during roadtrip: a_id is set for any roadtrip stop
 	--         which is within the starting or ending geoarea.
 	--         for stops 'in the middle' (neither start or end area), a_id is null.
+	--     0 for a_id is ok for a local tstop, but not ok for start/end location of trip.
+	--         A roadtrip's ending tstop's areaid should be the ending area.
+	--         A roadtrip's starting tstop's areaid is ignored, because it could be the
+	--         ending tstop of a local trip.
 	-- via_route, via_id are the route from the previous tstop's location;
 	--    they are ignored for the tstop which starts a trip. (via_id goes to the via_route table)
 	-- descr is null for all new rows (starting with app version 0.9.05), because the separate

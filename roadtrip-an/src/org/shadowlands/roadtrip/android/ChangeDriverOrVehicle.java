@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  Copyright (C) 2010-2011 Jeremy D Monin <jdmonin@nand.net>
+ *  Copyright (C) 2010-2012 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -30,8 +30,8 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.ArrayAdapter;
 import android.widget.Spinner;
+import android.widget.Toast;
 
 /**
  * Change the current driver or the current vehicle
@@ -130,7 +130,25 @@ public class ChangeDriverOrVehicle extends Activity
 		startActivityForResult(i, R.id.change_cvd_vehicle_new);
     }
 
-	/**
+    public void onClick_BtnDriversEdit(View v)
+    {
+    	Toast.makeText(this, "Stub: Edit drivers", Toast.LENGTH_SHORT).show();
+    	// TODO.
+    	// Intent i = new Intent(this, DriversEdit.class);
+    	// startActivityForResult(i, R.id.change_cvd_drivers_edit);
+    	// TODO update onActivityResult
+    }
+
+    public void onClick_BtnVehiclesEdit(View v)
+    {
+    	Toast.makeText(this, "Stub: Edit vehicles", Toast.LENGTH_SHORT).show();
+    	// TODO.
+    	// Intent i = new Intent(this, VehiclesEdit.class);
+    	// startActivityForResult(i, R.id.change_cvd_vehicles_edit);
+    	// TODO update onActivityResult
+    }
+
+    /**
 	 * Callback from {@link DriverEntry} or {@link VehicleEntry}.
 	 * @param idata  intent containing extra int "_id" with the
 	 *     ID of the newly added driver or vehicle
@@ -141,10 +159,20 @@ public class ChangeDriverOrVehicle extends Activity
 		if (resultCode == RESULT_CANCELED)
 			return;
 
-		if (requestCode == R.id.change_cvd_driver_new)
-			spinnerAddNewItem(true, driver, idata);
-		else
-			spinnerAddNewItem(false, veh, idata);
+		switch (requestCode)
+		{
+		case R.id.change_cvd_driver_new:
+			spinnerAddNewItem(true, driver, idata);  break;
+
+		case R.id.change_cvd_vehicle_new:
+			spinnerAddNewItem(false, veh, idata);    break;
+
+		case R.id.change_cvd_drivers_edit:
+			// TODO requery all-drivers spinner;     break;
+
+		case R.id.change_cvd_vehicles_edit:
+			// TODO requery all-vehicles spinner;    break;
+		}
 	}
 
 	/** update the Driver or Vehicle spinner contents, via intent extra "_id" */

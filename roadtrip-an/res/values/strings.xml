@@ -2,7 +2,7 @@
 <!--
  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
 
- Copyright (C) 2010-2011 Jeremy D Monin (jdmonin@nand.net)
+ Copyright (C) 2010-2012 Jeremy D Monin (jdmonin@nand.net)
 
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
@@ -72,8 +72,8 @@
 <string name="model">Model</string>
 <string name="name">Name</string>
 <string name="new_area">New area</string>
-<string name="new_driver">New driver...</string>
-<string name="new_vehicle">New vehicle...</string>
+<string name="new_driver">New driver</string>
+<string name="new_vehicle">New vehicle</string>
 <string name="no_earlier_trips_found">No earlier trips were found.</string>
 <string name="no_frequent_trips_found">No frequent trips were found.</string>
 <string name="no_later_trips_found">No later trips were found.</string>
@@ -158,6 +158,8 @@
 <string name="backups_restore_validation_error">Error in file validation.</string>
 <string name="backups_restore_validation_ok">File validated.</string>
 <string name="backups_restore__title">Restore from Backup</string>
+<string name="change_veh_or_driv__edit_drivers">Edit drivers</string>
+<string name="change_veh_or_driv__edit_vehicles">Edit vehicles</string>
 <string name="driver_entry_prompt">Enter information about this driver.</string>
 <string name="trip_createfreq__title">Create Frequent Trip</string>
 <string name="trip_createfreq_cancel_are_you_sure">Are you sure you want to cancel?\nThe Frequent Trip will not be created.</string>

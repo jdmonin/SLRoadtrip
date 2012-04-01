@@ -104,6 +104,19 @@
 		<TextView  
 		    android:layout_width="wrap_content" 
 		    android:layout_height="fill_parent" 
+		    android:text="@string/vehicle_entry_in_use_since"
+		    />
+		<Button
+		    android:id="@+id/vehicle_entry_btn_date_from"
+		    android:text="@string/vehicle_entry_set_date__optional"
+		    android:onClick="onClick_BtnDateFrom"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content" />
+    </TableRow>
+    <TableRow>
+		<TextView  
+		    android:layout_width="wrap_content" 
+		    android:layout_height="fill_parent" 
 		    android:text="@string/original_odometer"
 		    />
 		<org.shadowlands.roadtrip.android.OdometerNumberPicker

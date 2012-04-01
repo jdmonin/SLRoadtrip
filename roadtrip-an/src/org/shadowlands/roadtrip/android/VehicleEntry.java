@@ -19,9 +19,11 @@
 
 package org.shadowlands.roadtrip.android;
 
+import java.util.Calendar;
 import java.util.Vector;
 
 import org.shadowlands.roadtrip.R;
+import org.shadowlands.roadtrip.android.util.Misc;
 import org.shadowlands.roadtrip.db.Person;
 import org.shadowlands.roadtrip.db.RDBAdapter;
 import org.shadowlands.roadtrip.db.Settings;
@@ -30,11 +32,17 @@ import org.shadowlands.roadtrip.db.VehicleMake;
 import org.shadowlands.roadtrip.db.android.RDBOpenHelper;
 
 import android.app.Activity;
+import android.app.DatePickerDialog;
+import android.app.DatePickerDialog.OnDateSetListener;
+import android.app.Dialog;
 import android.content.Intent;
 import android.database.sqlite.SQLiteException;
 import android.os.Bundle;
+import android.text.format.DateFormat;
 import android.view.View;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.Toast;
@@ -57,7 +65,8 @@ import android.widget.Toast;
  * The Result code will be set to RESULT_OK, and the Intent will get
  * an int extra called "_id" with the ID of the edited vehicle.
  */
-public class VehicleEntry extends Activity
+public class VehicleEntry
+	extends Activity implements OnDateSetListener
 {
 	/** Flag to show we already have a driver entered,
 	 *  but the user asked to enter a new driver;
@@ -90,6 +99,19 @@ public class VehicleEntry extends Activity
 	private Spinner driver, vmake;
 	private OdometerNumberPicker odo_orig, odo_curr;
 
+	/** Button to set or change {@link #dateFrom} */
+	private Button btnDateFrom;
+
+	/** Vehicle's "in use since" date_from if any, or null; set with button {@link #btnDateFrom} */
+	private Calendar dateFrom;
+
+	/**
+	 * Date formatter for use with
+	 * {@link DateFormat#format(CharSequence, Calendar)} by {@link #btnDateFrom}.
+	 * initialized once in {@link #updateDateButton()}.
+	 */
+	private StringBuffer fmt_dow_shortdate;
+
 	/** Called when the activity is first created. */
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -118,6 +140,7 @@ public class VehicleEntry extends Activity
 	    odo_curr = (OdometerNumberPicker) findViewById(R.id.vehicle_entry_odo_curr);
 	    odo_orig.setTenthsVisibility(false);
 	    odo_curr.setTenthsVisibility(false);
+	    btnDateFrom = (Button) findViewById(R.id.vehicle_entry_btn_date_from);
 
 	    db = new RDBOpenHelper(this);
 
@@ -178,6 +201,14 @@ public class VehicleEntry extends Activity
 		odo_curr.setCurrent10d(veh.getOdometerCurrent(), true);
 		comment.setText(veh.getComment());
 
+		if (veh.getDate_from() != 0)
+		{
+			if (dateFrom == null)
+				dateFrom = Calendar.getInstance();
+			dateFrom.setTimeInMillis(1000L * veh.getDate_from());
+			updateDateButton();
+		}
+
 		// set vmake spinner:
 		final int id = veh.getMakeID();
 		for (int i = VEHICLEMAKES.length - 1; i >= 0; --i)
@@ -186,6 +217,18 @@ public class VehicleEntry extends Activity
 				vmake.setSelection(i);
 				break;
 			}
+	}
+
+	/** Update the date shown on {@link #btnDateFrom} from {@link #dateFrom} */
+	private void updateDateButton()
+	{
+		if (dateFrom == null)
+			return;
+		if (fmt_dow_shortdate == null)
+			fmt_dow_shortdate = Misc.buildDateFormatDOWShort(this, true);
+
+		// update btn date text:
+		btnDateFrom.setText(DateFormat.format(fmt_dow_shortdate, dateFrom));
 	}
 
 	@Override
@@ -202,6 +245,50 @@ public class VehicleEntry extends Activity
 		super.onDestroy();
 		if (db != null)
 			db.close();
+	}
+
+	/**
+	 * Show the {@link DatePickerDialog} when the in-use-since-date button is clicked.
+	 * @see #onCreateDialog(int)
+	 */
+	public void onClick_BtnDateFrom(View v)
+	{
+		showDialog(R.id.vehicle_entry_btn_date_from);
+	}
+
+	/**
+	 * Callback for displaying {@link DatePickerDialog} after {@link #onClick_BtnDateFrom(View)}.
+	 * @see #onDateSet(DatePicker, int, int, int)
+	 */
+	@Override
+	protected Dialog onCreateDialog(final int id)
+	{
+		// Assumes id == R.id.trip_tstop_btn_cont_date
+
+		if (dateFrom == null)
+			dateFrom = Calendar.getInstance();  // will be today's date
+
+        return new DatePickerDialog
+        	(this, this,
+        	 dateFrom.get(Calendar.YEAR),
+        	 dateFrom.get(Calendar.MONTH),
+        	 dateFrom.get(Calendar.DAY_OF_MONTH));
+	}
+
+	/**
+	 * Callback from {@link DatePickerDialog} for vehicle's "in use since" date.
+	 * Updates {@link #dateFrom}, calls {@link #updateDateButton()}.
+	 */
+	public void onDateSet(DatePicker dp, final int year, final int month, final int monthday)
+	{
+		if (dateFrom == null)
+			return;  // shouldn't happen
+
+		dateFrom.set(Calendar.YEAR, year);
+		dateFrom.set(Calendar.MONTH, month);
+		dateFrom.set(Calendar.DAY_OF_MONTH, monthday);
+
+		updateDateButton();
 	}
 
 	public void onClick_BtnOK(View v)
@@ -222,6 +309,20 @@ public class VehicleEntry extends Activity
 			return;
 		}
 
+		if (odo_curr.getCurrent10d() < odo_orig.getCurrent10d())
+		{
+			odo_curr.requestFocus();			
+			Toast.makeText(this, R.string.vehicle_entry_odo_curr_low, Toast.LENGTH_SHORT).show();
+			return;
+		}
+
+		int datefrom_int;
+		if (dateFrom == null)
+			datefrom_int = 0;
+		else
+			datefrom_int = (int) (dateFrom.getTimeInMillis() / 1000L);
+		// TODO on edit: check against trips' minimum date
+
 		Vehicle nv;
 		if (cameFromEdit_veh == null)
 		{
@@ -230,7 +331,7 @@ public class VehicleEntry extends Activity
 			   (Person) driver.getSelectedItem(), ((VehicleMake) vmake.getSelectedItem()).getID(),
 			   vmodel.getText().toString(),
 			   yr,
-			   0, 0, vin.getText().toString(),
+			   datefrom_int, 0, vin.getText().toString(),
 			   odo_orig.getCurrent10d(), odo_curr.getCurrent10d(),
 			   comment.getText().toString());
 			nv.insert(db);
@@ -241,6 +342,7 @@ public class VehicleEntry extends Activity
 			nv.setMakeID(((VehicleMake) vmake.getSelectedItem()).getID());
 			nv.setModel(vmodel.getText().toString());
 			nv.setYear(yr);
+			nv.setDate_from(datefrom_int);
 			nv.setVin(vin.getText().toString());
 			nv.setOdometerCurrent(odo_curr.getCurrent10d());
 			nv.setComment(comment.getText().toString());

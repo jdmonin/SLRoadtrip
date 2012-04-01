@@ -194,7 +194,10 @@
 <string name="trip_tstop_gas__title">Trip Stop: Gas</string>
 <string name="vehicle_entry_hint_nickname">Optional nickname or color</string>
 <string name="vehicle_entry_hint_year">Model year</string>
+<string name="vehicle_entry_in_use_since">In use\nsince</string>
+<string name="vehicle_entry_odo_curr_low">The current odometer is lower than the original odometer.</string>
 <string name="vehicle_entry_prompt">Enter information about this vehicle.</string>
+<string name="vehicle_entry_set_date__optional">Set date\n(optional)</string>
 <string name="vehicle_entry_year">Please enter the year.</string>
 <string name="vehicle_make">Make (Brand)</string>
 </resources>

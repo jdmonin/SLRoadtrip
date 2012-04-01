@@ -31,7 +31,8 @@
 	<activity android:name=".android.VehicleEntry" />
 	<activity android:name=".android.DriverEntry" />
 	<activity android:name=".android.Main" />
-	<activity android:name=".android.ChangeDriverOrVehicle" />
+	<activity android:name=".android.ChangeDriverOrVehicle"  android:label="@string/change_driver_vehicle" />
+	<activity android:name=".android.DriversEdit"  android:label="@string/edit_drivers" />
 	<activity android:name=".android.TripBegin"  android:label="@string/begin_trip" />
 	<activity android:name=".android.TripBeginChooseFreq"  android:label="@string/choose_a_frequent_trip" />
 	<activity android:name=".android.TripCreateFreq"  android:label="@string/trip_createfreq__title" />

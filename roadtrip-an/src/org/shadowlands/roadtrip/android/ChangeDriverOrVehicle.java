@@ -137,11 +137,8 @@ public class ChangeDriverOrVehicle extends Activity
 
     public void onClick_BtnDriversEdit(View v)
     {
-    	Toast.makeText(this, "Stub: Edit drivers", Toast.LENGTH_SHORT).show();
-    	// TODO.
-    	// Intent i = new Intent(this, DriversEdit.class);
-    	// startActivityForResult(i, R.id.change_cvd_drivers_edit);
-    	// TODO update onActivityResult
+    	Intent i = new Intent(this, DriversEdit.class);
+    	startActivityForResult(i, R.id.change_cvd_drivers_edit);
     }
 
     public void onClick_BtnVehiclesEdit(View v)
@@ -151,9 +148,11 @@ public class ChangeDriverOrVehicle extends Activity
     }
 
     /**
-	 * Callback from {@link DriverEntry} or {@link VehicleEntry}.
+	 * Callback from {@link DriverEntry}, {@link VehicleEntry}, {@link DriversEdit} or {@link VehiclesEdit}.
 	 * @param idata  intent containing extra int "_id" with the
-	 *     ID of the newly added driver or vehicle
+	 *     ID of the newly added driver or vehicle (for New only),
+	 *     or with result code {@link #RESULT_CHANGES_MADE}
+	 *     if any vehicle or driver was edited.
 	 */
 	@Override
 	public void onActivityResult(final int requestCode, final int resultCode, Intent idata)
@@ -170,7 +169,13 @@ public class ChangeDriverOrVehicle extends Activity
 			spinnerAddNewItem(false, veh, idata);    break;
 
 		case R.id.change_cvd_drivers_edit:
-			// TODO requery all-drivers spinner;     break;
+			if (resultCode == RESULT_CHANGES_MADE)
+			{
+				if (db == null)
+					db = new RDBOpenHelper(this);
+				SpinnerDataFactory.setupDriversSpinner(db, this, veh, currDID);
+			}
+			break;
 
 		case R.id.change_cvd_vehicles_edit:
 			if (resultCode == RESULT_CHANGES_MADE)

@@ -59,12 +59,18 @@ public class DriverEntry extends Activity
 	public static final String EXTRAS_FLAG_ASKED_NEW = "new";
 
 	/**
+	 * Int extra for a person ID to edit here;
+	 * for {@link Intent#putExtra(String, int)}.
+	 */
+	public static final String EXTRAS_INT_EDIT_ID = "edit";
+
+	/**
 	 * If true, {@link #EXTRAS_FLAG_ASKED_NEW} was set.
 	 */
 	private boolean cameFromAskNew;
 
 	private boolean isTextFromDB = false;
-	private Person dbPerson = null;  // only valid if isTextFromDB
+	private Person cameFromEdit_person = null;  // only valid if isTextFromDB
 
 	private EditText name;
 	private RDBAdapter db;
@@ -93,8 +99,8 @@ public class DriverEntry extends Activity
 	        	if (drivers != null)
 	        	{
 	        		// TODO edit selected, not edit first in db
-	        		dbPerson = drivers[0];
-	        		String txt = dbPerson.getName();
+	        		cameFromEdit_person = drivers[0];
+	        		String txt = cameFromEdit_person.getName();
 	        		isTextFromDB = true;
 	            	name.setText(txt);
 	        	}
@@ -116,17 +122,17 @@ public class DriverEntry extends Activity
     	{
       		if (isTextFromDB)
       		{
-      			dbPerson.setName(value.toString());
-      			dbPerson.commit();
+      			cameFromEdit_person.setName(value.toString());
+      			cameFromEdit_person.commit();
       		} else {
-      			dbPerson = new Person(value.toString(), true, null, null);
-      			dbPerson.insert(db);
+      			cameFromEdit_person = new Person(value.toString(), true, null, null);
+      			cameFromEdit_person.insert(db);
       		}
           	isTextFromDB = true;
 
         	if (! Settings.exists(db, Settings.CURRENT_DRIVER))
         	{
-        		Settings.setCurrentDriver(db, dbPerson);
+        		Settings.setCurrentDriver(db, cameFromEdit_person);
         	}
     	}
 
@@ -144,7 +150,7 @@ public class DriverEntry extends Activity
 	    	startActivity(intent);
     	} else {
     		Intent i = getIntent();
-	    	i.putExtra("_id", dbPerson.getID());
+	    	i.putExtra("_id", cameFromEdit_person.getID());
 	    	setResult(RESULT_OK, i);
     	}
     	finish();

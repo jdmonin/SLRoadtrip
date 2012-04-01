@@ -214,7 +214,7 @@ public class VehicleEntry
 		for (int i = VEHICLEMAKES.length - 1; i >= 0; --i)
 			if (id == VEHICLEMAKES[i].getID())
 			{
-				vmake.setSelection(i);
+				vmake.setSelection(i, true);
 				break;
 			}
 	}

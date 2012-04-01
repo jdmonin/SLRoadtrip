@@ -63,7 +63,7 @@ public class SpinnerDataFactory
     		for (int i = drivers.length - 1; i >= 0; --i)
     			if (currentID == drivers[i].getID())
     			{
-    				sp.setSelection(i);
+    				sp.setSelection(i, true);
     				break;
     			}
     	}
@@ -94,7 +94,7 @@ public class SpinnerDataFactory
     		for (int i = areas.length - 1; i >= 0; --i)
     			if (currentID == areas[i].getID())
     			{
-    				sp.setSelection(i);
+    				sp.setSelection(i, true);
     				break;
     			}
     	}
@@ -125,7 +125,7 @@ public class SpinnerDataFactory
     		for (int i = veh.length - 1; i >= 0; --i)
     			if (currentID == veh[i].getID())
     			{
-    				sp.setSelection(i);
+    				sp.setSelection(i, true);
     				break;
     			}
     	}

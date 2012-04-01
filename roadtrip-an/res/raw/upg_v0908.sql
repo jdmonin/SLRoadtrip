@@ -28,6 +28,6 @@ ALTER TABLE vehiclemake ADD COLUMN is_user_add int;
 
 CREATE TABLE app_db_upgrade_hist ( db_vers_to int not null, db_vers_from not null, upg_time int not null );
 
--- adds 2012-03-31 v0907: citroen = 52 renault = 53
+-- adds 2012-03-31 v0908: citroen = 52 renault = 53
 insert into vehiclemake(mname) values ('Citroen');
 insert into vehiclemake(mname) values ('Renault');

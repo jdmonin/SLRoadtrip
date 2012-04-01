@@ -1,5 +1,5 @@
 -- org.shadowlands.roadtrip
--- version 0.9.06 schema for SQLite 3.4 or higher  (2010-12-16)
+-- version 0.9.08 schema for SQLite 3.4 or higher  (2012-03-31)
 -- Remember: When you upgrade the schema version, be sure to
 -- make all code changes listed in RDBSchema's class javadoc, and
 -- add the upgrade script to RtrDBOpenHelper.getSQLScript().
@@ -7,7 +7,7 @@
 -- within the java accessor classes.  Changes to important tables
 -- or transactional tables should also be changed in RDBVerifier.
 
-PRAGMA user_version = 0906;
+PRAGMA user_version = 0908;
 
 -- This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
 -- 
@@ -48,19 +48,19 @@ PRAGMA auto_vacuum = INCREMENTAL;
 
 create table appinfo ( _id integer PRIMARY KEY AUTOINCREMENT not null, aifield varchar(32) not null unique, aivalue varchar(64) not null );
 	-- Important keys: (See also db.AppInfo javadocs, where some of these are static final string fields)
-	-- DB_CREATE_SCHEMAVERSION: 0906
+	-- DB_CREATE_SCHEMAVERSION: 0908
 	-- DB_CREATE_DATETIME
 	-- DB_CREATE_APPNAME: 'org.shadowlands.roadtrip'
 	-- DB_BACKUP_PREVFILE: copied from previous DB_BACKUP_THISFILE when user asks to back up; doesn't include path, only filename
 	-- DB_BACKUP_PREVTIME: (unix format) time of DB_BACKUP_PREVFILE
 	-- DB_BACKUP_THISFILE: written just before closing db for backup copy; if backup fails, clear it afterwards (copy it back from DB_BACKUP_PREVFILE)
 	-- DB_BACKUP_THISTIME: (unix format) time of DB_BACKUP_THISFILE
-	-- DB_CURRENT_SCHEMAVERSION (0906 unless it was upgraded)
+	-- DB_CURRENT_SCHEMAVERSION (0908 unless it was upgraded)
 	-- DB_UPGRADED_DATETIME (may not be present)
 	-- DB_UPGRADED_APPNAME (may not be present)
 
-insert into appinfo (aifield, aivalue) values ('DB_CREATE_SCHEMAVERSION', '0906');
-insert into appinfo (aifield, aivalue) values ('DB_CURRENT_SCHEMAVERSION', '0906');
+insert into appinfo (aifield, aivalue) values ('DB_CREATE_SCHEMAVERSION', '0908');
+insert into appinfo (aifield, aivalue) values ('DB_CURRENT_SCHEMAVERSION', '0908');
 
 create table settings ( _id integer PRIMARY KEY AUTOINCREMENT not null, sname varchar(32) not null unique, svalue varchar(64), ivalue int );
 	-- DISTANCE_DISPLAY: KM or MI
@@ -74,16 +74,21 @@ create table settings ( _id integer PRIMARY KEY AUTOINCREMENT not null, sname va
 	-- CURRENT_FREQTRIP_TSTOPLIST (empty string, or comma-delimited _id)
 	--      added in v0900; unused IDs for this freqtrip in freqtrip_tstop
 
+create table app_db_upgrade_hist ( db_vers_to int not null, db_vers_from not null, upg_time int not null );
+    -- May be empty, if db never upgraded
+    -- db_vers_from, db_vers_to are schema version numbers, like 908
+    -- upg_time is unix format
+
 create table geoarea ( _id integer PRIMARY KEY AUTOINCREMENT not null, aname varchar(255) not null );
 
-create table person ( _id integer PRIMARY KEY AUTOINCREMENT not null, is_driver int not null, name varchar(255) not null unique, contact_uri varchar(255) );
+create table person ( _id integer PRIMARY KEY AUTOINCREMENT not null, is_driver int not null, name varchar(255) not null unique, contact_uri varchar(255), is_active int not null default 1, comment varchar(255) );
 
 create index "person~d" ON person(is_driver);
 
-create table vehiclemake ( _id integer PRIMARY KEY AUTOINCREMENT not null, mname varchar(255) not null unique );
+create table vehiclemake ( _id integer PRIMARY KEY AUTOINCREMENT not null, mname varchar(255) not null unique, is_user_add int );
 	-- see bottom of file for inserts into vehiclemake
 
-create table vehicle ( _id integer PRIMARY KEY AUTOINCREMENT not null, nickname varchar(255), driverid int not null, makeid int not null, model varchar(255), year integer not null, date_from integer, date_to integer, vin varchar(64), odo_orig integer not null, odo_curr integer not null, last_tripid integer, distance_storage varchar(2) not null, expense_currency varchar(3) not null, expense_curr_sym varchar(3) not null, expense_curr_deci integer not null, fuel_curr_deci integer not null, fuel_type varchar(1) not null, fuel_qty_unit varchar(2) not null, fuel_qty_deci integer not null, comment varchar(255) );
+create table vehicle ( _id integer PRIMARY KEY AUTOINCREMENT not null, nickname varchar(255), driverid int not null, makeid int not null, model varchar(255), year integer not null, date_from integer, date_to integer, vin varchar(64), odo_orig integer not null, odo_curr integer not null, last_tripid integer, distance_storage varchar(2) not null, expense_currency varchar(3) not null, expense_curr_sym varchar(3) not null, expense_curr_deci integer not null, fuel_curr_deci integer not null, fuel_type varchar(1) not null, fuel_qty_unit varchar(2) not null, fuel_qty_deci integer not null, comment varchar(255), is_active int not null default 1 );
     -- To reduce write freq, update odo_curr only at end of each trip, not at each trip stop.
     -- Also update last_trip_id at the end of each trip.
     -- If the vehicle has never finished a trip, last_trip_id is 0 or null.
@@ -123,7 +128,7 @@ create table trip ( _id integer PRIMARY KEY AUTOINCREMENT not null, vid integer 
 create index "trip~odo" ON trip(vid, odo_start);
 create index "trip~d" ON trip(vid, time_start);
 
-create table freqtrip ( _id integer PRIMARY KEY AUTOINCREMENT not null, a_id int, start_locid integer not null, end_locid integer not null, end_odo_trip int not null, roadtrip_end_aid int, descr varchar(255), end_via_id int, typ_timeofday int, flag_weekends int not null default 0, flag_weekdays int not null default 0);
+create table freqtrip ( _id integer PRIMARY KEY AUTOINCREMENT not null, a_id int, start_locid integer not null, end_locid integer not null, end_odo_trip int not null, roadtrip_end_aid int, descr varchar(255), end_via_id int, typ_timeofday int, flag_weekends int not null default 0, flag_weekdays int not null default 0, is_roundtrip int not null default 0 );
 	-- start_locid, end_locid are location IDs.
 	-- if typ_timeofday not null, it's a 24-hour time stored as hours*60 + minutes.
 
@@ -237,6 +242,10 @@ insert into vehiclemake(mname) values ('Toyota');
 insert into vehiclemake(mname) values ('Triumph');
 insert into vehiclemake(mname) values ('Volkswagen');
 insert into vehiclemake(mname) values ('Volvo');
+-- End of original sequence; acura is _id 1, and volvo is 51
+-- adds 2012-03-31 v0908: citroen = 52 renault = 53
+insert into vehiclemake(mname) values ('Citroen');
+insert into vehiclemake(mname) values ('Renault');
 commit;
 
 -- master-data inserts done --

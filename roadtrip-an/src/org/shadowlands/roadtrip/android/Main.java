@@ -57,6 +57,8 @@ import android.widget.Toast;
  * Main activity/screen of the application.
  * Go here after CURRENT_DRIVER and CURRENT_VEHICLE are set.
  * If these aren't found, go back to AndroidStartup activity.
+ *<P>
+ * Also contains the About box dialog.
  *
  * @author jdmonin
  */
@@ -183,7 +185,7 @@ public class Main extends Activity
 		case R.id.menu_main_about:
 			{
 				AlertDialog.Builder aboutBuilder = new AlertDialog.Builder(this);
-				aboutBuilder.setMessage(R.string.app_about)
+				aboutBuilder.setMessage(R.string.app_about)   // app_about is the multi-line text
 				  .setCancelable(true)
 				  .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
 					public void onClick(DialogInterface dialog, int id) {

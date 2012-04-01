@@ -134,8 +134,9 @@ create index "trip~odo" ON trip(vid, odo_start);
 create index "trip~d" ON trip(vid, time_start);
 create index "trip~cv" ON trip(catid, vid);
 
-create table freqtrip ( _id integer PRIMARY KEY AUTOINCREMENT not null, a_id int, start_locid integer not null, end_locid integer not null, end_odo_trip int not null, roadtrip_end_aid int, descr varchar(255), end_via_id int, typ_timeofday int, flag_weekends int not null default 0, flag_weekdays int not null default 0, is_roundtrip int not null default 0 );
+create table freqtrip ( _id integer PRIMARY KEY AUTOINCREMENT not null, a_id int, start_locid integer not null, end_locid integer not null, end_odo_trip int not null, roadtrip_end_aid int, descr varchar(255), end_via_id int, typ_timeofday int, flag_weekends int not null default 0, flag_weekdays int not null default 0, is_roundtrip int not null default 0, catid int );
 	-- start_locid, end_locid are location IDs.
+	-- fields with same name as a trip field have the same meaning.
 	-- if typ_timeofday not null, it's a 24-hour time stored as hours*60 + minutes.
 
 create index "freqtrip~l" ON freqtrip(start_locid);

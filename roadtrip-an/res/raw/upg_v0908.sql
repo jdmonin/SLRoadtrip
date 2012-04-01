@@ -26,10 +26,12 @@ ALTER TABLE freqtrip ADD COLUMN is_roundtrip int not null default 0;
 
 ALTER TABLE vehiclemake ADD COLUMN is_user_add int;
 
+CREATE TABLE tripcategory ( _id integer PRIMARY KEY AUTOINCREMENT not null, cname varchar(255) not null unique, pos int not null, is_user_add int );
+
 ALTER TABLE trip ADD COLUMN catid int;
 CREATE INDEX "trip~cv" ON trip(catid, vid);
 
-CREATE TABLE tripcategory ( _id integer PRIMARY KEY AUTOINCREMENT not null, cname varchar(255) not null unique, pos int not null, is_user_add int );
+ALTER TABLE freqtrip ADD COLUMN catid int;
 
 CREATE TABLE app_db_upgrade_hist ( db_vers_to int not null, db_vers_from not null, upg_time int not null );
 

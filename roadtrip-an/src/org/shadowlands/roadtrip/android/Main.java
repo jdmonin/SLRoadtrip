@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  Copyright (C) 2010-2011 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2012 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -32,6 +32,7 @@ import org.shadowlands.roadtrip.db.RDBKeyNotFoundException;
 import org.shadowlands.roadtrip.db.Settings;
 import org.shadowlands.roadtrip.db.TStop;
 import org.shadowlands.roadtrip.db.Trip;
+import org.shadowlands.roadtrip.db.TripCategory;
 import org.shadowlands.roadtrip.db.Vehicle;
 import org.shadowlands.roadtrip.db.android.RDBOpenHelper;
 
@@ -72,6 +73,11 @@ public class Main extends Activity
 	/** Current vehicle; updated in {@link #updateDriverVehTripTextAndButtons()} */
 	Vehicle currV = null;
 
+	/**
+	 * Holds 'Trip in Progress' status text; updated in {@link #updateDriverVehTripTextAndButtons()}.
+	 * For current roadtrip, show source and destination GeoAreas.
+	 * For categorized trip, show the category.
+	 */
 	private TextView tvCurrentSet;
 
 	private Button localTrip, roadTrip, freqLocal, freqRoad,
@@ -329,6 +335,10 @@ public class Main extends Activity
 	/**
 	 * Update the text about current driver, vehicle and trip;
 	 * hide or show start-stop buttons as appropriate.
+	 * Sets text of {@link #tvCurrentSet}, {@link #changeDriverOrVeh},
+	 * {@link #stopContinue}, etc.
+	 * For current roadtrip, show source and destination GeoAreas.
+	 * For categorized trip, show the category.
 	 */
 	private void updateDriverVehTripTextAndButtons()
 	{
@@ -358,11 +368,25 @@ public class Main extends Activity
 				txt.append("\nArea: ");
 			txt.append(currA.toString());
 
+			String currTCateg = null;
+			if (currT.getTripCategoryID() != 0)
+			{
+				try
+				{
+					TripCategory tc = new TripCategory(db, currT.getTripCategoryID());
+					currTCateg = " [" + tc.getName() + "]";
+				} catch (Throwable th) {}
+			}
+
 			if (destAreaID == 0)
 			{
 				txt.append("\n\nTrip in Progress.");
+				if (currTCateg != null)
+					txt.append(currTCateg);
 			} else {
-				txt.append("\n\nRoadtrip in progress.\nDestination area: ");
+				txt.append("\n\nRoadtrip in progress.");
+				txt.append(currTCateg);
+				txt.append("\nDestination area: ");
 				try {
 					txt.append(new GeoArea(db, destAreaID).getName());
 				} catch (IllegalStateException e) {

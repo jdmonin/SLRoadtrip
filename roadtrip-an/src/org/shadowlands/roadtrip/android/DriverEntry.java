@@ -79,7 +79,7 @@ public class DriverEntry extends Activity
 	 */
 	private Person cameFromEdit_person = null;
 
-	private EditText name;
+	private EditText name, comment;
 	private RDBAdapter db;
 
 	/** Called when the activity is first created. */
@@ -88,6 +88,7 @@ public class DriverEntry extends Activity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.driver_entry);
         name = (EditText) findViewById(R.id.driver_entry_name);
+        comment = (EditText) findViewById(R.id.driver_entry_comment);
 
         db = new RDBOpenHelper(this);
 
@@ -109,6 +110,9 @@ public class DriverEntry extends Activity
 			{
 				cameFromEdit_person = new Person(db, cameFromEdit_id);
 				name.setText(cameFromEdit_person.getName());
+				String s = cameFromEdit_person.getComment();
+				if ((s != null) && (s.length() > 0))
+					comment.setText(s);
 			} catch (Throwable e) {
 				// should not happen
 				Toast.makeText(this, R.string.not_found, Toast.LENGTH_SHORT).show();
@@ -133,12 +137,17 @@ public class DriverEntry extends Activity
     		return;
     	}
 
+    	String comm = comment.getText().toString().trim();
+    	if (comm.length() == 0)
+    		comm = null;
+
   		if (cameFromEdit_person != null)
   		{
   			cameFromEdit_person.setName(value.toString());
+  			cameFromEdit_person.setComment(comm);
   			cameFromEdit_person.commit();
   		} else {
-  			cameFromEdit_person = new Person(value.toString(), true, null, null);
+  			cameFromEdit_person = new Person(value.toString(), true, null, comm);
   			cameFromEdit_person.insert(db);
   		}
 

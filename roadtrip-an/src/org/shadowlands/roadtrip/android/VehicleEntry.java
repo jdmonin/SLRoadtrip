@@ -50,7 +50,7 @@ import android.widget.Toast;
 /**
  * Enter a new vehicle, or edit a vehicle.
  *<P>
- * <b>When no intent extra is used:</b><BR>
+ * <b>When no intent extras are used:</b><BR>
  * will next go to Main.
  *<P>
  * <b>When {@link #EXTRAS_FLAG_ASKED_NEW} is set:</b><BR>
@@ -349,11 +349,12 @@ public class VehicleEntry
 			nv.commit();
 		}
 
-    	if (! Settings.exists(db, Settings.CURRENT_VEHICLE))  // TODO also popup to ask user, if no curr_trip
+    	if (! Settings.exists(db, Settings.CURRENT_VEHICLE))
     	{
     		Settings.setCurrentVehicle(db, nv);
     		Settings.setPreviousLocation(db, null);
     	}
+		// TODO also popup to ask user whether to change setting to the new one, if no curr_trip
 
     	if ((cameFromEdit_veh == null) && ! cameFromAskNew)
 		{

@@ -27,20 +27,18 @@ import org.shadowlands.roadtrip.db.android.RDBOpenHelper;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.database.sqlite.SQLiteException;
 import android.os.Bundle;
 import android.text.Editable;
 import android.view.View;
 import android.widget.EditText;
-
-// TODO only handles the 1st driver, right now
+import android.widget.Toast;
 
 /**
  * Enter information about a driver.
  *<P>
- * <b>When {@link #EXTRAS_FLAG_ASKED_NEW} is not used:</b><BR>
+ * <b>When no intent extras are used:</b><BR>
  * When OK is pressed, check if CURRENT_VEHICLE is set.
- * If not set, go to Vehicle Entry.
+ * If not set, go to {@link VehicleEntry Vehicle Entry}.
  * Otherwise, go to Main.
  * Also set CURRENT_DRIVER if not already set.
  *<P>
@@ -49,6 +47,12 @@ import android.widget.EditText;
  * Finish this activity and return to what the user was previously doing.
  * The Result code will be set to RESULT_OK, and the Intent will get
  * an int extra called "_id" with the ID of the newly added driver.
+ *<P>
+ * <b>When {@link #EXTRAS_INT_EDIT_ID} is set:</b><BR>
+ * Edit the specified person.
+ * Finish this activity and return to what the user was previously doing.
+ * The Result code will be set to RESULT_OK, and the Intent will get
+ * an int extra called "_id" with the ID of the edited person.
  */
 public class DriverEntry extends Activity
 {
@@ -69,8 +73,11 @@ public class DriverEntry extends Activity
 	 */
 	private boolean cameFromAskNew;
 
-	private boolean isTextFromDB = false;
-	private Person cameFromEdit_person = null;  // only valid if isTextFromDB
+	/**
+	 * If not null, {@link #EXTRAS_INT_EDIT_ID} was set to this person's ID,
+	 * they was in the database, and we're editing them.
+	 */
+	private Person cameFromEdit_person = null;
 
 	private EditText name;
 	private RDBAdapter db;
@@ -81,34 +88,35 @@ public class DriverEntry extends Activity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.driver_entry);
         name = (EditText) findViewById(R.id.driver_entry_name);
+
         db = new RDBOpenHelper(this);
 
+        int cameFromEdit_id;
 		Intent i = getIntent();
 		if (i != null)
 		{
 			cameFromAskNew = i.getBooleanExtra(EXTRAS_FLAG_ASKED_NEW, false);
+			cameFromEdit_id = i.getIntExtra(EXTRAS_INT_EDIT_ID, 0);
 		} else {
 	        cameFromAskNew = false;
+	        cameFromEdit_id = 0;
 		}
 
-        if ((name != null) && ! cameFromAskNew)
-        {
-        	try
-        	{
-        		Person[] drivers = Person.getAll(db, true);
-	        	if (drivers != null)
-	        	{
-	        		// TODO edit selected, not edit first in db
-	        		cameFromEdit_person = drivers[0];
-	        		String txt = cameFromEdit_person.getName();
-	        		isTextFromDB = true;
-	            	name.setText(txt);
-	        	}
-        	}
-        	catch (SQLiteException e)
-        	{}
-
-        }
+		cameFromEdit_person = null;
+		if ((cameFromEdit_id != 0) && ! cameFromAskNew)
+		{
+			try
+			{
+				cameFromEdit_person = new Person(db, cameFromEdit_id);
+				name.setText(cameFromEdit_person.getName());
+			} catch (Throwable e) {
+				// should not happen
+				Toast.makeText(this, R.string.not_found, Toast.LENGTH_SHORT).show();
+				setResult(Activity.RESULT_CANCELED);
+				finish();
+				return;   // <--- Early return: Could lot load from db to view fields ---
+			}
+		}
     }
 
     /**
@@ -118,27 +126,31 @@ public class DriverEntry extends Activity
     public void onClick_BtnOK(View v)
     {
     	Editable value = name.getText();
-    	if ((db != null) && (name != null) && (value.length() > 0))
+    	if (value.length() == 0)
     	{
-      		if (isTextFromDB)
-      		{
-      			cameFromEdit_person.setName(value.toString());
-      			cameFromEdit_person.commit();
-      		} else {
-      			cameFromEdit_person = new Person(value.toString(), true, null, null);
-      			cameFromEdit_person.insert(db);
-      		}
-          	isTextFromDB = true;
+    		name.requestFocus();
+    		Toast.makeText(this, R.string.driver_entry_prompt, Toast.LENGTH_SHORT).show();
+    		return;
+    	}
 
-        	if (! Settings.exists(db, Settings.CURRENT_DRIVER))
-        	{
-        		Settings.setCurrentDriver(db, cameFromEdit_person);
-        	}
+  		if (cameFromEdit_person != null)
+  		{
+  			cameFromEdit_person.setName(value.toString());
+  			cameFromEdit_person.commit();
+  		} else {
+  			cameFromEdit_person = new Person(value.toString(), true, null, null);
+  			cameFromEdit_person.insert(db);
+  		}
+
+    	if (! Settings.exists(db, Settings.CURRENT_DRIVER))
+    	{
+    		Settings.setCurrentDriver(db, cameFromEdit_person);
     	}
 
     	// where to go next?
-    	if (! cameFromAskNew)
+    	if ((cameFromEdit_person == null) && ! cameFromAskNew)
     	{
+    		// Initial setup of app
 	    	Intent intent;
 	    	if (Settings.exists(db, Settings.CURRENT_VEHICLE))
 	    	{

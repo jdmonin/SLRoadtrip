@@ -173,7 +173,7 @@ public class ChangeDriverOrVehicle extends Activity
 			{
 				if (db == null)
 					db = new RDBOpenHelper(this);
-				SpinnerDataFactory.setupDriversSpinner(db, this, veh, currDID);
+				SpinnerDataFactory.setupDriversSpinner(db, this, driver, currDID);
 			}
 			break;
 

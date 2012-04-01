@@ -161,7 +161,7 @@ public class Vehicle extends RDBRecord
 
     /**
      * Fill our obj fields from db-record string contents.
-     * <tt>id</tt> is not filled; the constructor has filled it already.
+     * <tt>_id</tt> is not filled; the constructor has filled it already.
      * @param rec, as returned by db.getRow(FIELDS) or db.getRows(FIELDS_AND_ID)
      * @throws IllegalArgumentException if rec.length is too short
      */
@@ -506,7 +506,7 @@ public class Vehicle extends RDBRecord
 		return is_active;
 	}
 
-    public void setIsActive(final boolean isActive)
+    public void setActive(final boolean isActive)
 	{
 		if (isActive == is_active)
 			return;

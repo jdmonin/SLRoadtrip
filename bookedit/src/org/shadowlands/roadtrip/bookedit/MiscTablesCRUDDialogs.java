@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  Copyright (C) 2010 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010,2012 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -45,15 +45,17 @@ public abstract class MiscTablesCRUDDialogs
 	public static Person createEditPersonDialog(JFrame owner, RDBAdapter conn, Person p, final boolean driverIfNew)
 	    throws IllegalStateException
 	{
-		final String[] labels = { "Name", "Driver?" };
-		String[] vals = new String[2];
+		final String[] labels = { "Name", "Driver?", "Comment" };
+		String[] vals = new String[3];
 		if (p != null)
 		{
 			vals[0] = p.getName();
 			vals[1] = (p.isDriver() ? "Y" : "N");
+			vals[2] = p.getComment();
 		} else {
 			vals[0] = null;
 			vals[1] = (driverIfNew ? "Y" : "N");
+			vals[2] = null;
 		}
 
 		/**
@@ -71,7 +73,7 @@ public abstract class MiscTablesCRUDDialogs
 		final boolean isDriver = (vals[1] != null) && (vals[1].equalsIgnoreCase("Y"));
 		if (p == null)
 		{
-			p = new Person(vals[0], isDriver, null);
+			p = new Person(vals[0], isDriver, null, vals[2]);
 			p.insert(conn);
 		} else if (mid.isChanged())
 		{

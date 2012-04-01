@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  Copyright (C) 2010-2011 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2012 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -29,13 +29,16 @@ import java.util.Vector;
 public class Person extends RDBRecord
 {
 	private static final String TABNAME = "person";
-	private static final String[] FIELDS = { "is_driver", "name", "contact_uri" };
-	private static final String[] FIELDS_AND_ID = { "is_driver", "name", "contact_uri", "_id" };
+	private static final String[] FIELDS = { "is_driver", "name", "contact_uri", "is_active", "comment" };
+	private static final String[] FIELDS_AND_ID = { "is_driver", "name", "contact_uri", "is_active", "comment", "_id" };
 
     private boolean is_driver;
+    private boolean is_active;
     private String name;
     /** contact info; may be null */
     private String contact_uri;
+    /** comment; may be null */
+    private String comment;
 
     /**
      * Get the Persons (drivers or all) currently in the database.
@@ -63,7 +66,7 @@ public class Person extends RDBRecord
     	for (int i = 0; i < L; ++i)
     	{
     		final String[] rec = names.elementAt(i);
-    		Person p = new Person(rec[1], ("1".equals(rec[0])), rec[2]);
+    		Person p = new Person(rec[1], ("1".equals(rec[0])), ("1".equals(rec[3])), rec[2], rec[4]);
     		p.isCleanFromDB(db, Integer.parseInt(rec[3]));
     		rv[i] = p;
     	}
@@ -88,6 +91,8 @@ public class Person extends RDBRecord
     	is_driver = ("1".equals(rec[0]));
     	name = rec[1];
     	contact_uri = rec[2];
+    	is_active = ("1".equals(rec[3]));
+    	comment = rec[4];
     }
 
     /**
@@ -98,9 +103,27 @@ public class Person extends RDBRecord
      * @param name  Person's name; cannot be null
      * @param isDriver  Driver, or only a friend or passenger?
      * @param contactURI  Contact info, or null
+     * @param commment  Comment, or null
      * @throws IllegalArgumentException  if name is null
      */
-    public Person(String name, boolean isDriver, String contactURI)
+    public Person(String name, boolean isDriver, String contactURI, String comment)
+    {
+    	this(name, isDriver, true, contactURI, comment);
+    }
+
+    /**
+     * Create a new person, but don't yet write to the database.
+     * When ready to write (after any changes you make to this object),
+     * call {@link #insert(RDBAdapter)}.
+     *
+     * @param name  Person's name; cannot be null
+     * @param isDriver  Driver, or only a friend or passenger?
+     * @param isActive  Actively used?
+     * @param contactURI  Contact info, or null
+     * @param commment  Comment, or null
+     * @throws IllegalArgumentException  if name is null
+     */
+    public Person(String name, boolean isDriver, boolean isActive, String contactURI, String comment)
     	throws IllegalArgumentException
     {
     	super();
@@ -108,7 +131,9 @@ public class Person extends RDBRecord
     		throw new IllegalArgumentException("null name");
     	this.name = name;
     	is_driver = isDriver;
+    	is_active = true;
     	contact_uri = contactURI;
+    	this.comment = comment;
     }
 
     public boolean isDriver()
@@ -116,7 +141,7 @@ public class Person extends RDBRecord
 		return is_driver;
 	}
 
-	public void setIsDriver(boolean isDriver)
+    public void setIsDriver(boolean isDriver)
 	{
 		if (isDriver == is_driver)
 			return;
@@ -124,7 +149,20 @@ public class Person extends RDBRecord
 		dirty = true;
 	}
 
-	public String getName()
+    public boolean isActive()
+    {
+		return is_active;
+	}
+
+    public void setIsActive(boolean isActive)
+	{
+		if (isActive == is_active)
+			return;
+		is_active = isActive;
+		dirty = true;
+	}
+
+    public String getName()
 	{
 		return name;
 	}
@@ -156,6 +194,17 @@ public class Person extends RDBRecord
 		dirty = true;
 	}
 
+	public String getComment()
+	{
+		return comment;
+	}
+
+	public void setComment(String comment)
+	{
+		this.comment = comment;
+		dirty = true;
+	}
+
 	/**
      * Insert a new record based on field and value.
 	 * Clears dirty field; sets id and dbConn fields.
@@ -166,7 +215,7 @@ public class Person extends RDBRecord
         throws IllegalStateException
     {
     	String[] fv =
-            { is_driver ? "1" : "0", name, contact_uri };
+            { is_driver ? "1" : "0", name, contact_uri, is_active ? "1" : "0", comment };
     	id = db.insert(TABNAME, FIELDS, fv, true);
 		dirty = false;
     	dbConn = db;

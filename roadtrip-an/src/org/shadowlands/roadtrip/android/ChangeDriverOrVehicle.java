@@ -30,6 +30,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.Button;
 import android.widget.Spinner;
 import android.widget.Toast;
 
@@ -84,8 +85,13 @@ public class ChangeDriverOrVehicle extends Activity
 	    }
 	}
 
-    public void onClick_BtnOK(View v)
-    {
+	/**
+	 * Change current driver/vehicle, {@link #finish()} the activity.
+	 * Set our result to {@link #RESULT_OK} if any current setting was changed,
+	 * {@link #RESULT_CANCEL} otherwise (even if drivers/vehicles were edited).
+	 */
+	public void onClick_BtnChange(View v)
+	{
     	boolean anyChange = false;
 
     	Person d = (Person) driver.getSelectedItem();
@@ -115,6 +121,10 @@ public class ChangeDriverOrVehicle extends Activity
     	finish();
     }
 
+    /**
+     * Don't change the current driver/vehicle, and {@link #finish()} the activity.
+     * Result will be {@link #RESULT_CANCEL},even if drivers/vehicles were edited.
+     */
     public void onClick_BtnCancel(View v)
     {
     	setResult(RESULT_CANCELED);
@@ -149,6 +159,9 @@ public class ChangeDriverOrVehicle extends Activity
 
     /**
 	 * Callback from {@link DriverEntry}, {@link VehicleEntry}, {@link DriversEdit} or {@link VehiclesEdit}.
+	 *<P>
+	 * If changes were made, also changes our "Cancel" button to "Done" to reduce confusion.
+	 *
 	 * @param idata  intent containing extra int "_id" with the
 	 *     ID of the newly added driver or vehicle (for New only),
 	 *     or with result code {@link #RESULT_CHANGES_MADE}
@@ -159,6 +172,8 @@ public class ChangeDriverOrVehicle extends Activity
 	{
 		if (resultCode == RESULT_CANCELED)
 			return;
+
+		boolean changed = true;
 
 		switch (requestCode)
 		{
@@ -174,6 +189,8 @@ public class ChangeDriverOrVehicle extends Activity
 				if (db == null)
 					db = new RDBOpenHelper(this);
 				SpinnerDataFactory.setupDriversSpinner(db, this, driver, currDID);
+			} else {
+				changed = false;
 			}
 			break;
 
@@ -183,8 +200,16 @@ public class ChangeDriverOrVehicle extends Activity
 				if (db == null)
 					db = new RDBOpenHelper(this);
 				SpinnerDataFactory.setupVehiclesSpinner(db, this, veh, currVID);
+			} else {
+				changed = false;
 			}
 			break;
+		}
+
+		if (changed)
+		{
+			Button b = (Button) findViewById(R.id.change_cvd_btn_cancel);
+			b.setText(R.string.done);
 		}
 	}
 

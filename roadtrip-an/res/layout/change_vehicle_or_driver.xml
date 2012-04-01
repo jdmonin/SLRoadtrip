@@ -97,12 +97,12 @@
 	    android:layout_width="fill_parent"
 		android:layout_alignParentBottom="true"
 	    android:orientation="horizontal" >
-		<Button android:id="@+id/change_cvd_btn_ok"
+		<Button
 		        android:layout_width="wrap_content"
 		        android:layout_height="wrap_content"
 		        android:layout_weight="0.5"
-		        android:text="@android:R/string/ok"
-		        android:onClick="onClick_BtnOK"
+		        android:text="@string/change"
+		        android:onClick="onClick_BtnChange"
 		        />
 		<Button android:id="@+id/change_cvd_btn_cancel"
 		        android:layout_width="wrap_content"

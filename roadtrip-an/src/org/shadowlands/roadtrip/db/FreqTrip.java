@@ -506,6 +506,14 @@ public class FreqTrip extends RDBRecord
 		return fv;
 	}
 
+	/**
+	 * Get this trip's optional {@link TripCategory} id.
+	 * @return the trip category ID, or 0 for none
+	 */
+	public int getTripCategoryID() {
+		return catid;
+	}
+
 	/** get the trip-odometer at the end of this trip */
 	public int getEnd_odoTrip() {
 		return end_odo_trip;

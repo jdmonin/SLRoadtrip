@@ -31,6 +31,7 @@ import org.shadowlands.roadtrip.db.Person;
 import org.shadowlands.roadtrip.db.RDBAdapter;
 import org.shadowlands.roadtrip.db.RDBKeyNotFoundException;
 import org.shadowlands.roadtrip.db.Settings;
+import org.shadowlands.roadtrip.db.TripCategory;
 import org.shadowlands.roadtrip.db.TStop;
 import org.shadowlands.roadtrip.db.Trip;
 import org.shadowlands.roadtrip.db.Vehicle;
@@ -58,6 +59,7 @@ import android.widget.DatePicker;
 import android.widget.ListAdapter;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.TimePicker;
 import android.widget.Toast;
@@ -116,6 +118,8 @@ public class TripBegin extends Activity
 	private StringBuffer fmt_dow_shortdate;
 	private Button btnStartTimeDate;
 	private TimePicker tpStartTimeTime;  // TODO on wraparound: Chg date
+	/** optional {@link TripCategory} */
+	private Spinner spTripCat;
 
 	private GeoArea currA, prevA;
 	private Vehicle currV;
@@ -175,6 +179,8 @@ public class TripBegin extends Activity
 		btnStartTimeDate = (Button) findViewById(R.id.trip_begin_btn_start_date);
 		tpStartTimeTime = (TimePicker) findViewById(R.id.trip_begin_start_time);
 		tpStartTimeTime.setIs24HourView(DateFormat.is24HourFormat(this));
+		spTripCat = (Spinner) findViewById(R.id.trip_begin_category);
+		SpinnerDataFactory.setupTripCategoriesSpinner(db, this, spTripCat, -1);
 
 		// update title text if frequent/roadtrip
 		if (isRoadtrip || isFrequent)
@@ -620,6 +626,9 @@ public class TripBegin extends Activity
     		wantsFT, null,
     		(isRoadtrip ? destAreaObj.getID() : 0),
     		false);
+		final int tripCat = ((TripCategory) (spTripCat.getSelectedItem())).getID();
+		if (tripCat > 0)
+			t.setTripCategoryID(tripCat);
 		t.insert(db);
 
 		// if wanted, set CURRENT_FREQTRIP and CURRENT_FREQTRIP_TSTOPLIST
@@ -714,6 +723,20 @@ public class TripBegin extends Activity
 				// RDBKeyNotFoundException should occur only if it's 0
 				finish();
 				return;
+			}
+
+			final int ftCat = wantsFT.getTripCategoryID();
+			if (ftCat != 0)
+			{
+				for (int i = spTripCat.getCount() - 1; i >= 0; --i)
+				{
+					if (ftCat == ((TripCategory) (spTripCat.getItemAtPosition(i))).getID())
+					{
+						spTripCat.setSelection(i, true);
+						break;
+					}
+				}
+
 			}
 			Toast.makeText(this, "L549: using freqtrip id " + wantsFT.getID(), Toast.LENGTH_SHORT).show();
 			// TODO update the based-on-freqtrip display row?

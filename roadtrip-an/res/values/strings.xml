@@ -31,6 +31,7 @@
 <string name="begin__initcap">Begin</string>
 <string name="begin_trip">Begin Trip</string>
 <string name="cancel_trip">Cancel Trip</string>
+<string name="category">Category</string>
 <string name="change">Change</string>
 <string name="change_driver">Change Driver</string>
 <string name="change_driver_vehicle">Change Driver / Vehicle</string>

@@ -204,40 +204,41 @@ public class SpinnerDataFactory
 	 * @param db  connection to use
 	 * @param ctx  the calling Activity or Context
 	 * @param sp  spinner to fill with the areas
-	 * @param currentID  If not -1, the area _id to select in the Spinner. 
+	 * @param currentID  The area _id to select in the Spinner, or 0 or -1 to select the empty category. 
 	 * @return true on success, false if could not populate from database
 	 * @since 0.9.08
 	 */
-	public static boolean setupTripCategoriesSpinner(RDBAdapter db, Context ctx, Spinner sp, final int currentID)
+	public static boolean setupTripCategoriesSpinner(RDBAdapter db, Context ctx, Spinner sp, int currentID)
 	{
 		if (EMPTY_TRIPCAT == null)
 			EMPTY_TRIPCAT = new TripCategory("", -1);
+		if (currentID == 0)
+			currentID = -1;
 
 		TripCategory[] cats = null;
-    	try
-    	{
-    		cats = TripCategory.getAll(db, EMPTY_TRIPCAT);
-    	}
-    	catch (SQLiteException e)
-    	{}
-	    if (cats == null)
-	    	return false;
+		try
+		{
+			cats = TripCategory.getAll(db, EMPTY_TRIPCAT);
+		}
+		catch (SQLiteException e)
+		{}
+		if (cats == null)
+			return false;
 
-    	ArrayAdapter<TripCategory> daa = new ArrayAdapter<TripCategory>(ctx, android.R.layout.simple_spinner_item, cats);
-    	daa.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-    	sp.setAdapter(daa);
+		ArrayAdapter<TripCategory> daa = new ArrayAdapter<TripCategory>(ctx, android.R.layout.simple_spinner_item, cats);
+		daa.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+		sp.setAdapter(daa);
 
-    	if (currentID != -1)
-    	{
-    		for (int i = cats.length - 1; i >= 0; --i)
-    			if (currentID == cats[i].getID())
-    			{
-    				sp.setSelection(i, true);
-    				break;
-    			}
-    	}
+		for (int i = cats.length - 1; i >= 0; --i)
+		{
+			if (currentID == cats[i].getID())
+			{
+				sp.setSelection(i, true);
+				break;
+			}
+		}
 
-    	return true;
+		return true;
 	}
 
 }

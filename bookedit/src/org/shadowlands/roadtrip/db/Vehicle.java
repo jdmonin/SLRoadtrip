@@ -415,10 +415,17 @@ public class Vehicle extends RDBRecord
 		dirty = true;
 	}
 
+	/**
+	 * @return the Date From ("in use since" date), unix format.  0 for empty/unused.
+	 */
 	public int getDate_from() {
 		return date_from;
 	}
 
+	/**
+	 * Set or clear the Date From ("in use since" date).
+	 * @param dateFrom  Date in unix format, or 0 for unused
+	 */
 	public void setDate_from(int dateFrom) {
 		date_from = dateFrom;
 		dirty = true;

@@ -141,19 +141,21 @@ public class DriverEntry extends Activity
     	if (comm.length() == 0)
     		comm = null;
 
+  		Person p;
   		if (cameFromEdit_person != null)
   		{
-  			cameFromEdit_person.setName(value.toString());
-  			cameFromEdit_person.setComment(comm);
-  			cameFromEdit_person.commit();
+  			p = cameFromEdit_person;
+  			p.setName(value.toString());
+  			p.setComment(comm);
+  			p.commit();
   		} else {
-  			cameFromEdit_person = new Person(value.toString(), true, null, comm);
-  			cameFromEdit_person.insert(db);
+  			p = new Person(value.toString(), true, null, comm);
+  			p.insert(db);
   		}
 
     	if (! Settings.exists(db, Settings.CURRENT_DRIVER))
     	{
-    		Settings.setCurrentDriver(db, cameFromEdit_person);
+    		Settings.setCurrentDriver(db, p);
     	}
 
     	// where to go next?
@@ -171,7 +173,7 @@ public class DriverEntry extends Activity
 	    	startActivity(intent);
     	} else {
     		Intent i = getIntent();
-	    	i.putExtra("_id", cameFromEdit_person.getID());
+	    	i.putExtra("_id", p.getID());
 	    	setResult(RESULT_OK, i);
     	}
     	finish();

@@ -31,6 +31,7 @@ public class Person extends RDBRecord
 	private static final String TABNAME = "person";
 	private static final String[] FIELDS = { "is_driver", "name", "contact_uri", "is_active", "comment" };
 	private static final String[] FIELDS_AND_ID = { "is_driver", "name", "contact_uri", "is_active", "comment", "_id" };
+	// If you add fields, check the id position in calls to isCleanFromDB.
 
     private boolean is_driver;
     private boolean is_active;
@@ -67,7 +68,7 @@ public class Person extends RDBRecord
     	{
     		final String[] rec = names.elementAt(i);
     		Person p = new Person(rec[1], ("1".equals(rec[0])), ("1".equals(rec[3])), rec[2], rec[4]);
-    		p.isCleanFromDB(db, Integer.parseInt(rec[3]));
+    		p.isCleanFromDB(db, Integer.parseInt(rec[5]));
     		rv[i] = p;
     	}
     	return rv;
@@ -131,7 +132,7 @@ public class Person extends RDBRecord
     		throw new IllegalArgumentException("null name");
     	this.name = name;
     	is_driver = isDriver;
-    	is_active = true;
+    	is_active = isActive;
     	contact_uri = contactURI;
     	this.comment = comment;
     }
@@ -154,7 +155,7 @@ public class Person extends RDBRecord
 		return is_active;
 	}
 
-    public void setIsActive(boolean isActive)
+    public void setActive(boolean isActive)
 	{
 		if (isActive == is_active)
 			return;
@@ -236,7 +237,7 @@ public class Person extends RDBRecord
         throws IllegalStateException, NullPointerException
 	{
     	String[] fv =
-            { is_driver ? "1" : "0", name, contact_uri };
+            { is_driver ? "1" : "0", name, contact_uri, is_active ? "1" : "0", comment };
 		dbConn.update(TABNAME, id, FIELDS, fv);
 		dirty = false;
 	}

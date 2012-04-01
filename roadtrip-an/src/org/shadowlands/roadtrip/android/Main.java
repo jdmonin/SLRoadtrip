@@ -44,6 +44,9 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.Bundle;
+import android.text.SpannableString;
+import android.text.method.LinkMovementMethod;
+import android.text.util.Linkify;
 import android.view.ContextMenu;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -184,8 +187,16 @@ public class Main extends Activity
 		{
 		case R.id.menu_main_about:
 			{
+				// R.string.app_about is the multi-line text.
+				final TextView tv_about_text = new TextView(this);
+				final SpannableString about_str = 
+					new SpannableString(getText(R.string.app_about));
+				Linkify.addLinks(about_str, Linkify.WEB_URLS);
+				tv_about_text.setText(about_str);
+				tv_about_text.setMovementMethod(LinkMovementMethod.getInstance());
+
 				AlertDialog.Builder aboutBuilder = new AlertDialog.Builder(this);
-				aboutBuilder.setMessage(R.string.app_about)   // app_about is the multi-line text
+				aboutBuilder.setView(tv_about_text)   
 				  .setCancelable(true)
 				  .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
 					public void onClick(DialogInterface dialog, int id) {

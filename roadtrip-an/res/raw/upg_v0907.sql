@@ -1,4 +1,4 @@
--- Upgrade from v0906 to v0907: (2012-03-31)
+-- Upgrade from v0906 to v0908: (2012-03-31)  [schema versions skip 0907]
 
 -- This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
 -- 
@@ -17,9 +17,8 @@
 --  You should have received a copy of the GNU General Public License
 --  along with this program.  If not, see http://www.gnu.org/licenses/ .
 
-ALTER TABLE person ADD COLUMN is_active_driver int not null default 0;
+ALTER TABLE person ADD COLUMN is_active int not null default 1;
 ALTER TABLE person ADD COLUMN comment varchar(255);
-UPDATE person SET is_active_driver = 1 WHERE is_driver = 1;
 
 ALTER TABLE vehicle ADD COLUMN is_active int not null default 1;
 

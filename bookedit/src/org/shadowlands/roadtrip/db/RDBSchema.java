@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  Copyright (C) 2010 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010,2012 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -32,9 +32,13 @@ import java.util.Vector;
  * Also has some utility methods related to db content, such as
  * {@link #parseFixedDecOr0(CharSequence, int)}.
  *<P>
- * If you update the schema, please update {@link #DATABASE_VERSION},
- * {@link #DB_SCHEMA_CREATE_FILENAME}, {@link #upgradeToCurrent(RDBAdapter, int, boolean)},
- * and the <tt>RDBOpenHelper</tt> version of {@link RDBAdapter#getSQLScript(int)}.
+ * <b>If you update the schema:</b> please update:
+ *<UL>
+ *<LI> {@link #DATABASE_VERSION}
+ *<LI> {@link #DB_SCHEMA_CREATE_FILENAME}
+ *<LI> {@link #upgradeToCurrent(RDBAdapter, int, boolean)},
+ *<LI> The <tt>RDBOpenHelper</tt> version of {@link RDBAdapter#getSQLScript(int)}.
+ *</UL>
  */
 public abstract class RDBSchema
 {
@@ -42,10 +46,10 @@ public abstract class RDBSchema
 	 * Database version; 1204 represents version 1.2.04; below 1000 represents pre-1.0 (0.8.09, etc).
 	 *<P> See the class javadoc for what to change in the code when you update the schema version.
 	 */
-	public static final int DATABASE_VERSION = 906;
+	public static final int DATABASE_VERSION = 908;
 
 	/** Filename of schema create sql script for the current {@link #DATABASE_VERSION}. */
-	public static final String DB_SCHEMA_CREATE_FILENAME = "schema_v0906.sql";
+	public static final String DB_SCHEMA_CREATE_FILENAME = "schema_v0908.sql";
 
 	/**
 	 * Filename prefix of schema upgrade sql script.
@@ -158,16 +162,18 @@ public abstract class RDBSchema
 			*
 			*/
 
-		case 906:
+		case 908:
 			// Nothing to do, current. Don't set anythingDone.
 			break;
 
-		case 901:  // 901 -> 905
+		case 901:  // 901 -> 905   2010-11-30
 			upgradeStep(db, 905);
-		case 905:  // 905 -> 906
+		case 905:  // 905 -> 906   2010-12-16
 			upgradeStep(db, 906);
+		case 906:  // 906 -> 908   2012-03-31
+			upgradeStep(db, 908);
 
-		// after all cases, but NOT default case
+		// after all cases, but NOT default case or already-current case
 			anythingDone = true;
 			break;
 
@@ -191,6 +197,10 @@ public abstract class RDBSchema
 			dbvers = "0" + dbvers;
 		db.execStrucUpdate("UPDATE appinfo SET aivalue = '" + dbvers + "' WHERE aifield = 'DB_CURRENT_SCHEMAVERSION' ;");
 
+		// Upgrade history timestamp (table added in v0908)
+		final int now = (int) (System.currentTimeMillis() / 1000L); 
+		db.execStrucUpdate("INSERT into app_db_upgrade_hist(db_vers_to, db_vers_from, upg_time) VALUES("
+			+ DATABASE_VERSION + ", " + oldVersion + ", " + now + ");");
 	}
 
 	private static void upgradeStep(RDBAdapter db, final int toVers)

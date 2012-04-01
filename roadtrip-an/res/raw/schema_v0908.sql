@@ -1,5 +1,5 @@
 -- org.shadowlands.roadtrip
--- version 0.9.08 schema for SQLite 3.4 or higher  (2012-03-31)
+-- version 0.9.08 schema for SQLite 3.4 or higher  (2012-04-01)
 -- Remember: When you upgrade the schema version, be sure to
 -- make all code changes listed in RDBSchema's class javadoc, and
 -- add the upgrade script to RtrDBOpenHelper.getSQLScript().
@@ -100,13 +100,18 @@ create table vehicle ( _id integer PRIMARY KEY AUTOINCREMENT not null, nickname 
     -- fuel_qty_unit is 'ga' or 'L'
     -- fuel_type is 'G' gas, 'D' diesel
 
-create table trip ( _id integer PRIMARY KEY AUTOINCREMENT not null, vid integer not null, did int not null, odo_start int not null, odo_end int, aid int, tstopid_start int, time_start int not null, time_end int, start_lat float, start_lon float, end_lat float, end_lon float, freqtripid int, comment varchar(255), roadtrip_end_aid int, has_continue int not null default 0 );
+create table tripcategory ( _id integer PRIMARY KEY AUTOINCREMENT not null, cname varchar(255) not null unique, pos int not null, is_user_add int );
+	-- pos is a place number for on-screen order (instead of alphabetical listing)
+	-- see bottom of file for inserts into tripcategory
+
+create table trip ( _id integer PRIMARY KEY AUTOINCREMENT not null, vid integer not null, did int not null, catid int, odo_start int not null, odo_end int, aid int, tstopid_start int, time_start int not null, time_end int, start_lat float, start_lon float, end_lat float, end_lon float, freqtripid int, comment varchar(255), roadtrip_end_aid int, has_continue int not null default 0 );
 	-- vid is vehicle, did is driver
 	-- if tstopid_start not null, it's the endpoint of a previous trip with the same odo_total.
 	--    This gives the starting location (descr and/or locid) for the trip.
 	--    Otherwise, see below under 'chronological order of stops within a trip'.
 	-- odo_end is 0 until trip is completed, and then it's a required field.
 	-- aid is the geoarea ID (most other tables use a_id)
+	-- catid is the optional trip category, or null (table tripcategory)
 	-- The starting and ending location are taken from the trip's TStops.
 	-- Convention for chronological order of stops within a trip:
 	--    (Needed because any useful field can be null)
@@ -127,6 +132,7 @@ create table trip ( _id integer PRIMARY KEY AUTOINCREMENT not null, vid integer 
 
 create index "trip~odo" ON trip(vid, odo_start);
 create index "trip~d" ON trip(vid, time_start);
+create index "trip~cv" ON trip(catid, vid);
 
 create table freqtrip ( _id integer PRIMARY KEY AUTOINCREMENT not null, a_id int, start_locid integer not null, end_locid integer not null, end_odo_trip int not null, roadtrip_end_aid int, descr varchar(255), end_via_id int, typ_timeofday int, flag_weekends int not null default 0, flag_weekdays int not null default 0, is_roundtrip int not null default 0 );
 	-- start_locid, end_locid are location IDs.
@@ -243,9 +249,17 @@ insert into vehiclemake(mname) values ('Triumph');
 insert into vehiclemake(mname) values ('Volkswagen');
 insert into vehiclemake(mname) values ('Volvo');
 -- End of original sequence; acura is _id 1, and volvo is 51
--- adds 2012-03-31 v0908: citroen = 52 renault = 53
+-- vehiclemake adds 2012-04-01 v0908: citroen = 52 renault = 53
 insert into vehiclemake(mname) values ('Citroen');
 insert into vehiclemake(mname) values ('Renault');
+commit;
+
+begin transaction;
+-- tripcategory initial contents 2012-04-01 v0908:
+insert into tripcategory(cname,pos) values ('Work', 1);
+insert into tripcategory(cname,pos) values ('Personal', 2);
+insert into tripcategory(cname,pos) values ('Volunteer', 3);
+insert into tripcategory(cname,pos) values ('Moving', 4);
 commit;
 
 -- master-data inserts done --

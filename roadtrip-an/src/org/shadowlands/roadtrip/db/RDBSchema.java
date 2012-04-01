@@ -170,7 +170,7 @@ public abstract class RDBSchema
 			upgradeStep(db, 905);
 		case 905:  // 905 -> 906   2010-12-16
 			upgradeStep(db, 906);
-		case 906:  // 906 -> 908   2012-03-31
+		case 906:  // 906 -> 908   2012-04-01
 			upgradeStep(db, 908);
 
 		// after all cases, but NOT default case or already-current case

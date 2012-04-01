@@ -40,15 +40,15 @@ public class Vehicle extends RDBRecord
     private static final String TABNAME = "vehicle";
 
     private static final String[] FIELDS =
-        { "nickname", "driverid", "makeid", "model", "year", "date_from", "date_to", "vin", "odo_orig", "odo_curr", "last_tripid", "distance_storage", "expense_currency", "expense_curr_sym", "expense_curr_deci", "fuel_curr_deci", "fuel_type", "fuel_qty_unit", "fuel_qty_deci", "comment" };
+        { "nickname", "driverid", "makeid", "model", "year", "date_from", "date_to", "vin", "odo_orig", "odo_curr", "last_tripid", "distance_storage", "expense_currency", "expense_curr_sym", "expense_curr_deci", "fuel_curr_deci", "fuel_type", "fuel_qty_unit", "fuel_qty_deci", "comment", "is_active" };
     private static final String[] FIELDS_AND_ID =
-    	{ "nickname", "driverid", "makeid", "model", "year", "date_from", "date_to", "vin", "odo_orig", "odo_curr", "last_tripid", "distance_storage", "expense_currency", "expense_curr_sym", "expense_curr_deci", "fuel_curr_deci", "fuel_type", "fuel_qty_unit", "fuel_qty_deci", "comment", "_id" };
+    	{ "nickname", "driverid", "makeid", "model", "year", "date_from", "date_to", "vin", "odo_orig", "odo_curr", "last_tripid", "distance_storage", "expense_currency", "expense_curr_sym", "expense_curr_deci", "fuel_curr_deci", "fuel_type", "fuel_qty_unit", "fuel_qty_deci", "comment", "is_active", "_id" };
     /**
      * Basic fields only, for commit.  Omits:
      * "distance_storage", "expense_currency", "expense_curr_sym", "expense_curr_deci", "fuel_curr_deci", "fuel_type", "fuel_qty_unit", "fuel_qty_deci"
      */
     private static final String[] FIELDS_BASIC =
-    	{ "nickname", "driverid", "makeid", "model", "year", "date_from", "date_to", "vin", "odo_orig", "odo_curr", "last_tripid", "comment" };
+    	{ "nickname", "driverid", "makeid", "model", "year", "date_from", "date_to", "vin", "odo_orig", "odo_curr", "last_tripid", "comment", "is_active" };
     private static final String[] FIELDS_ODO_LASTTRIP =
     	{ "odo_curr", "last_tripid" }; 
 
@@ -99,7 +99,9 @@ public class Vehicle extends RDBRecord
 
 	private String comment;
 
-    /** null unless {@link #readAllTrips(boolean)} called */
+	private boolean is_active;
+
+	/** null unless {@link #readAllTrips(boolean)} called */
     private transient Vector<Trip> allTrips;
 
     /**
@@ -166,8 +168,8 @@ public class Vehicle extends RDBRecord
 	private void initFields(final String[] rec)
 	    throws IllegalArgumentException
 	{
-		if (rec.length < 20)
-			throw new IllegalArgumentException("length < 20: " + rec.length);
+		if (rec.length < 21)
+			throw new IllegalArgumentException("length < 21: " + rec.length);
 		nickname = rec[0];
     	driverid = Integer.parseInt(rec[1]);  // FK
     	makeid = Integer.parseInt(rec[2]);  // FK
@@ -193,6 +195,7 @@ public class Vehicle extends RDBRecord
     	fuel_qty_unit = (rec[17].equals("GA") ? 'G' : 'L');
     	fuel_qty_deci = Integer.parseInt(rec[18]);
     	comment = rec[19];
+    	is_active = rec[20].equals("1");
 	}
 
     /**
@@ -202,6 +205,7 @@ public class Vehicle extends RDBRecord
      *<P>
      * <tt>last_tripid</tt> will be null, because this new vehicle
      * hasn't been on any trips yet.
+     * <tt>is_active</tt> will be true.
      *
      * @param nickname
      * @param driver
@@ -237,6 +241,7 @@ public class Vehicle extends RDBRecord
     	this.odo_curr = odo_curr;
     	last_tripid = 0;
     	this.comment = comment;
+    	this.is_active = true;
     }
 
     /**
@@ -315,7 +320,7 @@ public class Vehicle extends RDBRecord
     		  // TODO construc/gui, not hardcoded, for these:  (also getters/setters/commit)
     		  //    "distance_storage", "expense_currency", "expense_curr_sym", "expense_curr_deci", "fuel_curr_deci", "fuel_type", "fuel_qty_unit", "fuel_qty_deci"
     		  "MI", "USD", "$", "2", "3", "G", "ga", "3",
-    		  comment };
+    		  comment, (is_active ? "1" : "0") };
     	id = db.insert(TABNAME, FIELDS, fv, true);
 		dirty = false;
     	dbConn = db;
@@ -351,7 +356,8 @@ public class Vehicle extends RDBRecord
     	String[] fv =
             { nickname, Integer.toString(driverid), Integer.toString(makeid),
     		  model, Integer.toString(year), dte_f, dte_t, vin,
-    		  Integer.toString(odo_orig), Integer.toString(odo_curr), l_tripid, comment };
+    		  Integer.toString(odo_orig), Integer.toString(odo_curr), l_tripid,
+    		  comment, (is_active ? "1" : "0") };
 		dbConn.update(TABNAME, id, FIELDS_BASIC, fv);
 		dirty = false;
 	}
@@ -485,6 +491,19 @@ public class Vehicle extends RDBRecord
 
 	public void setComment(String comment) {
 		this.comment = comment;
+		dirty = true;
+	}
+
+    public boolean isActive()
+    {
+		return is_active;
+	}
+
+    public void setIsActive(final boolean isActive)
+	{
+		if (isActive == is_active)
+			return;
+		is_active = isActive;
 		dirty = true;
 	}
 

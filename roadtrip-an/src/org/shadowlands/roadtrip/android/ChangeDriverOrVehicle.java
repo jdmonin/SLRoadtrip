@@ -27,6 +27,8 @@ import org.shadowlands.roadtrip.db.Vehicle;
 import org.shadowlands.roadtrip.db.android.RDBOpenHelper;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
@@ -178,10 +180,10 @@ public class ChangeDriverOrVehicle extends Activity
 		switch (requestCode)
 		{
 		case R.id.change_cvd_driver_new:
-			spinnerAddNewItem(true, driver, idata);  break;
+			spinnerAddNewItem_Ask(true, driver, idata);  break;
 
 		case R.id.change_cvd_vehicle_new:
-			spinnerAddNewItem(false, veh, idata);    break;
+			spinnerAddNewItem_Ask(false, veh, idata);    break;
 
 		case R.id.change_cvd_drivers_edit:
 			if (resultCode == RESULT_CHANGES_MADE)
@@ -213,13 +215,63 @@ public class ChangeDriverOrVehicle extends Activity
 		}
 	}
 
-	/** update the Driver or Vehicle spinner contents, via intent extra "_id" */
-    private void spinnerAddNewItem(final boolean isDriver, Spinner sp, Intent idata)
+	/**
+	 * Ask whether to change the current driver/vehicle after adding a new one.
+	 * When dialog is answered, will call {@link #spinnerAddNewItem(boolean, Spinner, boolean, int)} 
+	 * to update the Driver or Vehicle spinner contents, including the current value.
+	 * @param isDriver  True for driver, false for vehicle
+	 * @param  sp  Spinner to update from <tt>idata</tt>'s data
+	 */
+    private void spinnerAddNewItem_Ask(final boolean isDriver, final Spinner sp, Intent idata)
     {
     	final int newID = idata.getIntExtra("_id", 0);
     	if (newID == 0)
     		return;
-		try
+
+    	final int toastMsg =
+    		isDriver ? R.string.change_vehicle_driver_ask_chg_new_d
+    				 : R.string.change_vehicle_driver_ask_chg_new_v;
+
+    	AlertDialog.Builder alert = new AlertDialog.Builder(this);
+
+    	alert.setTitle(R.string.change_vehicle_driver_ask_chg_title);
+    	alert.setMessage(toastMsg);
+    	alert.setPositiveButton(R.string.change, new DialogInterface.OnClickListener() {
+	    	  public void onClick(DialogInterface dialog, int whichButton) {
+		    	  spinnerAddNewItem(isDriver, sp, true, newID);
+	    	  }
+	    	});
+    	alert.setNegativeButton(R.string.no, new DialogInterface.OnClickListener() {
+	    	  public void onClick(DialogInterface dialog, int whichButton) {
+    			spinnerAddNewItem(isDriver, sp, false, newID);
+	    	  }
+	    	});
+    	alert.show();
+	}
+
+	/**
+	 * Update the Driver or Vehicle spinner contents after adding a new one.
+	 * @param isDriver  True for driver, false for vehicle
+	 * @param  sp  Spinner to update
+	 * @param  doChange  True to change current, false to keep it
+	 * @param newID  newly added item's ID
+	 */
+    private void spinnerAddNewItem(final boolean isDriver, final Spinner sp, final boolean doChange, final int newID)
+    {
+    	if (doChange)
+    	{
+    		try
+    		{
+	    		if (isDriver)
+	    		{
+	    			Settings.setCurrentDriver(db, new Person(db, newID));
+	    		} else {
+	    			Settings.setCurrentVehicle(db, new Vehicle(db, newID));	    			
+	    		}
+    		} catch (Throwable th) {}
+    	}
+
+    	try
 		{
 	    	if (isDriver)
 	    	{

@@ -78,6 +78,7 @@
 <string name="new_area">New area</string>
 <string name="new_driver">New driver</string>
 <string name="new_vehicle">New vehicle</string>
+<string name="no">No</string>
 <string name="no_earlier_trips_found">No earlier trips were found.</string>
 <string name="no_frequent_trips_found">No frequent trips were found.</string>
 <string name="no_frequent_trips_found_from">No frequent trips were found from</string>
@@ -164,6 +165,9 @@
 <string name="backups_restore_validation_error">Error in file validation.</string>
 <string name="backups_restore_validation_ok">File validated.</string>
 <string name="backups_restore__title">Restore from Backup</string>
+<string name="change_vehicle_driver_ask_chg_title">Change current setting?</string>
+<string name="change_vehicle_driver_ask_chg_new_d">Change current driver to the new one?</string>
+<string name="change_vehicle_driver_ask_chg_new_v">Change current vehicle to the new one?</string>
 <string name="driver_entry_prompt">Enter information about this driver.</string>
 <string name="driver_entry_init_geoarea_prompt">Name your local geographic area. \'Road trips\' are the trips that leave this area. The name should be short, not formal; a nickname or abbreviation is fine.</string>
 <string name="driver_entry_init_geoarea_toast">Please name your local geographic area.</string>

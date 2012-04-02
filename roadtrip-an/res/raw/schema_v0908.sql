@@ -100,8 +100,8 @@ create table vehicle ( _id integer PRIMARY KEY AUTOINCREMENT not null, nickname 
     -- fuel_qty_unit is 'ga' or 'L'
     -- fuel_type is 'G' gas, 'D' diesel
 
-create table tripcategory ( _id integer PRIMARY KEY AUTOINCREMENT not null, cname varchar(255) not null unique, pos int not null, is_user_add int );
-	-- pos is a place number for on-screen order (instead of alphabetical listing)
+create table tripcategory ( _id integer PRIMARY KEY AUTOINCREMENT not null, cname varchar(255) not null unique, rank int not null, is_user_add int );
+	-- rank is a place number for on-screen order (instead of alphabetical listing)
 	-- see bottom of file for inserts into tripcategory
 
 create table trip ( _id integer PRIMARY KEY AUTOINCREMENT not null, vid integer not null, did int not null, catid int, odo_start int not null, odo_end int, aid int, tstopid_start int, time_start int not null, time_end int, start_lat float, start_lon float, end_lat float, end_lon float, freqtripid int, comment varchar(255), roadtrip_end_aid int, has_continue int not null default 0 );
@@ -257,10 +257,10 @@ commit;
 
 begin transaction;
 -- tripcategory initial contents 2012-04-01 v0908:
-insert into tripcategory(cname,pos) values ('Work', 1);
-insert into tripcategory(cname,pos) values ('Personal', 2);
-insert into tripcategory(cname,pos) values ('Volunteer', 3);
-insert into tripcategory(cname,pos) values ('Moving', 4);
+insert into tripcategory(cname,rank) values ('Work', 1);
+insert into tripcategory(cname,rank) values ('Personal', 2);
+insert into tripcategory(cname,rank) values ('Volunteer', 3);
+insert into tripcategory(cname,rank) values ('Moving', 4);
 commit;
 
 -- master-data inserts done --

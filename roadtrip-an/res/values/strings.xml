@@ -31,7 +31,6 @@
 <string name="begin__initcap">Begin</string>
 <string name="begin_trip">Begin Trip</string>
 <string name="cancel_trip">Cancel Trip</string>
-<string name="category">Category</string>
 <string name="change">Change</string>
 <string name="change_driver">Change Driver</string>
 <string name="change_driver_vehicle">Change Driver / Vehicle</string>
@@ -113,6 +112,7 @@
 <string name="this_time_must_be_no_earlier_than">This time must be no earlier than the stop time.</string>
 <string name="to__colon">To:</string>
 <string name="total">total</string>
+<string name="trip__category">Trip\ncategory</string>
 <string name="trip_odometer">Trip\nodometer</string>
 <string name="using_old_date_due_to_previous">Historical Mode:\nUsing an old date because of the previous date entered for this vehicle.</string>
 <string name="validate">Validate</string>

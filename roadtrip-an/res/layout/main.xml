@@ -85,6 +85,9 @@
 		<Button android:id="@+id/main_btn_show_logbook"
 		        android:text="@string/show_logbook"
 		        android:onClick="onClick_BtnShowLogbook"/>
+		<Button android:id="@+id/main_btn_backups"
+		        android:text="@string/backups"
+		        android:onClick="onClick_BtnBackups" />
 	</TableRow>
 </TableLayout>
 </LinearLayout>

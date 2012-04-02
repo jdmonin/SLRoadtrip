@@ -517,6 +517,11 @@ public class Main extends Activity
 		startActivity(new Intent(Main.this, LogbookShow.class));		
 	}
 
+	public void onClick_BtnBackups(View v)
+	{
+		startActivity(new Intent(Main.this, BackupsMain.class));
+	}
+
 	@Override
 	public void onActivityResult(final int requestCode, final int resultCode, Intent data)
 	{

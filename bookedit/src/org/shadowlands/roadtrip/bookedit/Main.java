@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  Copyright (C) 2010 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010,2012 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -45,19 +45,19 @@ public class Main
 	 * @see #APP_VERSION_STRING
 	 * @since 0.9.07
 	 */
-	public static final int APP_VERSION_CODE = 907;
+	public static final int APP_VERSION_CODE = 908;
 
 	/**
 	 * Application version as a human-readable string; changes with each point release.
 	 * @see #APP_VERSION_CODE
 	 * @since 0.9.07
 	 */
-	public static final String APP_VERSION_STRING = "0.9.07";
+	public static final String APP_VERSION_STRING = "0.9.08";
 
 	private String dbFilename = null;
 	private StartupChoiceFrame scf;
 	private RDBAdapter conn = null;
-	private boolean isBackup = false;
+	private boolean isBackup = false;  // TODO upgrade temp copy when opened
 	private boolean isReadOnly = false;
 
 	/**

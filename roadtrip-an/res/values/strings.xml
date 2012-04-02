@@ -164,6 +164,9 @@
 <string name="backups_restore_validation_ok">File validated.</string>
 <string name="backups_restore__title">Restore from Backup</string>
 <string name="driver_entry_prompt">Enter information about this driver.</string>
+<string name="driver_entry_init_geoarea_prompt">Name your local geographic area. \'Road trips\' are the trips that leave this area. The name should be short, not formal; a nickname or abbreviation is fine.</string>
+<string name="driver_entry_init_geoarea_toast">Please name your local geographic area.</string>
+<string name="driver_entry_init_local_geoarea">Local\nGeo Area</string>
 <string name="trip_createfreq__title">Create Frequent Trip</string>
 <string name="trip_createfreq_cancel_are_you_sure">Are you sure you want to cancel?\nThe Frequent Trip will not be created.</string>
 <string name="trip_createfreq_confirm_each_via">Because some stops were removed, please confirm the Via Route you wish to use for each remaining stop.</string>

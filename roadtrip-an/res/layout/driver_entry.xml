@@ -17,7 +17,11 @@
  You should have received a copy of the GNU General Public License
  along with this program.  If not, see http://www.gnu.org/licenses/ .
  -->
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="fill_parent"
+	android:layout_height="fill_parent"
+	>
+<LinearLayout
     android:orientation="vertical"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
@@ -26,6 +30,7 @@
     android:layout_width="fill_parent" 
     android:layout_height="wrap_content" 
     android:text="@string/driver_entry_prompt"
+    android:paddingBottom="4dp"
     />
 <TableLayout android:layout_height="wrap_content" android:layout_width="fill_parent">
     <TableRow>
@@ -37,7 +42,7 @@
 		<EditText android:id="@+id/driver_entry_name"
 		  android:layout_width="fill_parent" android:layout_height="wrap_content"
 		  android:inputType="textPersonName"
-		  android:layout_weight="1" ></EditText>
+		  android:layout_weight="1" />
     </TableRow>
     <TableRow>
 		<TextView  
@@ -49,13 +54,40 @@
 		    android:layout_width="fill_parent"
 		    android:layout_height="wrap_content"
 		    android:layout_weight="1"
-		    android:minLines="2" >
-		    </EditText>
+		    android:minLines="2" />
     </TableRow>
 </TableLayout>
+<!-- GeoArea info entry. Shown only during initial setup of the app. -->
+<TextView  android:id="@+id/driver_entry_init_geoarea_prompt"
+	android:text="@string/driver_entry_init_geoarea_prompt"
+	android:layout_width="fill_parent"
+	android:layout_height="wrap_content"
+	android:paddingTop="4dp"
+    />
+<LinearLayout android:id="@+id/driver_entry_init_geoarea_row"
+	android:orientation="horizontal"
+	android:layout_width="fill_parent"
+	android:layout_height="wrap_content"
+	android:paddingBottom="4dp"
+	>
+	<TextView
+		android:text="@string/driver_entry_init_local_geoarea"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_gravity="center"
+		/>
+	<EditText android:id="@+id/driver_entry_init_local_geoarea"
+		android:layout_width="fill_parent"
+		android:layout_height="wrap_content"
+		android:layout_weight="1"
+		/>
+</LinearLayout>
+<!-- End of GeoArea info entry. -->
 <Button android:id="@+id/driver_entry_btn_ok"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_gravity="right"
         android:text="@string/continu"
         android:onClick="onClick_BtnOK" />
 </LinearLayout>
+</ScrollView>

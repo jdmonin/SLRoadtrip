@@ -20,6 +20,7 @@
 package org.shadowlands.roadtrip.android;
 
 import org.shadowlands.roadtrip.R;
+import org.shadowlands.roadtrip.db.GeoArea;
 import org.shadowlands.roadtrip.db.Person;
 import org.shadowlands.roadtrip.db.RDBAdapter;
 import org.shadowlands.roadtrip.db.Settings;
@@ -67,6 +68,9 @@ public class DriverEntry extends Activity
 	 * for {@link Intent#putExtra(String, int)}.
 	 */
 	public static final String EXTRAS_INT_EDIT_ID = "edit";
+
+	/** If true, don't hide the Local GeoArea info prompt. */
+	private boolean doingInitialSetup;
 
 	/**
 	 * If true, {@link #EXTRAS_FLAG_ASKED_NEW} was set.
@@ -118,8 +122,20 @@ public class DriverEntry extends Activity
 				Toast.makeText(this, R.string.not_found, Toast.LENGTH_SHORT).show();
 				setResult(Activity.RESULT_CANCELED);
 				finish();
-				return;   // <--- Early return: Could lot load from db to view fields ---
+				return;   // <--- Early return: Could not load from db to view fields ---
 			}
+		}
+
+		// Unless we're doing initial setup, hide local-geoarea name field
+		doingInitialSetup = (cameFromEdit_person == null) && ! cameFromAskNew;
+		if (! doingInitialSetup)
+		{
+			View v = findViewById(R.id.driver_entry_init_geoarea_row);
+			if (v != null)
+				v.setVisibility(View.GONE);
+			v = findViewById(R.id.driver_entry_init_geoarea_prompt);
+			if (v != null)
+				v.setVisibility(View.GONE);
 		}
     }
 
@@ -135,6 +151,40 @@ public class DriverEntry extends Activity
     		name.requestFocus();
     		Toast.makeText(this, R.string.driver_entry_prompt, Toast.LENGTH_SHORT).show();
     		return;
+    	}
+
+    	if (doingInitialSetup)
+    	{
+    		// Set our home area
+
+    		EditText etHomeGeoArea = (EditText) findViewById(R.id.driver_entry_init_local_geoarea);
+        	String name = etHomeGeoArea.getText().toString().trim();
+        	if (name.length() == 0)
+        	{
+        		etHomeGeoArea.requestFocus();
+        		Toast.makeText(this, R.string.driver_entry_init_geoarea_toast, Toast.LENGTH_SHORT).show();
+        		return;        		
+        	}
+        	GeoArea homeArea;
+        	GeoArea current = Settings.getCurrentArea(db, false);
+        	if (current == null)
+        	{
+        		GeoArea[] all_one = GeoArea.getAll(db, -1);
+	        	if (all_one == null)
+	        	{
+	        		homeArea = new GeoArea(name);
+	        		homeArea.insert(db);
+	        	} else {
+	        		homeArea = all_one[0];
+	        		homeArea.setName(name);
+	        		homeArea.commit();
+	        	}
+        		Settings.setCurrentArea(db, homeArea);
+        	} else {
+        		homeArea = current;
+        		homeArea.setName(name);
+        		homeArea.commit();
+        	}
     	}
 
     	String comm = comment.getText().toString().trim();
@@ -159,7 +209,7 @@ public class DriverEntry extends Activity
     	}
 
     	// where to go next?
-    	if ((cameFromEdit_person == null) && ! cameFromAskNew)
+    	if (doingInitialSetup)
     	{
     		// Initial setup of app
 	    	Intent intent;

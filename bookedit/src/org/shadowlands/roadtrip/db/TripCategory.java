@@ -29,22 +29,22 @@ import java.util.Vector;
 public class TripCategory extends RDBRecord
 {
 	private static final String TABNAME = "tripcategory";
-	private static final String[] FIELDS = { "cname", "pos" };
-	private static final String[] FIELDS_AND_ID = { "cname", "pos", "_id" };
+	private static final String[] FIELDS = { "cname", "rank" };
+	private static final String[] FIELDS_AND_ID = { "cname", "rank", "_id" };
 	// If you add fields, check the id position in calls to isCleanFromDB.
 
     private String name;
-    private int pos;
+    private int rank;
 
     /**
      * Get the trip categories currently in the database.
      * @param db  database connection
      * @param blank  A placeholder to add the blank (empty) category to the array, or null
-     * @return an array of TripCategory objects from the database, ordered by <tt>pos</tt>, or null if none
+     * @return an array of TripCategory objects from the database, ordered by <tt>rank</tt>, or null if none
      */
     public static TripCategory[] getAll(RDBAdapter db, TripCategory blank)
     {
-		Vector<String[]> tcs = db.getRows(TABNAME, null, (String[]) null, FIELDS_AND_ID, "pos", 0);
+		Vector<String[]> tcs = db.getRows(TABNAME, null, (String[]) null, FIELDS_AND_ID, "rank", 0);
     	if (tcs == null)
     		return null;
 
@@ -83,26 +83,26 @@ public class TripCategory extends RDBRecord
     	if (rec == null)
     		throw new RDBKeyNotFoundException(id);
     	name = rec[0];
-    	pos = Integer.parseInt(rec[1]);
+    	rank = Integer.parseInt(rec[1]);
     }
 
     /**
-     * Create a new person, but don't yet write to the database.
+     * Create a new category, but don't yet write to the database.
      * When ready to write (after any changes you make to this object),
      * call {@link #insert(RDBAdapter)}.
      *
-     * @param name  Person's name; cannot be null
-     * @param position  Place number for on-screen order (instead of alphabetical listing)
+     * @param name  Category name; cannot be null
+     * @param ranking  Place number for on-screen order (instead of alphabetical listing)
      * @throws IllegalArgumentException  if name is null
      */
-    public TripCategory(String name, final int position)
+    public TripCategory(String name, final int ranking)
     	throws IllegalArgumentException
     {
     	super();
     	if (name == null)
     		throw new IllegalArgumentException("null name");
     	this.name = name;
-    	pos = position;
+    	rank = ranking;
     }
 
     public String getName()
@@ -130,21 +130,21 @@ public class TripCategory extends RDBRecord
 	 * Get the position for sorting.
 	 * @return  Position number
 	 */
-	public int getPosition()
+	public int getRanking()
 	{
-		return pos;
+		return rank;
 	}
 
 	/**
 	 * Set the position for sorting.
 	 * Must be unique (not checked here).
-	 * @param newPos  New position number
+	 * @param newRanking  New position number
 	 */
-	public void setPosition(final int newPos)
+	public void setRanking(final int newRanking)
 	{
-		if (newPos == pos)
+		if (newRanking == rank)
 			return;
-		pos = newPos;
+		rank = newRanking;
 		dirty = true;
 	}
 
@@ -158,7 +158,7 @@ public class TripCategory extends RDBRecord
         throws IllegalStateException
     {
     	String[] fv =
-            { name, Integer.toString(pos) };
+            { name, Integer.toString(rank) };
     	id = db.insert(TABNAME, FIELDS, fv, true);
 		dirty = false;
     	dbConn = db;
@@ -179,7 +179,7 @@ public class TripCategory extends RDBRecord
         throws IllegalStateException, NullPointerException
 	{
     	String[] fv =
-    		{ name, Integer.toString(pos) };
+    		{ name, Integer.toString(rank) };
 		dbConn.update(TABNAME, id, FIELDS, fv);
 		dirty = false;
 	}

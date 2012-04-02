@@ -3,7 +3,7 @@
  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  Layout for stop during trip / resume trip / end trip; default title label is stop_during_a_trip.
 
- Copyright (C) 2010-2012 Jeremy D Monin (jdmonin@nand.net)
+ This file Copyright (C) 2010-2012 Jeremy D Monin (jdmonin@nand.net)
 
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
@@ -267,6 +267,25 @@
 	        android:onClick="onClick_BtnGas"/>
     </TableRow>
 </TableLayout>
+<!-- Rows for Trip Category, Make Frequent are visible only at End Trip -->
+<LinearLayout android:id="@+id/trip_tstop_row_end_tcat"
+	android:orientation="horizontal"
+	android:layout_width="fill_parent"
+	android:layout_height="wrap_content"
+	>
+	<TextView
+		android:text="@string/category"
+		android:layout_width="wrap_content" 
+		android:layout_height="wrap_content"
+		/>
+	<Spinner
+		android:id="@+id/trip_tstop_end_category"
+		android:layout_weight="1"
+		android:layout_width="fill_parent"
+		android:layout_height="wrap_content"
+		android:paddingBottom="2dp"
+		/>
+</LinearLayout>
 <LinearLayout android:id="@+id/trip_tstop_row_end_mk_freq"
     android:orientation="horizontal"
     android:layout_width="wrap_content"

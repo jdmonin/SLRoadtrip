@@ -36,6 +36,7 @@ import org.shadowlands.roadtrip.db.Settings;
 import org.shadowlands.roadtrip.db.TStop;
 import org.shadowlands.roadtrip.db.TStopGas;
 import org.shadowlands.roadtrip.db.Trip;
+import org.shadowlands.roadtrip.db.TripCategory;
 import org.shadowlands.roadtrip.db.Vehicle;
 import org.shadowlands.roadtrip.db.ViaRoute;
 import org.shadowlands.roadtrip.db.android.RDBOpenHelper;
@@ -64,6 +65,7 @@ import android.widget.EditText;
 import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.ScrollView;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.TimePicker;
 import android.widget.TimePicker.OnTimeChangedListener;
@@ -213,6 +215,9 @@ public class TripTStopEntry extends Activity
 
 	private CheckBox odo_total_chk, odo_trip_chk, tp_time_stop_chk, tp_time_cont_chk;
 	private TimePicker tp_time_stop, tp_time_cont;
+
+	/** optional {@link TripCategory}; null unless {@link #stopEndsTrip} */
+	private Spinner spTripCat;
 
 	/** location; uses, sets {@link #locObj} */
 	private AutoCompleteTextView loc;
@@ -436,9 +441,17 @@ public class TripTStopEntry extends Activity
 			}
 		} // else, stopEndsTrip is false
 
-		if (! stopEndsTrip)
+		// Hide rows unless stopEndsTrip;
+		// set "continue" button text if already stopped
+		if (stopEndsTrip)
 		{
-			View vrow = findViewById(R.id.trip_tstop_row_end_mk_freq);
+			spTripCat = (Spinner) findViewById(R.id.trip_tstop_end_category);
+			SpinnerDataFactory.setupTripCategoriesSpinner(db, this, spTripCat, currT.getTripCategoryID());
+		} else {
+			View vrow = findViewById(R.id.trip_tstop_row_end_tcat);
+			if (vrow != null)
+				vrow.setVisibility(View.GONE);
+			vrow = findViewById(R.id.trip_tstop_row_end_mk_freq);
 			if (vrow != null)
 				vrow.setVisibility(View.GONE);
 
@@ -1838,6 +1851,7 @@ public class TripTStopEntry extends Activity
 
 	/**
 	 * Finish the current trip in the database. (Completed trips have a time_end, odo_end).
+	 * Set its {@link TripCategory} if specified.
 	 * Clear CURRENT_TRIP.
 	 * Update the Trip and Vehicle odometer.
 	 * If ending a roadtrip, also update CURRENT_AREA.
@@ -1850,6 +1864,16 @@ public class TripTStopEntry extends Activity
 	 */
 	private void endCurrentTrip(final int tsid, final int odo_total, final boolean mkFreqTrip)
 	{
+		// check for tripcategory
+		{
+			final int tripCat = ((TripCategory) (spTripCat.getSelectedItem())).getID();
+			if (tripCat >= 0)
+				currT.setTripCategoryID(tripCat);
+			else
+				currT.setTripCategoryID(0);  // tripCat is -1
+		}
+
+		// Set and commit other trip fields
 		currT.setTime_end((int) (stopTime.getTimeInMillis() / 1000L));
 		currT.setOdo_end(odo_total);
 		currT.commit();

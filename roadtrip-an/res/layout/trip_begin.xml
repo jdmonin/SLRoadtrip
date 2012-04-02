@@ -163,7 +163,9 @@
 	    android:id="@+id/trip_begin_category"
 	    android:layout_weight="1"
 		android:layout_width="fill_parent"
-		android:layout_height="wrap_content" />
+		android:layout_height="wrap_content"
+		android:paddingBottom="2dp"
+		/>
 </LinearLayout>
 <Button android:id="@+id/trip_begin_btn_begin"
     android:text="@string/begin_trip"

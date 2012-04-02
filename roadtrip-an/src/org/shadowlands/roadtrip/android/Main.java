@@ -385,7 +385,8 @@ public class Main extends Activity
 					txt.append(currTCateg);
 			} else {
 				txt.append("\n\nRoadtrip in progress.");
-				txt.append(currTCateg);
+				if (currTCateg != null)
+					txt.append(currTCateg);
 				txt.append("\nDestination area: ");
 				try {
 					txt.append(new GeoArea(db, destAreaID).getName());

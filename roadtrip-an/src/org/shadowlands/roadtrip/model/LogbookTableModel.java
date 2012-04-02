@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  Copyright (C) 2010-2011 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2012 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -31,6 +31,7 @@ import org.shadowlands.roadtrip.db.Settings;
 import org.shadowlands.roadtrip.db.TStop;
 import org.shadowlands.roadtrip.db.TStopGas;
 import org.shadowlands.roadtrip.db.Trip;
+import org.shadowlands.roadtrip.db.TripCategory;
 import org.shadowlands.roadtrip.db.Vehicle;
 import org.shadowlands.roadtrip.db.ViaRoute;
 import org.shadowlands.roadtrip.db.Trip.TripListTimeRange;
@@ -166,6 +167,13 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	private TIntObjectHashMap<GasBrandGrade> gasCache;
 
 	/**
+	 * {@link TripCategory} cache. Each item is its own key.
+	 * Names are modified in the cache: "[" + catname + "]"
+	 * @since 0.9.08
+	 */
+	private TIntObjectHashMap<TripCategory> tcatCache;
+
+	/**
 	 * Are we adding a new trip right now?
 	 * @see #maxRowBeforeAdd
 	 * @see #tAddedRows
@@ -217,6 +225,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 		locCache = new TIntObjectHashMap<Location>();
 		viaCache = new TIntObjectHashMap<ViaRoute>();
 		gasCache = new TIntObjectHashMap<GasBrandGrade>();
+		tcatCache = new TIntObjectHashMap<TripCategory>();
 		dtf = dtFmt;
 
 		this.veh = veh;
@@ -628,9 +637,27 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 				firstrow = null;
 			}
 
-			// next row of trip: time
+			// next row of trip: time; also "[category]" if set
 			tr = new String[COL_HEADINGS.length];
 			tr[1] = dtf.formatTime(tstart);
+			{
+				final int tcatID = t.getTripCategoryID();
+				if (tcatID != 0)
+				{
+					TripCategory tcat = tcatCache.get(tcatID);
+					if (tcat == null)
+					{
+						try
+						{
+							tcat = new TripCategory(conn, tcatID);
+							tcat.setName("[" + tcat.getName() + "]");
+							tcatCache.put(tcatID, tcat);
+						}
+						catch (Throwable th) {}
+					}
+					tr[5] = tcat.getName();
+				}
+			}
 			tText.addElement(tr);
 
 			final int odo_end = t.getOdo_end();

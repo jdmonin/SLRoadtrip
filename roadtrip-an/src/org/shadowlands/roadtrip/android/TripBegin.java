@@ -336,6 +336,7 @@ public class TripBegin extends Activity
 				rbLocContinue.setEnabled(false);
 				rbLocContinue.setVisibility(View.GONE);
 				rbLocGroup.check(R.id.trip_begin_radio_loc_new);
+				tvLocContinue.setVisibility(View.GONE);
 				// rbLocNew.setChecked(true);
 			} else {
 				rbLocContinue.setVisibility(View.VISIBLE);
@@ -614,9 +615,6 @@ public class TripBegin extends Activity
 				}
 				destAreaObj = new GeoArea(destarea);
 				destAreaObj.insert(db);
-				Toast.makeText(this, "Using new geoarea " + destAreaObj.getID(), Toast.LENGTH_SHORT).show();
-			} else {
-				Toast.makeText(this, "Using dest geoarea " + destAreaObj.getID(), Toast.LENGTH_SHORT).show();
 			}
 		}
 
@@ -738,7 +736,7 @@ public class TripBegin extends Activity
 				}
 
 			}
-			Toast.makeText(this, "L549: using freqtrip id " + wantsFT.getID(), Toast.LENGTH_SHORT).show();
+
 			// TODO update the based-on-freqtrip display row?
 			// like updateDriverVehTripTextAndButtons
 			if (isRoadtrip)

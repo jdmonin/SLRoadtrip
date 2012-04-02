@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  Copyright (C) 2010-2011 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2012 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -39,15 +39,17 @@ public class FreqTrip extends RDBRecord
     private static final String[] FIELDS =
         { "a_id", "start_locid", "end_locid",
       	  "end_odo_trip", "roadtrip_end_aid", "descr", "end_via_id",
-      	  "typ_timeofday", "flag_weekends", "flag_weekdays" };
+      	  "typ_timeofday", "flag_weekends", "flag_weekdays", "is_roundtrip", "catid" };
 
     private static final String[] FIELDS_AND_ID =
 	    { "a_id", "start_locid", "end_locid",
     	  "end_odo_trip", "roadtrip_end_aid", "descr", "end_via_id",
-	  	  "typ_timeofday", "flag_weekends", "flag_weekdays", "_id" };
+	  	  "typ_timeofday", "flag_weekends", "flag_weekdays", "is_roundtrip", "catid", "_id" };
 
     /** GeoArea ID.  -1 is empty/unused. */
     private int a_id;
+    /** Optional {@link TripCategory} ID.  0 is empty/unused (null in db). */
+    private int catid;
     /** For roadtrips, ending GeoArea ID.  0 is empty/unused. */
     private int roadtrip_end_aid;
     /** Starting/ending {@link Location} IDs. See {@link #start_loc}. */
@@ -60,6 +62,9 @@ public class FreqTrip extends RDBRecord
 
     /** typical time of week */
     private boolean flag_weekends, flag_weekdays;
+
+    /** Does this trip end at {@link #start_locid} after stopping at {@link #end_locid}? */
+    private boolean is_roundtrip;
 
     /** may be null */
     private String descr;
@@ -183,6 +188,7 @@ public class FreqTrip extends RDBRecord
      *
      * @param t  The trip which will be copied to the new FreqTrip.  Its start and end location,
      *            and ending trip odometer, must be set.
+     *           If this trip's {@link Trip#getTripCategoryID()} is set, it will be copied to the new FreqTrip. 
      * @param keepStops  Any intermediate stops from the trip which should be part of the FreqTrip;
      *            can be 0-length or null.
      *            The new FreqTrip will have uncommitted {@link FreqTripTStop}s
@@ -204,6 +210,8 @@ public class FreqTrip extends RDBRecord
     	final int typ_timeofday, final boolean flag_weekends, final boolean flag_weekdays)
     	throws IllegalArgumentException
     {
+    	// TODO is_roundtrip
+
     	if (t.getID() == -1)
     		throw new IllegalArgumentException("trip not in db");
     	if (! t.isEnded())
@@ -234,6 +242,7 @@ public class FreqTrip extends RDBRecord
 
     	// Make the FreqTrip:
     	FreqTrip ft = new FreqTrip(startLoc, tsEnd.readLocation(), tsEnd.getOdo_trip(), descr, tsEnd.getVia_id(), typ_timeofday, flag_weekends, flag_weekdays);
+    	ft.catid = t.getTripCategoryID();
 
     	// Make the stops:
     	if ((keepStops != null) && (keepStops.size() > 0))
@@ -304,7 +313,7 @@ public class FreqTrip extends RDBRecord
     private static final String[] FIELDS =
         { "a_id", "start_locid", "end_locid",
       	  "end_odo_trip", "roadtrip_end_aid", "descr", "end_via_id",
-      	  "typ_timeofday", "flag_weekends", "flag_weekdays" };
+      	  "typ_timeofday", "flag_weekends", "flag_weekdays", "is_roundtrip", "catid" };
 		 */
 		if (rec[0] != null)
 			a_id = Integer.parseInt(rec[0]);  // FK
@@ -324,12 +333,17 @@ public class FreqTrip extends RDBRecord
     		typ_timeofday = -1;
     	flag_weekends = ("1".equals(rec[8]));
     	flag_weekdays = ("1".equals(rec[9]));
+    	is_roundtrip = ("1".equals(rec[10]));
+    	if (rec[11] != null)
+    		catid = Integer.parseInt(rec[11]);  // FK
 	}
 
     /**
      * Create a new freqtrip, but don't yet write to the database.
      * The areas (a_id, roadtrip_end_aid) will be taken from those of
      * <tt>start_loc</tt>, <tt>end_loc</tt>.
+     *<P>
+     * To set the optional trip category, call {@link #setTripCategoryID()} before <tt>insert</tt>.
      *<P>
      * When ready to write (after any changes you make to this object),
      * call {@link #insert(RDBAdapter)}.
@@ -368,6 +382,8 @@ public class FreqTrip extends RDBRecord
     	this.typ_timeofday = typ_timeofday;
         this.flag_weekends = flag_weekends;
         this.flag_weekdays = flag_weekdays;
+        // TODO is_roundtrip
+        catid = 0;
     }
 
     /**
@@ -471,7 +487,7 @@ public class FreqTrip extends RDBRecord
     private static final String[] FIELDS =
         { "a_id", "start_locid", "end_locid",
       	  "end_odo_trip", "roadtrip_end_aid", "descr", "end_via_id",
-      	  "typ_timeofday", "flag_weekends", "flag_weekdays" };
+      	  "typ_timeofday", "flag_weekends", "flag_weekdays", "is_roundtrip", "catid" };
     	  */
 		String[] fv =
 		    {
@@ -483,9 +499,19 @@ public class FreqTrip extends RDBRecord
 			(end_via_id != 0 ? Integer.toString(end_via_id) : null),
 			(typ_timeofday != -1 ? Integer.toString(typ_timeofday) : null),
 			(flag_weekends ? "1" : "0"),
-			(flag_weekdays ? "1" : "0")
+			(flag_weekdays ? "1" : "0"),
+			(is_roundtrip ? "1" : "0"),
+			(catid != 0 ? Integer.toString(catid) : null)
 		    };
 		return fv;
+	}
+
+	/**
+	 * Get this trip's optional {@link TripCategory} id.
+	 * @return the trip category ID, or 0 for none
+	 */
+	public int getTripCategoryID() {
+		return catid;
 	}
 
 	/** get the trip-odometer at the end of this trip */
@@ -537,6 +563,11 @@ public class FreqTrip extends RDBRecord
 	/** Is this freqtrip typically made on weekdays? */
 	public boolean isWeekdays() {
 		return flag_weekdays;
+	}
+
+	/** Does this trip end at {@link #getStart_locID()} after stopping at {@link #getEnd_locID()}? */
+	public boolean isRoundTrip() {
+		return is_roundtrip;
 	}
 
 	/**

@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  Copyright (C) 2010-2011 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2012 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -54,12 +54,12 @@ public class Trip extends RDBRecord
      * @see #buildInsertUpdate()
      */
     private static final String[] FIELDS =
-        { "vid", "did", "odo_start", "odo_end", "aid", "tstopid_start",
+        { "vid", "did", "catid", "odo_start", "odo_end", "aid", "tstopid_start",
 		  FIELD_TIME_START, "time_end", "start_lat", "start_lon", "end_lat", "end_lon",
 		  "freqtripid", "comment", "roadtrip_end_aid", "has_continue" };
 
     private static final String[] FIELDS_AND_ID =
-	    { "vid", "did", "odo_start", "odo_end", "aid", "tstopid_start",
+	    { "vid", "did", "catid", "odo_start", "odo_end", "aid", "tstopid_start",
 		  FIELD_TIME_START, "time_end", "start_lat", "start_lon", "end_lat", "end_lon",
 		  "freqtripid", "comment", "roadtrip_end_aid", "has_continue", "_id" };
 
@@ -99,6 +99,8 @@ public class Trip extends RDBRecord
 
     private int vehicleid;
     private int driverid;
+    /** Optional {@link TripCategory} ID.  0 is empty/unused (null in db). */
+    private int catid;
     /** Starting odometer, in tenths of a unit */
     private int odo_start;
     /** Ending odometer, in tenths of a unit, or 0 if trip is still in progress */
@@ -506,33 +508,37 @@ public class Trip extends RDBRecord
 	{
 		vehicleid = Integer.parseInt(rec[0]);  // FK
     	driverid = Integer.parseInt(rec[1]);  // FK
-    	odo_start = Integer.parseInt(rec[2]);
-    	if (rec[3] != null)
-    		odo_end = Integer.parseInt(rec[3]);
+    	if (rec[2] != null)
+    		catid = Integer.parseInt(rec[2]);  // FK
+    	odo_start = Integer.parseInt(rec[3]);
     	if (rec[4] != null)
-    		a_id = Integer.parseInt(rec[4]);
+    		odo_end = Integer.parseInt(rec[4]);
     	if (rec[5] != null)
-    		tstopid_start = Integer.parseInt(rec[5]);  // FK
+    		a_id = Integer.parseInt(rec[5]);
     	if (rec[6] != null)
-    		time_start = Integer.parseInt(rec[6]);
+    		tstopid_start = Integer.parseInt(rec[6]);  // FK
     	if (rec[7] != null)
-    		time_end = Integer.parseInt(rec[7]);
-    	start_lat = rec[8];
-    	start_lon = rec[9];
-    	end_lat = rec[10];
-    	end_lon = rec[11];
-    	if (rec[12] != null)
-    		freqtripid = Integer.parseInt(rec[12]);
-    	comment = rec[13];
-    	if (rec[14] != null)
-    		roadtrip_end_aid = Integer.parseInt(rec[14]);
-    	has_continue = ("1".equals(rec[15]));
+    		time_start = Integer.parseInt(rec[7]);
+    	if (rec[8] != null)
+    		time_end = Integer.parseInt(rec[8]);
+    	start_lat = rec[9];
+    	start_lon = rec[10];
+    	end_lat = rec[11];
+    	end_lon = rec[12];
+    	if (rec[13] != null)
+    		freqtripid = Integer.parseInt(rec[13]);  // FK
+    	comment = rec[14];
+    	if (rec[15] != null)
+    		roadtrip_end_aid = Integer.parseInt(rec[15]);
+    	has_continue = ("1".equals(rec[16]));
 	}
 
     /**
      * Create a new trip, but don't yet write to the database.
      * When ready to write (after any changes you make to this object),
      * call {@link #insert(RDBAdapter)}.
+     *<P>
+     * To set the optional trip category, call {@link #setTripCategoryID()} before <tt>insert</tt>.
      *
      * @param veh    Vehicle used on this trip
      * @param driver Driver for the trip
@@ -570,6 +576,7 @@ public class Trip extends RDBRecord
 
     	vehicleid = veh.getID();
     	driverid = driver.getID();
+    	catid = 0;
         if (tstop_start != null)
         {
         	final int ts_odo = tstop_start.getOdo_total();
@@ -946,13 +953,14 @@ public class Trip extends RDBRecord
 	{
 		/*
     private static final String[] FIELDS =
-        { "vid", "did", "odo_start", "odo_end", "aid", "tstopid_start",
-    	  "time_start", "time_end", "start_lat", "start_lon", "end_lat", "end_lon",
-    	  "freqtripid", "comment", "roadtrip_end_aid", "has_continue" };
+        { "vid", "did", "catid", "odo_start", "odo_end", "aid", "tstopid_start",
+          FIELD_TIME_START, "time_end", "start_lat", "start_lon", "end_lat", "end_lon",
+          "freqtripid", "comment", "roadtrip_end_aid", "has_continue" };
 		 */
 		String[] fv =
 		    {
 			Integer.toString(vehicleid), Integer.toString(driverid),
+			(catid != 0 ? Integer.toString(catid) : null),
 			Integer.toString(odo_start), (odo_end != 0 ? Integer.toString(odo_end) : null),
 			(a_id != 0 ? Integer.toString(a_id) : null), (tstopid_start != 0 ? Integer.toString(tstopid_start) : null),
 			Integer.toString(time_start), Integer.toString(time_end),
@@ -980,6 +988,26 @@ public class Trip extends RDBRecord
 
 	public int getVehicleID() {
 		return vehicleid;
+	}
+
+	/**
+	 * Get this trip's optional {@link TripCategory} id.
+	 * @return the trip category ID, or 0 for none
+	 */
+	public int getTripCategoryID() {
+		return catid;
+	}
+
+	/**
+	 * Set or clear this trip's optional {@link TripCategory} id.
+	 * @param newCatID  trip category ID, or 0 for none
+	 */
+	public void setTripCategoryID(final int newCatID)
+	{
+		if (catid == newCatID)
+			return;
+		catid = newCatID;
+		dirty = true;
 	}
 
 	public int getOdo_start() {

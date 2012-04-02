@@ -24,6 +24,7 @@ import java.util.Vector;
 import org.shadowlands.roadtrip.R;
 import org.shadowlands.roadtrip.db.FreqTrip;
 import org.shadowlands.roadtrip.db.GeoArea;
+import org.shadowlands.roadtrip.db.Location;
 import org.shadowlands.roadtrip.db.RDBAdapter;
 import org.shadowlands.roadtrip.db.Settings;
 import org.shadowlands.roadtrip.db.android.RDBOpenHelper;
@@ -119,7 +120,26 @@ public class TripBeginChooseFreq extends Activity
 		final boolean hadAny = populateTripsList(db);
 		if (! hadAny)
 		{
-			Toast.makeText(this, R.string.no_frequent_trips_found, Toast.LENGTH_SHORT).show();
+			String locText = null;
+			if (locID != 0)
+			{
+				try
+				{
+					Location lo = new Location(db, locID);
+					locText = lo.getLocation();
+				} catch (Throwable t) { }
+			}
+
+			if (locText == null)
+			{
+				Toast.makeText(this, R.string.no_frequent_trips_found, Toast.LENGTH_SHORT).show();				
+			} else {
+				StringBuffer sb = new StringBuffer();
+				sb.append(getResources().getString(R.string.no_frequent_trips_found_from));
+				sb.append(' ');
+				sb.append(locText);
+				Toast.makeText(this, sb, Toast.LENGTH_SHORT).show();				
+			}
 	    	setResult(RESULT_CANCELED);
 			finish();
 		}
@@ -134,7 +154,7 @@ public class TripBeginChooseFreq extends Activity
 	}
 
 	/**
-	 * List the frequent trips currently available.
+	 * List the frequent trips currently available, from {@link #locID} if known, or for current area.
 	 * @return true if {@link FreqTrip}s found, false otherwise
 	 */
 	private boolean populateTripsList(RDBAdapter db)

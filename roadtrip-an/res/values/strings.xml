@@ -80,6 +80,7 @@
 <string name="new_vehicle">New vehicle</string>
 <string name="no_earlier_trips_found">No earlier trips were found.</string>
 <string name="no_frequent_trips_found">No frequent trips were found.</string>
+<string name="no_frequent_trips_found_from">No frequent trips were found from</string>
 <string name="no_later_trips_found">No later trips were found.</string>
 <string name="none">none</string>
 <string name="not_found">Not found.</string>

@@ -163,7 +163,7 @@ public class VehicleEntry
 				Toast.makeText(this, R.string.not_found, Toast.LENGTH_SHORT).show();
 				setResult(Activity.RESULT_CANCELED);
 				finish();
-				return;   // <--- Early return: Could lot load from db to view fields ---
+				return;   // <--- Early return: Could not load from db to view fields ---
 			}
 	    }
 

@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  Copyright (C) 2010 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010,2012 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -29,6 +29,7 @@ import org.shadowlands.roadtrip.db.Location;
 import org.shadowlands.roadtrip.db.RDBAdapter;
 import org.shadowlands.roadtrip.db.TStop;
 import org.shadowlands.roadtrip.db.Trip;
+import org.shadowlands.roadtrip.db.TripCategory;
 import org.shadowlands.roadtrip.db.ViaRoute;
 import org.shadowlands.roadtrip.db.android.RDBOpenHelper;
 
@@ -55,6 +56,7 @@ import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ListAdapter;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.TimePicker;
 import android.widget.TimePicker.OnTimeChangedListener;
@@ -140,6 +142,9 @@ public class TripCreateFreq extends Activity
 	/** Used by {@link TStopRowController} */
 	private int tstopListPosition = -1;
 
+	/** Optional {@link TripCategory} */
+	private Spinner spTripCat;
+
 	/**
 	 * Called when the activity is first created.
 	 * Load our source trip, set flags, etc.
@@ -200,6 +205,10 @@ public class TripCreateFreq extends Activity
 		    	calAtTime.setTimeInMillis(1000L * srcT.getTime_start());
 		    tpAtTime.setCurrentHour(calAtTime.get(Calendar.HOUR_OF_DAY));
 		    tpAtTime.setCurrentMinute(calAtTime.get(Calendar.MINUTE));
+
+		    // Trip category
+			spTripCat = (Spinner) findViewById(R.id.trip_createfreq_category);
+			SpinnerDataFactory.setupTripCategoriesSpinner(db, this, spTripCat, srcT.getTripCategoryID());
 		}
 
 		if (! populateStopsList())
@@ -384,13 +393,20 @@ public class TripCreateFreq extends Activity
 			updateStopsListNewVias();
 		}
 
+		// Update the trip category
+		final int tripCat = ((TripCategory) (spTripCat.getSelectedItem())).getID();
+		if (tripCat >= 0)
+			srcT.setTripCategoryID(tripCat);
+		else
+			srcT.setTripCategoryID(0);  // tripCat < 0
+
+		// Create the FreqTrip
 		FreqTrip ft = FreqTrip.createFromTrip
 			(srcT, stopsList, descr, atTime,
 			 cbWeekends.isChecked(), cbWeekdays.isChecked());
 		ft.insert(db);
 
 		Log.i(TAG, "Created new FreqTrip id " + ft.getID());
-		Toast.makeText(this, "Created new FreqTrip id " + ft.getID(), Toast.LENGTH_SHORT).show();
 
 		finish();
 	}

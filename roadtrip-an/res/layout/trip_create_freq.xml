@@ -1,4 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+ This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
+
+ This file Copyright (C) 2010,2012 Jeremy D Monin (jdmonin@nand.net)
+
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with this program.  If not, see http://www.gnu.org/licenses/ .
+ -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical"
     android:layout_width="fill_parent"
@@ -57,6 +75,28 @@
 	<TextView android:id="@+id/trip_createfreq_desttext"
 	    android:layout_width="fill_parent"
 	    android:layout_height="wrap_content" />
+	<LinearLayout
+	    android:orientation="horizontal"
+	    android:layout_width="fill_parent"
+	    android:layout_height="wrap_content"
+	    >
+		<TextView
+		    android:text="@string/trip__category"
+		    android:layout_width="wrap_content" 
+		    android:layout_height="wrap_content"
+			android:gravity="top"
+			android:layout_gravity="center"
+		    />
+		<Spinner
+		    android:id="@+id/trip_createfreq_category"
+		    android:layout_weight="1"
+			android:layout_gravity="top"
+			android:layout_width="fill_parent"
+			android:layout_height="wrap_content"
+			android:paddingTop="2dp"
+			android:paddingBottom="2dp"
+			/>
+	</LinearLayout>
 	<LinearLayout
 	    android:orientation="horizontal"
 	    android:layout_width="fill_parent"

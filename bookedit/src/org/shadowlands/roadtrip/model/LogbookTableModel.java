@@ -506,17 +506,17 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 					{
 						tr[2] = "/";  // only start time
 					}
-					int x = ts.getOdo_total();
-					final boolean is_last_stop = (x != 0) && (x == odo_end) && (ttcont == 0);
-					if ((x != 0) && ! is_last_stop)
-						tr[3] = Integer.toString((int) (x / 10.0f));
-					x = ts.getOdo_trip();
-					if (x != 0)
+					final int ts_ototal = ts.getOdo_total();
+					final boolean is_last_stop = (ts_ototal != 0) && (ts_ototal == odo_end) && (ttcont == 0);
+					if ((ts_ototal != 0) && ! is_last_stop)
+						tr[3] = Integer.toString((int) (ts_ototal / 10.0f));
+					final int ts_otrip = ts.getOdo_trip();
+					if (ts_otrip != 0)
 					{
 						if (! is_last_stop)
-							tr[4] = String.format("(%.1f)", x / 10.0f);
+							tr[4] = String.format("(%.1f)", ts_otrip / 10.0f);
 						else
-							tr[4] = String.format("%.1f", x / 10.0f);
+							tr[4] = String.format("%.1f", ts_otrip / 10.0f);
 					}
 
 					// Via

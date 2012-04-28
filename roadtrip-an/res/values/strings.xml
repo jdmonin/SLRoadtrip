@@ -167,6 +167,7 @@
 <string name="backups_restore_validation_error">Error in file validation.</string>
 <string name="backups_restore_validation_ok">File validated.</string>
 <string name="backups_restore__title">Restore from Backup</string>
+<string name="settings_require_tripcat">Require trip category</string>
 <string name="change_vehicle_driver_ask_chg_title">Change current setting?</string>
 <string name="change_vehicle_driver_ask_chg_new_d">Change current driver to the new one?</string>
 <string name="change_vehicle_driver_ask_chg_new_v">Change current vehicle to the new one?</string>
@@ -181,6 +182,7 @@
 <string name="trip_createfreq_usually_weekdays">Usually on weekdays</string>
 <string name="trip_createfreq_usually_weekends">Usually on weekends</string>
 <string name="trip_createfreq_tstops_to_include">Trip stops to include:</string>
+<string name="trip_tstart_categ_req">Trip Category is required. (To change this, go to Settings.)</string>
 <string name="trip_tstart_geoarea_different">A roadtrip\'s destination must be different than the current geographic area.</string>
 <string name="trip_tstart_geoarea_prompt">Please enter the destination\'s geographic area.</string>
 <string name="trip_tstart_loc_not_freq">If the location changes, you won\'t be using the frequent trip. Do you want to go back to the frequent trip\'s location?</string>

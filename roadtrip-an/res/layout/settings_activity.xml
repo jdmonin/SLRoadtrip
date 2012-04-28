@@ -2,7 +2,7 @@
 <!--
  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
 
- This file Copyright (C) 2010-2012 Jeremy D Monin (jdmonin@nand.net)
+ This file Copyright (C) 2012 Jeremy D Monin (jdmonin@nand.net)
 
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
@@ -16,23 +16,16 @@
 
  You should have received a copy of the GNU General Public License
  along with this program.  If not, see http://www.gnu.org/licenses/ .
+
  -->
-<menu
-  xmlns:android="http://schemas.android.com/apk/res/android">
-<item android:id="@+id/menu_main_backup"
-	android:title="@string/backups"
-	android:icon="@android:R/drawable/ic_menu_save"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="fill_parent"
+	android:layout_height="fill_parent"
+	android:orientation="vertical"
+	>
+<CheckBox  android:id="@+id/cb_req_tripcat"
+	android:layout_width="wrap_content"
+	android:layout_height="wrap_content"
+	android:text="@string/settings_require_tripcat"
 	/>
-<item android:id="@+id/menu_main_canceltrip"
-	android:title="@string/cancel_trip"
-	android:icon="@android:R/drawable/ic_menu_close_clear_cancel"
-	/>
-<item android:id="@+id/menu_main_settings"
-	android:title="@string/settings"
-	android:icon="@android:R/drawable/ic_menu_preferences"
-	/>
-<item android:id="@+id/menu_main_about"
-	android:title="@string/about"
-	android:icon="@android:R/drawable/ic_menu_info_details"
-	/>
-</menu>
+</LinearLayout>

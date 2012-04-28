@@ -141,6 +141,10 @@ public class Main extends Activity
 	    	confirmCancelCurrentTrip();
 	    	return true;
 
+		case R.id.menu_main_settings:
+			startActivity(new Intent(Main.this, SettingsActivity.class));
+			return true;
+
 	    case R.id.menu_main_about:
         	showDialog(R.id.menu_main_about);
 	    	return true;

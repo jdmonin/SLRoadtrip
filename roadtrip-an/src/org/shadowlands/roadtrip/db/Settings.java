@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  Copyright (C) 2010-2011 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2012 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -134,6 +134,7 @@ public class Settings extends RDBRecord
      * @param settname field to create or update
      * @param ivalue  int value to set
      * @throws IllegalStateException if db not open
+     * @see #setBoolean(RDBAdapter, String, boolean)
      */
     public static void insertOrUpdate(RDBAdapter db, final String settname, final int ivalue)
     	throws IllegalStateException
@@ -150,6 +151,7 @@ public class Settings extends RDBRecord
      * @param settname field to create or update
      * @param svalue  string value to set; "" will be stored as null.
      * @throws IllegalStateException if db not open
+     * @see #setBoolean(RDBAdapter, String, boolean)
      */
     public static void insertOrUpdate(RDBAdapter db, final String settname, final String svalue)
     	throws IllegalStateException
@@ -191,6 +193,7 @@ public class Settings extends RDBRecord
      * @param db  connection to use
      * @param settname field to create or update
      * @throws IllegalStateException if db not open
+     * @see #clearIfExists(RDBAdapter, String, int)
      */
     public static void clearIfExists(RDBAdapter db, final String settname)
     	throws IllegalStateException
@@ -206,6 +209,7 @@ public class Settings extends RDBRecord
      * @param db  connection to use
      * @param settname field to create or update
      * @throws IllegalStateException if db not open
+     * @see #clearIfExists(RDBAdapter, String)
      */
     public static void clearIfExists(RDBAdapter db, final String settname, final int ivalue_clear)
     	throws IllegalStateException
@@ -226,11 +230,67 @@ public class Settings extends RDBRecord
 	}
 
     /**
+     * Get this boolean setting from the database.
+     * Booleans are int settings with ivalue 1 or 0.
+     * @param db  connection to use
+     * @param settname   field to read
+     * @param settdefault  default value if not found
+     * @return  Setting value (true if != 0), or <tt>settdefault</tt> if not found
+     * @see #setBoolean(RDBAdapter, String, boolean)
+     * @since 0.9.12
+     */
+    public static boolean getBoolean(RDBAdapter db, final String settname, final boolean settdefault)
+    {
+		Settings s = null;
+
+		try {
+			s = new Settings(db, settname);
+		} catch (RDBKeyNotFoundException e) { }
+
+		if (s == null)
+			return settdefault;
+
+		return (s.ivalue != 0);
+    }
+
+    /**
+     * Set this boolean setting in the database.
+     * Booleans are int settings with ivalue 1 or 0.
+     * @param db  connection to use
+     * @param settname   field to write
+     * @param settvalue  value to write
+     * @see #getBoolean(RDBAdapter, String, boolean)
+     * @see #insertOrUpdate(RDBAdapter, String, int)
+     * @since 0.9.12
+     */
+    public static void setBoolean(RDBAdapter db, final String settname, final boolean settvalue)
+    {
+		final int ivalue = settvalue ? 1 : 0;
+		Settings s = null;
+
+		try {
+			s = new Settings(db, settname);
+		} catch (RDBKeyNotFoundException e) { }
+
+		if (s == null)
+		{
+			s = new Settings(settname, ivalue);
+			s.insert(db);
+		}
+		else if (ivalue != s.ivalue)
+		{
+			s.setIntValue(ivalue);
+			s.commit();
+		}
+	}
+
+    /**
      * Look up a Setting from the database.
      * @param db  db connection
      * @param settname field to retrieve
      * @throws IllegalStateException if db not open
      * @throws RDBKeyNotFoundException if settname not found in database
+     * @see #getBoolean(RDBAdapter, String, boolean)
      */
     public Settings(RDBAdapter db, String settname)
         throws IllegalStateException, RDBKeyNotFoundException

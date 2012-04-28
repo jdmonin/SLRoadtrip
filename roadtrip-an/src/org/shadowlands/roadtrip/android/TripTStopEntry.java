@@ -1297,6 +1297,19 @@ public class TripTStopEntry extends Activity
 			}
 		}
 
+		// Check for required trip category:
+		if (stopEndsTrip)
+		{
+			final int tripCat = ((TripCategory) (spTripCat.getSelectedItem())).getID();
+			if ((Settings.getBoolean(db, Settings.REQUIRE_TRIPCAT, false))
+			    && (tripCat <= 0))
+			{
+				spTripCat.requestFocus();
+				Toast.makeText(this, R.string.trip_tstart_categ_req, Toast.LENGTH_SHORT).show();
+				return;  // <--- Early return: missing required ---
+			}
+		}
+
 		/**
 		 * Done checking field contents, time to update the db.
 		 * tsid is the TStop ID we'll create or update here.

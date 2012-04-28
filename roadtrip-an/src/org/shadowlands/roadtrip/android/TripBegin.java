@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  Copyright (C) 2010-2011 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2012 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -590,6 +590,16 @@ public class TripBegin extends Activity
 			}
 		}
 
+		// Check for required trip category:
+		final int tripCat = ((TripCategory) (spTripCat.getSelectedItem())).getID();
+		if ((Settings.getBoolean(db, Settings.REQUIRE_TRIPCAT, false))
+		    && (tripCat <= 0))
+		{
+			spTripCat.requestFocus();
+			Toast.makeText(this, R.string.trip_tstart_categ_req, Toast.LENGTH_SHORT).show();
+			return;  // <--- Early return: missing required ---
+		}
+
 		// Check other fields:
 
 		if (isRoadtrip)
@@ -624,7 +634,6 @@ public class TripBegin extends Activity
     		wantsFT, null,
     		(isRoadtrip ? destAreaObj.getID() : 0),
     		false);
-		final int tripCat = ((TripCategory) (spTripCat.getSelectedItem())).getID();
 		if (tripCat > 0)
 			t.setTripCategoryID(tripCat);
 		t.insert(db);

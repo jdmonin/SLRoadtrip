@@ -226,9 +226,7 @@ public class TripTStopGas extends Activity
 				gbgCreatedHere = loadFrom.getBoolean(EXTRAS_FIELD_BRANDGRADE_CREATED, false);
 			}
 			catch (Throwable th) {}
-			Log.d(TAG, "loadFieldsFromBundle: bgid = " + bgid + ", obj = " + brandGradeObj);
 		} else {
-			Log.d(TAG, "loadFieldsFromBundle: bgid = 0");
 		}
 		final boolean[] calc = loadFrom.getBooleanArray(EXTRAS_FIELD_CALC_FLAGS);
 		if (calc != null)
@@ -264,7 +262,6 @@ public class TripTStopGas extends Activity
 				brandGradeObj = null;  // a new name was typed, or no name was typed
 		}
 		saveTo.putInt(EXTRAS_FIELD_BRANDGRADE_ID, (brandGradeObj != null) ? brandGradeObj.getID() : 0);
-		Log.d(TAG, "saveBundleFromFields: bgobj = " + brandGradeObj);
 		final boolean[] calc = new boolean[] {
 			quant_calc, perunit_calc, totalcost_calc
 		};
@@ -329,7 +326,6 @@ public class TripTStopGas extends Activity
 		          pt = RDBSchema.parseFixedDecOr0(saveFrom.getCharSequence(EXTRAS_FIELD_TOTALCOST), 2);
 		if ((q == 0) && (pp == 0) && (pt == 0))
 		{
-			// Log.d(TAG, "saveDB: got a 0");
 			return null;
 		}
 
@@ -434,7 +430,6 @@ public class TripTStopGas extends Activity
 		if (ga == null)
 			return;
 		brandGradeObj = (GasBrandGrade) ga.getItem(position);
-		Log.d(TAG, "clicked: bgobj = id " + brandGradeObj.getID() + " " + brandGradeObj);
 	}
 
 }

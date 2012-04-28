@@ -1,5 +1,5 @@
 -- org.shadowlands.roadtrip
--- version 0.9.08 schema for SQLite 3.4 or higher  (2012-04-01)
+-- version 0.9.08 schema (2012-04-01) for SQLite 3.4 or higher
 -- Remember: When you upgrade the schema version, be sure to
 -- make all code changes listed in RDBSchema's class javadoc, and
 -- add the upgrade script to RtrDBOpenHelper.getSQLScript().
@@ -73,6 +73,8 @@ create table settings ( _id integer PRIMARY KEY AUTOINCREMENT not null, sname va
 	-- CURRENT_FREQTRIP (int _id, or 0) -- added in v0900; 0 when not on a freqtrip; 0 when CURRENT_TRIP is 0
 	-- CURRENT_FREQTRIP_TSTOPLIST (empty string, or comma-delimited _id)
 	--      added in v0900; unused IDs for this freqtrip in freqtrip_tstop
+	-- REQUIRE_TRIPCAT (bool) -- is trip category required for new trips?  Added in app version 0.9.12.
+	-- LOGVIEW_ODO_TRIP_DELTA (int) -- logview trip odometers normal (0), delta (1), or both (2)  Added in 0.9.12.
 
 create table app_db_upgrade_hist ( db_vers_to int not null, db_vers_from not null, upg_time int not null );
     -- May be empty, if db never upgraded

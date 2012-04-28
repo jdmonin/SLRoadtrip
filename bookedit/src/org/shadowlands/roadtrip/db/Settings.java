@@ -91,6 +91,22 @@ public class Settings extends RDBRecord
 	 */
 	public static final String CURRENT_FREQTRIP_TSTOPLIST = "CURRENT_FREQTRIP_TSTOPLIST";
 
+	/**
+	 * boolean setting for requiring a Trip Category for each trip.
+	 * Default is false.
+	 * @since 0.9.12
+	 */
+	public static final String REQUIRE_TRIPCAT = "REQUIRE_TRIPCAT";
+
+	/**
+	 * int setting for showing trip odometers as delta
+	 * (difference from the last stop).
+	 * 0 = Normal (actual trip-odometer value); 1 = show Delta; 2 = show both Delta and Normal.
+	 * Default is 0.
+	 * @since 0.9.12
+	 */
+	public static final String LOGVIEW_ODO_TRIP_DELTA = "LOGVIEW_ODO_TRIP_DELTA";
+
 	private static final String TABNAME = "settings";
 	private static final String KEYFIELD = "sname";
 	private static final String VALFIELD_STR = "svalue";
@@ -235,11 +251,43 @@ public class Settings extends RDBRecord
      * @param db  connection to use
      * @param settname   field to read
      * @param settdefault  default value if not found
-     * @return  Setting value (true if != 0), or <tt>settdefault</tt> if not found
+     * @return  Setting's value (true if != 0), or <tt>settdefault</tt> if not found
      * @see #setBoolean(RDBAdapter, String, boolean)
+     * @see #getInt(RDBAdapter, String, int)
      * @since 0.9.12
      */
     public static boolean getBoolean(RDBAdapter db, final String settname, final boolean settdefault)
+    {
+		return (0 != getInt(db, settname, (settdefault ? 1 : 0)));
+    }
+
+    /**
+     * Set this boolean setting in the database.
+     * Booleans are int settings with ivalue 1 or 0.
+     * @param db  connection to use
+     * @param settname   field to write
+     * @param settvalue  value to write
+     * @see #getBoolean(RDBAdapter, String, boolean)
+     * @see #setInt(RDBAdapter, String, int)
+     * @see #insertOrUpdate(RDBAdapter, String, int)
+     * @since 0.9.12
+     */
+    public static void setBoolean(RDBAdapter db, final String settname, final boolean settvalue)
+    {
+    	setInt(db, settname, settvalue ? 1 : 0);
+    }
+
+    /**
+     * Get this int setting from the database.
+     * @param db  connection to use
+     * @param settname   field to read
+     * @param settdefault  default value if not found
+     * @return  Setting's value, or <tt>settdefault</tt> if not found
+     * @see #setInt(RDBAdapter, String, boolean)
+     * @see #getBoolean(RDBAdapter, String, int)
+     * @since 0.9.12
+     */
+    public static int getInt(RDBAdapter db, final String settname, final int settdefault)
     {
 		Settings s = null;
 
@@ -250,22 +298,21 @@ public class Settings extends RDBRecord
 		if (s == null)
 			return settdefault;
 
-		return (s.ivalue != 0);
+		return s.ivalue;
     }
 
     /**
-     * Set this boolean setting in the database.
-     * Booleans are int settings with ivalue 1 or 0.
+     * Set this int setting in the database.
      * @param db  connection to use
      * @param settname   field to write
-     * @param settvalue  value to write
-     * @see #getBoolean(RDBAdapter, String, boolean)
+     * @param ivalue  value to write
+     * @see #getInt(RDBAdapter, String, int)
+     * @see #setBoolean(RDBAdapter, String, boolean)
      * @see #insertOrUpdate(RDBAdapter, String, int)
      * @since 0.9.12
      */
-    public static void setBoolean(RDBAdapter db, final String settname, final boolean settvalue)
+    public static void setInt(RDBAdapter db, final String settname, final int ivalue)
     {
-		final int ivalue = settvalue ? 1 : 0;
 		Settings s = null;
 
 		try {

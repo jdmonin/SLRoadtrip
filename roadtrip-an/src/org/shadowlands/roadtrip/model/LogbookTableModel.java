@@ -625,7 +625,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 			if (trip_odo_delta_mode != 0)
 				odo_total = t.getOdo_start();
 			else
-				odo_total = 0;  // for the compiler
+				odo_total = 0;  // required for the compiler
 
 			TStop ts_start = t.readStartTStop(false);  // may be null
 			String[] tr;
@@ -719,40 +719,41 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 					{
 						tr[2] = "/";  // only start time
 					}
+
 					int odo_delta = 0;
-					int x = ts.getOdo_total();
-					if ((trip_odo_delta_mode != 0) && (x != 0))
+					final int ts_ototal = ts.getOdo_total();
+					if ((trip_odo_delta_mode != 0) && (ts_ototal != 0))
 					{
-						odo_delta = x - odo_total;
-						odo_total = x;
+						odo_delta = ts_ototal - odo_total;
+						odo_total = ts_ototal;
 					}
-					final boolean is_last_stop = (x != 0) && (x == odo_end) && (ttcont == 0);
-					if ((x != 0) && ! is_last_stop)
-						tr[3] = Integer.toString((int) (x / 10.0f));
-					x = ts.getOdo_trip();
-					if (x != 0)
+					final boolean is_last_stop = (ts_ototal != 0) && (ts_ototal == odo_end) && (ttcont == 0);
+					if ((ts_ototal != 0) && ! is_last_stop)
+						tr[3] = Integer.toString((int) (ts_ototal / 10.0f));
+					final int ts_otrip = ts.getOdo_trip();
+					if (ts_otrip != 0)
 					{
 						if (trip_odo_delta_mode != 0)
 						{
-							odo_delta = x - odo_trip;
-							odo_trip = x;
-							if (ts.getOdo_total() == 0)
+							odo_delta = ts_otrip - odo_trip;
+							odo_trip = ts_otrip;
+							if (ts_ototal == 0)
 								odo_total += odo_delta;   // estimate total if not known
 						}
 
 						if (! is_last_stop)
 						{
 							if (odo_delta == 0)
-								tr[4] = String.format("(%.1f)", x / 10.0f);
+								tr[4] = String.format("(%.1f)", ts_otrip / 10.0f);
 							else if (trip_odo_delta_mode == 2)
-								tr[4] = String.format("(%.1f; +%.1f)", x / 10.0f, odo_delta / 10.0f);
+								tr[4] = String.format("(%.1f; +%.1f)", ts_otrip / 10.0f, odo_delta / 10.0f);
 							else  // trip_odo_delta_mode == 1 because odo_delta != 0
 								tr[4] = String.format("(+%.1f)", odo_delta / 10.0f);
 						} else {
 							if (odo_delta == 0)
-								tr[4] = String.format("%.1f", x / 10.0f);
+								tr[4] = String.format("%.1f", ts_otrip / 10.0f);
 							else if (trip_odo_delta_mode == 2)
-								tr[4] = String.format("%.1f; +%.1f", x / 10.0f, odo_delta / 10.0f);
+								tr[4] = String.format("%.1f; +%.1f", ts_otrip / 10.0f, odo_delta / 10.0f);
 							else  // trip_odo_delta_mode == 1 because odo_delta != 0
 								tr[4] = String.format("+%.1f", odo_delta / 10.0f);
 						}

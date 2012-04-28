@@ -10,7 +10,8 @@ Contents:
 - How to build
 - Before testing, reminder how to back up / export data
 - Coding style
-- Other source included, and software licenses
+- Version history
+- Other source included (libraries), and software licenses
 
 (those sections here)
 
@@ -41,6 +42,7 @@ How to build:
 
 Android: If you want the svn revision to show in the About box, then before
 building, you must first manually edit res/raw/svnversion.txt and refresh
+that file in Eclipse.
 
 
 
@@ -54,7 +56,27 @@ Within Activities, fields are declared in this order:
 - On-screen views and other GUI items
 
 
-Other source included, and software licenses:
+
+Version history:
+
+svn	version	date
+-	0.8.05	2010-10-06	first install on any device hardware
+-	0.8.07	2010-10-15
+-	0.9.01	2010-11-20
+r5	0.9.05	2010-11-30
+r24	0.9.06	2011-02-13
+r25		2011-02-19
+r64		2011-04-18
+r118		2011-07-21
+r149		2011-08-25
+r164		2011-09-22
+r173            2011-12-11
+r246	0.9.08	2012-04-01	first version released as an APK
+
+
+
+
+Other source included (libraries), and software licenses:
 
 Shadowlands Roadtrip is licensed under GPL v3 or later
 (the GNU General Public License).  See the COPYING file for details.

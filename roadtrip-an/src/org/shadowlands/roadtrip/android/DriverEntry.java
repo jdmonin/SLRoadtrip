@@ -36,6 +36,7 @@ import android.widget.Toast;
 
 /**
  * Enter information about a driver.
+ * Read-only if current trip.
  *<P>
  * <b>When no intent extras are used:</b><BR>
  * When OK is pressed, check if CURRENT_VEHICLE is set.
@@ -76,6 +77,11 @@ public class DriverEntry extends Activity
 	 * If true, {@link #EXTRAS_FLAG_ASKED_NEW} was set.
 	 */
 	private boolean cameFromAskNew;
+
+	/**
+	 * Are we on a trip? Is the {@link Settings#getCurrentTrip(RDBAdapter, boolean)} != null?
+	 */
+	private boolean hasCurrentTrip;
 
 	/**
 	 * If not null, {@link #EXTRAS_INT_EDIT_ID} was set to this person's ID,
@@ -137,6 +143,14 @@ public class DriverEntry extends Activity
 			if (v != null)
 				v.setVisibility(View.GONE);
 		}
+
+		hasCurrentTrip = (null != Settings.getCurrentTrip(db, false));
+		if (hasCurrentTrip)
+		{
+			setTitle(R.string.view_drivers);
+			name.setEnabled(false);
+			comment.setEnabled(false);
+		}
     }
 
     /**
@@ -145,6 +159,12 @@ public class DriverEntry extends Activity
      */
     public void onClick_BtnOK(View v)
     {
+    	if (hasCurrentTrip)
+    	{
+        	finish();
+        	return;
+    	}
+
     	Editable value = name.getText();
     	if (value.length() == 0)
     	{

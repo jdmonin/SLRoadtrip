@@ -74,17 +74,25 @@ public class ChangeDriverOrVehicle extends Activity
 		hasCurrentTrip = (null != Settings.getCurrentTrip(db, false));
 
 		driver = (Spinner) findViewById(R.id.change_cvd_driver);
-	    veh = (Spinner) findViewById(R.id.change_cvd_vehicle);
-	    SpinnerDataFactory.setupDriversSpinner(db, this, driver, currDID);
+		veh = (Spinner) findViewById(R.id.change_cvd_vehicle);
+		SpinnerDataFactory.setupDriversSpinner(db, this, driver, currDID);
 
-	    if (hasCurrentTrip)
-	    {
-	    	veh.setVisibility(View.GONE);
-	    	findViewById(R.id.change_cvd_vehicle_label).setVisibility(View.GONE);
-	    	findViewById(R.id.change_cvd_vehicle_new).setVisibility(View.GONE);
-	    } else {
-		    SpinnerDataFactory.setupVehiclesSpinner(db, this, veh, currVID);
-	    }
+		if (hasCurrentTrip)
+		{
+			setTitle(R.string.view_drivers_vehicles);
+			driver.setEnabled(false);
+			findViewById(R.id.change_cvd_driver_new).setEnabled(false);
+			findViewById(R.id.change_cvd_vehicle_label).setVisibility(View.INVISIBLE);
+			findViewById(R.id.change_cvd_vehicle_new).setVisibility(View.INVISIBLE);
+			veh.setVisibility(View.GONE);
+			((Button) findViewById(R.id.change_cvd_drivers_edit)).setText(R.string.view_drivers);
+			((Button) findViewById(R.id.change_cvd_vehicles_edit)).setText(R.string.view_vehicles);
+			findViewById(R.id.change_cvd_btn_change).setVisibility(View.INVISIBLE);
+			((Button) findViewById(R.id.change_cvd_btn_cancel)).setText(R.string.done);
+			setResult(RESULT_CANCELED);  // no changes
+		} else {
+			SpinnerDataFactory.setupVehiclesSpinner(db, this, veh, currVID);
+		}
 	}
 
 	/**
@@ -217,6 +225,7 @@ public class ChangeDriverOrVehicle extends Activity
 
 	/**
 	 * Ask whether to change the current driver/vehicle after adding a new one.
+	 * Ask only if no current trip.
 	 * When dialog is answered, will call {@link #spinnerAddNewItem(boolean, Spinner, boolean, int)} 
 	 * to update the Driver or Vehicle spinner contents, including the current value.
 	 * @param isDriver  True for driver, false for vehicle
@@ -226,6 +235,8 @@ public class ChangeDriverOrVehicle extends Activity
     {
     	final int newID = idata.getIntExtra("_id", 0);
     	if (newID == 0)
+    		return;
+    	if (null != Settings.getCurrentTrip(db, false))
     		return;
 
     	final int toastMsg =

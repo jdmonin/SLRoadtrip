@@ -125,6 +125,9 @@
 <string name="via_route">Via route</string>
 <string name="via_routes_changed">Via Routes Changed</string>
 <string name="view">View</string>
+<string name="view_drivers">View Drivers</string>
+<string name="view_drivers_vehicles">View Drivers / Vehicles</string>
+<string name="view_vehicles">View Vehicles</string>
 <string name="vin">VIN</string>
 <string name="year">Year</string>
 <!--                            -->
@@ -143,7 +146,6 @@
 <string name="logbook_show__go_to_date">Go to Date</string>
 <string name="logbook_show__enter_location_to_search_trips">Enter the location to search trips for.</string>
 <string name="logbook_show__trips_to_location">Trips to Location</string>
-<string name="main_text">Main Screen</string>
 <string name="main_cancel_are_you_sure">Are you sure you want to cancel the current trip?</string>
 <string name="main_cancel_cannot_with_stops">Cannot cancel a trip with stops; use End Trip instead.</string>
 <string name="main_create_freq_from_recent">Create Frequent from recent trip...</string>

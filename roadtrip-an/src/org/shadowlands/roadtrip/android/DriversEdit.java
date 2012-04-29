@@ -23,6 +23,7 @@ package org.shadowlands.roadtrip.android;
 import org.shadowlands.roadtrip.R;
 import org.shadowlands.roadtrip.db.Person;
 import org.shadowlands.roadtrip.db.RDBAdapter;
+import org.shadowlands.roadtrip.db.Settings;
 import org.shadowlands.roadtrip.db.Vehicle;
 import org.shadowlands.roadtrip.db.android.RDBOpenHelper;
 
@@ -37,10 +38,11 @@ import android.widget.ListView;
 import android.widget.Toast;
 
 /**
- * List of {@link Person} (people, drivers) to edit.
+ * List of {@link Person} (people, drivers) to edit or view.
  *<P>
  * Called from {@link ChangeDriverOrVehicle}
  * with {@link Activity#startActivityForResult(android.content.Intent, int)}.
+ * Read-only if current trip.
  *<P>
  * If any changes were made to people, will call <tt>{@link #setResult(int) setResult(}
  * {@link ChangeDriverOrVehicle#RESULT_CHANGES_MADE})</tt> before returning.
@@ -86,6 +88,12 @@ public class DriversEdit extends Activity
 			finish();
 		} else {
 			setResult(RESULT_OK);  // No vehicle changes made yet
+		}
+
+		if (null != Settings.getCurrentTrip(db, false))
+		{
+			setTitle(R.string.view_drivers);
+			findViewById(R.id.drivers_edit_new).setVisibility(View.INVISIBLE);
 		}
 	}
 

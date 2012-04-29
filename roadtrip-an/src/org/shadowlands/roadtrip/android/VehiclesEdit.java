@@ -20,11 +20,7 @@
 
 package org.shadowlands.roadtrip.android;
 
-import java.util.Vector;
-
 import org.shadowlands.roadtrip.R;
-import org.shadowlands.roadtrip.db.FreqTrip;
-import org.shadowlands.roadtrip.db.GeoArea;
 import org.shadowlands.roadtrip.db.RDBAdapter;
 import org.shadowlands.roadtrip.db.Settings;
 import org.shadowlands.roadtrip.db.Vehicle;
@@ -33,7 +29,6 @@ import org.shadowlands.roadtrip.db.android.RDBOpenHelper;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
@@ -42,7 +37,8 @@ import android.widget.ListView;
 import android.widget.Toast;
 
 /**
- * List of {@link Vehicle}s to edit.
+ * List of {@link Vehicle}s to edit or view.
+ * Read-only if current trip.
  *<P>
  * Called from {@link ChangeDriverOrVehicle}
  * with {@link Activity#startActivityForResult(android.content.Intent, int)}.
@@ -90,6 +86,12 @@ public class VehiclesEdit extends Activity
 			finish();
 		} else {
 			setResult(RESULT_OK);  // No vehicle changes made yet
+		}
+
+		if (null != Settings.getCurrentTrip(db, false))
+		{
+			setTitle(R.string.view_vehicles);
+			findViewById(R.id.vehicles_edit_new).setVisibility(View.INVISIBLE);
 		}
 	}
 

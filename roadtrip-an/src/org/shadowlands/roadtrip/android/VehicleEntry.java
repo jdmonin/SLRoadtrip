@@ -49,6 +49,7 @@ import android.widget.Toast;
 
 /**
  * Enter a new vehicle, or edit a vehicle.
+ * Read-only if current trip.
  *<P>
  * <b>When no intent extras are used:</b><BR>
  * will next go to Main.
@@ -86,6 +87,11 @@ public class VehicleEntry
 	 * If true, {@link #EXTRAS_FLAG_ASKED_NEW} was set.
 	 */
 	private boolean cameFromAskNew;
+
+	/**
+	 * Are we on a trip? Is the {@link Settings#getCurrentTrip(RDBAdapter, boolean)} != null?
+	 */
+	private boolean hasCurrentTrip;
 
 	/**
 	 * If not null, {@link #EXTRAS_INT_EDIT_ID} was set to this vehicle's ID,
@@ -144,6 +150,13 @@ public class VehicleEntry
 
 	    db = new RDBOpenHelper(this);
 
+		hasCurrentTrip = (null != Settings.getCurrentTrip(db, false));
+		if (hasCurrentTrip)
+		{
+			setTitle(R.string.view_vehicles);
+			// most fields are made read-only in updateScreenFieldsFromVehicle().
+		}
+
 	    populateVehMakesList();
 	    if (VEHICLEMAKES != null)
 	    {
@@ -180,6 +193,8 @@ public class VehicleEntry
 	    }
 	    SpinnerDataFactory.setupDriversSpinner
 	    	(db, this, driver, currentDriverID);
+	    if (hasCurrentTrip)
+	    	driver.setEnabled(false);
 	}
 
 	/**
@@ -212,11 +227,25 @@ public class VehicleEntry
 		// set vmake spinner:
 		final int id = veh.getMakeID();
 		for (int i = VEHICLEMAKES.length - 1; i >= 0; --i)
+		{
 			if (id == VEHICLEMAKES[i].getID())
 			{
 				vmake.setSelection(i, true);
 				break;
 			}
+		}
+
+		if (hasCurrentTrip)
+		{
+			nickname.setEnabled(false);
+			vmodel.setEnabled(false);
+			year.setEnabled(false);
+			vin.setEnabled(false);
+			odo_curr.setEnabled(false);
+			comment.setEnabled(false);
+			btnDateFrom.setEnabled(false);
+			vmake.setEnabled(false);
+		}
 	}
 
 	/** Update the date shown on {@link #btnDateFrom} from {@link #dateFrom} */

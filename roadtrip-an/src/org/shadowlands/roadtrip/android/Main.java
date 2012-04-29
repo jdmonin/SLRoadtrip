@@ -406,7 +406,7 @@ public class Main extends Activity
 				txt.append("\nFrom frequent trip: ");
 				txt.append(currFT.toString());
 			}
-			changeDriverOrVeh.setText(R.string.change_driver);
+			changeDriverOrVeh.setText(R.string.view_drivers_vehicles);
 			if (currTS != null)
 				stopContinue.setText(R.string.continu_from_stop);
 			else
@@ -505,12 +505,7 @@ public class Main extends Activity
 
 	public void onClick_BtnChangeDriverVehicle(View v)
 	{
-		if (null != Settings.getCurrentTrip(db, false))
-		{
-			// TODO implement changing during a trip within ChangeDriverOrVehicle
-			Toast.makeText(this, R.string.main_changedriver_cannot_during_trip, Toast.LENGTH_SHORT).show();
-			return;
-		}
+		// If we have a current trip, ChangeDriverOrVehicle is view-only.
 		startActivityForResult
 		   (new Intent(Main.this, ChangeDriverOrVehicle.class),
 			R.id.main_btn_change_driver_vehicle);

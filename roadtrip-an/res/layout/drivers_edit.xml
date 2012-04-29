@@ -18,40 +18,34 @@
  You should have received a copy of the GNU General Public License
  along with this program.  If not, see http://www.gnu.org/licenses/ .
  -->
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical"
-    android:layout_width="fill_parent"
-    android:layout_height="fill_parent"
-    >
-    <!-- TODO listview still is shrunk at top of screen -->
-<ListView android:id="@+id/list"
-    android:layout_weight=".9"
-    android:minHeight="?android:attr/listPreferredItemHeight" 
-    android:layout_width="fill_parent"
-    android:layout_height="fill_parent" />
-<RelativeLayout
-    android:layout_height="wrap_content"
-    android:layout_width="fill_parent"
-    android:layout_weight=".1"
-    >
-	<LinearLayout
-	    android:orientation="horizontal"
-	    android:layout_width="fill_parent"
-	    android:layout_height="wrap_content"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="fill_parent"
+	android:layout_height="fill_parent"
+	>
+	<LinearLayout android:id="@+id/drivers_edit_btns"
+		android:orientation="horizontal"
+		android:layout_width="fill_parent"
+		android:layout_height="wrap_content"
 		android:layout_alignParentBottom="true"
-	    >
+		>
 		<Button android:id="@+id/drivers_edit_new"
-	        android:text="@string/new_driver"
-	        android:layout_width="wrap_content"
-	        android:layout_height="wrap_content"
-	        android:layout_weight=".5"
-	        android:onClick="onClick_BtnNewPerson" />
+			android:text="@string/new_driver"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_weight=".5"
+			android:onClick="onClick_BtnNewPerson" />
 		<Button
-	        android:text="@string/done"
-	        android:layout_width="wrap_content"
-	        android:layout_height="wrap_content"
-	        android:layout_weight=".5"
-	        android:onClick="onClick_BtnDone" />
+			android:text="@string/done"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_weight=".5"
+			android:onClick="onClick_BtnDone" />
 	</LinearLayout>
+	<ListView android:id="@+id/list"
+		android:layout_above="@id/drivers_edit_btns"
+		android:layout_alignParentTop="true" 
+		android:minHeight="?android:attr/listPreferredItemHeight"
+		android:layout_width="fill_parent"
+		android:layout_height="fill_parent" />
 </RelativeLayout>
-</LinearLayout>
+ 

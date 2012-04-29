@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  Copyright (C) 2010 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010,2012 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -37,7 +37,10 @@ package org.shadowlands.roadtrip.db;
  */
 public abstract class RDBRecord
 {
-	/** connection to database */
+	/**
+	 * connection to database.
+	 * Null for new records, must never become null once read from or written to the db.
+	 */
 	protected RDBAdapter dbConn;
 
 	/** primary key field "_id" */

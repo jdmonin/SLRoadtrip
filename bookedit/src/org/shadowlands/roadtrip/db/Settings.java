@@ -129,8 +129,10 @@ public class Settings extends RDBRecord
      * @param db  connection to use
      * @param settname field to retrieve
      * @return whether this setting exists in the database
+     * @throws NullPointerException if db null
      */
     public static boolean exists(RDBAdapter db, final String settname)
+    	throws NullPointerException
     {
 		try
 		{
@@ -149,11 +151,12 @@ public class Settings extends RDBRecord
      * @param db  connection to use
      * @param settname field to create or update
      * @param ivalue  int value to set
+     * @throws IllegalArgumentException if db null
      * @throws IllegalStateException if db not open
      * @see #setBoolean(RDBAdapter, String, boolean)
      */
     public static void insertOrUpdate(RDBAdapter db, final String settname, final int ivalue)
-    	throws IllegalStateException
+    	throws IllegalArgumentException, IllegalStateException
 	{
     	insertOrUpdate(db, settname, ivalue, null);
 	}
@@ -166,17 +169,18 @@ public class Settings extends RDBRecord
      * @param db  connection to use
      * @param settname field to create or update
      * @param svalue  string value to set; "" will be stored as null.
+     * @throws IllegalArgumentException if db null
      * @throws IllegalStateException if db not open
      * @see #setBoolean(RDBAdapter, String, boolean)
      */
     public static void insertOrUpdate(RDBAdapter db, final String settname, final String svalue)
-    	throws IllegalStateException
+    	throws IllegalArgumentException, IllegalStateException
 	{
     	insertOrUpdate(db, settname, 0, svalue);
 	}
 
     private static void insertOrUpdate(RDBAdapter db, final String settname, final int ivalue, String svalue)
-		throws IllegalStateException
+		throws IllegalArgumentException, IllegalStateException
 	{
 		Settings s = null;
 
@@ -208,11 +212,12 @@ public class Settings extends RDBRecord
      *
      * @param db  connection to use
      * @param settname field to create or update
+     * @throws IllegalArgumentException if db null
      * @throws IllegalStateException if db not open
      * @see #clearIfExists(RDBAdapter, String, int)
      */
     public static void clearIfExists(RDBAdapter db, final String settname)
-    	throws IllegalStateException
+    	throws IllegalArgumentException, IllegalStateException
     {
     	clearIfExists(db, settname, 0);
     }
@@ -224,11 +229,12 @@ public class Settings extends RDBRecord
      *
      * @param db  connection to use
      * @param settname field to create or update
+     * @throws IllegalArgumentException if db null
      * @throws IllegalStateException if db not open
      * @see #clearIfExists(RDBAdapter, String)
      */
     public static void clearIfExists(RDBAdapter db, final String settname, final int ivalue_clear)
-    	throws IllegalStateException
+    	throws IllegalArgumentException, IllegalStateException
 	{
 		Settings s = null;
 
@@ -252,11 +258,14 @@ public class Settings extends RDBRecord
      * @param settname   field to read
      * @param settdefault  default value if not found
      * @return  Setting's value (true if != 0), or <tt>settdefault</tt> if not found
+     * @throws IllegalArgumentException  if db null
+     * @throws IllegalStateException if db not open
      * @see #setBoolean(RDBAdapter, String, boolean)
      * @see #getInt(RDBAdapter, String, int)
      * @since 0.9.12
      */
     public static boolean getBoolean(RDBAdapter db, final String settname, final boolean settdefault)
+    	throws IllegalArgumentException, IllegalStateException
     {
 		return (0 != getInt(db, settname, (settdefault ? 1 : 0)));
     }
@@ -267,12 +276,15 @@ public class Settings extends RDBRecord
      * @param db  connection to use
      * @param settname   field to write
      * @param settvalue  value to write
+     * @throws IllegalArgumentException  if db null
+     * @throws IllegalStateException if db not open
      * @see #getBoolean(RDBAdapter, String, boolean)
      * @see #setInt(RDBAdapter, String, int)
      * @see #insertOrUpdate(RDBAdapter, String, int)
      * @since 0.9.12
      */
     public static void setBoolean(RDBAdapter db, final String settname, final boolean settvalue)
+    	throws IllegalArgumentException, IllegalStateException
     {
     	setInt(db, settname, settvalue ? 1 : 0);
     }
@@ -283,11 +295,14 @@ public class Settings extends RDBRecord
      * @param settname   field to read
      * @param settdefault  default value if not found
      * @return  Setting's value, or <tt>settdefault</tt> if not found
+     * @throws IllegalArgumentException  if db null
+     * @throws IllegalStateException if db not open
      * @see #setInt(RDBAdapter, String, boolean)
      * @see #getBoolean(RDBAdapter, String, int)
      * @since 0.9.12
      */
     public static int getInt(RDBAdapter db, final String settname, final int settdefault)
+    	throws IllegalArgumentException, IllegalStateException
     {
 		Settings s = null;
 
@@ -306,12 +321,15 @@ public class Settings extends RDBRecord
      * @param db  connection to use
      * @param settname   field to write
      * @param ivalue  value to write
+     * @throws IllegalArgumentException  if db null
+     * @throws IllegalStateException if db not open
      * @see #getInt(RDBAdapter, String, int)
      * @see #setBoolean(RDBAdapter, String, boolean)
      * @see #insertOrUpdate(RDBAdapter, String, int)
      * @since 0.9.12
      */
     public static void setInt(RDBAdapter db, final String settname, final int ivalue)
+    	throws IllegalArgumentException, IllegalStateException
     {
 		Settings s = null;
 
@@ -335,14 +353,15 @@ public class Settings extends RDBRecord
      * Look up a Setting from the database.
      * @param db  db connection
      * @param settname field to retrieve
+     * @throws IllegalArgumentException  if db null
      * @throws IllegalStateException if db not open
      * @throws RDBKeyNotFoundException if settname not found in database
      * @see #getBoolean(RDBAdapter, String, boolean)
      */
     public Settings(RDBAdapter db, String settname)
-        throws IllegalStateException, RDBKeyNotFoundException
+        throws IllegalStateException, IllegalArgumentException, RDBKeyNotFoundException
     {
-    	super(db, -1);
+    	super(db, -1);  // checks db != null
     	sfield = settname;
     	String[] fv = db.getRow(TABNAME, KEYFIELD, settname, VALFIELDS_AND_ID);
     	if (fv == null)
@@ -368,8 +387,8 @@ public class Settings extends RDBRecord
     public Settings(String settname, String svalue)
     {
     	super();
-	if ((svalue != null) && (svalue.length() == 0))
-	    svalue = null;
+    	if ((svalue != null) && (svalue.length() == 0))
+    		svalue = null;
     	sfield = settname;
     	this.svalue = svalue;
     	ivalue = 0;
@@ -409,8 +428,8 @@ public class Settings extends RDBRecord
      */
     public void setStrValue(String s)
     {
-	if ((s != null) && (s.length() == 0))
-		s = null;
+    	if ((s != null) && (s.length() == 0))
+    		s = null;
     	svalue = s;
     	if (s != null)
     		ivalue = 0;
@@ -537,7 +556,7 @@ public class Settings extends RDBRecord
 	 * For use with <tt>setCurrent*</tt>,
 	 * validate that db == rec.dbConn.  If all is OK, do nothing,
 	 * otherwise throw the exception.
-	 * @param db  conn to use
+	 * @param db  conn to use. If <tt>rec</tt> is new, can be null, otherwise must not be null
 	 * @param rec  record to validate dbConn; must not be null
      * @throws IllegalArgumentException if <tt>rec.{@link RDBRecord#dbConn dbConn}</tt>
      *         isn't <tt>db</tt>; if rec's dbconn is <tt>null</tt>, this will be in the exception detail text.
@@ -562,11 +581,13 @@ public class Settings extends RDBRecord
 	 * @param db  connection to use
 	 * @param clearIfBad  If true, clear the setting to 0 if no record by its ID is found
 	 * @return the GeoArea for <tt>CURRENT_AREA</tt>, or null
-     * @throws IllegalStateException if the db isn't open
+     * @throws IllegalStateException if the db is null or isn't open
 	 */
 	public static GeoArea getCurrentArea(RDBAdapter db, final boolean clearIfBad)
 		throws IllegalStateException
 	{
+		if (db == null)
+			throw new IllegalStateException("null db");
 		if (currentA != null)
 		{
 			if (! currentA.dbConn.hasSameOwner(db))
@@ -620,11 +641,13 @@ public class Settings extends RDBRecord
 	 * @param db  connection to use
 	 * @param clearIfBad  If true, clear the setting to 0 if no record by its ID is found
 	 * @return the Person for <tt>CURRENT_DRIVER</tt>, or null
-     * @throws IllegalStateException if the db isn't open
+     * @throws IllegalStateException if the db is null or isn't open
 	 */
 	public static Person getCurrentDriver(RDBAdapter db, final boolean clearIfBad)
 		throws IllegalStateException
 	{
+		if (db == null)
+			throw new IllegalStateException("null db");
 		if (currentD != null)
 		{
 			if (! currentD.dbConn.hasSameOwner(db))
@@ -678,11 +701,13 @@ public class Settings extends RDBRecord
 	 * @param db  connection to use
 	 * @param clearIfBad  If true, clear the setting to 0 if no record by its ID is found
 	 * @return the Vehicle for <tt>CURRENT_VEHICLE</tt>, or null
-     * @throws IllegalStateException if the db isn't open
+     * @throws @throws IllegalStateException if the db is null or isn't open
 	 */
 	public static Vehicle getCurrentVehicle(RDBAdapter db, final boolean clearIfBad)
 		throws IllegalStateException
 	{
+		if (db == null)
+			throw new IllegalStateException("null db");
 		if (currentV != null)
 		{
 			if (! currentV.dbConn.hasSameOwner(db))
@@ -736,11 +761,13 @@ public class Settings extends RDBRecord
 	 * @param db  connection to use
 	 * @param clearIfBad  If true, clear the setting to 0 if no record by its ID is found
 	 * @return the Trip for <tt>CURRENT_TRIP</tt>, or null
-     * @throws IllegalStateException if the db isn't open
+     * @throws IllegalStateException if the db is null or isn't open
 	 */
 	public static Trip getCurrentTrip(RDBAdapter db, final boolean clearIfBad)
 		throws IllegalStateException
 	{
+		if (db == null)
+			throw new IllegalStateException("null db");
 		if (currentT != null)
 		{
 			if (! currentT.dbConn.hasSameOwner(db))
@@ -794,13 +821,15 @@ public class Settings extends RDBRecord
 	 * @param db  connection to use
 	 * @param clearIfBad  If true, clear the setting to 0 if no record by its ID is found
 	 * @return the FreqTrip for <tt>CURRENT_FREQTRIP</tt>, or null
-     * @throws IllegalStateException if the db isn't open
+     * @throws @throws IllegalStateException if the db is null or isn't open
      *
      * @see #getCurrentFreqTripTStops(RDBAdapter, boolean)
 	 */
 	public static FreqTrip getCurrentFreqTrip(RDBAdapter db, final boolean clearIfBad)
 		throws IllegalStateException
 	{
+		if (db == null)
+			throw new IllegalStateException("null db");
 		if (currentFT != null)
 		{
 			if (! currentFT.dbConn.hasSameOwner(db))
@@ -897,11 +926,10 @@ public class Settings extends RDBRecord
 	 * both the current freqtrip and the tstop list from the database,
 	 * or call {@link #reduceCurrentFreqTripTStops(RDBAdapter, FreqTripTStop)}.
 	 *
-	 * @param db  connection to use
+	 * @param db  connection to use; must be open, must not be null, or null will be returned
 	 * @param clearIfBad  If true, clear the setting to null if no record by its ID is found
 	 * @return the FreqTripTStops for <tt>CURRENT_FREQTRIP_TSTOPLIST</tt>, or null;
 	 *            will never be 0-length, will return null in that case.
-     * @throws IllegalStateException if the db isn't open
      *
      * @see #getCurrentFreqTrip(RDBAdapter, boolean)
 	 */
@@ -994,11 +1022,13 @@ public class Settings extends RDBRecord
 	 * @param db  connection to use
 	 * @param clearIfBad  If true, clear the setting to 0 if no record by its ID is found
 	 * @return the TStop for <tt>CURRENT_TSTOP</tt>, or null
-     * @throws IllegalStateException if the db isn't open
+     * @throws IllegalStateException if the db is null or isn't open
 	 */
 	public static TStop getCurrentTStop(RDBAdapter db, final boolean clearIfBad)
 		throws IllegalStateException
 	{
+		if (db == null)
+			throw new IllegalStateException("null db");
 		if (currentTS != null)
 		{
 			if (! currentTS.dbConn.hasSameOwner(db))
@@ -1052,11 +1082,13 @@ public class Settings extends RDBRecord
 	 * @param db  connection to use
 	 * @param clearIfBad  If true, clear the setting to 0 if no record by its ID is found
 	 * @return the TStop for <tt>PREV_LOCATION</tt>, or null
-     * @throws IllegalStateException if the db isn't open
+     * @throws IllegalStateException if the db is null or isn't open
 	 */
 	public static Location getPreviousLocation(RDBAdapter db, final boolean clearIfBad)
 		throws IllegalStateException
 	{
+		if (db == null)
+			throw new IllegalStateException("null db");
 		if (prevL != null)
 		{
 			if (! prevL.dbConn.hasSameOwner(db))

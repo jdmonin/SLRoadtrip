@@ -215,6 +215,8 @@ public class TripTStopEntry extends Activity
 
 	private CheckBox odo_total_chk, odo_trip_chk, tp_time_stop_chk, tp_time_cont_chk;
 	private TimePicker tp_time_stop, tp_time_cont;
+	/** Ignore {@link #onTimeChanged(TimePicker, int, int)} until this is true */
+	private boolean tp_time_stop_init;
 
 	/** optional {@link TripCategory}; null unless {@link #stopEndsTrip} */
 	private Spinner spTripCat;
@@ -387,7 +389,8 @@ public class TripTStopEntry extends Activity
 			tp_time_stop.setIs24HourView(pref24hr);
 			tp_time_cont.setIs24HourView(pref24hr);
 		}
-		tp_time_cont.setOnTimeChangedListener(this);  // onTimeChanged
+		tp_time_stop.setOnTimeChangedListener(this);  // onTimeChanged - to set checkbox if user sets time
+		tp_time_cont.setOnTimeChangedListener(this);  // onTimeChanged - to cancel auto-update of time if user sets time
 
 		btnStopTimeDate = (Button) findViewById(R.id.trip_tstop_btn_stop_date);
 		btnContTimeDate = (Button) findViewById(R.id.trip_tstop_btn_cont_date);
@@ -551,6 +554,7 @@ public class TripTStopEntry extends Activity
 		tp_time_stop_chk.setChecked(setTimeStopCheckbox);
 		updateDateButtons(0);
 		initTimePicker(stopTime, tp_time_stop);
+		tp_time_stop_init = true;
 		if (contTime != null)
 		{
 			initTimePicker(contTime, tp_time_cont);
@@ -1131,8 +1135,7 @@ public class TripTStopEntry extends Activity
 		CheckBox b;
 
 		int stopTimeSec = 0;  // optional stop-time
-		b = (CheckBox) findViewById (R.id.trip_tstop_time_stop_chk);
-		if ((b != null) && b.isChecked())
+		if ((tp_time_stop_chk != null) && tp_time_stop_chk.isChecked())
 		{			
 			if (tp_time_stop != null)
 			{
@@ -2121,6 +2124,8 @@ public class TripTStopEntry extends Activity
 	}
 
 	/**
+	 * Time callbacks for both TimePickers.
+	 * Callback when {@link #tp_time_stop} is updated by the user, to set {@link #tp_time_stop_chk}.
 	 * Callback when {@link #tp_time_cont} is updated by the
 	 * user or by {@link #contTimeRunningRunnable}.
 	 * Called twice for each time change: First for {@link TimePicker#setCurrentMinute(Integer)},
@@ -2129,6 +2134,13 @@ public class TripTStopEntry extends Activity
 	 */
 	public void onTimeChanged(TimePicker view, final int hour, final int minute)
 	{
+		if ((view == tp_time_stop) && tp_time_stop_init && ! tp_time_stop_chk.isChecked())
+			tp_time_stop_chk.setChecked(true);
+
+		if (view != tp_time_cont)
+		{
+			return;  // The rest of this method is for tp_time_cont only
+		}
 		if (contTimeRunningHourMinute == -1)
 		{
 			return;  // Not active
@@ -2495,6 +2507,7 @@ public class TripTStopEntry extends Activity
 		int hhmm = inState.getInt("TSV");
 		tp_time_stop.setCurrentHour(hhmm >> 8);
 		tp_time_stop.setCurrentMinute(hhmm & 0xFF);
+		tp_time_stop_init = true;
 		hhmm = inState.getInt("TCV");
 		tp_time_cont.setCurrentHour(hhmm >> 8);
 		tp_time_cont.setCurrentMinute(hhmm & 0xFF);

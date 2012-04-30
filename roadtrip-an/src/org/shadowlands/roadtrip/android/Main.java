@@ -44,6 +44,7 @@ import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.content.res.Resources;
 import android.os.Bundle;
 import android.text.SpannableString;
 import android.text.method.LinkMovementMethod;
@@ -249,7 +250,7 @@ public class Main extends Activity
 						if (hadVersName)
 							title.append('.');
 						else
-							title.append(" build ");
+							title.append(" build ");  // do not externalize this string
 						title.append(svnversion);
 					}
 				} catch (Throwable th) {
@@ -346,7 +347,6 @@ public class Main extends Activity
 	 */
 	private void updateDriverVehTripTextAndButtons()
 	{
-		// TODO string resources, not hardcoded
 		GeoArea currA = Settings.getCurrentArea(db, false);
 		Person currD = Settings.getCurrentDriver(db, false);
 		currV = Settings.getCurrentVehicle(db, false);
@@ -354,22 +354,31 @@ public class Main extends Activity
 		TStop currTS = ((currT != null) ? Settings.getCurrentTStop(db, false) : null);
 		FreqTrip currFT = Settings.getCurrentFreqTrip(db, false);
 
-		StringBuffer txt = new StringBuffer("Driver: ");
+		final Resources res = getResources();		
+		StringBuffer txt = new StringBuffer(res.getString(R.string.driver));
+		txt.append(": ");
 		txt.append(currD.toString());
-		txt.append("\nVehicle: ");
+		txt.append("\n");
+		txt.append(res.getString(R.string.vehicle));
+		txt.append(": ");
 		txt.append(currV.toString());
 		if (currT == null)
 		{
-			txt.append("\nArea: ");
+			txt.append("\n");
+			txt.append(res.getString(R.string.area__colon));
+			txt.append(' ');
 			txt.append(currA.toString());
-			txt.append("\n\nNo current trip.");
+			txt.append("\n\n");
+			txt.append(res.getString(R.string.main_no_current_trip));
 			changeDriverOrVeh.setText(R.string.change_driver_vehicle);
 		} else {
 			final int destAreaID = currT.getRoadtripEndAreaID();
+			txt.append("\n");
 			if ((currT != null) && (destAreaID != 0))
-				txt.append("\nRoadtrip start area: ");
+				txt.append(res.getString(R.string.main_roadtrip_start_area));
 			else
-				txt.append("\nArea: ");
+				txt.append(res.getString(R.string.area__colon));
+			txt.append(' ');
 			txt.append(currA.toString());
 
 			String currTCateg = null;
@@ -382,16 +391,19 @@ public class Main extends Activity
 				} catch (Throwable th) {}
 			}
 
+			txt.append("\n\n");
 			if (destAreaID == 0)
 			{
-				txt.append("\n\nTrip in Progress.");
+				txt.append(res.getString(R.string.main_trip_in_progress));
 				if (currTCateg != null)
 					txt.append(currTCateg);
 			} else {
-				txt.append("\n\nRoadtrip in progress.");
+				txt.append(res.getString(R.string.main_roadtrip_in_progress));
 				if (currTCateg != null)
 					txt.append(currTCateg);
-				txt.append("\nDestination area: ");
+				txt.append("\n");
+				txt.append(res.getString(R.string.main_destination_area));
+				txt.append(' ');
 				try {
 					txt.append(new GeoArea(db, destAreaID).getName());
 				} catch (IllegalStateException e) {
@@ -403,7 +415,9 @@ public class Main extends Activity
 			}
 			if (currFT != null)
 			{
-				txt.append("\nFrom frequent trip: ");
+				txt.append("\n");
+				txt.append(res.getString(R.string.main_from_frequent_trip));
+				txt.append(' ');
 				txt.append(currFT.toString());
 			}
 			changeDriverOrVeh.setText(R.string.view_drivers_vehicles);

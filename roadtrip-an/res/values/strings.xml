@@ -17,6 +17,7 @@
  You should have received a copy of the GNU General Public License
  along with this program.  If not, see http://www.gnu.org/licenses/ .
 
+ Remember that trailing spaces are trimmed away automatically.
  The "About..." text is found here; the version number is found in AndroidManifest.xml.
  -->
 <resources>
@@ -150,9 +151,15 @@
 <string name="main_cancel_cannot_with_stops">Cannot cancel a trip with stops; use End Trip instead.</string>
 <string name="main_create_freq_from_recent">Create Frequent from recent trip...</string>
 <string name="main_changedriver_cannot_during_trip">Sorry, cannot change driver during a trip yet; use End Trip instead.</string>
+<string name="main_destination_area">Destination area:</string>
+<string name="main_from_frequent_trip">From frequent trip:</string>
+<string name="main_no_current_trip">No current trip.</string>
 <string name="main_no_recent_local_trips_for_vehicle">No recent local trips found for this vehicle.</string>
 <string name="main_no_recent_roadtrips_for_vehicle">No recent roadtrips found for this vehicle.</string>
+<string name="main_roadtrip_in_progress">Roadtrip in progress.</string>
+<string name="main_roadtrip_start_area">Roadtrip start area:</string>
 <string name="main_trip_based_on_frequent">This trip is based on another frequent trip.</string>
+<string name="main_trip_in_progress">Trip in Progress.</string>
 <string name="backups_main_folder_nonefound">No backups found in the backup folder.</string>
 <string name="backups_main_last_bkuptime">Last backup time: </string>
 <string name="backups_main_last_triptime">Last trip time: </string>

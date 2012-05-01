@@ -87,6 +87,7 @@
 <string name="no_frequent_trips_found_from">No frequent trips were found from</string>
 <string name="no_later_trips_found">No later trips were found.</string>
 <string name="none">none</string>
+<string name="none__parens">(none)</string>
 <string name="not_found">Not found.</string>
 <string name="original_odometer">Original\nodometer</string>
 <string name="other_stop">Other stop...</string>

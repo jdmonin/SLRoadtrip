@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  Copyright (C) 2010-2011 Jeremy D Monin <jdmonin@nand.net>
+ *  Copyright (C) 2010-2012 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -175,7 +175,7 @@ public class LogbookShow extends Activity
 	private static boolean askLocationAndShow_allV = false;
 
 	/** Used by #askLocationAndShow(Activity, RDBAdapter); geoarea */
-	private static int askLocationAndShow_areaID = 0;
+	private static int askLocationAndShow_areaID = -1;
 
 	/**
 	 * Logbook in Location Mode: Show a popup with the current GeoArea's locations, the user picks
@@ -186,7 +186,7 @@ public class LogbookShow extends Activity
 	 */
 	public static final void askLocationAndShow(final Activity fromActivity, final RDBAdapter db)
 	{
-		if (askLocationAndShow_areaID == 0)
+		if (askLocationAndShow_areaID == -1)
 		{
 			final GeoArea currA = Settings.getCurrentArea(db, false);
 			if (currA == null)
@@ -241,7 +241,7 @@ public class LogbookShow extends Activity
 
 		/** When GeoArea spinner selection changes, query for locations in that area: */
 		final Spinner areas = (Spinner) askItems.findViewById(R.id.logbook_show_popup_locs_areas);
-		SpinnerDataFactory.setupGeoAreasSpinner(db, fromActivity, areas, askLocationAndShow_areaID);
+		SpinnerDataFactory.setupGeoAreasSpinner(db, fromActivity, areas, askLocationAndShow_areaID, true);
 		areas.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
 			public void onItemSelected
 				(AdapterView<?> ctx, View view, int pos, long id)

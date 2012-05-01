@@ -19,6 +19,7 @@
 
 package org.shadowlands.roadtrip.android;
 
+import org.shadowlands.roadtrip.R;
 import org.shadowlands.roadtrip.db.GeoArea;
 import org.shadowlands.roadtrip.db.Person;
 import org.shadowlands.roadtrip.db.RDBAdapter;
@@ -42,6 +43,8 @@ public class SpinnerDataFactory
 	public static Person NEW_VEHICLE; // TODO keep?
 	/** Placeholder in spinners for an empty {@link TripCategory}. */
 	public static TripCategory EMPTY_TRIPCAT;
+	/** Placeholder in spinners for an empty {@link GeoArea}. */
+	public static GeoArea GEOAREA_NONE;
 
 	/**
 	 * Populate a spinner from the drivers (Persons) in the database.
@@ -79,12 +82,13 @@ public class SpinnerDataFactory
 	 * @param db  connection to use
 	 * @param ctx  the calling Activity or Context
 	 * @param sp  spinner to fill with the areas
-	 * @param currentID  If not -1, the area _id to select in the Spinner. 
+	 * @param currentID  If not -1, the area _id to select in the Spinner
+	 * @param withNone  If true, include a GeoArea "(none)" with id 0 as the first item 
 	 * @return true on success, false if could not populate from database
 	 */
-	public static boolean setupGeoAreasSpinner(RDBAdapter db, Context ctx, Spinner sp, final int currentID)
+	public static boolean setupGeoAreasSpinner(RDBAdapter db, Context ctx, Spinner sp, final int currentID, final boolean withNone)
 	{
-		GeoArea[] areas = populateGeoAreasList(db);
+		GeoArea[] areas = populateGeoAreasList(db, ctx, withNone);
 	    if (areas == null)
 	    	return false;
 
@@ -158,13 +162,15 @@ public class SpinnerDataFactory
 	}
 
 	/**
-	 * For {@link #setupGeoAreasSpinner(RDBAdapter, Context, Spinner, int)},
+	 * For {@link #setupGeoAreasSpinner(RDBAdapter, Context, Spinner, int, boolean)},
 	 * gather the list of GeoAreas from the database.
 	 *
 	 * @param db  connection to use
+	 * @param ctx  context; ignored unless <tt>withNone</tt>; used for strings for withNone
+	 * @param withNone  If true, include "(none)" as first entry; its id is 0
 	 * @return array of areas, or null
 	 */
-	private static GeoArea[] populateGeoAreasList(RDBAdapter db)
+	private static GeoArea[] populateGeoAreasList(RDBAdapter db, final Context ctx, final boolean withNone)
 	{
 		GeoArea[] areas = null; 
 
@@ -174,6 +180,27 @@ public class SpinnerDataFactory
     	}
     	catch (SQLiteException e)
     	{}
+
+    	if (withNone)
+    	{
+    		if (GEOAREA_NONE == null)
+    		{
+    			final String none = ctx.getString(R.string.none__parens);
+    			GEOAREA_NONE = new GeoArea(none);  // "(none)"
+    			GEOAREA_NONE.setID0();
+    		}
+
+    		if (areas == null)
+    		{
+    			areas = new GeoArea[1];
+    		} else {
+    			final int L = areas.length;
+    			GeoArea[] areas2 = new GeoArea[L + 1];
+    			System.arraycopy(areas, 0, areas2, 1, L);
+    			areas = areas2;
+    		}
+    		areas[0] = GEOAREA_NONE;
+    	}
 
     	return areas;
 	}

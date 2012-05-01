@@ -83,11 +83,23 @@
 		/>
 </LinearLayout>
 <!-- End of GeoArea info entry. -->
-<Button android:id="@+id/driver_entry_btn_ok"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="right"
-        android:text="@string/continu"
-        android:onClick="onClick_BtnOK" />
+<LinearLayout
+	android:orientation="horizontal"
+	android:layout_width="fill_parent"
+	android:layout_height="wrap_content"
+	android:gravity="right"
+	>
+	<TextView
+		android:layout_weight=".5"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"> </TextView>
+	<Button android:id="@+id/driver_entry_btn_ok"
+		android:layout_weight=".5"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_gravity="right"
+		android:text="@string/continu"
+		android:onClick="onClick_BtnOK" />
+</LinearLayout>
 </LinearLayout>
 </ScrollView>

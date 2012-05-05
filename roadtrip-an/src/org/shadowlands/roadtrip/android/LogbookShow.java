@@ -758,13 +758,13 @@ public class LogbookShow extends Activity
 	 * @see LogbookShow#doDBValidation()
 	 * @see BackupsRestore.ValidateDBTask
 	 */
-	private class ValidateDBTDataTask extends AsyncTask<String, Integer, Boolean>
+	private class ValidateDBTDataTask extends AsyncTask<Void, Integer, Boolean>
 	{
 		ProgressDialog dia;
 
-		protected Boolean doInBackground(final String... ignoredParam)
+		@Override
+		protected Boolean doInBackground(final Void... unusedParam)
 		{
-			verifTask = this;
 			final boolean ok = (verifCache.verify(RDBVerifier.LEVEL_TDATA) == 0);
 			if (ok)
 			{
@@ -780,7 +780,10 @@ public class LogbookShow extends Activity
 		}
 
 		@Override
-		protected void onPreExecute() {
+		protected void onPreExecute()
+		{
+			verifTask = this;
+
 			dia = new ProgressDialog(LogbookShow.this);
 			// dia.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);  TODO progress bar
 			dia.setMessage(getResources().getString(R.string.logbook_show__validating_db));
@@ -789,19 +792,21 @@ public class LogbookShow extends Activity
 			dia.show();
 		}
 
+		@Override
 		protected void onProgressUpdate(Integer... progress) { }
 
+		@Override
 		protected void onPostExecute(final Boolean ok)
 		{
 			if (dia.isShowing())
 				dia.dismiss();
-			Toast.makeText(LogbookShow.this,
+			Toast.makeText(getApplicationContext(),
 				( ok
 					? R.string.logbook_show__validation_successful_3
 					: R.string.logbook_show__validation_failed )
 				, Toast.LENGTH_SHORT)
 				.show();
-	    }
+		}
 	}
 
 }

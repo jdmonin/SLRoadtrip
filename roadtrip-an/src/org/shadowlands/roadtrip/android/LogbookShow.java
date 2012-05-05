@@ -36,8 +36,10 @@ import org.shadowlands.roadtrip.util.android.RTRAndroidDateTimeFormatter;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
@@ -158,6 +160,9 @@ public class LogbookShow extends Activity
 
 	/** Cached verifier object, for successive manual calls from {@link #doDBValidation()} */
 	private RDBVerifier verifCache = null;
+
+	/** Non-null if currently running. Set and cleared in {@link ValidateDBTDataTask#doInBackground(String...)}. */
+	private ValidateDBTDataTask verifTask = null;
 
 	/** Used by {@link #onClick_BtnEarlier(View)}, {@link #onClick_BtnLater(View)} */
 	private LinearLayout tripListParentLayout = null;
@@ -329,6 +334,12 @@ public class LogbookShow extends Activity
 			chkLevel = 1 + verifiedLevel;
 			if (verifCache == null)
 				verifCache = new RDBVerifier(db);
+			if (chkLevel == RDBVerifier.LEVEL_TDATA)
+			{
+				 new ValidateDBTDataTask().execute();
+				 return;  // <--- Early return: Verify DB in bg task ---
+			}
+
 			res = verifCache.verify(chkLevel);
 			if (res == 0)
 			{
@@ -710,7 +721,7 @@ public class LogbookShow extends Activity
 	public void onPause()
 	{
 		super.onPause();
-		if (verifCache != null)
+		if ((verifCache != null) && (verifTask == null))
 		{
 			verifCache.release();
 			verifCache = null;
@@ -737,6 +748,60 @@ public class LogbookShow extends Activity
 		}
 		if (db != null)
 			db.close();
+	}
+
+	/**
+	 * Run db validation level {@link RDBVerifier#LEVEL_TDATA} in a separate thread.
+	 * Uses {@link LogbookShow#verifCache}, which must not be null.
+	 * Calls {@link RDBVerifier#verify(int)}.
+	 * If OK, sets {@link LogbookShow#verifiedLevel} and clears {@link LogbookShow#verifCache}.
+	 * @see LogbookShow#doDBValidation()
+	 * @see BackupsRestore.ValidateDBTask
+	 */
+	private class ValidateDBTDataTask extends AsyncTask<String, Integer, Boolean>
+	{
+		ProgressDialog dia;
+
+		protected Boolean doInBackground(final String... ignoredParam)
+		{
+			verifTask = this;
+			final boolean ok = (verifCache.verify(RDBVerifier.LEVEL_TDATA) == 0);
+			if (ok)
+			{
+				verifiedLevel = RDBVerifier.LEVEL_TDATA;
+				if (verifCache != null)
+				{
+					verifCache.release();
+					verifCache = null;
+				}
+			}
+			verifTask = null;
+			return ok ? Boolean.TRUE : Boolean.FALSE;
+		}
+
+		@Override
+		protected void onPreExecute() {
+			dia = new ProgressDialog(LogbookShow.this);
+			// dia.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);  TODO progress bar
+			dia.setMessage(getResources().getString(R.string.logbook_show__validating_db));
+			dia.setIndeterminate(true);
+			dia.setCancelable(false);
+			dia.show();
+		}
+
+		protected void onProgressUpdate(Integer... progress) { }
+
+		protected void onPostExecute(final Boolean ok)
+		{
+			if (dia.isShowing())
+				dia.dismiss();
+			Toast.makeText(LogbookShow.this,
+				( ok
+					? R.string.logbook_show__validation_successful_3
+					: R.string.logbook_show__validation_failed )
+				, Toast.LENGTH_SHORT)
+				.show();
+	    }
 	}
 
 }

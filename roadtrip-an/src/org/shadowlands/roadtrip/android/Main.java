@@ -54,7 +54,9 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ContextMenu.ContextMenuInfo;
+import android.view.ViewGroup.LayoutParams;
 import android.widget.Button;
+import android.widget.TableRow;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -108,6 +110,26 @@ public class Main extends Activity
 		// Allow long-press on Frequent buttons
 		registerForContextMenu(freqLocal);
 		registerForContextMenu(freqRoad);
+
+		if (Settings.getBoolean(db, Settings.HIDE_FREQTRIP, false))
+		{
+			LayoutParams vlp = localTrip.getLayoutParams();
+			if (vlp instanceof TableRow.LayoutParams)
+			{
+				((TableRow.LayoutParams) vlp).span = 2;
+				localTrip.setLayoutParams(vlp);
+			}
+
+			vlp = roadTrip.getLayoutParams();
+			if (vlp instanceof TableRow.LayoutParams)
+			{
+				((TableRow.LayoutParams) vlp).span = 2;
+				roadTrip.setLayoutParams(vlp);
+			}
+
+			freqLocal.setVisibility(View.GONE);
+			freqRoad.setVisibility(View.GONE);
+		}
 
 		// see onResume for rest of initialization.
 	}
@@ -440,8 +462,14 @@ public class Main extends Activity
 		}
 		localTrip.setVisibility(visNotTrip);
 		roadTrip.setVisibility(visNotTrip);
-		freqLocal.setVisibility(visNotTrip);
-		freqRoad.setVisibility(visNotTrip);
+		if (Settings.getBoolean(db, Settings.HIDE_FREQTRIP, false))
+		{
+			freqLocal.setVisibility(View.GONE);
+			freqRoad.setVisibility(View.GONE);
+		} else {
+			freqLocal.setVisibility(visNotTrip);
+			freqRoad.setVisibility(visNotTrip);			
+		}
 	    endTrip.setVisibility(visTrip);
 	    stopContinue.setVisibility(visTrip);
 	}

@@ -482,8 +482,15 @@ public class TripTStopEntry extends Activity
 		// loc, areaLocs, areaLocs_areaID will be filled soon.
 
 		via = (AutoCompleteTextView) findViewById(R.id.trip_tstop_via);
-		viaListener = new ViaRouteListenerWatcher();
-		via.addTextChangedListener(viaListener);
+		if (Settings.getBoolean(db, Settings.HIDE_VIA, false))
+		{
+			via.setVisibility(View.GONE);
+			View vlab = findViewById(R.id.trip_tstop_via_label);
+			vlab.setVisibility(View.GONE);
+		} else {
+			viaListener = new ViaRouteListenerWatcher();
+			via.addTextChangedListener(viaListener);
+		}
 
 		// adjust date/time fields, now that we know if we have currTS
 		// and know if stopEndsTrip.

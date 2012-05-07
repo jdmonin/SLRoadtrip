@@ -41,6 +41,12 @@ public class SettingsActivity extends Activity
 	/** Checkbox for <tt>REQUIRE_TRIPCAT</tt> */
 	private CheckBox cbReqTripCat;
 
+	/** Checkbox for <tt>HIDE_FREQTRIP</tt> */
+	private CheckBox cbHideFreqtrip;
+
+	/** Checkbox for <tt>HIDE_VIA</tt> */
+	private CheckBox cbHideVia;
+
 	/** Called when the activity is first created.
 	 * See {@link #onResume()} for remainder of init work,
 	 * which includes checking the current settings
@@ -51,6 +57,8 @@ public class SettingsActivity extends Activity
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.settings_activity);
 
+		cbHideFreqtrip = (CheckBox) findViewById(R.id.cb_set_hide_freqtrip);
+		cbHideVia = (CheckBox) findViewById(R.id.cb_set_hide_via);
 		cbReqTripCat = (CheckBox) findViewById(R.id.cb_req_tripcat); 
 		db = new RDBOpenHelper(this);
 
@@ -59,22 +67,39 @@ public class SettingsActivity extends Activity
 
 	/**
 	 * Check Settings table for <tt>REQUIRE_TRIPCAT</tt>.  Set {@link #cbReqTripCat}.
+	 * Also <tt>HIDE_FREQTRIP</tt> and <tt>HIDE_VIA</tt>.
 	 */
 	@Override
 	public void onResume()
 	{
 		super.onResume();
-		final boolean reqTripCat = Settings.getBoolean(db, Settings.REQUIRE_TRIPCAT, false);
-		cbReqTripCat.setChecked(reqTripCat);
+		boolean b = Settings.getBoolean(db, Settings.HIDE_FREQTRIP, false);
+		cbHideFreqtrip.setChecked(b);
+		b = Settings.getBoolean(db, Settings.HIDE_VIA, false);
+		cbHideVia.setChecked(b);
+		b = Settings.getBoolean(db, Settings.REQUIRE_TRIPCAT, false);
+		cbReqTripCat.setChecked(b);
 	}
 
 	/**
 	 * Update <tt>REQUIRE_TRIPCAT</tt> in db, if different from {@link #cbReqTripCat}.
+	 * Also <tt>HIDE_FREQTRIP</tt> and <tt>HIDE_VIA</tt>.
 	 */
 	@Override
 	public void onPause()
 	{
 		super.onPause();
+
+		final boolean db_hideFreqtrip = Settings.getBoolean(db, Settings.HIDE_FREQTRIP, false);
+		final boolean cb_hideFreqtrip = cbHideFreqtrip.isChecked();
+		if (db_hideFreqtrip != cb_hideFreqtrip)
+			Settings.setBoolean(db, Settings.HIDE_FREQTRIP, cb_hideFreqtrip);
+
+		final boolean db_hideVia = Settings.getBoolean(db, Settings.HIDE_VIA, false);
+		final boolean cb_hideVia = cbHideVia.isChecked();
+		if (db_hideVia != cb_hideVia)
+			Settings.setBoolean(db, Settings.HIDE_VIA, cb_hideVia);
+
 		final boolean db_reqTripCat = Settings.getBoolean(db, Settings.REQUIRE_TRIPCAT, false);
 		final boolean cb_reqTripCat = cbReqTripCat.isChecked();
 		if (db_reqTripCat != cb_reqTripCat)

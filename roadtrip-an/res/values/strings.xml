@@ -180,6 +180,8 @@
 <string name="backups_restore_validation_error">Error in file validation.</string>
 <string name="backups_restore_validation_ok">File validated.</string>
 <string name="backups_restore__title">Restore from Backup</string>
+<string name="settings_hide_freqtrip">Hide "Frequent Trip" buttons</string>
+<string name="settings_hide_via">Hide "Via Route" entry field</string>
 <string name="settings_require_tripcat">Require trip category</string>
 <string name="change_vehicle_driver_ask_chg_title">Change current setting?</string>
 <string name="change_vehicle_driver_ask_chg_new_d">Change current driver to the new one?</string>

@@ -75,6 +75,8 @@ create table settings ( _id integer PRIMARY KEY AUTOINCREMENT not null, sname va
 	--      added in v0900; unused IDs for this freqtrip in freqtrip_tstop
 	-- REQUIRE_TRIPCAT (bool) -- is trip category required for new trips?  Added in app version 0.9.12.
 	-- LOGVIEW_ODO_TRIP_DELTA (int) -- logview trip odometers normal (0), delta (1), or both (2)  Added in 0.9.12.
+	-- HIDE_FREQTRIP (bool) -- Hide the Frequent Trip buttons?  Added in app version 0.9.12.
+	-- HIDE_VIA (bool) -- Hide the Via entry field?  Added in app version 0.9.12.
 
 create table app_db_upgrade_hist ( db_vers_to int not null, db_vers_from not null, upg_time int not null );
     -- May be empty, if db never upgraded

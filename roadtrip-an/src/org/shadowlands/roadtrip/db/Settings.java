@@ -107,6 +107,20 @@ public class Settings extends RDBRecord
 	 */
 	public static final String LOGVIEW_ODO_TRIP_DELTA = "LOGVIEW_ODO_TRIP_DELTA";
 
+	/**
+	 * boolean setting to hide the Frequent Trip buttons on the main screen.
+	 * Default is false.
+	 * @since 0.9.12
+	 */
+	public static final String HIDE_FREQTRIP = "HIDE_FREQTRIP";
+
+	/**
+	 * boolean setting to hide the Via Route entry field.
+	 * Default is false.
+	 * @since 0.9.12
+	 */
+	public static final String HIDE_VIA = "HIDE_VIA";
+
 	private static final String TABNAME = "settings";
 	private static final String KEYFIELD = "sname";
 	private static final String VALFIELD_STR = "svalue";

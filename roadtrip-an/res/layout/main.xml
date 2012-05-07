@@ -62,12 +62,12 @@
 		        android:layout_span="2" />
 	</TableRow>
 	<TableRow>
-		<Button android:id="@+id/main_btn_end_trip"
-		        android:text="@string/end_trip"
-		        android:onClick="onClick_BtnEndTrip"/>
 		<Button android:id="@+id/main_btn_stop_continue"
 		        android:text="@string/stop_continue"
 		        android:onClick="onClick_BtnStopContinue"/>
+		<Button android:id="@+id/main_btn_end_trip"
+		        android:text="@string/end_trip"
+		        android:onClick="onClick_BtnEndTrip"/>
 	</TableRow>
 	<TableRow>  <!-- spacer -->
 		<TextView
@@ -76,12 +76,12 @@
 		> \n </TextView>
 	</TableRow>
 	<TableRow>
-		<Button android:id="@+id/main_btn_show_logbook"
-		        android:text="@string/show_logbook"
-		        android:onClick="onClick_BtnShowLogbook"/>
 		<Button android:id="@+id/main_btn_backups"
 		        android:text="@string/backups"
 		        android:onClick="onClick_BtnBackups" />
+		<Button android:id="@+id/main_btn_show_logbook"
+		        android:text="@string/show_logbook"
+		        android:onClick="onClick_BtnShowLogbook"/>
 	</TableRow>
 </TableLayout>
 </LinearLayout>

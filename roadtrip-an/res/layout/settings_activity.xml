@@ -23,6 +23,16 @@
 	android:layout_height="fill_parent"
 	android:orientation="vertical"
 	>
+<CheckBox  android:id="@+id/cb_set_hide_freqtrip"
+	android:layout_width="wrap_content"
+	android:layout_height="wrap_content"
+	android:text="@string/settings_hide_freqtrip"
+	/>
+<CheckBox  android:id="@+id/cb_set_hide_via"
+	android:layout_width="wrap_content"
+	android:layout_height="wrap_content"
+	android:text="@string/settings_hide_via"
+	/>
 <CheckBox  android:id="@+id/cb_req_tripcat"
 	android:layout_width="wrap_content"
 	android:layout_height="wrap_content"

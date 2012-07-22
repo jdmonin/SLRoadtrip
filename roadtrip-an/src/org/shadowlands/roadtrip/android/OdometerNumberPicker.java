@@ -65,7 +65,7 @@ public class OdometerNumberPicker extends LinearLayout implements OnChangedListe
     private boolean tenthsVisible = true;
 
     /**
-     * if {@link #tenthsVisible} true, and {@link #changeCurrentWhole(int)} is called,
+     * if {@link #tenthsVisible} true, and {@link #changeCurrentWhole(int, boolean)} is called,
      * have we already set tenths value to 0?
      */
     private boolean tenthsCleared = false;
@@ -157,7 +157,7 @@ public class OdometerNumberPicker extends LinearLayout implements OnChangedListe
      *    the 10ths field ignores it.
      *    That is, setting the minimum to 1234 is the same to 1230.
      * @see #changeCurrentTenths(int)
-     * @see #changeCurrentWhole(int)
+     * @see #changeCurrentWhole(int, boolean)
      * @see #setCurrent10dAndRelated(int)
      */
     public void setCurrent10d(final int newValue, final boolean setMinimumToo)
@@ -199,11 +199,15 @@ public class OdometerNumberPicker extends LinearLayout implements OnChangedListe
      *<P>
      * Does not change the related odometer.
      * @param wholeChange amount to increase (positive) or decrease (negative).
+     * @param onlyIfUnchecked  Only change it if our checkbox isn't currently checked
      * @see #setCurrent10d(int, boolean)
      * @see #setCurrent10dAndRelated(int)
      */
-    public void changeCurrentWhole(final int wholeChange)
+    public void changeCurrentWhole(final int wholeChange, final boolean onlyIfUnchecked)
     {
+    	if (onlyIfUnchecked && (checkOnChanges != null) && checkOnChanges.isChecked())
+    		return;
+
     	mWholeNum.setCurrent(mWholeNum.getCurrent() + wholeChange);
     	if (! (tenthsVisible || tenthsCleared))
     	{
@@ -253,9 +257,9 @@ public class OdometerNumberPicker extends LinearLayout implements OnChangedListe
     	if (relatedOdoOnChanges != related)
     	{
 	    	if (relatedOdoOnChanges != null)
-	    		relatedOdoOnChanges.mTenths.setRelatedWholePicker(null);    		
+	    		relatedOdoOnChanges.mTenths.setRelatedOdoPicker(null);    		
 	    	relatedOdoOnChanges = related;
-	    	relatedOdoOnChanges.mTenths.setRelatedWholePicker(mWholeNum);
+	    	relatedOdoOnChanges.mTenths.setRelatedOdoPicker(this);
     	}
     	relatedCheckOnChanges = relatedCB;
     }
@@ -284,7 +288,7 @@ public class OdometerNumberPicker extends LinearLayout implements OnChangedListe
 
 		final int delta = newVal - oldVal;
 		if (picker == mWholeNum)
-			relatedOdoOnChanges.changeCurrentWhole(delta);
+			relatedOdoOnChanges.changeCurrentWhole(delta, false);
 		else
 			relatedOdoOnChanges.changeCurrentTenths(delta);
 	}

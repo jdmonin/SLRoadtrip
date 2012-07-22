@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  Copyright (C) 2010-2011 Jeremy D Monin <jdmonin@nand.net>
+ *  Copyright (C) 2010-2012 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -37,8 +37,8 @@ public class OdometerNumberPickerTenths extends NumberPicker
 	/** Within a single {@link OdometerNumberPicker}, the whole-number part that matches this tenths odometer. */
 	private NumberPicker matchingWholePicker;
 
-	/** Within another related {@link OdometerNumberPicker}, the whole-number part. */
-	private NumberPicker relatedWholePicker;
+	/** Related {@link OdometerNumberPicker}, for changing the whole-number part. */
+	private OdometerNumberPicker relatedOdoPicker;
 
     public OdometerNumberPickerTenths(Context context) {
         this(context, null, 0);
@@ -71,14 +71,14 @@ public class OdometerNumberPickerTenths extends NumberPicker
      * @param relatedWhole  The related odometer's whole-number picker, or null to clear
      * @since 0.9.07
      */
-    void setRelatedWholePicker(NumberPicker relatedWhole)
+    void setRelatedOdoPicker(OdometerNumberPicker relatedOdo)
     {
-    	relatedWholePicker = relatedWhole;
+    	relatedOdoPicker = relatedOdo;
     }
 
     /**
      * If we wrap around the values, don't just go past the end,
-     * also increment/decrement the whole-number picker.
+     * also increment/decrement the related whole-number picker.
      */
     protected void changeCurrent(int current)
     {
@@ -87,15 +87,15 @@ public class OdometerNumberPickerTenths extends NumberPicker
 
             	if (! matchingWholePicker.increment())
             		return;  // don't wrap us around
-            	else if (relatedWholePicker != null)
-            		relatedWholePicker.increment();
+            	else if (relatedOdoPicker != null)
+            		relatedOdoPicker.changeCurrentWhole(+1, true);
 
             } else if (current < mStart) {
 
             	if (! matchingWholePicker.decrement())
             		return;  // don't wrap us around
-            	else if (relatedWholePicker != null)
-            		relatedWholePicker.decrement();
+            	else if (relatedOdoPicker != null)
+            		relatedOdoPicker.changeCurrentWhole(-1, true);
 
             }
     	}

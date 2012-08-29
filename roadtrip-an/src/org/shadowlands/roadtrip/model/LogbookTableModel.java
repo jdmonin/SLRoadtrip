@@ -744,7 +744,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 							odo_delta = ts_otrip - odo_trip;
 							odo_trip = ts_otrip;
 							if (ts_ototal == 0)
-								odo_total += odo_delta;   // estimate total if not known
+								odo_total += odo_delta;   // estimate total for display at next stop
 						}
 
 						if (! is_last_stop)
@@ -787,6 +787,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 						// the user can't verify their accuracy.
 						if ((trip_odo_delta_mode != 0) && (odo_delta != 0))
 						{
+							odo_trip += odo_delta;  // estimate trip for display at next stop
 							if (! is_last_stop)
 								tr[4] = String.format("(+%d)", odo_delta / 10);
 							else
@@ -797,6 +798,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 
 					// TODO if delta mode, but both odos were 0, how to track for next stop?
 					//   Maybe keep odos of last-known stop, calc delta from there
+					//   but then "delta" is since last-known, not since last stop; shouldn't show it
 
 					// Via
 					final int viaID = ts.getVia_id();

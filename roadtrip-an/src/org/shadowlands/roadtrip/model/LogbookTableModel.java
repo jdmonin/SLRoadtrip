@@ -597,7 +597,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 		Vector<Trip> td = ttr.tr;
 		if (td == null)
 		{
-			return;  // <--- nothing found ---
+			return;  // <--- no trips found in ttr ---
 		}
 
 		if (dtf == null)
@@ -617,11 +617,12 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 		// Does next trip continue from the same tstop and odometer?
 		boolean nextTripUsesSameStop = false;  // Updated at bottom of loop.
 
+		// Loop for each trip in td
 		final int L = td.size();
 		for (int i = 0; i < L; ++i)  // towards end of trip, must look at next trip
 		{
 			Trip t = td.elementAt(i);
-			int odo_total, odo_trip = 0;  // used only with trip_odo_delta_mode
+			int odo_total;  // used only with trip_odo_delta_mode
 			if (trip_odo_delta_mode != 0)
 				odo_total = t.getOdo_start();
 			else
@@ -686,6 +687,11 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 			final TStop lastStop = (stops != null) ? stops.lastElement() : null;
 			if (stops != null)
 			{
+				boolean odo_trip_prev_known = true;  // When true, previous stop's trip-odo is accurate to 10ths.
+					// When false, don't display 10ths because total-odo doesn't display those, so
+					// the user can't verify their accuracy.
+				int odo_trip = 0;  // used only with trip_odo_delta_mode
+
 				for (TStop ts : stops)
 				{
 					if ((ts_start == null) && (ts.getOdo_trip() == 0) && (firstrow != null))
@@ -720,7 +726,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 						tr[2] = "/";  // only start time
 					}
 
-					int odo_delta = 0;
+					int odo_delta = 0;  // distance from previous stop; used only when trip_odo_delta_mode != 0 
 					final int ts_ototal = ts.getOdo_total();
 					if ((trip_odo_delta_mode != 0) && (ts_ototal != 0))
 					{
@@ -746,31 +752,51 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 							if (odo_delta == 0)
 								tr[4] = String.format("(%.1f)", ts_otrip / 10.0f);
 							else if (trip_odo_delta_mode == 2)
-								tr[4] = String.format("(%.1f; +%.1f)", ts_otrip / 10.0f, odo_delta / 10.0f);
-							else  // trip_odo_delta_mode == 1 because odo_delta != 0
-								tr[4] = String.format("(+%.1f)", odo_delta / 10.0f);
+							{
+								if (odo_trip_prev_known)
+									tr[4] = String.format("(%.1f; +%.1f)", ts_otrip / 10.0f, odo_delta / 10.0f);
+								else
+									tr[4] = String.format("(%.1f; +%d)", ts_otrip / 10.0f, odo_delta / 10);
+							} else {  // trip_odo_delta_mode == 1 because odo_delta != 0
+								if (odo_trip_prev_known)
+									tr[4] = String.format("(+%.1f)", odo_delta / 10.0f);
+								else
+									tr[4] = String.format("(+%d)", odo_delta / 10);
+							}
 						} else {
 							if (odo_delta == 0)
 								tr[4] = String.format("%.1f", ts_otrip / 10.0f);
 							else if (trip_odo_delta_mode == 2)
-								tr[4] = String.format("%.1f; +%.1f", ts_otrip / 10.0f, odo_delta / 10.0f);
-							else  // trip_odo_delta_mode == 1 because odo_delta != 0
-								tr[4] = String.format("+%.1f", odo_delta / 10.0f);
+							{
+								if (odo_trip_prev_known)
+									tr[4] = String.format("%.1f; +%.1f", ts_otrip / 10.0f, odo_delta / 10.0f);
+								else
+									tr[4] = String.format("%.1f; +%d", ts_otrip / 10.0f, odo_delta / 10);
+							} else {  // trip_odo_delta_mode == 1 because odo_delta != 0
+								if (odo_trip_prev_known)
+									tr[4] = String.format("+%.1f", odo_delta / 10.0f);
+								else
+									tr[4] = String.format("+%d", odo_delta / 10);
+							}
 						}
+						odo_trip_prev_known = true;
 					} else {
 						// trip odo is 0.
 						// If we're tracking delta mode, estimate it from our total odo delta (just above)
-						// and display it
+						// and display it. Don't display 10ths because total-odo doesn't display those, so
+						// the user can't verify their accuracy.
 						if ((trip_odo_delta_mode != 0) && (odo_delta != 0))
 						{
 							if (! is_last_stop)
-								tr[4] = String.format("(+%.1f)", odo_delta / 10.0f);
+								tr[4] = String.format("(+%d)", odo_delta / 10);
 							else
-								tr[4] = String.format("+%.1f", odo_delta / 10.0f);
+								tr[4] = String.format("+%d", odo_delta / 10);
 						}
+						odo_trip_prev_known = false;
 					}
 
 					// TODO if delta mode, but both odos were 0, how to track for next stop?
+					//   Maybe keep odos of last-known stop, calc delta from there
 
 					// Via
 					final int viaID = ts.getVia_id();

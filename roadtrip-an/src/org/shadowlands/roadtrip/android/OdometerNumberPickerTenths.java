@@ -37,7 +37,7 @@ public class OdometerNumberPickerTenths extends NumberPicker
 	/** Within a single {@link OdometerNumberPicker}, the whole-number part that matches this tenths odometer. */
 	private NumberPicker matchingWholePicker;
 
-	/** Related {@link OdometerNumberPicker}, for changing the whole-number part. */
+	/** Related {@link OdometerNumberPicker}, for changing its whole-number part. */
 	private OdometerNumberPicker relatedOdoPicker;
 
     public OdometerNumberPickerTenths(Context context) {
@@ -68,7 +68,7 @@ public class OdometerNumberPickerTenths extends NumberPicker
      * When this tenths odometer wraps around, and increments or decrements our whole-number picker,
      * also increment or decrement this related odometer's whole-number picker. 
      * Package access for {@link OdometerNumberPicker}'s use.
-     * @param relatedWhole  The related odometer's whole-number picker, or null to clear
+     * @param relatedOdo  The related odometer picker, or null to clear
      * @since 0.9.07
      */
     void setRelatedOdoPicker(OdometerNumberPicker relatedOdo)

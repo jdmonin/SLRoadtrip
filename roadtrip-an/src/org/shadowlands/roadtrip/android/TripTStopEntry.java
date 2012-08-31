@@ -249,6 +249,7 @@ public class TripTStopEntry extends Activity
 	/**
 	 * if non-null, then <tt>currTS != null</tt>, and
 	 * {@link #viaRouteObj} was created for this TStop.
+	 * @see TStop#TEMPFLAG_CREATED_VIAROUTE
 	 */
 	private ViaRoute viaRouteObjCreatedHere = null;
 
@@ -270,7 +271,8 @@ public class TripTStopEntry extends Activity
 
 	/**
 	 * if non-null, then <tt>currTS != null</tt>, and
-	 * {@link #viaRouteObj} was created for this TStop.
+	 * {@link #locObj} was created for this TStop.
+	 * @see TStop#TEMPFLAG_CREATED_LOCATION
 	 */
 	private Location locObjCreatedHere = null;
 
@@ -280,6 +282,7 @@ public class TripTStopEntry extends Activity
 	 *<P>
 	 * Remember that <tt>stopGas</tt> isn't loaded from the db until
 	 * {@link #onClick_BtnGas(View)} or {@link #onClick_BtnEnterTStop(View)}.
+	 * @see TStop#TEMPFLAG_CREATED_GASBRANDGRADE
 	 */
 	private boolean gbgCreatedHere = false;
 
@@ -412,6 +415,13 @@ public class TripTStopEntry extends Activity
 		// if currTS != null, we'll read stopGas in updateTextAndButtons,
 		// and set btnGas's green light.
 		stopGas = null;
+
+		if (! isCurrentlyStopped)
+		{
+			View sb = findViewById(R.id.trip_tstop_btn_save);
+			if (sb != null)
+				sb.setVisibility(View.INVISIBLE);
+		}
 
 		Intent i = getIntent();
 		if (i != null)
@@ -1122,8 +1132,22 @@ public class TripTStopEntry extends Activity
 	}
 
 	/**
+	 * Save changes while {@link #isCurrentlyStopped}:
 	 * Read fields, and record this TStop in the database.
-	 * If continuing from the stop, update {@link Settings#PREV_LOCATION}.
+	 * Don't continue from the stop at this time.
+	 * Finish this Activity.
+	 */
+	public void onClick_BtnSaveChanges(View v)
+	{
+		if (! isCurrentlyStopped)
+			return;
+
+		enterTStop(true);
+	}
+
+	/**
+	 * Read fields, and record this TStop in the database.
+	 * If {@link #isCurrentlyStopped continuing} from the stop, update {@link Settings#PREV_LOCATION}.
 	 * If {@link #EXTRAS_FLAG_ENDTRIP}, end the Trip too.
 	 * Finish this Activity.
 	 *<P>
@@ -1135,11 +1159,28 @@ public class TripTStopEntry extends Activity
 	 */
 	public void onClick_BtnEnterTStop(View v)
 	{
+		enterTStop(false);
+	}
+
+	/**
+	 * Internal call for {@link #onClick_BtnSaveChanges(View)}
+	 * and {@link #onClick_BtnEnterTStop(View)}.
+	 *<P>
+	 * Check for required fields, prompt if missing. Otherwise
+	 * save changes, continue from stop if {@link #isCurrentlyStopped}
+	 * unless <tt>saveOnly</tt>, and finish this Activity.
+	 * @param saveOnly  If true, save changes but don't leave
+	 *   the stop or continue the trip.
+	 * @since 0.9.13
+	 */
+	protected void enterTStop(final boolean saveOnly)
+	{
 		String locat = null, via_route = null, comment = null;
 		boolean createdLoc = false, createdVia = false;
-		int locID = 0;
 
-		CheckBox b;
+		/**
+		 * Before any db changes, check entered data for consistency.
+		 */
 
 		int stopTimeSec = 0;  // optional stop-time
 		if ((tp_time_stop_chk != null) && tp_time_stop_chk.isChecked())
@@ -1169,7 +1210,7 @@ public class TripTStopEntry extends Activity
 			odoTotal = odo_total.getCurrent10d();
 		if ((odo_trip_chk != null) && odo_trip_chk.isChecked())
 			odoTrip = odo_trip.getCurrent10d();
-		if ((odoTotal == 0) &&
+		if ((odoTotal == 0) && (! saveOnly) &&
 			(stopEndsTrip || (bundleGas != null)))
 		{
 			odo_total.requestFocus();
@@ -1180,7 +1221,7 @@ public class TripTStopEntry extends Activity
 		}
 
 		final boolean mkFreqTrip;
-		if (! stopEndsTrip)
+		if (saveOnly || ! stopEndsTrip)
 		{
 			mkFreqTrip = false;
 		} else {
@@ -1199,7 +1240,9 @@ public class TripTStopEntry extends Activity
 
 		// If about to continue the trip, and neither odo_trip nor odo_total
 		// are entered, ask to confirm.
-		if ((odoTrip == 0) && (odoTotal == 0) && isCurrentlyStopped && ! askedConfirmEmptyOdos)
+		if ((odoTrip == 0) && (odoTotal == 0)
+			&& isCurrentlyStopped
+			&& (! saveOnly) && ! askedConfirmEmptyOdos)
 		{
 			AlertDialog.Builder alert = new AlertDialog.Builder(this);
 
@@ -1259,7 +1302,8 @@ public class TripTStopEntry extends Activity
 
 		// continue-time
 		int contTimeSec = 0;
-		if (isCurrentlyStopped && (! stopEndsTrip) && tp_time_cont_chk.isChecked() && (contTime != null))
+		if (isCurrentlyStopped && (! stopEndsTrip) && (! saveOnly)
+			&& tp_time_cont_chk.isChecked() && (contTime != null))
 		{
 			// Convert to unix time:
 			contTime.set(Calendar.HOUR_OF_DAY, tp_time_cont.getCurrentHour());
@@ -1279,7 +1323,7 @@ public class TripTStopEntry extends Activity
 			}
 		}
 
-		// area ID (roadtrips)
+		// area ID @ end of roadtrip
 		if (stopEndsTrip && currT.isRoadtrip()
 			&& (areaLocs_areaID != currT.getRoadtripEndAreaID()))
 		{
@@ -1308,7 +1352,7 @@ public class TripTStopEntry extends Activity
 		}
 
 		// Check for required trip category:
-		if (stopEndsTrip)
+		if (stopEndsTrip && ! saveOnly)
 		{
 			final int tripCat = ((TripCategory) (spTripCat.getSelectedItem())).getID();
 			if ((Settings.getBoolean(db, Settings.REQUIRE_TRIPCAT, false))
@@ -1321,10 +1365,12 @@ public class TripTStopEntry extends Activity
 		}
 
 		/**
-		 * Done checking field contents, time to update the db.
+		 * Done checking data entered, time to update the db.
 		 * tsid is the TStop ID we'll create or update here.
 		 */
 		final int tsid;
+
+		int locID = 0;
 
 		// Get or create the Location db record,
 		// if we don't already have it
@@ -1375,14 +1421,14 @@ public class TripTStopEntry extends Activity
 		}
 		if ((locObjCreatedHere != null) && (locID != locObjCreatedHere.getID()))
 		{
-			// record created here wasn't used, so remove it from db
+			// record created at this tstop wasn't used, so remove it from db
 			locObjCreatedHere.delete();
 			locObjCreatedHere = null;
 		}
 
 		// Get or create the ViaRoute db record,
 		// if we don't already have it
-		int viaID;
+		final int viaID;
 		if ((locID == 0) || (via_route == null) || (prevLocObj == null))
 		{
 			viaID = 0;
@@ -1394,7 +1440,7 @@ public class TripTStopEntry extends Activity
 			// if isCurrentlyStopped, or ending the trip,
 			// and we don't yet have odo_dist for
 			// this ViaRoute, set it from this tstop:
-			if (isCurrentlyStopped || stopEndsTrip)
+			if ((isCurrentlyStopped || stopEndsTrip) && ! saveOnly)
 			{
 				if (odo_trip_chk.isChecked())
 				{
@@ -1423,7 +1469,7 @@ public class TripTStopEntry extends Activity
 				}
 			}
 		} else {
-			// via-route text doesn't match, create new ViaRoute
+			// via-route text doesn't match; create new ViaRoute or change viaRouteObjCreatedHere
 			int odo_dist = 0;
 			if (odo_trip_chk.isChecked())
 			{
@@ -1446,14 +1492,15 @@ public class TripTStopEntry extends Activity
 		}
 		if ((viaRouteObjCreatedHere != null) && (viaID != viaRouteObjCreatedHere.getID()))
 		{
-			// record created here wasn't used, so remove it from db
+			// record created at this tstop wasn't used, so remove it from db
 			viaRouteObjCreatedHere.delete();
 			viaRouteObjCreatedHere = null;
 		}
 
-		// If we've chosen a frequent tstop, remove
-		// it from the list of unused ones.
-		if ((wantsFTS != null) && (locID == wantsFTS.getLocationID()) && ! stopEndsTrip)
+		// If we've chosen a frequent tstop's location,
+		// remove it from the list of unused ones.
+		if ((wantsFTS != null) && (locID == wantsFTS.getLocationID())
+			 && isCurrentlyStopped && (! stopEndsTrip) && (! saveOnly))
 		{
 			Settings.reduceCurrentFreqTripTStops(db, wantsFTS);
 		}
@@ -1489,14 +1536,14 @@ public class TripTStopEntry extends Activity
 					createdGasBrandGrade = false;  // null or 0-length name
 					if (gbgCreatedHere)
 					{
-						// TODO delete the one created, since we aren't using it
+						// TODO delete the gbg created, since we aren't using it
 					}
 				}
 			}
 			else if (gbgCreatedHere && (0 != bgid))
 			{
-				// brand was created here when we stopped, now we're
-				// continuing; see if the created name was changed.
+				// brand was created here when we stopped, now we're saving
+				// or continuing; see if the created name was changed.
 				if (stopGas.gas_brandgrade == null)
 				{
 					try
@@ -1557,25 +1604,29 @@ public class TripTStopEntry extends Activity
 				}
 			}
 		} else {
-			// Currently stopped; resuming from stop, or ending trip.
+			// Currently stopped; saving, resuming from stop, or ending trip.
 			tsid = currTS.getID();
 			currTS.setOdos(odoTotal, odoTrip);
 			// text fields, info fields
 			currTS.setLocationID(locID);
 			currTS.setVia_id(viaID);
 			currTS.setComment(comment);
-			if (currT.isRoadtrip() && (areaLocs_areaID != -1)
-				&& (areaLocs_areaID != currTS.getAreaID()))
+			if (currT.isRoadtrip() && (areaLocs_areaID != -1))
 				currTS.setAreaID(areaLocs_areaID);
-			currTS.clearTempFlags();
-			// continue-time
-			if ((! stopEndsTrip) && (contTimeSec != 0))
-				currTS.setTime_continue(contTimeSec, false);
-			if (stopEndsTrip)
+
+			if (! saveOnly)
 			{
-				final int areaID = currT.getRoadtripEndAreaID();  // will be 0 if local trip
-				if (areaID != 0)
-					currTS.setAreaID(areaID);
+				currTS.clearTempFlags();
+
+				// continue-time
+				if ((! stopEndsTrip) && (contTimeSec != 0))
+					currTS.setTime_continue(contTimeSec, false);
+				if (stopEndsTrip)
+				{
+					final int areaID = currT.getRoadtripEndAreaID();  // will be 0 if local trip
+					if (areaID != 0)
+						currTS.setAreaID(areaID);
+				}
 			}
 
 			currTS.commit();
@@ -1605,7 +1656,7 @@ public class TripTStopEntry extends Activity
 			}
 		}  // if (! currently stopped)
 
-		if ((stopGas != null) && (bundleGas != null))
+		if ((stopGas != null) && (bundleGas != null) && ! saveOnly)
 		{
 			// For gas, update Location's latest_gas_brandgrade_id
 			if (stopGas.gas_brandgrade_id != 0)
@@ -1615,10 +1666,10 @@ public class TripTStopEntry extends Activity
 			}
 		}
 
-		if (stopEndsTrip)
+		if (stopEndsTrip && ! saveOnly)
 			endCurrentTrip(tsid, odo_total.getCurrent10d(), mkFreqTrip);
 
-		if (currTS != null)  // if we were stopped already...
+		if ((currTS != null) && ! saveOnly)  // if we were stopped already...
 		{
 			Settings.setCurrentTStop(db, null);  // clear it
 			Settings.setPreviousLocation(db, locObj); // update prev_loc

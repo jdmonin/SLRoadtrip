@@ -26,7 +26,7 @@
 <LinearLayout
     android:orientation="vertical"
     android:layout_width="fill_parent"
-    android:layout_height="fill_parent"
+    android:layout_height="wrap_content"
     >
 <TextView 
 	android:id="@+id/trip_tstop_prompt"
@@ -34,7 +34,10 @@
     android:layout_height="wrap_content" 
     android:text="@string/trip_tstop_entry_prompt"
     />
-<TableLayout android:layout_height="wrap_content" android:layout_width="fill_parent">
+<!-- Table with 2 columns: Everything above odometers -->
+<TableLayout
+	android:layout_height="wrap_content" android:layout_width="fill_parent"
+	android:stretchColumns="2" >
     <TableRow>
 		<LinearLayout
 		    android:orientation="vertical"
@@ -146,6 +149,9 @@
 			android:layout_width="fill_parent"
 			android:layout_height="wrap_content" />
     </TableRow>
+</TableLayout>
+<!-- Table with 3 columns: odometers -->
+<TableLayout android:layout_height="wrap_content" android:layout_width="fill_parent">    
     <TableRow>
         <CheckBox android:id="@+id/trip_tstop_odo_trip_chk"
             android:paddingBottom="12sp"
@@ -208,6 +214,12 @@
 			android:layout_width="fill_parent"
 			android:layout_height="wrap_content" />
     </TableRow>
+</TableLayout>
+<!-- Table with 3 columns: Everything below odometers -->
+<TableLayout
+	android:layout_height="wrap_content" android:layout_width="fill_parent"
+	android:stretchColumns="3"
+	>    
     <TableRow>
 		<LinearLayout
 		    android:orientation="vertical"
@@ -261,7 +273,7 @@
 	        android:gravity="center"
 		    android:text="@string/gas__dots"
 		    android:drawableLeft="@android:drawable/presence_invisible"
-		    android:drawablePadding="3px"
+		    android:drawablePadding="2dp"
 		    android:layout_span="3"
 	        android:onClick="onClick_BtnGas"/>
     </TableRow>

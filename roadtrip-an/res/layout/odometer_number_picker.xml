@@ -24,9 +24,10 @@
     android:layout_width="wrap_content" 
     android:layout_height="fill_parent" >
 
+   <!-- wholenum must be wide enough for 6 or 7 digits  -->
    <com.quietlycoding.android.picker.NumberPicker
         android:id="@+id/org_shadowlands_rtr_odometer_wholenum"
-        android:minWidth="150sp"
+        android:minWidth="120sp"
 	    android:layout_width="wrap_content" 
         android:layout_height="wrap_content"
          />
@@ -40,7 +41,7 @@
 	    />
     <org.shadowlands.roadtrip.android.OdometerNumberPickerTenths
         android:id="@+id/org_shadowlands_rtr_odometer_tenths"
-        android:layout_width="fill_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content" />
 
 </LinearLayout>

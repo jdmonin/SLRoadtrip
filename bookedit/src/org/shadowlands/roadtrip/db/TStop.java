@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  Copyright (C) 2010-2011 Jeremy D Monin <jdmonin@nand.net>
+ *  Copyright (C) 2010-2012 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -497,6 +497,8 @@ public class TStop extends RDBRecord
 	public void commit()
         throws IllegalStateException, NullPointerException
 	{
+		if (! dirty)
+			return;
 		dbConn.update(TABNAME, id, FIELDS, buildInsertUpdate());
 		dirty = false;
 	}
@@ -557,6 +559,8 @@ public class TStop extends RDBRecord
 	public void setOdos(final int odoTotal, final int odoTrip) {
 		if (odo_trip != odoTrip)
 			toString_descr = null;
+		else if (odo_total == odoTotal)
+			return;  // they're both equal; no change made
 		odo_total = odoTotal;
 		odo_trip = odoTrip;
 		dirty = true;
@@ -585,6 +589,8 @@ public class TStop extends RDBRecord
 	 */
 	public void setTime_continue(final int sTime, final boolean commitNow)
 	{
+		if (sTime == time_continue)
+			return;
 		time_continue = sTime;
 		if (! commitNow)
 		{
@@ -671,6 +677,8 @@ public class TStop extends RDBRecord
 	 * @param locID  New Location ID, or 0 for null
 	 * */
 	public void setLocationID(final int locID) {
+		if (locID == locid)
+			return;
 		locid = locID;
 		dirty = true;
 		if (toString_descr != null)
@@ -692,6 +700,8 @@ public class TStop extends RDBRecord
 	{
 		if (a_id < 0)
 			throw new IllegalArgumentException();
+		if (a_id == areaid)
+			return;
 		areaid = a_id;
 		dirty = true;
 	}
@@ -706,6 +716,9 @@ public class TStop extends RDBRecord
 	}
 
 	public void setVia_route(final String via) {
+		if ((via == via_route)
+			|| ((via != null) && via.equals(via_route)))
+			return;
 		via_route = via;
 		dirty = true;
 	}
@@ -723,6 +736,8 @@ public class TStop extends RDBRecord
 	 * @param viaID id, or 0 if empty/unused.
 	 */
 	public void setVia_id(final int viaID) {
+		if (viaID == via_id)
+			return;
 		via_id = viaID;
 		dirty = true;
 	}
@@ -844,8 +859,13 @@ public class TStop extends RDBRecord
 	public void setComment(final String comment)
 		throws IllegalArgumentException
 	{
-		if ((comment != null) && (comment.length() > MAXLEN))
-			throw new IllegalArgumentException("comment length");
+		if (comment != null)
+		{
+			if (comment.length() > MAXLEN)
+				throw new IllegalArgumentException("comment length");
+			if (comment.equals(this.comment))
+				return;
+		}
 		this.comment = comment;
 		dirty = true;
 		if (toString_descr != null)

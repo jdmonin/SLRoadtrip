@@ -46,7 +46,7 @@ import android.widget.TextView;
  * a few slight modifications to the code here, I simply put a MAX and MIN default in the code but these values
  * can still be set publicly by calling code.
  *<P>
- * This copy was obtained at <A href="http://www.quietlycoding.com/?p=5"
+ * This copy was obtained 2010-07-14 at <A href="http://www.quietlycoding.com/?p=5"
  *   >http://www.quietlycoding.com/?p=5</A>.
  *<P>
  * 2010-12-11 jdmonin Update mCurrent if mText is typed into

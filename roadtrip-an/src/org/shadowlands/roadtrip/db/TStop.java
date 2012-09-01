@@ -560,7 +560,7 @@ public class TStop extends RDBRecord
 		if (odo_trip != odoTrip)
 			toString_descr = null;
 		else if (odo_total == odoTotal)
-			return;  // they're both equal; no change made
+			return;  // both odos equal; no change made
 		odo_total = odoTotal;
 		odo_trip = odoTrip;
 		dirty = true;

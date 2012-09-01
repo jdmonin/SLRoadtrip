@@ -420,7 +420,7 @@ public class TripTStopEntry extends Activity
 		{
 			View sb = findViewById(R.id.trip_tstop_btn_save);
 			if (sb != null)
-				sb.setVisibility(View.INVISIBLE);
+				sb.setVisibility(View.GONE);
 		}
 
 		Intent i = getIntent();
@@ -460,6 +460,12 @@ public class TripTStopEntry extends Activity
 		{
 			spTripCat = (Spinner) findViewById(R.id.trip_tstop_end_category);
 			SpinnerDataFactory.setupTripCategoriesSpinner(db, this, spTripCat, currT.getTripCategoryID());
+			if (Settings.getBoolean(db, Settings.HIDE_FREQTRIP, false))
+			{
+				View vrow = findViewById(R.id.trip_tstop_row_end_mk_freq);
+				if (vrow != null)
+					vrow.setVisibility(View.GONE);				
+			}
 		} else {
 			View vrow = findViewById(R.id.trip_tstop_row_end_tcat);
 			if (vrow != null)

@@ -34,48 +34,45 @@
     android:layout_height="wrap_content" 
     android:text="@string/trip_tstop_entry_prompt"
     />
+<!-- Stop-At Time and its checkbox, laid out like:
+		chkbox   label    time
+		date-btn         picker
+  -->
+<RelativeLayout
+	android:layout_width="fill_parent"
+	android:layout_height="wrap_content"
+    >
+	<CheckBox android:id="@+id/trip_tstop_time_stop_chk"
+		android:checked="true"
+		android:paddingBottom="12sp"
+		android:paddingTop="0sp"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content" />
+	<TextView android:id="@+id/trip_tstop_time_stop_label"
+		android:text="@string/stopped_at_time"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_toRightOf="@+id/trip_tstop_time_stop_chk"
+		android:layout_alignParentTop="true"
+		android:layout_gravity="right" />
+	<Button android:id="@+id/trip_tstop_btn_stop_date"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_below="@+id/trip_tstop_time_stop_chk"
+		android:layout_gravity="center"
+		android:gravity="center"
+		android:onClick="onClick_BtnStopDate" />
+	<TimePicker
+		android:id="@+id/trip_tstop_time_stop"
+		android:layout_toRightOf="@+id/trip_tstop_time_stop_label"
+		android:layout_alignParentTop="true"
+		android:layout_width="fill_parent"
+		android:layout_height="wrap_content" />
+</RelativeLayout>
 <!-- Table with 2 columns: Everything above odometers -->
 <TableLayout
 	android:layout_height="wrap_content" android:layout_width="fill_parent"
 	android:stretchColumns="2" >
-    <TableRow>
-		<LinearLayout
-		    android:orientation="vertical"
-		    android:layout_span="2"
-		    android:layout_width="wrap_content"
-		    android:layout_height="wrap_content"
-		    >
-		    <LinearLayout
-			    android:orientation="horizontal"
-			    android:layout_width="wrap_content"
-			    android:layout_height="wrap_content"
-			    >
-		        <CheckBox android:id="@+id/trip_tstop_time_stop_chk"
-		        	android:checked="true"
-		            android:paddingBottom="12sp"
-			        android:paddingTop="12sp"
-		            android:layout_width="wrap_content"
-		            android:layout_height="wrap_content" />
-				<TextView
-				    android:layout_width="wrap_content" 
-				    android:layout_height="fill_parent" 
-				    android:layout_gravity="right"
-				    android:layout_weight="1"
-				    android:text="@string/stopped_at_time"
-				    />
-		    </LinearLayout>
-		    <Button android:id="@+id/trip_tstop_btn_stop_date"
-		        android:layout_width="wrap_content"
-		        android:layout_height="wrap_content"
-		        android:layout_gravity="center"
-		        android:gravity="center"
-		        android:onClick="onClick_BtnStopDate"/>
-        </LinearLayout>
-		<TimePicker
-		    android:id="@+id/trip_tstop_time_stop"
-			android:layout_width="fill_parent"
-			android:layout_height="wrap_content" />
-    </TableRow>
     <TableRow>
 		<TextView android:id="@+id/trip_tstop_area_label"
 		    android:layout_width="wrap_content" 
@@ -215,41 +212,46 @@
 			android:layout_height="wrap_content" />
     </TableRow>
 </TableLayout>
-<!-- Table with 3 columns: Everything below odometers -->
+<!-- Continue-At Time and its checkbox, laid out like:
+		chkbox   label    time
+		date-btn         picker
+	-->
+<RelativeLayout
+	android:layout_width="fill_parent"
+	android:layout_height="wrap_content"
+    >
+	<CheckBox android:id="@+id/trip_tstop_time_cont_chk"
+		android:checked="true"
+		android:paddingBottom="12sp"
+		android:paddingTop="0sp"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content" />
+	<TextView android:id="@+id/trip_tstop_time_cont_label"
+		android:text="@string/continu_at_time"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_toRightOf="@+id/trip_tstop_time_cont_chk"
+		android:layout_alignParentTop="true"
+		android:layout_gravity="right" />
+	<Button android:id="@+id/trip_tstop_btn_cont_date"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_below="@+id/trip_tstop_time_cont_chk"
+		android:layout_gravity="center"
+		android:gravity="center"
+		android:onClick="onClick_BtnContDate" />
+	<TimePicker
+		android:id="@+id/trip_tstop_time_cont"
+		android:layout_toRightOf="@+id/trip_tstop_time_cont_label"
+		android:layout_alignParentTop="true"
+		android:layout_width="fill_parent"
+		android:layout_height="wrap_content" />
+</RelativeLayout>
+<!-- Table with 3 columns: Below continue-time -->
 <TableLayout
 	android:layout_height="wrap_content" android:layout_width="fill_parent"
-	android:stretchColumns="3"
+	android:stretchColumns="2"
 	>    
-    <TableRow>
-		<LinearLayout
-		    android:orientation="vertical"
-		    android:layout_width="wrap_content"
-		    android:layout_height="wrap_content"
-		    >
-	        <CheckBox android:id="@+id/trip_tstop_time_cont_chk"
-	        	android:checked="true"
-	            android:paddingBottom="12sp"
-		        android:paddingTop="12sp"
-	            android:layout_width="wrap_content"
-	            android:layout_height="wrap_content" />
-		    <Button android:id="@+id/trip_tstop_btn_cont_date"
-		        android:layout_width="wrap_content"
-		        android:layout_height="wrap_content"
-		        android:layout_gravity="center"
-		        android:gravity="center"
-		        android:onClick="onClick_BtnContDate"/>
-        </LinearLayout>
-		<TextView
-		    android:id="@+id/trip_tstop_time_cont_label"		
-		    android:layout_width="wrap_content" 
-		    android:layout_height="fill_parent" 
-		    android:text="@string/continu_at_time"
-		    />
-		<TimePicker
-		    android:id="@+id/trip_tstop_time_cont"
-			android:layout_width="fill_parent"
-			android:layout_height="wrap_content" />
-    </TableRow>
     <TableRow>
 		<TextView  
 		    android:layout_width="wrap_content" 
@@ -258,14 +260,20 @@
 		    />
 		<EditText
 		    android:id="@+id/trip_tstop_comment"
-		    android:layout_span="2"
 			android:layout_width="fill_parent"
 			android:layout_height="wrap_content"
 			android:layout_weight="1"
 			android:maxLength="255"
 		    android:minLines="2" />
     </TableRow>
-    <TableRow>
+</TableLayout>
+<!-- TStop detail buttons row (gas, etc) -->
+<LinearLayout
+	android:orientation="horizontal"
+	android:layout_width="fill_parent"
+	android:layout_height="wrap_content"
+	android:gravity="center"
+	>
 	    <Button android:id="@+id/trip_tstop_btn_gas"
 	        android:layout_width="wrap_content"
 	        android:layout_height="wrap_content"
@@ -274,10 +282,8 @@
 		    android:text="@string/gas__dots"
 		    android:drawableLeft="@android:drawable/presence_invisible"
 		    android:drawablePadding="2dp"
-		    android:layout_span="3"
 	        android:onClick="onClick_BtnGas"/>
-    </TableRow>
-</TableLayout>
+</LinearLayout>
 <!-- Rows for Trip Category, Make Frequent are visible only at End Trip -->
 <LinearLayout android:id="@+id/trip_tstop_row_end_tcat"
 	android:orientation="horizontal"

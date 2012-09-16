@@ -747,38 +747,25 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 								odo_total += odo_delta;   // estimate total for display at next stop
 						}
 
-						if (! is_last_stop)
+						if (odo_delta == 0)
 						{
-							if (odo_delta == 0)
-								tr[4] = String.format("(%.1f)", ts_otrip / 10.0f);
-							else if (trip_odo_delta_mode == 2)
-							{
-								if (odo_trip_prev_known)
-									tr[4] = String.format("(%.1f; +%.1f)", ts_otrip / 10.0f, odo_delta / 10.0f);
-								else
-									tr[4] = String.format("(%.1f; +%d)", ts_otrip / 10.0f, odo_delta / 10);
-							} else {  // trip_odo_delta_mode == 1 because odo_delta != 0
-								if (odo_trip_prev_known)
-									tr[4] = String.format("(+%.1f)", odo_delta / 10.0f);
-								else
-									tr[4] = String.format("(+%d)", odo_delta / 10);
-							}
-						} else {
-							if (odo_delta == 0)
-								tr[4] = String.format("%.1f", ts_otrip / 10.0f);
-							else if (trip_odo_delta_mode == 2)
-							{
-								if (odo_trip_prev_known)
-									tr[4] = String.format("%.1f; +%.1f", ts_otrip / 10.0f, odo_delta / 10.0f);
-								else
-									tr[4] = String.format("%.1f; +%d", ts_otrip / 10.0f, odo_delta / 10);
-							} else {  // trip_odo_delta_mode == 1 because odo_delta != 0
-								if (odo_trip_prev_known)
-									tr[4] = String.format("+%.1f", odo_delta / 10.0f);
-								else
-									tr[4] = String.format("+%d", odo_delta / 10);
-							}
+							tr[4] = String.format("%.1f", ts_otrip / 10.0f);
+						} else if (trip_odo_delta_mode == 2)
+						{
+							if (odo_trip_prev_known)
+								tr[4] = String.format("%.1f; +%.1f", ts_otrip / 10.0f, odo_delta / 10.0f);
+							else
+								tr[4] = String.format("%.1f; +%d", ts_otrip / 10.0f, odo_delta / 10);
+						} else {  // trip_odo_delta_mode == 1 because odo_delta != 0
+							if (odo_trip_prev_known)
+								tr[4] = String.format("+%.1f", odo_delta / 10.0f);
+							else
+								tr[4] = String.format("+%d", odo_delta / 10);
 						}
+
+						if (! is_last_stop)
+							tr[4] = "(" + tr[4] + ")";
+
 						odo_trip_prev_known = true;
 					} else {
 						// trip odo is 0.
@@ -995,6 +982,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	 */
 	public void finishAdd()  {}
 	  // TODO interpret data from maxRowBeforeAdd, save to db, un-set mode
+	  //   Allow user to enter any of the trip_odo_delta_mode formats
 
 	/**
 	 * Cancel and clear the data entered by the user since {@link #beginAdd(boolean)}.

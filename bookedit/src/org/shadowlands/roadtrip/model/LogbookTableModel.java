@@ -48,6 +48,8 @@ import org.shadowlands.roadtrip.util.RTRDateTimeFormatter;
  *<P>
  * Assumes that data won't change elsewhere while displayed; for example,
  * cached ViaRoute object contents.
+ *<P>
+ * Preferences: Before creating the LTM, you can set {@link #trip_odo_delta_mode}.
  *
  * @author jdmonin
  */
@@ -73,6 +75,17 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	   { null, "Resume-time" },
 	   { null , "End-Time", null, null, "Trip-odo", "via", "End at" },
 	   { null, null, "\\", "End-odo" } };
+
+	/**
+	 * Preference: Trip odometer delta mode.
+	 *<UL>
+	 *<LI> 0: Show the trip odometer value (12.2)
+	 *<LI> 1: Show the delta from previous stop (+8.5)
+	 *<LI> 2: Show both (12.2; +8.5)
+	 *</UL>
+	 * If the previous stop has neither total nor trip odometer, the delta will be blank.
+	 */
+	public static int trip_odo_delta_mode = 2;
 
 	/**
 	 * The vehicle being displayed.
@@ -423,6 +436,12 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 		for (int i = 0; i < L; ++i)  // towards end of trip, must look at next trip
 		{
 			Trip t = td.elementAt(i);
+			int odo_total;  // used only with trip_odo_delta_mode
+			if (trip_odo_delta_mode != 0)
+				odo_total = t.getOdo_start();
+			else
+				odo_total = 0;  // required for the compiler
+
 			TStop ts_start = t.readStartTStop(false);  // may be null
 			String[] tr;
 
@@ -482,6 +501,11 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 			final TStop lastStop = (stops != null) ? stops.lastElement() : null;
 			if (stops != null)
 			{
+				boolean odo_trip_prev_known = true;  // When true, previous stop's trip-odo is accurate to 10ths.
+					// When false, don't display 10ths because total-odo doesn't display those, so
+					// the user can't verify their accuracy.
+				int odo_trip = 0;  // used only with trip_odo_delta_mode
+
 				for (TStop ts : stops)
 				{
 					if ((ts_start == null) && (ts.getOdo_trip() == 0) && (firstrow != null))
@@ -515,18 +539,67 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 					{
 						tr[2] = "/";  // only start time
 					}
+
+					int odo_delta = 0;  // distance from previous stop; used only when trip_odo_delta_mode != 0 
 					final int ts_ototal = ts.getOdo_total();
+					if ((trip_odo_delta_mode != 0) && (ts_ototal != 0))
+					{
+						odo_delta = ts_ototal - odo_total;
+						odo_total = ts_ototal;
+					}
 					final boolean is_last_stop = (ts_ototal != 0) && (ts_ototal == odo_end) && (ttcont == 0);
 					if ((ts_ototal != 0) && ! is_last_stop)
 						tr[3] = Integer.toString((int) (ts_ototal / 10.0f));
 					final int ts_otrip = ts.getOdo_trip();
 					if (ts_otrip != 0)
 					{
-						if (! is_last_stop)
-							tr[4] = String.format("(%.1f)", ts_otrip / 10.0f);
-						else
+						if (trip_odo_delta_mode != 0)
+						{
+							odo_delta = ts_otrip - odo_trip;
+							odo_trip = ts_otrip;
+							if (ts_ototal == 0)
+								odo_total += odo_delta;   // estimate total for display at next stop
+						}
+
+						if (odo_delta == 0)
+						{
 							tr[4] = String.format("%.1f", ts_otrip / 10.0f);
+						} else if (trip_odo_delta_mode == 2)
+						{
+							if (odo_trip_prev_known)
+								tr[4] = String.format("%.1f; +%.1f", ts_otrip / 10.0f, odo_delta / 10.0f);
+							else
+								tr[4] = String.format("%.1f; +%d", ts_otrip / 10.0f, odo_delta / 10);
+						} else {  // trip_odo_delta_mode == 1 because odo_delta != 0
+							if (odo_trip_prev_known)
+								tr[4] = String.format("+%.1f", odo_delta / 10.0f);
+							else
+								tr[4] = String.format("+%d", odo_delta / 10);
+						}
+
+						if (! is_last_stop)
+							tr[4] = "(" + tr[4] + ")";
+
+						odo_trip_prev_known = true;
+					} else {
+						// trip odo is 0.
+						// If we're tracking delta mode, estimate it from our total odo delta (just above)
+						// and display it. Don't display 10ths because total-odo doesn't display those, so
+						// the user can't verify their accuracy.
+						if ((trip_odo_delta_mode != 0) && (odo_delta != 0))
+						{
+							odo_trip += odo_delta;  // estimate trip for display at next stop
+							if (! is_last_stop)
+								tr[4] = String.format("(+%d)", odo_delta / 10);
+							else
+								tr[4] = String.format("+%d", odo_delta / 10);
+						}
+						odo_trip_prev_known = false;
 					}
+
+					// TODO if delta mode, but both odos were 0, how to track for next stop?
+					//   Maybe keep odos of last-known stop, calc delta from there
+					//   but then "delta" is since last-known, not since last stop; shouldn't show it
 
 					// Via
 					final int viaID = ts.getVia_id();
@@ -724,6 +797,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	 */
 	public void finishAdd()  {}
 	  // TODO interpret data from maxRowBeforeAdd, save to db, un-set mode
+	  //   Allow user to enter any of the trip_odo_delta_mode formats
 
 	/**
 	 * Cancel and clear the data entered by the user since {@link #beginAdd(boolean)}.

@@ -44,7 +44,7 @@ import org.shadowlands.roadtrip.util.RTRDateTimeFormatter;
  * The data is loaded in "ranges" of several weeks.  You can either
  * retrieve them as a grid of cells, or can retrieve the ranges
  * by calling {@link #getRangeCount()} and {@link #getRange(int)}.
- * Load earlier data by calling {@link #addEarlierTripWeeks(RDBAdapter)}.
+ * Load increments of earlier data by calling {@link #addEarlierTripWeeks(RDBAdapter)}.
  *<P>
  * Assumes that data won't change elsewhere while displayed; for example,
  * cached ViaRoute object contents.
@@ -74,7 +74,10 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	   { null , "End-Time", null, null, "Trip-odo", "via", "End at" },
 	   { null, null, "\\", "End-odo" } };
 
-	/** the vehicle being displayed */
+	/**
+	 * The vehicle being displayed.
+	 * @see #filterLoc_showAllV
+	 */
 	private Vehicle veh;
 
 	/**
@@ -86,7 +89,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 
 	/**
 	 * For Week Mode, the date (unix format) if filtering by start date; otherwise 0.
-	 * Only used if {@link #tData} is empty in {@link #addEarlierTripWeeks(RDBAdapter)}.
+	 * Only used if {@link #tData} is empty in {@link #addEarlierTripWeeks(RDBAdapter)};
 	 * if {@link #tData} contains trips, they might be from dates earlier than this field.
 	 * Unused in Location Mode.
 	 * @see #LogbookTableModel(Vehicle, int, int, boolean, RTRDateTimeFormatter, RDBAdapter)
@@ -107,6 +110,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 
 	/**
 	 * Rows being newly added (manual typing/edit mode), or null
+	 * @see #addMode
 	 */
 	private Vector<String[]> tAddedRows;
 
@@ -137,6 +141,8 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	/**
 	 * Are we adding a new trip right now?
 	 * @see #maxRowBeforeAdd
+	 * @see #tAddedRows
+	 * @see #beginAdd(boolean)
 	 */
 	private boolean addMode;
 
@@ -251,7 +257,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	}
 
 	/**
-	 * Add vehicle trips earlier than the current time range,
+	 * Load vehicle trips earlier than the current time range,
 	 * looking back {@link #getWeekIncrement()} weeks.
 	 *<P>
 	 * The added trips will be a new {@link TripListTimeRange}
@@ -280,11 +286,11 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	}
 
 	/**
-	 * Add vehicle trips earlier than the current time range,
-	 * looking back {@link #getWeekIncrement()} weeks.
+	 * Load vehicle trips later than the current time range,
+	 * looking forward {@link #getWeekIncrement()} weeks.
 	 *<P>
 	 * The added trips will be a new {@link TripListTimeRange}
-	 * inserted at the start of the range list; keep this
+	 * inserted at the end of the range list; keep this
 	 * in mind when calling {@link #getRange(int)} afterwards.
 	 * (If no trips are found, no range is created.)
 	 *
@@ -292,6 +298,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	 * @throws IllegalStateException if {@link #beginAdd(boolean)} (add mode) is active.
 	 */
 	public boolean addLaterTrips(RDBAdapter conn)
+		throws IllegalStateException
 	{
 		if (addMode)
 			throw new IllegalStateException();
@@ -365,6 +372,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 		return ttr.tText.size();
 	}
 
+	/** Add all trip data for this vehicle. */
 	private void addRowsFromDBTrips(RDBAdapter conn)
 	{
 		Vector<Trip> td = veh.readAllTrips(true);
@@ -390,7 +398,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 		Vector<Trip> td = ttr.tr;
 		if (td == null)
 		{
-			return;  // <--- nothing found ---
+			return;  // <--- no trips found in ttr ---
 		}
 
 		if (dtf == null)
@@ -410,6 +418,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 		// Does next trip continue from the same tstop and odometer?
 		boolean nextTripUsesSameStop = false;  // Updated at bottom of loop.
 
+		// Loop for each trip in td
 		final int L = td.size();
 		for (int i = 0; i < L; ++i)  // towards end of trip, must look at next trip
 		{
@@ -588,8 +597,8 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 						tr[7] = "[" + stopc + "]";
 
 					// Done with this row
-	    			tText.addElement(tr);
-	
+					tText.addElement(tr);
+
 					// start-time (if present)
 					if (ttcont != 0)
 					{

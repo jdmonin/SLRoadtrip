@@ -28,15 +28,15 @@
 	    android:layout_width="fill_parent"
 	    android:layout_height="wrap_content"
 	    android:numeric="decimal"
+	    android:inputType="numberDecimal"
 	    android:gravity="right"
 	    android:singleLine="true"
 	    />
 	<TableLayout
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
-		android:stretchColumns="0"
+		android:stretchColumns="*"
 		>
-		<!-- TODO: First column's buttons are stretched too wide -->
 		<!-- TODO: Equals button span 2 rows; not directly possible TableLayout; maybe RelativeLayout -->
 		<TableRow>
 			<Button android:text="M+" android:onClick="onClick_CalcBtnMemPlus" android:id="@+id/trip_tstop_popup_odo_calc_mp"

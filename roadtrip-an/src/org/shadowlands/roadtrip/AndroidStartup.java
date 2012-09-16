@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  Copyright (C) 2010 Jeremy D Monin <jdmonin@nand.net>
+ *  Copyright (C) 2010,2012 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,6 +19,7 @@
 
 package org.shadowlands.roadtrip;
 
+import org.shadowlands.roadtrip.android.BackupsMain;
 import org.shadowlands.roadtrip.android.DriverEntry;
 import org.shadowlands.roadtrip.android.Main;
 import org.shadowlands.roadtrip.android.VehicleEntry;
@@ -60,6 +61,20 @@ public class AndroidStartup extends Activity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.android_startup);
         tv = (TextView) findViewById(R.id.textview_tmpText);
+
+        // See onResume for the rest of initialization.
+    }
+
+    /**
+     * See if the db is missing any settings.  If not, go to {@link Main} activity.
+     *<P>
+     * Called when first created, or from the Back button from {@link BackupsMain}
+     * (which might have restored the db from a backup).
+     */
+	@Override
+	public void onResume()
+	{
+		super.onResume();
 
         // pointer to retrieve schema sql text, if needed
     	RDBOpenHelper.dbSQLRsrcs = getApplicationContext().getResources();
@@ -117,6 +132,7 @@ public class AndroidStartup extends Activity
         
     }
 
+    /** Continue button: Begin entering initial information */
     public void onClick_BtnContinue(View v)
     {
     	Intent intent;  // where to go?
@@ -129,6 +145,12 @@ public class AndroidStartup extends Activity
     	startActivity(intent);
     	if (missingSettings)
     		finish();
+    }
+
+    /** Restore button: Restore an earlier backup */
+    public void onClick_BtnRestore(View v)
+    {
+    	startActivity(new Intent(this, BackupsMain.class));
     }
 
     @Override

@@ -2,7 +2,7 @@
 <!--
  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
 
- Copyright (C) 2010 Jeremy D Monin (jdmonin@nand.net)
+ Copyright (C) 2010,2012 Jeremy D Monin (jdmonin@nand.net)
 
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
@@ -33,4 +33,20 @@
         android:layout_height="wrap_content"
         android:text="@string/continu"
         android:onClick="onClick_BtnContinue"/>
+<!-- spacer -->
+<TextView
+    android:layout_width="fill_parent" 
+    android:layout_height="36dp" 
+    android:text=""
+    />
+<TextView
+    android:layout_width="fill_parent" 
+    android:layout_height="wrap_content" 
+    android:text="@string/androidstartup_restoreBkup"
+    />
+<Button android:id="@+id/android_startup_btn_restore"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/restore"
+        android:onClick="onClick_BtnRestore"/>
 </LinearLayout>

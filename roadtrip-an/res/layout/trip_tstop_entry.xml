@@ -41,7 +41,7 @@
 <RelativeLayout
 	android:layout_width="fill_parent"
 	android:layout_height="wrap_content"
-    >
+	>
 	<CheckBox android:id="@+id/trip_tstop_time_stop_chk"
 		android:checked="true"
 		android:paddingBottom="12sp"
@@ -219,7 +219,7 @@
 <RelativeLayout
 	android:layout_width="fill_parent"
 	android:layout_height="wrap_content"
-    >
+	>
 	<CheckBox android:id="@+id/trip_tstop_time_cont_chk"
 		android:checked="true"
 		android:paddingBottom="12sp"
@@ -247,24 +247,23 @@
 		android:layout_width="fill_parent"
 		android:layout_height="wrap_content" />
 </RelativeLayout>
-<!-- Table with 3 columns: Below continue-time -->
+<!-- Table with 2 columns: Below continue-time -->
 <TableLayout
 	android:layout_height="wrap_content" android:layout_width="fill_parent"
 	android:stretchColumns="2"
 	>    
     <TableRow>
 		<TextView  
-		    android:layout_width="wrap_content" 
-		    android:layout_height="fill_parent" 
-		    android:text="@string/comment"
-		    />
+			android:text="@string/comment"
+			android:layout_width="wrap_content" 
+			android:layout_height="fill_parent" />
 		<EditText
-		    android:id="@+id/trip_tstop_comment"
+			android:id="@+id/trip_tstop_comment"
 			android:layout_width="fill_parent"
 			android:layout_height="wrap_content"
 			android:layout_weight="1"
 			android:maxLength="255"
-		    android:minLines="2" />
+			android:minLines="2" />
     </TableRow>
 </TableLayout>
 <!-- TStop detail buttons row (gas, etc) -->
@@ -274,15 +273,15 @@
 	android:layout_height="wrap_content"
 	android:gravity="center"
 	>
-	    <Button android:id="@+id/trip_tstop_btn_gas"
-	        android:layout_width="wrap_content"
-	        android:layout_height="wrap_content"
-	        android:layout_gravity="center"
-	        android:gravity="center"
-		    android:text="@string/gas__dots"
-		    android:drawableLeft="@android:drawable/presence_invisible"
-		    android:drawablePadding="2dp"
-	        android:onClick="onClick_BtnGas"/>
+	<Button android:id="@+id/trip_tstop_btn_gas"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_gravity="center"
+		android:gravity="center"
+		android:text="@string/gas__dots"
+		android:drawableLeft="@android:drawable/presence_invisible"
+		android:drawablePadding="2dp"
+		android:onClick="onClick_BtnGas" />
 </LinearLayout>
 <!-- Rows for Trip Category, Make Frequent are visible only at End Trip -->
 <LinearLayout android:id="@+id/trip_tstop_row_end_tcat"

@@ -834,7 +834,7 @@ public class RDBOpenHelper
 		int res = 0;
 		switch (upgScriptToVersion)
 		{
-		case   0: res = R.raw.schema_v0908;  break;  // create, not upgrade
+		case   0: res = R.raw.schema_v0909;  break;  // create, not upgrade
 
 		/* 
 		 * obsolete versions, not encountered in the wild:
@@ -851,6 +851,7 @@ public class RDBOpenHelper
 		case 905: res = R.raw.upg_v0905;  break;   // 2010-11-30
 		case 906: res = R.raw.upg_v0906;  break;   // 2010-12-16
 		case 908: res = R.raw.upg_v0908;  break;   // 2012-04-01
+		case 909: res = R.raw.upg_v0909;  break;   // 2012-12-06
 		}
 		if (res == 0)
 		{

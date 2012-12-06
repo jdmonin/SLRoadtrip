@@ -1,13 +1,17 @@
 -- org.shadowlands.roadtrip
--- version 0.9.08 schema (2012-04-01) for SQLite 3.4 or higher
+-- version 0.9.09 schema (2012-12-06) for SQLite 3.4 or higher
+-- The db schema version may be lower than the app version.
 -- Remember: When you upgrade the schema version, be sure to
 -- make all code changes listed in RDBSchema's class javadoc, and
 -- add the upgrade script to RtrDBOpenHelper.getSQLScript().
 -- Remember: Any schema changes must also be made
 -- within the java accessor classes.  Changes to important tables
 -- or transactional tables should also be changed in RDBVerifier.
+-- Be sure to test upgrading in the emulator to your new schema,
+-- and doing a fresh install with the new schema, then restoring a
+-- previous backup that has an older schema (which will also upgrade).
 
-PRAGMA user_version = 0908;
+PRAGMA user_version = 0909;
 
 -- This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
 -- 
@@ -48,19 +52,19 @@ PRAGMA auto_vacuum = INCREMENTAL;
 
 create table appinfo ( _id integer PRIMARY KEY AUTOINCREMENT not null, aifield varchar(32) not null unique, aivalue varchar(64) not null );
 	-- Important keys: (See also db.AppInfo javadocs, where some of these are static final string fields)
-	-- DB_CREATE_SCHEMAVERSION: 0908
+	-- DB_CREATE_SCHEMAVERSION: 0909
 	-- DB_CREATE_DATETIME
 	-- DB_CREATE_APPNAME: 'org.shadowlands.roadtrip'
 	-- DB_BACKUP_PREVFILE: copied from previous DB_BACKUP_THISFILE when user asks to back up; doesn't include path, only filename
 	-- DB_BACKUP_PREVTIME: (unix format) time of DB_BACKUP_PREVFILE
 	-- DB_BACKUP_THISFILE: written just before closing db for backup copy; if backup fails, clear it afterwards (copy it back from DB_BACKUP_PREVFILE)
 	-- DB_BACKUP_THISTIME: (unix format) time of DB_BACKUP_THISFILE
-	-- DB_CURRENT_SCHEMAVERSION (0908 unless it was upgraded)
+	-- DB_CURRENT_SCHEMAVERSION (0909 unless it was upgraded)
 	-- DB_UPGRADED_DATETIME (may not be present)
 	-- DB_UPGRADED_APPNAME (may not be present)
 
-insert into appinfo (aifield, aivalue) values ('DB_CREATE_SCHEMAVERSION', '0908');
-insert into appinfo (aifield, aivalue) values ('DB_CURRENT_SCHEMAVERSION', '0908');
+insert into appinfo (aifield, aivalue) values ('DB_CREATE_SCHEMAVERSION', '0909');
+insert into appinfo (aifield, aivalue) values ('DB_CURRENT_SCHEMAVERSION', '0909');
 
 create table settings ( _id integer PRIMARY KEY AUTOINCREMENT not null, sname varchar(32) not null unique, svalue varchar(64), ivalue int );
 	-- DISTANCE_DISPLAY: KM or MI
@@ -77,6 +81,7 @@ create table settings ( _id integer PRIMARY KEY AUTOINCREMENT not null, sname va
 	-- LOGVIEW_ODO_TRIP_DELTA (int) -- logview trip odometers normal (0), delta (1), or both (2)  Added in 0.9.12.
 	-- HIDE_FREQTRIP (bool) -- Hide the Frequent Trip buttons?  Added in app version 0.9.12.
 	-- HIDE_VIA (bool) -- Hide the Via entry field?  Added in app version 0.9.12.
+	-- SHOW_TRIP_PAX (bool) -- Show the optional Passenger Count field for trip?  Added in app version 0.9.13.
 
 create table app_db_upgrade_hist ( db_vers_to int not null, db_vers_from not null, upg_time int not null );
     -- May be empty, if db never upgraded
@@ -92,7 +97,7 @@ create index "person~d" ON person(is_driver);
 create table vehiclemake ( _id integer PRIMARY KEY AUTOINCREMENT not null, mname varchar(255) not null unique, is_user_add int );
 	-- see bottom of file for inserts into vehiclemake
 
-create table vehicle ( _id integer PRIMARY KEY AUTOINCREMENT not null, nickname varchar(255), driverid int not null, makeid int not null, model varchar(255), year integer not null, date_from integer, date_to integer, vin varchar(64), odo_orig integer not null, odo_curr integer not null, last_tripid integer, distance_storage varchar(2) not null, expense_currency varchar(3) not null, expense_curr_sym varchar(3) not null, expense_curr_deci integer not null, fuel_curr_deci integer not null, fuel_type varchar(1) not null, fuel_qty_unit varchar(2) not null, fuel_qty_deci integer not null, comment varchar(255), is_active int not null default 1 );
+create table vehicle ( _id integer PRIMARY KEY AUTOINCREMENT not null, nickname varchar(255), driverid int not null, makeid int not null, model varchar(255), year integer not null, date_from integer, date_to integer, vin varchar(64), plate varchar(64), odo_orig integer not null, odo_curr integer not null, last_tripid integer, distance_storage varchar(2) not null, expense_currency varchar(3) not null, expense_curr_sym varchar(3) not null, expense_curr_deci integer not null, fuel_curr_deci integer not null, fuel_type varchar(1) not null, fuel_qty_unit varchar(2) not null, fuel_qty_deci integer not null, comment varchar(255), is_active int not null default 1 );
     -- To reduce write freq, update odo_curr only at end of each trip, not at each trip stop.
     -- Also update last_trip_id at the end of each trip.
     -- If the vehicle has never finished a trip, last_trip_id is 0 or null.
@@ -104,11 +109,11 @@ create table vehicle ( _id integer PRIMARY KEY AUTOINCREMENT not null, nickname 
     -- fuel_qty_unit is 'ga' or 'L'
     -- fuel_type is 'G' gas, 'D' diesel
 
-create table tripcategory ( _id integer PRIMARY KEY AUTOINCREMENT not null, cname varchar(255) not null unique, rank int not null, is_user_add int );
+create table tripcategory ( _id integer PRIMARY KEY AUTOINCREMENT not null, cname varchar(255) not null unique, rank int not null, is_work_related int not null default 0, is_user_add int );
 	-- rank is a place number for on-screen order (instead of alphabetical listing)
 	-- see bottom of file for inserts into tripcategory
 
-create table trip ( _id integer PRIMARY KEY AUTOINCREMENT not null, vid integer not null, did int not null, catid int, odo_start int not null, odo_end int, aid int, tstopid_start int, time_start int not null, time_end int, start_lat float, start_lon float, end_lat float, end_lon float, freqtripid int, comment varchar(255), roadtrip_end_aid int, has_continue int not null default 0 );
+create table trip ( _id integer PRIMARY KEY AUTOINCREMENT not null, vid integer not null, did int not null, catid int, odo_start int not null, odo_end int, aid int, tstopid_start int, time_start int not null, time_end int, start_lat float, start_lon float, end_lat float, end_lon float, freqtripid int, comment varchar(255), passengers int, roadtrip_end_aid int, has_continue int not null default 0 );
 	-- vid is vehicle, did is driver
 	-- if tstopid_start not null, it's the endpoint of a previous trip with the same odo_total.
 	--    This gives the starting location (descr and/or locid) for the trip.
@@ -260,8 +265,8 @@ insert into vehiclemake(mname) values ('Renault');
 commit;
 
 begin transaction;
--- tripcategory initial contents 2012-04-01 v0908:
-insert into tripcategory(cname,rank) values ('Work', 1);
+-- tripcategory initial contents 2012-12-06 v0909:
+insert into tripcategory(cname,rank,is_work_related) values ('Work', 1, 1);
 insert into tripcategory(cname,rank) values ('Personal', 2);
 insert into tripcategory(cname,rank) values ('Volunteer', 3);
 insert into tripcategory(cname,rank) values ('Moving', 4);

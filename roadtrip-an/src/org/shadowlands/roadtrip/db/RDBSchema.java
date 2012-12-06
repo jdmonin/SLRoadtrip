@@ -37,7 +37,7 @@ import java.util.Vector;
  *<LI> {@link #DATABASE_VERSION}
  *<LI> {@link #DB_SCHEMA_CREATE_FILENAME}
  *<LI> {@link #upgradeToCurrent(RDBAdapter, int, boolean)},
- *<LI> The <tt>RDBOpenHelper</tt> version of {@link RDBAdapter#getSQLScript(int)}.
+ *<LI> Under roadtrip-an, the <tt>RDBOpenHelper</tt> override of {@link RDBAdapter#getSQLScript(int)}.
  *</UL>
  */
 public abstract class RDBSchema
@@ -46,10 +46,10 @@ public abstract class RDBSchema
 	 * Database version; 1204 represents version 1.2.04; below 1000 represents pre-1.0 (0.8.09, etc).
 	 *<P> See the class javadoc for what to change in the code when you update the schema version.
 	 */
-	public static final int DATABASE_VERSION = 908;
+	public static final int DATABASE_VERSION = 909;
 
 	/** Filename of schema create sql script for the current {@link #DATABASE_VERSION}. */
-	public static final String DB_SCHEMA_CREATE_FILENAME = "schema_v0908.sql";
+	public static final String DB_SCHEMA_CREATE_FILENAME = "schema_v0909.sql";
 
 	/**
 	 * Filename prefix of schema upgrade sql script.
@@ -162,7 +162,7 @@ public abstract class RDBSchema
 			*
 			*/
 
-		case 908:
+		case 909:
 			// Nothing to do, current. Don't set anythingDone.
 			break;
 
@@ -172,6 +172,8 @@ public abstract class RDBSchema
 			upgradeStep(db, 906);
 		case 906:  // 906 -> 908   2012-04-01
 			upgradeStep(db, 908);
+		case 908:  // 908 -> 909   2012-12-06
+			upgradeStep(db, 909);
 
 		// after all cases, but NOT default case or already-current case
 			anythingDone = true;

@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  Copyright (C) 2010-2011 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2012 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -32,6 +32,7 @@ public class GasBrandGrade extends RDBRecord
 {
 	private static final String TABNAME = "gas_brandgrade";
 	private static final String VALFIELD = "name";
+	private static final String VALFIELD_SORT = "name COLLATE NOCASE";  // syntax may be sqlite-specific
 	private static final String[] FIELDS = { VALFIELD };
 	private static final String[] FIELDS_AND_ID = { VALFIELD, "_id" };
 
@@ -45,7 +46,7 @@ public class GasBrandGrade extends RDBRecord
      */
     public static GasBrandGrade[] getAll(RDBAdapter db)
     {
-		Vector<String[]> gbg = db.getRows(TABNAME, null, (String[]) null, FIELDS_AND_ID, VALFIELD, 0);
+		Vector<String[]> gbg = db.getRows(TABNAME, null, (String[]) null, FIELDS_AND_ID, VALFIELD_SORT, 0);
     	if (gbg == null)
     		return null;
 

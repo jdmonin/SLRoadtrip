@@ -55,6 +55,9 @@ Within Activities, fields are declared in this order:
 - Flags and other non-GUI fields
 - On-screen views and other GUI items
 
+Most sorted dropdowns (such as gas_brandgrade) should be case-insensitive.
+In SQLite you can specify this with orderBy = "fieldname COLLATE NOCASE".
+
 
 
 Version history:

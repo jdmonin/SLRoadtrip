@@ -73,6 +73,13 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	public static final String[] COL_HEADINGS
 	    = { "Date", "Time", "", "Odometer", "Trip-O", "Description", "Via", "Comment" };
 
+	/**
+	 * Optional Passengers count label.
+	 * TODO: Make dynamic, for other languages
+	 * @since 0.9.13
+	 */
+	public static final String TXT_PASSENGERS = "Passengers";
+
 	private static final String[][] TEMPLATE_ADD_SIMPLE
 	   = { { null, null, "/", "Start-odo", null, null, "Start at" },
 		   { "Date", "Start-Time", },
@@ -657,10 +664,12 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 				firstrow = null;
 			}
 
-			// next row of trip: time; also "[category]" if set
+			// next row of trip: time; also "[category]" and/or passenger counts, if set
 			tr = new String[COL_HEADINGS.length];
 			tr[1] = dtf.formatTime(tstart);
 			{
+				String tr5 = null;  // content for tr[5]
+
 				final int tcatID = t.getTripCategoryID();
 				if (tcatID != 0)
 				{
@@ -675,8 +684,26 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 						}
 						catch (Throwable th) {}
 					}
-					tr[5] = tcat.getName();
+					tr5 = tcat.getName();
 				}
+
+				final int pax = t.getPassengerCount();
+				if (pax != -1)
+				{
+					StringBuilder sb = new StringBuilder();
+					if (tr5 != null)
+					{
+						sb.append(tr5);
+						sb.append(' ');
+					}
+					sb.append(TXT_PASSENGERS);  // "Passengers"
+					sb.append(": ");
+					sb.append(Integer.toString(pax));
+					tr5 = sb.toString();
+				}
+
+				if (tr5 != null)
+					tr[5] = tr5;
 			}
 			tText.addElement(tr);
 

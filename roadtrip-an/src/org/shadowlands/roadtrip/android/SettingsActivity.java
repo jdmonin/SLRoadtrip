@@ -44,6 +44,9 @@ public class SettingsActivity extends Activity
 	/** Checkbox for <tt>HIDE_FREQTRIP</tt> */
 	private CheckBox cbHideFreqtrip;
 
+	/** Checkbox for ! <tt>SHOW_TRIP_PAX</tt> */
+	private CheckBox cbHideTripPax;
+
 	/** Checkbox for <tt>HIDE_VIA</tt> */
 	private CheckBox cbHideVia;
 
@@ -58,6 +61,7 @@ public class SettingsActivity extends Activity
 		setContentView(R.layout.settings_activity);
 
 		cbHideFreqtrip = (CheckBox) findViewById(R.id.cb_set_hide_freqtrip);
+		cbHideTripPax = (CheckBox) findViewById(R.id.cb_set_hide_trip_pax);
 		cbHideVia = (CheckBox) findViewById(R.id.cb_set_hide_via);
 		cbReqTripCat = (CheckBox) findViewById(R.id.cb_req_tripcat); 
 		db = new RDBOpenHelper(this);
@@ -67,7 +71,7 @@ public class SettingsActivity extends Activity
 
 	/**
 	 * Check Settings table for <tt>REQUIRE_TRIPCAT</tt>.  Set {@link #cbReqTripCat}.
-	 * Also <tt>HIDE_FREQTRIP</tt> and <tt>HIDE_VIA</tt>.
+	 * Also <tt>HIDE_FREQTRIP</tt>, <tt>SHOW_TRIP_PAX</tt> and <tt>HIDE_VIA</tt>.
 	 */
 	@Override
 	public void onResume()
@@ -75,6 +79,8 @@ public class SettingsActivity extends Activity
 		super.onResume();
 		boolean b = Settings.getBoolean(db, Settings.HIDE_FREQTRIP, false);
 		cbHideFreqtrip.setChecked(b);
+		b = ! Settings.getBoolean(db, Settings.SHOW_TRIP_PAX, false);
+		cbHideTripPax.setChecked(b);
 		b = Settings.getBoolean(db, Settings.HIDE_VIA, false);
 		cbHideVia.setChecked(b);
 		b = Settings.getBoolean(db, Settings.REQUIRE_TRIPCAT, false);
@@ -83,7 +89,7 @@ public class SettingsActivity extends Activity
 
 	/**
 	 * Update <tt>REQUIRE_TRIPCAT</tt> in db, if different from {@link #cbReqTripCat}.
-	 * Also <tt>HIDE_FREQTRIP</tt> and <tt>HIDE_VIA</tt>.
+	 * Also <tt>HIDE_FREQTRIP</tt>, <tt>SHOW_TRIP_PAX</tt> and <tt>HIDE_VIA</tt>.
 	 */
 	@Override
 	public void onPause()
@@ -94,6 +100,11 @@ public class SettingsActivity extends Activity
 		final boolean cb_hideFreqtrip = cbHideFreqtrip.isChecked();
 		if (db_hideFreqtrip != cb_hideFreqtrip)
 			Settings.setBoolean(db, Settings.HIDE_FREQTRIP, cb_hideFreqtrip);
+
+		boolean db_b = ! Settings.getBoolean(db, Settings.SHOW_TRIP_PAX, false);
+		boolean cb_b = cbHideTripPax.isChecked();
+		if (db_b != cb_b)
+			Settings.setBoolean(db, Settings.SHOW_TRIP_PAX, ! cb_b);
 
 		final boolean db_hideVia = Settings.getBoolean(db, Settings.HIDE_VIA, false);
 		final boolean cb_hideVia = cbHideVia.isChecked();

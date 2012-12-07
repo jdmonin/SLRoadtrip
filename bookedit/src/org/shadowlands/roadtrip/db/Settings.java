@@ -121,6 +121,13 @@ public class Settings extends RDBRecord
 	 */
 	public static final String HIDE_VIA = "HIDE_VIA";
 
+	/**
+	 * boolean setting to show the optional Trip Passengers entry field.
+	 * Default is false.
+	 * @since 0.9.13
+	 */
+	public static final String SHOW_TRIP_PAX = "SHOW_TRIP_PAX";
+
 	private static final String TABNAME = "settings";
 	private static final String KEYFIELD = "sname";
 	private static final String VALFIELD_STR = "svalue";

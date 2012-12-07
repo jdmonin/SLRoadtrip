@@ -93,6 +93,8 @@
 <string name="original_odometer">Original\nodometer</string>
 <string name="other_stop">Other stop...</string>
 <string name="other_vehicle">Other vehicle...</string>
+<string name="passengers">Passengers</string>
+<string name="passengers_hint">(not including driver)</string>
 <string name="please_check_the_total_odometer">Please check the total odometer.</string>
 <string name="please_check_the_trip_odometer">Please check the trip odometer.</string>
 <string name="please_choose_existing_location">Please choose an existing location.</string>
@@ -183,6 +185,7 @@
 <string name="backups_restore_validation_ok">File validated.</string>
 <string name="backups_restore__title">Restore from Backup</string>
 <string name="settings_hide_freqtrip">Hide "Frequent Trip" buttons</string>
+<string name="settings_hide_trip_pax">Hide trip "Passengers" entry field</string>
 <string name="settings_hide_via">Hide "Via Route" entry field</string>
 <string name="settings_require_tripcat">Require trip category</string>
 <string name="change_vehicle_driver_ask_chg_title">Change current setting?</string>

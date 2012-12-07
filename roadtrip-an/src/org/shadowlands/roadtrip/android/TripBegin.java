@@ -56,6 +56,7 @@ import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.DatePicker;
+import android.widget.EditText;
 import android.widget.ListAdapter;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
@@ -118,6 +119,8 @@ public class TripBegin extends Activity
 	private StringBuffer fmt_dow_shortdate;
 	private Button btnStartTimeDate;
 	private TimePicker tpStartTimeTime;  // TODO on wraparound: Chg date
+	/** optional passenger count */
+	private EditText etPax;
 	/** optional {@link TripCategory} */
 	private Spinner spTripCat;
 
@@ -179,6 +182,14 @@ public class TripBegin extends Activity
 		btnStartTimeDate = (Button) findViewById(R.id.trip_begin_btn_start_date);
 		tpStartTimeTime = (TimePicker) findViewById(R.id.trip_begin_start_time);
 		tpStartTimeTime.setIs24HourView(DateFormat.is24HourFormat(this));
+		if (Settings.getBoolean(db, Settings.SHOW_TRIP_PAX, false))
+		{
+			etPax = (EditText) findViewById(R.id.trip_begin_pax);
+		} else {
+			View vrow = findViewById(R.id.trip_begin_row_pax);
+			if (vrow != null)
+				vrow.setVisibility(View.GONE);
+		}
 		spTripCat = (Spinner) findViewById(R.id.trip_begin_category);
 		SpinnerDataFactory.setupTripCategoriesSpinner(db, this, spTripCat, -1);
 
@@ -636,6 +647,20 @@ public class TripBegin extends Activity
     		false);
 		if (tripCat > 0)
 			t.setTripCategoryID(tripCat);
+		if (Settings.getBoolean(db, Settings.SHOW_TRIP_PAX, false))
+		{
+			String paxTxt = etPax.getText().toString().trim();
+			if (paxTxt.length() > 0)
+			{
+				try
+				{
+					final int pax = Integer.parseInt(paxTxt);
+					t.setPassengerCount(pax);
+				} catch (NumberFormatException e) {
+					// shouldn't occur: layout declaration has inputType=number
+				}
+			}
+		}
 		t.insert(db);
 
 		// if wanted, set CURRENT_FREQTRIP and CURRENT_FREQTRIP_TSTOPLIST

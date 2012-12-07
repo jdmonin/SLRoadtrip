@@ -149,6 +149,29 @@
 		android:layout_width="fill_parent"
 		android:layout_height="wrap_content" />
 </LinearLayout>
+<!-- Row for Passengers visible only if Settings.SHOW_TRIP_PAX -->
+<LinearLayout android:id="@+id/trip_begin_row_pax"
+	android:orientation="horizontal"
+	android:layout_width="fill_parent"
+	android:layout_height="wrap_content"
+	>
+	<TextView
+		android:text="@string/passengers"
+		android:layout_width="wrap_content" 
+		android:layout_height="wrap_content"
+		android:gravity="top"
+		android:layout_gravity="center"
+		/>
+	<EditText
+	    android:id="@+id/trip_begin_pax"
+	    android:inputType="number"
+	    android:layout_width="fill_parent"
+	    android:layout_height="wrap_content"
+	    android:layout_gravity="center"
+	    android:gravity="top"
+	    android:hint="@string/passengers_hint"
+	    />
+</LinearLayout>
 <LinearLayout
     android:orientation="horizontal"
     android:layout_width="fill_parent"

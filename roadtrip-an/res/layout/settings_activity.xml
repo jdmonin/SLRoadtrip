@@ -28,6 +28,11 @@
 	android:layout_height="wrap_content"
 	android:text="@string/settings_hide_freqtrip"
 	/>
+<CheckBox  android:id="@+id/cb_set_hide_trip_pax"
+	android:layout_width="wrap_content"
+	android:layout_height="wrap_content"
+	android:text="@string/settings_hide_trip_pax"
+	/>
 <CheckBox  android:id="@+id/cb_set_hide_via"
 	android:layout_width="wrap_content"
 	android:layout_height="wrap_content"

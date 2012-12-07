@@ -1,6 +1,5 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
- *
  *  This file Copyright (C) 2010-2012 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -56,12 +55,12 @@ public class Trip extends RDBRecord
     private static final String[] FIELDS =
         { "vid", "did", "catid", "odo_start", "odo_end", "aid", "tstopid_start",
 		  FIELD_TIME_START, "time_end", "start_lat", "start_lon", "end_lat", "end_lon",
-		  "freqtripid", "comment", "roadtrip_end_aid", "has_continue" };
+		  "freqtripid", "comment", "passengers", "roadtrip_end_aid", "has_continue" };
 
     private static final String[] FIELDS_AND_ID =
 	    { "vid", "did", "catid", "odo_start", "odo_end", "aid", "tstopid_start",
 		  FIELD_TIME_START, "time_end", "start_lat", "start_lon", "end_lat", "end_lon",
-		  "freqtripid", "comment", "roadtrip_end_aid", "has_continue", "_id" };
+		  "freqtripid", "comment", "passengers", "roadtrip_end_aid", "has_continue", "_id" };
 
     /** Field names/where-clause for use in {@link #recentTripForVehicle(RDBAdapter, Vehicle, boolean)} */
     private static final String WHERE_VID_AND_NOT_ROADTRIP =
@@ -126,6 +125,8 @@ public class Trip extends RDBRecord
     /** This trip's {@link FreqTrip} ID; 0 if unused */
     private int freqtripid;
     private String comment;
+    /** This trip's optional passenger count, or -1 if unused */
+    private int passengers = -1;
     /** ending area ID if roadtrip, 0 otherwise */
     private int roadtrip_end_aid;
     private boolean has_continue;
@@ -529,8 +530,12 @@ public class Trip extends RDBRecord
     		freqtripid = Integer.parseInt(rec[13]);  // FK
     	comment = rec[14];
     	if (rec[15] != null)
-    		roadtrip_end_aid = Integer.parseInt(rec[15]);
-    	has_continue = ("1".equals(rec[16]));
+    		passengers = Integer.parseInt(rec[15]);
+    	else
+    		passengers = -1;
+    	if (rec[16] != null)
+    		roadtrip_end_aid = Integer.parseInt(rec[16]);
+    	has_continue = ("1".equals(rec[17]));
 	}
 
     /**
@@ -538,7 +543,8 @@ public class Trip extends RDBRecord
      * When ready to write (after any changes you make to this object),
      * call {@link #insert(RDBAdapter)}.
      *<P>
-     * To set the optional trip category, call {@link #setTripCategoryID()} before <tt>insert</tt>.
+     * To set the optional trip category or passenger count,
+     * call {@link #setTripCategoryID(int)} or {@link #setPassengerCount(int)} before <tt>insert</tt>.
      *
      * @param veh    Vehicle used on this trip
      * @param driver Driver for the trip
@@ -955,7 +961,7 @@ public class Trip extends RDBRecord
     private static final String[] FIELDS =
         { "vid", "did", "catid", "odo_start", "odo_end", "aid", "tstopid_start",
           FIELD_TIME_START, "time_end", "start_lat", "start_lon", "end_lat", "end_lon",
-          "freqtripid", "comment", "roadtrip_end_aid", "has_continue" };
+          "freqtripid", "comment", "passengers", "roadtrip_end_aid", "has_continue" };
 		 */
 		String[] fv =
 		    {
@@ -967,6 +973,7 @@ public class Trip extends RDBRecord
 			start_lat, start_lon, end_lat, end_lon,
 			(freqtripid != 0 ? Integer.toString(freqtripid) : null),
 			comment,
+			(passengers != -1 ? Integer.toString(passengers) : null),
 			(roadtrip_end_aid != 0 ? Integer.toString(roadtrip_end_aid) : null),
 			(has_continue ? "1" : "0")
 		    };
@@ -1121,6 +1128,30 @@ public class Trip extends RDBRecord
 
 	public void setComment(String comment) {
 		this.comment = comment;
+		dirty = true;
+	}
+
+	/**
+	 * Get this trip's optional passenger count (not including driver).
+	 * @return the passenger count, or -1 if unused;
+	 *   will be 0 if count is known and driver is the only occupant
+	 * @since 0.9.13
+	 */
+	public int getPassengerCount() {
+		return passengers;
+	}
+
+	/**
+	 * Set or clear this trip's optional passenger count.
+	 * @param newPax  Passenger count (not including driver), or -1 to clear;
+	 *          will be 0 if count is known and driver is the only occupant
+	 * @since 0.9.13
+	 */
+	public void setPassengerCount(final int newPax)
+	{
+		if (passengers == newPax)
+			return;
+		passengers = newPax;
 		dirty = true;
 	}
 

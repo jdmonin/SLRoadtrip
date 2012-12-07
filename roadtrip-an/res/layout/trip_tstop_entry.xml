@@ -283,6 +283,29 @@
 		android:drawablePadding="2dp"
 		android:onClick="onClick_BtnGas" />
 </LinearLayout>
+<!-- Row for Passengers visible only at End Trip, only if Settings.SHOW_TRIP_PAX -->
+<LinearLayout android:id="@+id/trip_tstop_row_end_pax"
+	android:orientation="horizontal"
+	android:layout_width="fill_parent"
+	android:layout_height="wrap_content"
+	>
+	<TextView
+		android:text="@string/passengers"
+		android:layout_width="wrap_content" 
+		android:layout_height="wrap_content"
+		android:gravity="top"
+		android:layout_gravity="center"
+		/>
+	<EditText
+	    android:id="@+id/trip_tstop_end_pax"
+	    android:inputType="number"
+	    android:layout_width="fill_parent"
+	    android:layout_height="wrap_content"
+	    android:layout_gravity="center"
+	    android:gravity="top"
+	    android:hint="@string/passengers_hint"
+	    />
+</LinearLayout>
 <!-- Rows for Trip Category, Make Frequent are visible only at End Trip -->
 <LinearLayout android:id="@+id/trip_tstop_row_end_tcat"
 	android:orientation="horizontal"

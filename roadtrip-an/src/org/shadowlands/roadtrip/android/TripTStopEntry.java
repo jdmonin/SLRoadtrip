@@ -460,14 +460,31 @@ public class TripTStopEntry extends Activity
 		{
 			spTripCat = (Spinner) findViewById(R.id.trip_tstop_end_category);
 			SpinnerDataFactory.setupTripCategoriesSpinner(db, this, spTripCat, currT.getTripCategoryID());
+			if (Settings.getBoolean(db, Settings.SHOW_TRIP_PAX, false))
+			{
+				final int pax = currT.getPassengerCount();
+				if (pax != -1)
+				{
+					EditText et = (EditText) findViewById(R.id.trip_tstop_end_pax);
+					if (et != null)
+						et.setText(Integer.toString(pax));
+				}
+			} else {
+				View vrow = findViewById(R.id.trip_tstop_row_end_pax);
+				if (vrow != null)
+					vrow.setVisibility(View.GONE);
+			}
 			if (Settings.getBoolean(db, Settings.HIDE_FREQTRIP, false))
 			{
 				View vrow = findViewById(R.id.trip_tstop_row_end_mk_freq);
 				if (vrow != null)
-					vrow.setVisibility(View.GONE);				
+					vrow.setVisibility(View.GONE);
 			}
 		} else {
-			View vrow = findViewById(R.id.trip_tstop_row_end_tcat);
+			View vrow = findViewById(R.id.trip_tstop_row_end_pax);
+			if (vrow != null)
+				vrow.setVisibility(View.GONE);
+			vrow = findViewById(R.id.trip_tstop_row_end_tcat);
 			if (vrow != null)
 				vrow.setVisibility(View.GONE);
 			vrow = findViewById(R.id.trip_tstop_row_end_mk_freq);
@@ -1956,6 +1973,21 @@ public class TripTStopEntry extends Activity
 		// Set and commit other trip fields
 		currT.setTime_end((int) (stopTime.getTimeInMillis() / 1000L));
 		currT.setOdo_end(odo_total);
+		if (Settings.getBoolean(db, Settings.SHOW_TRIP_PAX, false))
+		{
+			int pax = -1;
+			String paxTxt = textIfEntered(R.id.trip_tstop_end_pax);
+			if (paxTxt != null)
+			{
+				try
+				{
+					pax = Integer.parseInt(paxTxt);
+				} catch (NumberFormatException e) {
+					// shouldn't occur: layout declaration has inputType=number
+				}
+			}
+			currT.setPassengerCount(pax);
+		}
 		currT.commit();
 
 		currV.setOdometerCurrentAndLastTrip(odo_total, currT, true);

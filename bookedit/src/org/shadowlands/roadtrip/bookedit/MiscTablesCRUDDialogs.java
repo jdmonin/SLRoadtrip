@@ -97,8 +97,8 @@ public abstract class MiscTablesCRUDDialogs
 	public static Vehicle createEditVehicleDialog(JFrame owner, RDBAdapter conn, Vehicle v, final Person ownerIfNew)
 	    throws IllegalStateException
 	{
-		final String[] labels = { "Nickname", "DriverID", "MakeID", "Model", "Year", "Owned from", "Owned to", "VIN", "Original odometer", "Current odometer", "Comment" };
-		String[] vals = new String[11];
+		final String[] labels = { "Nickname", "DriverID", "MakeID", "Model", "Year", "Owned from", "Owned to", "VIN", "License plate/tag", "Original odometer", "Current odometer", "Comment" };
+		String[] vals = new String[12];
 		if (v != null)
 		{
 			vals[0] = v.getNickname();
@@ -109,11 +109,12 @@ public abstract class MiscTablesCRUDDialogs
 			vals[5] = Integer.toString(v.getDate_from());
 			vals[6] = Integer.toString(v.getDate_to());
 			vals[7] = v.getVin();
-			vals[8] = Integer.toString(v.getOdometerOriginal());
-			vals[9] = Integer.toString(v.getOdometerCurrent());
-			vals[10] = v.getComment();
+			vals[8] = v.getPlate();
+			vals[9] = Integer.toString(v.getOdometerOriginal());
+			vals[10] = Integer.toString(v.getOdometerCurrent());
+			vals[11] = v.getComment();
 		} else {
-			for(int i = 0; i < 11; ++i)
+			for(int i = 0; i < 12; ++i)
 				vals[i] = null;
 			vals[1] = Integer.toString(ownerIfNew.getID());
 		}
@@ -133,7 +134,8 @@ public abstract class MiscTablesCRUDDialogs
 		if (v == null)
 		{
 			v = new Vehicle
-			    (vals[0], ownerIfNew, Integer.parseInt(vals[2]), vals[3], Integer.parseInt(vals[4]), Integer.parseInt(vals[5]), Integer.parseInt(vals[6]), vals[7], Integer.parseInt(vals[8]), Integer.parseInt(vals[9]), vals[10]);
+			    (vals[0], ownerIfNew, Integer.parseInt(vals[2]), vals[3], Integer.parseInt(vals[4]), Integer.parseInt(vals[5]),
+			     Integer.parseInt(vals[6]), vals[7], vals[8], Integer.parseInt(vals[9]), Integer.parseInt(vals[10]), vals[11]);
 			v.insert(conn);
 		} else if (mid.isChanged())
 		{

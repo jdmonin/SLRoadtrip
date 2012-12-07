@@ -103,6 +103,20 @@
     <TableRow>
 		<TextView  
 		    android:layout_width="wrap_content" 
+		    android:layout_height="fill_parent"
+		    android:text="@string/vehicle_entry_plate_tag"
+		    />
+		<EditText android:id="@+id/vehicle_entry_plate"
+		  android:layout_width="fill_parent"
+		  android:layout_height="wrap_content"
+		  android:hint="@string/vehicle_entry_plate_tag_hint"
+		  android:layout_weight="1"
+		  android:maxLines="1"
+		  android:capitalize="characters"></EditText>
+    </TableRow>
+    <TableRow>
+		<TextView  
+		    android:layout_width="wrap_content" 
 		    android:layout_height="fill_parent" 
 		    android:text="@string/vehicle_entry_in_use_since"
 		    />

@@ -101,7 +101,7 @@ public class VehicleEntry
 
 	private RDBAdapter db = null;
 
-	private EditText nickname, vmodel, vin, comment, year;
+	private EditText nickname, vmodel, vin, plate, comment, year;
 	private Spinner driver, vmake;
 	private OdometerNumberPicker odo_orig, odo_curr;
 
@@ -138,6 +138,7 @@ public class VehicleEntry
 		nickname = (EditText) findViewById(R.id.vehicle_entry_name);
 	    vmodel = (EditText) findViewById(R.id.vehicle_entry_model);
 	    vin = (EditText) findViewById(R.id.vehicle_entry_vin);
+	    plate = (EditText) findViewById(R.id.vehicle_entry_plate);
 	    comment = (EditText) findViewById(R.id.vehicle_entry_comment);
 	    year = (EditText) findViewById(R.id.vehicle_entry_year);
 	    driver = (Spinner) findViewById(R.id.vehicle_entry_driver);
@@ -200,7 +201,6 @@ public class VehicleEntry
 	/**
 	 * During onCreate, show this vehicle's fields, except the Driver spinner.
 	 * Spinners are set in {@link #onCreate(Bundle)}.
-	 * @param veh  Always {@link #cameFromEdit_veh}
 	 */
 	private void updateScreenFieldsFromVehicle()
 	{
@@ -211,6 +211,7 @@ public class VehicleEntry
 		vmodel.setText(veh.getModel());
 		year.setText(Integer.toString(veh.getYear()));
 		vin.setText(veh.getVin());
+		plate.setText(veh.getPlate());
 		odo_orig.setCurrent10d(veh.getOdometerOriginal(), true);
 		odo_orig.setEnabled(false);
 		odo_curr.setCurrent10d(veh.getOdometerCurrent(), true);
@@ -241,6 +242,7 @@ public class VehicleEntry
 			vmodel.setEnabled(false);
 			year.setEnabled(false);
 			vin.setEnabled(false);
+			plate.setEnabled(false);
 			odo_curr.setEnabled(false);
 			comment.setEnabled(false);
 			btnDateFrom.setEnabled(false);
@@ -352,6 +354,10 @@ public class VehicleEntry
 			datefrom_int = (int) (dateFrom.getTimeInMillis() / 1000L);
 		// TODO on edit: check against trips' minimum date
 
+		String plateText = plate.getText().toString().trim();
+		if (plateText.length() == 0)
+			plateText = null;
+
 		Vehicle nv;
 		if (cameFromEdit_veh == null)
 		{
@@ -360,7 +366,7 @@ public class VehicleEntry
 			   (Person) driver.getSelectedItem(), ((VehicleMake) vmake.getSelectedItem()).getID(),
 			   vmodel.getText().toString(),
 			   yr,
-			   datefrom_int, 0, vin.getText().toString(),
+			   datefrom_int, 0, vin.getText().toString(), plateText,
 			   odo_orig.getCurrent10d(), odo_curr.getCurrent10d(),
 			   comment.getText().toString());
 			nv.insert(db);
@@ -373,6 +379,7 @@ public class VehicleEntry
 			nv.setYear(yr);
 			nv.setDate_from(datefrom_int);
 			nv.setVin(vin.getText().toString());
+			nv.setPlate(plateText);
 			nv.setOdometerCurrent(odo_curr.getCurrent10d());
 			nv.setComment(comment.getText().toString());
 			nv.commit();

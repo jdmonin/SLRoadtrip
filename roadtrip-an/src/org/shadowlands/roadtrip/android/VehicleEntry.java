@@ -39,6 +39,7 @@ import android.content.Intent;
 import android.database.sqlite.SQLiteException;
 import android.os.Bundle;
 import android.text.format.DateFormat;
+import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -147,6 +148,9 @@ public class VehicleEntry
 	    odo_curr = (OdometerNumberPicker) findViewById(R.id.vehicle_entry_odo_curr);
 	    odo_orig.setTenthsVisibility(false);
 	    odo_curr.setTenthsVisibility(false);
+
+	    if (cameFromAskNew)
+	    	odo_orig.setRelatedUncheckedOdoOnChanges(odo_curr, null);
 	    btnDateFrom = (Button) findViewById(R.id.vehicle_entry_btn_date_from);
 
 	    db = new RDBOpenHelper(this);

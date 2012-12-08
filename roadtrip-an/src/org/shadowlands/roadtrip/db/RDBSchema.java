@@ -38,6 +38,7 @@ import java.util.Vector;
  *<LI> {@link #DB_SCHEMA_CREATE_FILENAME}
  *<LI> {@link #upgradeToCurrent(RDBAdapter, int, boolean)},
  *<LI> Under roadtrip-an, the <tt>RDBOpenHelper</tt> override of {@link RDBAdapter#getSQLScript(int)}.
+ *<LI> Save the old schema and the upgrade script to <tt> /doc/hist/ </tt>
  *</UL>
  */
 public abstract class RDBSchema

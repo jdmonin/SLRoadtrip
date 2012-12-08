@@ -187,8 +187,9 @@ public class OdometerNumberPicker extends LinearLayout implements OnChangedListe
 		setCurrent10d(newValue, false);
 
 		if ((relatedOdoOnChanges == null)
-		    || relatedCheckOnChanges.isChecked())
+		    || ((relatedCheckOnChanges != null) && relatedCheckOnChanges.isChecked()))
 			return;
+
 		relatedOdoOnChanges.setCurrent10d
 		  (relatedOdoOnChanges.getCurrent10d() + delta, false);
     }
@@ -274,6 +275,7 @@ public class OdometerNumberPicker extends LinearLayout implements OnChangedListe
      * Callback from our whole or tenths NumberPicker: the user has changed the value.
      * Potentially check our related checkbox.
      * Potentially adjust related odometer, depending on related odo's checkbox.
+     * (If related odo has no checkbox, always adjust it.)
      * @see #setCheckboxOnChanges(CheckBox)
      * @see #setRelatedUncheckedOdoOnChanges(OdometerNumberPicker, CheckBox)
      */
@@ -283,7 +285,7 @@ public class OdometerNumberPicker extends LinearLayout implements OnChangedListe
 			checkOnChanges.setChecked(true);
 
 		if ((relatedOdoOnChanges == null)
-		    || relatedCheckOnChanges.isChecked())
+		    || ((relatedCheckOnChanges != null) && relatedCheckOnChanges.isChecked()))
 			return;
 
 		final int delta = newVal - oldVal;

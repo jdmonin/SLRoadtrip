@@ -366,7 +366,7 @@ public class LogbookShow extends Activity
 		case RDBVerifier.LEVEL_MDATA:
 			vLevel = "Master-data (level 2)";
 			break;
-		// case RDBVerifier.LEVEL_TDATA -- happens in background task
+		// case RDBVerifier.LEVEL_TDATA happens in background task
 		default:
 			vLevel = "";  // to satisfy compiler
 		}

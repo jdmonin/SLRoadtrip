@@ -50,7 +50,7 @@
 		android:title="@string/validate"
 		/>
 	<item android:id="@+id/menu_logbook_validate_full"
-		android:title="@string/validate_full"
+		android:title="@string/validate_all"
 		/>
 	</menu>
 </item>

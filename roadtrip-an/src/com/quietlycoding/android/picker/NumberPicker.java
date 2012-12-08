@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2008 The Android Open Source Project
  *    Retrieved via http://www.quietlycoding.com/?p=5
- * Portions Copyright (C) 2010 Jeremy D Monin <jdmonin@nand.net>
+ * Portions Copyright (C) 2010,2012 Jeremy D Monin <jdmonin@nand.net>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,6 +50,7 @@ import android.widget.TextView;
  *   >http://www.quietlycoding.com/?p=5</A>.
  *<P>
  * 2010-12-11 jdmonin Update mCurrent if mText is typed into
+ * 2012-12-08 jdmonin Javadocs: setOnChangeListener
  *
  * @author Google
  */
@@ -179,6 +180,12 @@ public class NumberPicker extends LinearLayout implements OnClickListener,
         mText.setEnabled(enabled);
     }
 
+    /**
+     * Set or clear our change listener.
+     * When the user changes the value, call {@link OnChangedListener#onChanged(NumberPicker, int, int)}.
+     * Not called if the value is programmatically changed.
+     * @param listener  New listener, or <tt>null</tt> to clear
+     */
     public void setOnChangeListener(OnChangedListener listener) {
         mListener = listener;
     }

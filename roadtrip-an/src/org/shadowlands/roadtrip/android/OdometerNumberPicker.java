@@ -71,8 +71,18 @@ public class OdometerNumberPicker extends LinearLayout implements OnChangedListe
     private boolean tenthsCleared = false;
 
     /**
-     * update this odometer's value on user value changes, if not null.
+     * If not null, this odometer's value will be updated by another odometer
+     * until the user changes the value directly here.
+     * That is, this odometer is the other's {@link #relatedOdoOnChanges},
+     * and the other's {@link #relatedCheckOnChanges} is null.
+     * @see #setRelatedUncheckedOdoOnChanges(OdometerNumberPicker, CheckBox)
+     */
+    private OdometerNumberPicker controllingRelatedOdoUntilChangedDirectly;
+
+    /**
+     * update this other odometer's value on user value changes, if not null.
      * @see #relatedCheckOnChanges
+     * @see #controllingRelatedOdoUntilChangedDirectly
      */
     private OdometerNumberPicker relatedOdoOnChanges;
 
@@ -247,6 +257,8 @@ public class OdometerNumberPicker extends LinearLayout implements OnChangedListe
      * Set our related odometer; its value can be changed when this one changes.
      * If <tt>relatedCB</tt> is not null, only change <tt>related</tt>'s value when
      * this checkbox is unchecked.
+     * If <tt>relatedCB</tt> is null, change <tt>related</tt> from here only until
+     * the user changes it directly there.
      *
      * @param related  The related odometer, or null
      * @param relatedCB  The related odometer's checkbox, or null
@@ -258,9 +270,15 @@ public class OdometerNumberPicker extends LinearLayout implements OnChangedListe
     	if (relatedOdoOnChanges != related)
     	{
 	    	if (relatedOdoOnChanges != null)
-	    		relatedOdoOnChanges.mTenths.setRelatedOdoPicker(null);    		
+	    	{
+	    		relatedOdoOnChanges.mTenths.setRelatedOdoPicker(null);
+	    		relatedOdoOnChanges.controllingRelatedOdoUntilChangedDirectly = null;
+	    	}
 	    	relatedOdoOnChanges = related;
 	    	relatedOdoOnChanges.mTenths.setRelatedOdoPicker(this);
+
+	    	if (relatedCB == null)
+	    		relatedOdoOnChanges.controllingRelatedOdoUntilChangedDirectly = this;
     	}
     	relatedCheckOnChanges = relatedCB;
     }
@@ -283,6 +301,13 @@ public class OdometerNumberPicker extends LinearLayout implements OnChangedListe
 	{
 		if (checkOnChanges != null)
 			checkOnChanges.setChecked(true);
+
+		if (controllingRelatedOdoUntilChangedDirectly != null)
+		{
+			// user changed it directly here, so un-link that
+			controllingRelatedOdoUntilChangedDirectly.relatedOdoOnChanges = null;
+			controllingRelatedOdoUntilChangedDirectly = null;
+		}
 
 		if ((relatedOdoOnChanges == null)
 		    || ((relatedCheckOnChanges != null) && relatedCheckOnChanges.isChecked()))

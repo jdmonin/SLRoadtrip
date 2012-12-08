@@ -154,11 +154,11 @@ public class LogbookShow extends Activity
 
 	/**
 	 * Level for successive manual calls to {@link RDBVerifier}
-	 * on {@link #verifCache} from {@link #doDBValidation()}
+	 * on {@link #verifCache} from {@link #doDBValidation(boolean)}
 	 */
 	private int verifiedLevel = 0;
 
-	/** Cached verifier object, for successive manual calls from {@link #doDBValidation()} */
+	/** Cached verifier object, for successive manual calls from {@link #doDBValidation(boolean)} */
 	private RDBVerifier verifCache = null;
 
 	/** Non-null if currently running. Set and cleared in {@link ValidateDBTDataTask#doInBackground(String...)}. */
@@ -324,34 +324,37 @@ public class LogbookShow extends Activity
 		fromActivity.startActivity(i);
 	}
 
-	private void doDBValidation()
+	/**
+	 * Perform all levels of quick or full DB validation.
+	 * @param fullWithTData  Do full validation, including transactional data
+	 *     ({@link RDBVerifier#LEVEL_TDATA})
+	 */
+	private void doDBValidation(final boolean fullWithTData)
 	{
 		int res = 0;
-		final int chkLevel;		
 
-		if (verifiedLevel < RDBVerifier.LEVEL_TDATA)
+		if ((verifCache == null) && (verifiedLevel < RDBVerifier.LEVEL_TDATA))
+			verifCache = new RDBVerifier(db);
+
+		int chkLevel;
+		for (chkLevel = RDBVerifier.LEVEL_PHYS; chkLevel < RDBVerifier.LEVEL_TDATA; ++chkLevel)
+		{			
+			if (verifiedLevel < chkLevel)
+			{
+				res = verifCache.verify(chkLevel);
+				if (res == 0)
+					verifiedLevel = chkLevel;
+				else
+					break;
+			}
+		}
+		if (chkLevel == RDBVerifier.LEVEL_TDATA)
+			--chkLevel;  // completed all levels, undo ++ after last iteration
+
+		if (fullWithTData)
 		{
-			chkLevel = 1 + verifiedLevel;
-			if (verifCache == null)
-				verifCache = new RDBVerifier(db);
-			if (chkLevel == RDBVerifier.LEVEL_TDATA)
-			{
-				 new ValidateDBTDataTask().execute();
-				 return;  // <--- Early return: Verify DB in bg task ---
-			}
-
-			res = verifCache.verify(chkLevel);
-			if (res == 0)
-			{
-				verifiedLevel = chkLevel;
-				if (chkLevel == RDBVerifier.LEVEL_TDATA)
-				{
-					verifCache.release();
-					verifCache = null;
-				}
-			}
-		} else {
-			chkLevel = verifiedLevel;
+			 new ValidateDBTDataTask().execute();
+			 return;  // <--- Early return: Verify DB in bg task ---
 		}
 
 		String vLevel;
@@ -363,19 +366,17 @@ public class LogbookShow extends Activity
 		case RDBVerifier.LEVEL_MDATA:
 			vLevel = "Master-data (level 2)";
 			break;
-		case RDBVerifier.LEVEL_TDATA:
-			vLevel = "Transaction-data (level 3)";
-			break;
+		// case RDBVerifier.LEVEL_TDATA -- happens in background task
 		default:
 			vLevel = "";  // to satisfy compiler
 		}
 		if (res != 0)
 		{
-			vLevel += " validation failed at level " + res;
+			vLevel += " validation failed at level " + chkLevel;
 		} else {
 			vLevel += " validation successful";
 			if (verifiedLevel < RDBVerifier.LEVEL_TDATA)
-				vLevel += ", run again to validate next level";
+				vLevel += ", run again to do full validation";
 		}
 
 		Toast.makeText(this, vLevel, Toast.LENGTH_SHORT).show();
@@ -632,7 +633,11 @@ public class LogbookShow extends Activity
 			return true;
 
 		case R.id.menu_logbook_validate:
-			doDBValidation();
+			doDBValidation(false);
+			return true;
+
+		case R.id.menu_logbook_validate_full:
+			doDBValidation(true);
 			return true;
 
 		default:
@@ -755,7 +760,7 @@ public class LogbookShow extends Activity
 	 * Uses {@link LogbookShow#verifCache}, which must not be null.
 	 * Calls {@link RDBVerifier#verify(int)}.
 	 * If OK, sets {@link LogbookShow#verifiedLevel} and clears {@link LogbookShow#verifCache}.
-	 * @see LogbookShow#doDBValidation()
+	 * @see LogbookShow#doDBValidation(boolean)
 	 * @see BackupsRestore.ValidateDBTask
 	 */
 	private class ValidateDBTDataTask extends AsyncTask<Void, Integer, Boolean>

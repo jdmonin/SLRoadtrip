@@ -204,7 +204,7 @@ public class LogbookEditPane extends JPanel implements ActionListener, WindowLis
 	private void actionLoadPrevious()
 	{
 		// TODO chk mdata.ltm.addMode; btn should be disabled if addMode true, though
-		if (! mdata.ltm.addEarlierTripWeeks(conn))
+		if (! mdata.ltm.addEarlierTrips(conn))
 			bLoadPrevious.setEnabled(false);
 		else
 			tb.scrollRectToVisible(tb.getCellRect(0, 0, true));  // scroll to top
@@ -583,7 +583,9 @@ public class LogbookEditPane extends JPanel implements ActionListener, WindowLis
 	// NESTED CLASSES
 	//
 
-	// TODO descr
+	/**
+	 * Interactive {@link LogbookTableModel} adapter, with logbook trip data in {@link #ltm}, for our Swing GUI.
+	 */
 	private static class LBSwingTableModel extends AbstractTableModel implements TableChangeListener
 	{
 		public LogbookTableModel ltm;

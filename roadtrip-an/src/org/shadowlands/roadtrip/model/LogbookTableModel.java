@@ -619,13 +619,28 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 		}
 		Vector<String[]> tText = ttr.tText;
 
+		addRowsFromTrips_formatTripsStops(td, tText, conn);
+
+		tDataTextRowCount += (tText.size() - tRowCount);
+	}
+
+	/**
+	 * Add rows to strings from a list of {@link Trip}s and their {@link TStop}s.
+	 * @param td    Trip data to add to <tt>tText</tt>
+	 * @param tText Append rows here from <tt>td</tt>
+	 * @param conn  Add from this connection
+	 */
+	public void addRowsFromTrips_formatTripsStops
+		(final Vector<Trip> td, Vector<String[]> tText, RDBAdapter conn)
+	{
 		Date prevTripStart = null;  // time of trip start
+
+		final int L = td.size();
 
 		// Does next trip continue from the same tstop and odometer?
 		boolean nextTripUsesSameStop = false;  // Updated at bottom of loop.
 
 		// Loop for each trip in td
-		final int L = td.size();
 		for (int i = 0; i < L; ++i)  // towards end of trip, must look at next trip
 		{
 			Trip t = td.elementAt(i);
@@ -728,10 +743,10 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 						firstrow[6] = getTStopLocDescr(ts, conn);
 						continue;  // <-- doesn't get its own row, only firstrow --
 					}
-	
+
 					final int ttstop = ts.getTime_stop();
 					final int ttcont = ts.getTime_continue();
-	
+
 					// stop-time (if present)
 					if (ttstop != 0)
 					{
@@ -739,7 +754,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 		    			tr[1] = dtf.formatTime(ttstop * 1000L);
 		    			tText.addElement(tr);
 					}
-	
+
 					// stop info
 					tr = new String[COL_HEADINGS.length];
 					if (ttstop != 0)
@@ -753,7 +768,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 						tr[2] = "/";  // only start time
 					}
 
-					int odo_delta = 0;  // distance from previous stop; used only when trip_odo_delta_mode != 0 
+					int odo_delta = 0;  // distance from previous stop; used only when trip_odo_delta_mode != 0
 					final int ts_ototal = ts.getOdo_total();
 					if ((trip_odo_delta_mode != 0) && (ts_ototal != 0))
 					{
@@ -919,8 +934,6 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 				tText.addElement(tr);
 			}
 		}
-
-		tDataTextRowCount += (tText.size() - tRowCount);
 	}
 
 	/**

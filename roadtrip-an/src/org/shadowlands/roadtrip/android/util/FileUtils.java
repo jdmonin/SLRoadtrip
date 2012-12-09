@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  Copyright (C) 2010-2011 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2012 Jeremy D Monin <jdmonin@nand.net>
  *
  *  Portions of this file Copyright (C) 2010 Miklos Keresztes (miklos.keresztes@gmail.com)
  *  via the AndiCar project (GPLv3) - see
@@ -33,8 +33,13 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.regex.PatternSyntaxException;
 
+import android.content.Context;
+import android.os.Environment;
+
 /**
- * File utility methods.
+ * File constants and utility methods.
+ *<P>
+ * The Shadowlands Roadtrip directory on the SDcard is {@link #APP_SD_DIR}.
  *<P>
  * {@link #getFileNames(String, String, int)}, {@link #copyFile(File, File)} and {@link #copyFile(String, String, boolean)} are
  * adapted from the AndiCar project; you can see their version at
@@ -43,6 +48,42 @@ import java.util.regex.PatternSyntaxException;
  */
 public class FileUtils
 {
+	/**
+	 * App-specific dir to be placed within SDcard for app usage (backups, exports, etc).
+	 *<P>
+	 * Value format is <tt>"/app_shortname"</tt> (leading slash, no trailing slash).
+	 * @see #getAppSDPath(Context, String)
+	 * @see DBBackup#DB_SUBDIR
+	 * @since 0.9.20
+	 */
+	public static final String APP_SD_DIR = "/SLRoadtrip";
+
+	/**
+	 * Given our app context, determine the <tt>subdirPath</tt> location, if sdcard and is mounted and writable.
+	 * Does not guarantee this directory exists on the SD Card.
+	 * Uses {@link #APP_SD_DIR}.
+	 *
+	 * @param c app context, from {@link Context#getApplicationContext()}
+	 * @param subdirPath  Path to subdirectory within {@link #APP_SD_DIR}, such as "/backup".
+	 *           To return {@link #APP_SD_DIR} itself, use "" here, not null.
+	 * @return full path to the directory, such as <tt>"/sdcard/SLRoadtrip/backup"</tt>,
+	 *   or null if SD isn't mounted or we can't get the information
+	 * @throws IllegalArgumentException if <tt>subdirPath</tt> is null
+	 * @since 0.9.20
+	 */
+	public static String getAppSDPath(Context appc, final String subdirPath)
+		throws IllegalArgumentException
+	{
+		if (subdirPath == null)
+			throw new IllegalArgumentException();
+		if (! Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState()))
+			return null;
+		File sddir = Environment.getExternalStorageDirectory();
+		if (sddir == null)
+			return null;
+		return sddir.getAbsolutePath() + APP_SD_DIR + subdirPath;
+	}
+
 	/**
 	 * Get a list of filenames in this folder.
 	 * @param folder  Full path of directory 

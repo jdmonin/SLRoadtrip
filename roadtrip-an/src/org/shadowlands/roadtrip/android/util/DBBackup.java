@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  Copyright (C) 2010-2011 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2012 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -29,7 +29,6 @@ import org.shadowlands.roadtrip.db.RDBKeyNotFoundException;
 import org.shadowlands.roadtrip.db.android.RDBOpenHelper;
 
 import android.content.Context;
-import android.os.Environment;
 import android.text.format.DateFormat;
 
 /**
@@ -39,15 +38,7 @@ import android.text.format.DateFormat;
 public class DBBackup {
 
 	/**
-	 * App-specific dir to be placed within SDcard for app backup.
-	 *<P>
-	 * Value format is <tt>"/app_shortname"</tt> (leading slash, no trailing slash).
-	 * @see #DB_SUBDIR
-	 */
-	public static final String APP_BACKDIR = "/SLRoadtrip";
-
-	/**
-	 * db backup dir within {@link #APP_BACKDIR} directory.
+	 * db backup dir within {@link FileUtils#APP_SD_DIR} directory.
 	 * Used by {@link #getDBBackupPath(Context)}.
 	 *<P>
 	 * Value format is "/backup".
@@ -57,7 +48,7 @@ public class DBBackup {
 	/**
 	 * Given our app context, determine the backup location, if sdcard and is mounted and writable.
 	 * Does not guarantee this directory exists on the SD Card.
-	 * Uses {@link #APP_BACKDIR} and {@link #DB_SUBDIR}.
+	 * Uses {@link FileUtils#APP_SD_DIR} and {@link #DB_SUBDIR}.
 	 *
 	 * @param c app context, from {@link Context#getApplicationContext()}
 	 * @return path to a backup dir, such as <tt>"/sdcard/SLRoadtrip/db"</tt>,
@@ -67,12 +58,7 @@ public class DBBackup {
 	 */
 	public static String getDBBackupPath(Context appc)
 	{
-		if (! Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState()))
-			return null;
-		File sddir = Environment.getExternalStorageDirectory();
-		if (sddir == null)
-			return null;
-		return sddir.getAbsolutePath() + APP_BACKDIR + DB_SUBDIR;
+		return FileUtils.getAppSDPath(appc, DB_SUBDIR);
 	}
 
 	/** prefix "db-" */;
@@ -105,8 +91,6 @@ public class DBBackup {
 	 * as directed in the schema's comments.
 	 * The DB should be closed before calling this method.
 	 *
-	 * @param fromFilePath Full path to source database file; db must not be open.
-	 * @param toFilePath Full path to destination backup file
 	 * @param ctx  Context from which to obtain db info
 	 * @throws IllegalStateException if SDCard isn't mounted or isn't writeable
 	 * @throws IOException if an error occurs

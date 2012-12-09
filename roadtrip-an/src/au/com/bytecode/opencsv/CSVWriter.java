@@ -28,7 +28,7 @@ import java.util.List;
  * A very simple CSV writer released under a commercial-friendly license.
  *<P>
  * This class is from <A href="http://sourceforge.net/projects/opencsv/">openCSV</A>.
- * Shadowlands Roadtrip 0.9.13 only needed this one class, so we decided to not include
+ * Shadowlands Roadtrip 0.9.20 only needed this one class, so we decided to not include
  * the entire opencsv 2.3 jar file.
  *<P>
  * This copy was obtained 2012-12-08 from opencsv-2.3-src-with-libs.tar.gz

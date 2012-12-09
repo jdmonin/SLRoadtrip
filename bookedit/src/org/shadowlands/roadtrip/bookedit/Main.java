@@ -45,14 +45,14 @@ public class Main
 	 * @see #APP_VERSION_STRING
 	 * @since 0.9.07
 	 */
-	public static final int APP_VERSION_CODE = 913;
+	public static final int APP_VERSION_CODE = 920;
 
 	/**
 	 * Application version as a human-readable string; changes with each point release.
 	 * @see #APP_VERSION_CODE
 	 * @since 0.9.07
 	 */
-	public static final String APP_VERSION_STRING = "0.9.13";
+	public static final String APP_VERSION_STRING = "0.9.20";
 
 	private String dbFilename = null;
 	private StartupChoiceFrame scf;

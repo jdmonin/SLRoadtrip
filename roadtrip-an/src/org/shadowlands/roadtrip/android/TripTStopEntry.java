@@ -1194,7 +1194,7 @@ public class TripTStopEntry extends Activity
 	 * unless <tt>saveOnly</tt>, and finish this Activity.
 	 * @param saveOnly  If true, save changes but don't leave
 	 *   the stop or continue the trip.
-	 * @since 0.9.13
+	 * @since 0.9.20
 	 */
 	protected void enterTStop(final boolean saveOnly)
 	{

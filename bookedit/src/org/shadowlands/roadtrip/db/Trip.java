@@ -1146,7 +1146,7 @@ public class Trip extends RDBRecord
 	 * Get this trip's optional passenger count (not including driver).
 	 * @return the passenger count, or -1 if unused;
 	 *   will be 0 if count is known and driver is the only occupant
-	 * @since 0.9.13
+	 * @since 0.9.20
 	 */
 	public int getPassengerCount() {
 		return passengers;
@@ -1156,7 +1156,7 @@ public class Trip extends RDBRecord
 	 * Set or clear this trip's optional passenger count.
 	 * @param newPax  Passenger count (not including driver), or -1 to clear;
 	 *          will be 0 if count is known and driver is the only occupant
-	 * @since 0.9.13
+	 * @since 0.9.20
 	 */
 	public void setPassengerCount(final int newPax)
 	{

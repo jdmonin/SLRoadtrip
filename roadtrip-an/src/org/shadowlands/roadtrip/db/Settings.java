@@ -124,7 +124,7 @@ public class Settings extends RDBRecord
 	/**
 	 * boolean setting to show the optional Trip Passengers entry field.
 	 * Default is false.
-	 * @since 0.9.13
+	 * @since 0.9.20
 	 */
 	public static final String SHOW_TRIP_PAX = "SHOW_TRIP_PAX";
 

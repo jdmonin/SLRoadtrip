@@ -81,7 +81,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	 * Column headings for simple mode (no TStops).  The length of this array determines the number of columns.
 	 * Rows with this format are filled in {@link #addRowsFromTrips_formatTripsSimple(Vector, Vector, RDBAdapter)}.
 	 * @see #trip_simple_mode
-	 * @since 0.9.13
+	 * @since 0.9.20
 	 */
 	public static final String[] COL_HEADINGS_SIMPLE
 	    = { "Date", "Odo Start", "Odo End", "Time Start", "Time End", "From Location", "To Location", "Comment" };
@@ -89,7 +89,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	/**
 	 * Optional Passengers count label.
 	 * TODO: Make dynamic, for other languages
-	 * @since 0.9.13
+	 * @since 0.9.20
 	 */
 	public static final String TXT_PASSENGERS = "Passengers";
 
@@ -112,7 +112,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	 * Preference: When true, show trips in Simple mode (1 line per trip, no TStop details).
 	 * The standard-mode headings are {@link #COL_HEADINGS}.
 	 * The simple-mode headings are {@link #COL_HEADINGS_SIMPLE}.
-	 * @since 0.9.13
+	 * @since 0.9.20
 	 */
 	public static boolean trip_simple_mode = false;
 

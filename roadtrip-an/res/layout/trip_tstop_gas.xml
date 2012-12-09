@@ -1,6 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
+ Layout for TStop Gas data entry.
+
+ For international users, who may have ',' as their decimal separator,
+ this activity's numeric input fields use android:digits="0123456789,."
+ per comments in http://code.google.com/p/android/issues/detail?id=2626 .
 
  Copyright (C) 2010-2012 Jeremy D Monin (jdmonin@nand.net)
 
@@ -40,6 +45,7 @@
 		    />
 		<EditText android:id="@+id/trip_tstopgas_quant"
 			android:inputType="numberDecimal"
+			android:digits="0123456789,."
 		    android:layout_weight="1"
 		    android:layout_width="fill_parent" 
 		    android:layout_height="wrap_content"
@@ -54,6 +60,7 @@
 		    />
 		<EditText android:id="@+id/trip_tstopgas_perunit"
 			android:inputType="numberDecimal"
+			android:digits="0123456789,."
 		    android:layout_weight="1"
 		    android:layout_width="fill_parent" 
 		    android:layout_height="wrap_content"
@@ -72,6 +79,7 @@
 		    />
 		<EditText android:id="@+id/trip_tstopgas_total"
 			android:inputType="numberDecimal"
+			android:digits="0123456789,."
 		    android:layout_weight="1"
 		    android:layout_width="fill_parent" 
 		    android:layout_height="wrap_content"

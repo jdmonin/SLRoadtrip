@@ -19,6 +19,9 @@
 
 package org.shadowlands.roadtrip.android;
 
+import java.text.NumberFormat;
+import java.text.ParseException;
+
 import org.shadowlands.roadtrip.R;
 import org.shadowlands.roadtrip.db.GasBrandGrade;
 import org.shadowlands.roadtrip.db.RDBAdapter;
@@ -75,7 +78,10 @@ public class TripTStopGas extends Activity
 	/** Was {@link #brandGradeObj} created for this TStop? */
 	private boolean gbgCreatedHere = false;
 
-	/** decimal numbers (no currency sign): quantity, per-unit cost, total cost */
+	/**
+	 * Decimal numbers (no currency sign): quantity, per-unit cost, total cost.
+	 * See locale comments at {@link #parseDF}.
+	 */
 	private EditText quant_et, perunit_et, totalcost_et;
 
 	/**
@@ -87,6 +93,15 @@ public class TripTStopGas extends Activity
 
 	/** {@link GasBrandGrade}s available; updates {@link #brandGradeObj} */
 	private AutoCompleteTextView brandGrade_at;
+
+	/**
+	 * Decimal parser for {@link #afterTextChanged(Editable)}, in user's locale
+	 * because String.format will use that locale.  The locale might have ','
+	 * as the decimal separator; Float.parseFloat can't parse that format.
+	 * Our layout also uses android:digits="0123456789,." for decimal EditTexts
+	 * per comments in http://code.google.com/p/android/issues/detail?id=2626 .
+	 */
+	private NumberFormat parseDF = NumberFormat.getNumberInstance();
 
 	/** Called when the activity is first created. */
 	@Override
@@ -374,6 +389,10 @@ public class TripTStopGas extends Activity
 			}
 		}
 
+		// Parsing and formatting floats <-> strings: String.format uses the user's locale,
+		// which may have ',' as the decimal separator. So, use NumberFormat.parse
+		// instead of Float.parseFloat.
+
 		final boolean hasQuant = (! quant_calc) && (quant_et.length() > 0),
 		              hasPerU = (! perunit_calc) && (perunit_et.length() > 0),
 		              hasTotal = (! totalcost_calc) && (totalcost_et.length() > 0);
@@ -385,7 +404,13 @@ public class TripTStopGas extends Activity
 				afterTextChanged_lastChanged = null;
 				return;  // prevent endless callback-loop
 			}
-			float total = Float.parseFloat(quant_et.getText().toString()) * Float.parseFloat(perunit_et.getText().toString());
+			final float total;
+			try {
+				total = parseDF.parse(quant_et.getText().toString()).floatValue()
+				      * parseDF.parse(perunit_et.getText().toString()).floatValue();
+			} catch (ParseException pe) {
+				return;
+			}
 			totalcost_calc = true;
 			afterTextChanged_lastChanged = totalcost_et;
 			totalcost_et.setText(String.format("%1$1.2f", total));  // TODO dynamic # of digits from currV
@@ -399,7 +424,13 @@ public class TripTStopGas extends Activity
 				afterTextChanged_lastChanged = null;
 				return;  // prevent endless callback-loop
 			}
-			final float quant = Float.parseFloat(totalcost_et.getText().toString()) / Float.parseFloat(perunit_et.getText().toString());
+			final float quant;
+			try {
+				quant = parseDF.parse(totalcost_et.getText().toString()).floatValue()
+				      / parseDF.parse(perunit_et.getText().toString()).floatValue();
+			} catch (ParseException pe) {
+				return;
+			}
 			quant_calc = true;
 			afterTextChanged_lastChanged = quant_et;
 			quant_et.setText(String.format("%1$1.3f", quant));
@@ -413,7 +444,13 @@ public class TripTStopGas extends Activity
 				afterTextChanged_lastChanged = null;
 				return;  // prevent endless callback-loop
 			}
-			final float per_u = Float.parseFloat(totalcost_et.getText().toString()) / Float.parseFloat(quant_et.getText().toString());
+			final float per_u;
+			try {
+				per_u = parseDF.parse(totalcost_et.getText().toString()).floatValue()
+				      / parseDF.parse(quant_et.getText().toString()).floatValue();
+			} catch (ParseException pe) {
+				return;
+			}
 			perunit_calc = true;
 			afterTextChanged_lastChanged = perunit_et;
 			perunit_et.setText(String.format("%1$1.2f", per_u));  // TODO dynamic # of digits from currV

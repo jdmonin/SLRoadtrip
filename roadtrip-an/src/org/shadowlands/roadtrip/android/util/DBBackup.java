@@ -117,8 +117,8 @@ public class DBBackup {
 			File fdir = new File(bkupDir);
 			if (! fdir.exists())
 			{
-				fdir.mkdirs();
-				// TODO API lookup: retcode; throw ioexcepiton?
+				if (! fdir.mkdirs())
+					throw new IOException("Could not create directory: " + bkupDir);
 			}
 			else if (! fdir.isDirectory())
 			{

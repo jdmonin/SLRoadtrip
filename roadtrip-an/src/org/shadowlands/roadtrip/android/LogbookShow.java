@@ -22,6 +22,7 @@ package org.shadowlands.roadtrip.android;
 import java.util.Calendar;
 
 import org.shadowlands.roadtrip.R;
+import org.shadowlands.roadtrip.android.util.DBExport;
 import org.shadowlands.roadtrip.db.GeoArea;
 import org.shadowlands.roadtrip.db.Location;
 import org.shadowlands.roadtrip.db.RDBAdapter;
@@ -51,6 +52,7 @@ import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.CheckBox;
 import android.widget.DatePicker;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ListAdapter;
 import android.widget.ScrollView;
@@ -325,6 +327,45 @@ public class LogbookShow extends Activity
 	}
 
 	/**
+	 * Export some of this logbook's data from {@link #ltm}.
+	 * Called from the dialog created in {@link #onCreateExportDialog()}.
+	 * Calls {@link DBExport#exportTripData(android.content.Context, LogbookTableModel, String)}.
+	 *<P>
+	 * If {@link #ltm} is empty, does nothing.
+	 * @param fname  Filename for export (not a path)
+	 * @since 0.9.20
+	 */
+	private void doExport(final String fname)
+	{
+		if (ltm.getRangeCount() == 0)
+			return;
+
+		// TODO bg task, like ValidateDBTDataTask
+		try
+		{
+			final boolean prevMode = LogbookTableModel.trip_simple_mode;
+			LogbookTableModel.trip_simple_mode = true;
+			// TODO copy constructor for LTM with trip data?
+			LogbookTableModel expLTM = new LogbookTableModel
+				(showV, ltm.getRange(0).timeStart, ltm.getWeekIncrement(), true,
+				 new RTRAndroidDateTimeFormatter(getApplicationContext()), db);
+			DBExport.exportTripData(this, expLTM, fname);
+			LogbookTableModel.trip_simple_mode = prevMode;
+			Toast.makeText(this, R.string.logbook_show__export_complete, Toast.LENGTH_SHORT).show();
+		}
+		catch (Throwable th)
+		{
+	    	AlertDialog.Builder alert = new AlertDialog.Builder(this);
+	    	alert.setTitle(R.string.error);
+	    	alert.setMessage("Error during export: " + th);
+	    	alert.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+		    	  public void onClick(DialogInterface dialog, int whichButton) { }
+		    	});
+	    	alert.show();
+		}
+	}
+
+	/**
 	 * Perform all levels of quick or full DB validation.
 	 * @param fullWithTData  Do full validation, including transactional data
 	 *     ({@link RDBVerifier#LEVEL_TDATA})
@@ -507,7 +548,7 @@ public class LogbookShow extends Activity
 		}
 	}
 
-	/** Show the DatePickerDialog or "Other Vehicle" dialog, leading to "Go To Date" mode. */
+	/** Show the DatePickerDialog or "Other Vehicle" dialog, leading to "Go To Date" mode. Or, show Export dialog. */
 	@Override
 	protected Dialog onCreateDialog(int id)
 	{
@@ -517,6 +558,9 @@ public class LogbookShow extends Activity
 
 		    case R.id.menu_logbook_other_veh:
 				return onCreateGoToDateVehicleDialog(true);
+
+		    case R.id.menu_logbook_export:
+		    	return onCreateExportDialog();
 	    }
 	    return null;
 	}
@@ -596,6 +640,42 @@ public class LogbookShow extends Activity
 	}
 
 	/**
+	 * Set up and show the Export dialog.
+	 * This dialog will call {@link #doExport(String)}.
+	 */
+	private Dialog onCreateExportDialog()
+	{
+		final View exportLayout = getLayoutInflater().inflate(R.layout.logbook_show_popup_export, null);
+		final EditText etFname = (EditText) exportLayout.findViewById(R.id.logbook_show_popup_export_fname);
+
+		AlertDialog.Builder alert = new AlertDialog.Builder(this);
+		alert.setTitle(R.string.export);
+		alert.setView(exportLayout);
+		alert.setMessage("Testing only -- this feature is nowhere near complete");
+		alert.setPositiveButton(android.R.string.ok,
+				new DialogInterface.OnClickListener()
+		{
+			public void onClick(DialogInterface dialog, int whichButton)
+			{
+				String fname = etFname.getText().toString().trim();
+				if (fname.length() > 0)
+				{
+					if (! fname.contains("."))
+						fname = fname + DBExport.DBEXPORT_FILENAME_SUFFIX;  // ".csv"
+					doExport(fname);
+				} else {
+					Toast.makeText(LogbookShow.this, R.string.please_enter_the_filename, Toast.LENGTH_SHORT).show();
+				}
+			}
+		});
+		alert.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+			public void onClick(DialogInterface dialog, int whichButton) {}
+		});
+
+		return alert.create();
+	}
+
+	/**
 	 * Check Settings table for <tt>CURRENT_VEHICLE</tt>.
 	 * Set {@link #currV}.
 	 *
@@ -638,6 +718,10 @@ public class LogbookShow extends Activity
 
 		case R.id.menu_logbook_validate_full:
 			doDBValidation(true);
+			return true;
+
+		case R.id.menu_logbook_export:
+			showDialog(R.id.menu_logbook_export);
 			return true;
 
 		default:

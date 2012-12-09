@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  Copyright (C) 2010-2011 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2012 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -33,7 +33,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
@@ -360,6 +359,21 @@ public class TripTStopGas extends Activity
 	/** check for empty fields, calculate them if the other 2 are filled */
 	public void afterTextChanged(Editable e)
 	{
+		if (e.length() == 0)
+		{
+			// a field was cleared; reset flags so we can calc it if we have the other 2
+			int has = 0;
+			if (quant_et.length() > 0)  ++has;
+			if (perunit_et.length() > 0) ++has;
+			if (totalcost_et.length() > 0) ++has;
+			if (has == 2)
+			{
+				quant_calc = false;
+				perunit_calc = false;
+				totalcost_calc = false;
+			}
+		}
+
 		final boolean hasQuant = (! quant_calc) && (quant_et.length() > 0),
 		              hasPerU = (! perunit_calc) && (perunit_et.length() > 0),
 		              hasTotal = (! totalcost_calc) && (totalcost_et.length() > 0);
@@ -385,10 +399,10 @@ public class TripTStopGas extends Activity
 				afterTextChanged_lastChanged = null;
 				return;  // prevent endless callback-loop
 			}
-			// TODO calc quant...
+			final float quant = Float.parseFloat(totalcost_et.getText().toString()) / Float.parseFloat(perunit_et.getText().toString());
 			quant_calc = true;
 			afterTextChanged_lastChanged = quant_et;
-			quant_et.setText("Qcalc'd");
+			quant_et.setText(String.format("%1$1.3f", quant));
 			return;
 		}
 
@@ -399,10 +413,10 @@ public class TripTStopGas extends Activity
 				afterTextChanged_lastChanged = null;
 				return;  // prevent endless callback-loop
 			}
-			// TODO calc perunit...
+			final float per_u = Float.parseFloat(totalcost_et.getText().toString()) / Float.parseFloat(quant_et.getText().toString());
 			perunit_calc = true;
 			afterTextChanged_lastChanged = perunit_et;
-			perunit_et.setText("Ucalc'd");
+			perunit_et.setText(String.format("%1$1.2f", per_u));  // TODO dynamic # of digits from currV
 			return;
 		}
 	}

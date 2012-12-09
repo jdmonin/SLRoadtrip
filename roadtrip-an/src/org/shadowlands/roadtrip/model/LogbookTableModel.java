@@ -61,17 +61,30 @@ import org.shadowlands.roadtrip.util.RTRDateTimeFormatter;
  * Assumes that data won't change elsewhere while displayed; for example,
  * cached ViaRoute object contents.
  *<P>
- * Preferences: Before creating the LTM, you can set {@link #trip_odo_delta_mode}.
+ * Preferences: Before creating the LTM, you can set {@link #trip_odo_delta_mode}
+ * and/or {@link #trip_simple_mode}.
  *
  * @author jdmonin
  */
 public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 {
 	/**
+	 * Column headings for standard mode.
 	 * The length of this array determines the number of columns.
+	 * Rows with this format are filled in {@link #addRowsFromTrips_formatTripsStops(Vector, Vector, RDBAdapter)}.
+	 * @see #trip_simple_mode
 	 */
 	public static final String[] COL_HEADINGS
 	    = { "Date", "Time", "", "Odometer", "Trip-O", "Description", "Via", "Comment" };
+
+	/**
+	 * Column headings for simple mode (no TStops).  The length of this array determines the number of columns.
+	 * Rows with this format are filled in {@link #addRowsFromTrips_formatTripsSimple(Vector, Vector, RDBAdapter)}.
+	 * @see #trip_simple_mode
+	 * @since 0.9.13
+	 */
+	public static final String[] COL_HEADINGS_SIMPLE
+	    = { "Date", "Odo Start", "Odo End", "Time Start", "Time End", "From Location", "To Location", "Comment" };
 
 	/**
 	 * Optional Passengers count label.
@@ -96,6 +109,14 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	   { null, null, "\\", "End-odo" } };
 
 	/**
+	 * Preference: When true, show trips in Simple mode (1 line per trip, no TStop details).
+	 * The standard-mode headings are {@link #COL_HEADINGS}.
+	 * The simple-mode headings are {@link #COL_HEADINGS_SIMPLE}.
+	 * @since 0.9.13
+	 */
+	public static boolean trip_simple_mode = false;
+
+	/**
 	 * Preference: Trip odometer delta mode.
 	 *<UL>
 	 *<LI> 0: Show the trip odometer value (12.2)
@@ -103,6 +124,9 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	 *<LI> 2: Show both (12.2; +8.5)
 	 *</UL>
 	 * If the previous stop has neither total nor trip odometer, the delta will be blank.
+	 *<P>
+	 * If using {@link #trip_simple_mode}, always show the total odometer, never the delta;
+	 * <tt>trip_odo_delta_mode</tt> is ignored.
 	 */
 	public static int trip_odo_delta_mode = 2;
 
@@ -619,13 +643,17 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 		}
 		Vector<String[]> tText = ttr.tText;
 
-		addRowsFromTrips_formatTripsStops(td, tText, conn);
+		if (trip_simple_mode)
+			addRowsFromTrips_formatTripsSimple(td, tText, conn);
+		else
+			addRowsFromTrips_formatTripsStops(td, tText, conn);
 
 		tDataTextRowCount += (tText.size() - tRowCount);
 	}
 
 	/**
 	 * Add rows to strings from a list of {@link Trip}s and their {@link TStop}s.
+	 * Columns of added rows line up with {@link #COL_HEADINGS}.
 	 * @param td    Trip data to add to <tt>tText</tt>
 	 * @param tText Append rows here from <tt>td</tt>
 	 * @param conn  Add from this connection
@@ -654,7 +682,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 			String[] tr;
 
 			// first row of trip: date, if different from prev date
-			Date tstart = new Date(t.getTime_start() * 1000L);
+			final Date tstart = new Date(t.getTime_start() * 1000L);
 			if ((prevTripStart == null)
 			    || (prevTripStart.getDate() != tstart.getDate())
 			    || (prevTripStart.getMonth() != tstart.getMonth()))
@@ -933,6 +961,125 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 				tr[5] = t.getComment();
 				tText.addElement(tr);
 			}
+		}
+	}
+
+	/**
+	 * Add rows (simple mode) to strings from a list of {@link Trip}s and their {@link TStop}s.
+	 * Columns of added rows line up with {@link #COL_HEADINGS_SIMPLE}.
+	 * @param td    Trip data to add to <tt>tText</tt>
+	 * @param tText Append rows here from <tt>td</tt>
+	 * @param conn  Add from this connection
+	 */
+	public void addRowsFromTrips_formatTripsSimple
+		(final Vector<Trip> td, Vector<String[]> tText, RDBAdapter conn)
+	{
+		final int L = td.size();
+
+		// Loop for each trip in td
+		for (int i = 0; i < L; ++i)  // towards end of trip, must look at next trip
+		{
+			Trip t = td.elementAt(i);
+
+			String[] tr = new String[COL_HEADINGS_SIMPLE.length];
+
+			// trip starting date
+			final long tstart = t.getTime_start() * 1000L;
+			tr[0] = dtf.formatDate(tstart);
+
+			// start,end odo
+			tr[1] = Integer.toString((int) (t.getOdo_start() / 10.0f));
+			final int odo_end = t.getOdo_end();
+			if (odo_end > 0)
+				tr[2] = Integer.toString((int) (odo_end / 10.0f));
+
+			// start,end time
+			tr[3] = dtf.formatTime(tstart);
+			final int time_end = t.getTime_end();
+			if (time_end != 0)
+				tr[4] = dtf.formatTime(time_end * 1000L);
+
+			// Remaining fields might require TStops, so read them and continue.
+			// All well-formed trips have 1 or more TStops.
+			Vector<TStop> stops = t.readAllTStops();	// works for current, if addCommittedTStop was called
+
+			final TStop ts_start = t.readStartTStop(true);
+			final TStop ts_end = (stops != null) ? stops.lastElement() : null;
+
+			// start,end location
+			if (ts_start != null)
+				tr[5] = getTStopLocDescr(ts_start, conn);
+			if (ts_end != null)
+				tr[6] = getTStopLocDescr(ts_end, conn);
+
+			// trip comment, or highest tstop comment:
+
+			String tripComment = t.getComment();  // t.getComment is almost always null
+			if ((tripComment != null) && (tripComment.length() == 0))
+				tripComment = null;
+
+			if (ts_end != null)
+			{
+				final String lsComment = ts_end.getComment();
+				if ((lsComment != null) && (lsComment.length() > 0))
+					tripComment = lsComment;
+			}
+
+			if ((stops != null) && (tripComment == null))
+			{
+				// Go through all stops to find a comment
+				for (int j = stops.size() - 1; j >= 0; --j)
+				{
+					final String tsComment = stops.get(j).getComment();
+					if ((tsComment != null) && (tsComment.length() > 0))
+					{
+						tripComment = tsComment;
+						break;
+					}
+				}
+			}
+
+			tr[7] = tripComment;
+
+			// Done with this row
+			tText.addElement(tr);
+
+
+			/*
+			final int tcatID = t.getTripCategoryID();
+			if (tcatID != 0)
+			{
+				TripCategory tcat = tcatCache.get(tcatID);
+				if (tcat == null)
+				{
+					try
+					{
+						tcat = new TripCategory(conn, tcatID);
+						tcat.setName("[" + tcat.getName() + "]");
+						tcatCache.put(tcatID, tcat);
+					}
+					catch (Throwable th) {}
+				}
+				tr5 = tcat.getName();
+			}
+
+			final int pax = t.getPassengerCount();
+			if (pax != -1)
+			{
+				StringBuilder sb = new StringBuilder();
+				if (tr5 != null)
+				{
+					sb.append(tr5);
+					sb.append(' ');
+				}
+				sb.append(TXT_PASSENGERS);  // "Passengers"
+				sb.append(": ");
+				sb.append(Integer.toString(pax));
+				tr5 = sb.toString();
+			}
+		 	*/
+
+
 		}
 	}
 

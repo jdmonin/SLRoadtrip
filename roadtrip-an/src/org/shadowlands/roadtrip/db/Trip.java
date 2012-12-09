@@ -1122,10 +1122,21 @@ public class Trip extends RDBRecord
 		dirty = true;
 	}
 
+	/**
+	 * Get the trip comment, if any, or null.  Typically TStop comments are used instead;
+	 * use {@link Trip#readLatestTStop()} to get the tstop (and possible comment) nearest
+	 * the end of the trip.
+	 */
 	public String getComment() {
 		return comment;
 	}
 
+	/**
+	 * Set or clear the trip comment.  Typically TStop comments are used instead;
+	 * use {@link Trip#readLatestTStop()} to get the tstop (and possible comment) nearest
+	 * the end of the trip.
+	 * @param comment  Comment string, or null; please use null for a 0-length (empty) string.
+	 */
 	public void setComment(String comment) {
 		this.comment = comment;
 		dirty = true;

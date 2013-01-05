@@ -1,6 +1,6 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
- *  This file Copyright (C) 2010-2012 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2013 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -969,7 +969,7 @@ public class Trip extends RDBRecord
 			(catid != 0 ? Integer.toString(catid) : null),
 			Integer.toString(odo_start), (odo_end != 0 ? Integer.toString(odo_end) : null),
 			(a_id != 0 ? Integer.toString(a_id) : null), (tstopid_start != 0 ? Integer.toString(tstopid_start) : null),
-			Integer.toString(time_start), Integer.toString(time_end),
+			Integer.toString(time_start), (time_end != 0 ? Integer.toString(time_end) : null),
 			start_lat, start_lon, end_lat, end_lon,
 			(freqtripid != 0 ? Integer.toString(freqtripid) : null),
 			comment,
@@ -1056,6 +1056,10 @@ public class Trip extends RDBRecord
 		return time_end;
 	}
 
+	/**
+	 * Set or clear trip's optional ending time.
+	 * @param timeEnd  ending time (unix format) if set, or 0; 0 if still in progress
+	 */
 	public void setTime_end(int timeEnd)
 	{
 		time_end = timeEnd;

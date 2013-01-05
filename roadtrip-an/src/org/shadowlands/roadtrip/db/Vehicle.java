@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  Copyright (C) 2010-2012 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2013 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -276,7 +276,7 @@ public class Vehicle extends RDBRecord
      * Assumes no current TStop, because you could use that TStop's time instead.
      * @param tr  The vehicle's current trip, if one is in progress, or null.
      *          tr's dbConn should be valid (not closed).
-     * @return the time, or 0 if no trips for this vehicle
+     * @return the time, or 0 if no completed trips for this vehicle
      * @throws IllegalStateException if the db connection is closed
      */
     public int readLatestTime(Trip tr)
@@ -480,6 +480,7 @@ public class Vehicle extends RDBRecord
 	/**
 	 * Get the id of the vehicle's last completed trip.
 	 * @return trip ID, or 0 if no trip has been completed.
+	 * @see #setOdometerCurrentAndLastTrip(int, Trip, boolean)
 	 */
 	public int getLastTripID() {
 		return last_tripid;

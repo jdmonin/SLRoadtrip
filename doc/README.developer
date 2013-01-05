@@ -76,7 +76,7 @@ r164		2011-09-22
 r173            2011-12-11
 r246	0.9.08	2012-04-01	first version released as an APK
 r271	0.9.12	2012-05-06
--	0.9.13			being developed now
+-	0.9.20			being developed now
 
 
 
@@ -95,11 +95,11 @@ com.quietlycoding.android.picker.NumberPicker, which is licensed under
 the Apache License version 2.0.  See
 src/com/quietlycoding/android/picker/NumberPicker.java comments for details.
 
-Includes FileUtils.java modified from AndiCar, which is licensed under
-GPL v3. See https://code.google.com/p/andicar/ for details, or
+Includes FileUtils.java modified from the summer 2010 source of AndiCar, which
+is licensed under GPL v3. See https://code.google.com/p/andicar/ for details, or
 src/org/shadowlands/roadtrip/android/util/FileUtils.java.
 
 Includes CSVWriter as modified source, from opencsv 2.3, which
-is which is licensed under the Apache License version 2.0.  See
+is licensed under the Apache License version 2.0.  See
 http://sourceforge.net/projects/opencsv/ for details, or
 src/au/com/bytecode/CSVWriter.java.

@@ -1210,7 +1210,7 @@ public class TripTStopEntry extends Activity
 
 		int stopTimeSec = 0;  // optional stop-time
 		if ((tp_time_stop_chk != null) && tp_time_stop_chk.isChecked())
-		{			
+		{
 			if (tp_time_stop != null)
 			{
 				stopTime.set(Calendar.HOUR_OF_DAY, tp_time_stop.getCurrentHour());
@@ -1694,11 +1694,11 @@ public class TripTStopEntry extends Activity
 		}
 
 		if (stopEndsTrip && ! saveOnly)
-			endCurrentTrip(tsid, odo_total.getCurrent10d(), mkFreqTrip);
+			endCurrentTrip(tsid, odo_total.getCurrent10d(), stopTimeSec, mkFreqTrip);
 
-		if ((currTS != null) && ! saveOnly)  // if we were stopped already...
+		if ((currTS != null) && ! saveOnly)  // if we were stopped already, now continuing trip...
 		{
-			Settings.setCurrentTStop(db, null);  // clear it
+			Settings.setCurrentTStop(db, null);
 			Settings.setPreviousLocation(db, locObj); // update prev_loc
 		}
 
@@ -1961,9 +1961,10 @@ public class TripTStopEntry extends Activity
 	 *
 	 * @param tsid  This trip stop ID, not 0
 	 * @param odo_total  Total odometer at end of trip, not 0
+	 * @param stopTimeSec  Trip ending time (from final tstop), or 0 if not set there
 	 * @param mkFreqTrip  If true, want to create a {@link FreqTrip} based on this trip's data.
 	 */
-	private void endCurrentTrip(final int tsid, final int odo_total, final boolean mkFreqTrip)
+	private void endCurrentTrip(final int tsid, final int odo_total, final int stopTimeSec, final boolean mkFreqTrip)
 	{
 		// check for tripcategory
 		{
@@ -1975,7 +1976,8 @@ public class TripTStopEntry extends Activity
 		}
 
 		// Set and commit other trip fields
-		currT.setTime_end((int) (stopTime.getTimeInMillis() / 1000L));
+		if (stopTimeSec != 0)
+			currT.setTime_end(stopTimeSec);
 		currT.setOdo_end(odo_total);
 		if (Settings.getBoolean(db, Settings.SHOW_TRIP_PAX, false))
 		{

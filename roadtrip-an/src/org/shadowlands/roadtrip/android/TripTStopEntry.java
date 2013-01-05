@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  Copyright (C) 2010-2012 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2013 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -289,7 +289,10 @@ public class TripTStopEntry extends Activity
 	/** TStop's date-time for time_stop, time_continue */
 	private Calendar stopTime, contTime;
 
-	/** Which date to update? Set in {@link #onCreateDialog(int)}, checked in {@link #onDateSet(DatePicker, int, int, int)}. */
+	/**
+	 * Which date to update: {@link #stopTime} or {@link #contTime}?
+	 * Set in {@link #onCreateDialog(int)}, checked in {@link #onDateSet(DatePicker, int, int, int)}.
+	 */
 	private Calendar currentDateToPick;
 
 	/**
@@ -1630,6 +1633,7 @@ public class TripTStopEntry extends Activity
 			// Currently stopped; saving, resuming from stop, or ending trip.
 			tsid = currTS.getID();
 			currTS.setOdos(odoTotal, odoTrip);
+			currTS.setTime_stop(stopTimeSec);
 			// text fields, info fields
 			currTS.setLocationID(locID);
 			currTS.setVia_id(viaID);

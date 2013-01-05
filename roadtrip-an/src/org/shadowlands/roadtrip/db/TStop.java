@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  Copyright (C) 2010-2012 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2013 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -571,9 +571,22 @@ public class TStop extends RDBRecord
 		return odo_trip;
 	}
 
-	/** Get the trip's stop time */
+	/** Get the trip's stop time (when the vehicle arrived at this TStop), or 0 if none. */
 	public int getTime_stop() {
 		return time_stop;
+	}
+
+	/**
+	 * Set or clear the stopped-here time (when the vehicle arrived at this TStop).
+	 * @param sTime Stop time (unix format), or 0 for none
+	 * @since 0.9.20
+	 */
+	public void setTime_stop(final int sTime)
+	{
+		if (sTime == time_stop)
+			return;
+		time_stop = sTime;
+		dirty = true;
 	}
 
 	/** Get the trip's continue-time (when the trip resumes), or 0 if none */
@@ -582,8 +595,8 @@ public class TStop extends RDBRecord
 	}
 
 	/**
-	 * Set the travel-start time (ending the stop) for this TStop.
-	 * @param sTime Start time (unix format), or 0
+	 * Set or clear the travel-start time (ending the stop) for this TStop.
+	 * @param sTime Start time (unix format), or 0 for none
 	 * @param commit Also commit this field change (ONLY!) to db right now;
 	 *               if false, only set {@link #isDirty()}.
 	 */

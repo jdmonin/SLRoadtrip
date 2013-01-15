@@ -2,7 +2,7 @@
 <!--
  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
 
- Copyright (C) 2010-2012 Jeremy D Monin (jdmonin@nand.net)
+ This file Copyright (C) 2010-2013 Jeremy D Monin (jdmonin@nand.net)
 
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
@@ -129,7 +129,7 @@
 <string name="trip_odometer">Trip\nodometer</string>
 <string name="using_old_date_due_to_previous">Historical Mode:\nUsing an old date because of the previous date entered for this vehicle.</string>
 <string name="validate">Validate</string>
-<string name="validate_all">Validate All</string>
+<string name="validation_failed">Validation failed</string>
 <string name="vehicle">Vehicle</string>
 <string name="via">via</string>
 <string name="via_route">Via route</string>

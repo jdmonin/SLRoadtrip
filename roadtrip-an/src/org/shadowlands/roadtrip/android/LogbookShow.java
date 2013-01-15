@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  Copyright (C) 2010-2012 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2013 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -154,13 +154,7 @@ public class LogbookShow extends Activity
 	 */
 	private boolean rangeEarlierClicked = false;
 
-	/**
-	 * Level for successive manual calls to {@link RDBVerifier}
-	 * on {@link #verifCache} from {@link #doDBValidation(boolean)}
-	 */
-	private int verifiedLevel = 0;
-
-	/** Cached verifier object, for successive manual calls from {@link #doDBValidation(boolean)} */
+	/** Cached verifier object, for successive manual calls from {@link #doDBValidation()} */
 	private RDBVerifier verifCache = null;
 
 	/** Non-null if currently running. Set and cleared in {@link ValidateDBTDataTask#doInBackground(String...)}. */
@@ -366,17 +360,23 @@ public class LogbookShow extends Activity
 	}
 
 	/**
-	 * Perform all levels of quick or full DB validation.
-	 * @param fullWithTData  Do full validation, including transactional data
-	 *     ({@link RDBVerifier#LEVEL_TDATA})
+	 * Perform all levels of DB validation, including transactional data
+	 *     ({@link RDBVerifier#LEVEL_TDATA}).
 	 */
-	private void doDBValidation(final boolean fullWithTData)
+	private void doDBValidation()
 	{
 		int res = 0;
 
-		if ((verifCache == null) && (verifiedLevel < RDBVerifier.LEVEL_TDATA))
+		/**
+		 * Level for successive calls on {@link #verifCache}
+		 */
+		int verifiedLevel = 0;
+
+		/** Cached verifier object, for successive level calls */
+		if (verifCache == null)
 			verifCache = new RDBVerifier(db);
 
+		// do "quick validation" levels (below LEVEL_TDATA) first
 		int chkLevel;
 		for (chkLevel = RDBVerifier.LEVEL_PHYS; chkLevel < RDBVerifier.LEVEL_TDATA; ++chkLevel)
 		{			
@@ -389,13 +389,12 @@ public class LogbookShow extends Activity
 					break;
 			}
 		}
-		if (chkLevel == RDBVerifier.LEVEL_TDATA)
-			--chkLevel;  // completed all levels, undo ++ after last iteration
 
-		if (fullWithTData)
+		if (chkLevel == RDBVerifier.LEVEL_TDATA)
 		{
-			 new ValidateDBTDataTask().execute();
-			 return;  // <--- Early return: Verify DB in bg task ---
+			// completed all "quick" levels successfully
+			new ValidateDBTDataTask().execute();
+			return;  // <--- Early return: Verify DB in bg task ---
 		}
 
 		String vLevel;
@@ -415,9 +414,7 @@ public class LogbookShow extends Activity
 		{
 			vLevel += " validation failed at level " + chkLevel;
 		} else {
-			vLevel += " validation successful";
-			if (verifiedLevel < RDBVerifier.LEVEL_TDATA)
-				vLevel += ", run again to do full validation";
+			vLevel += " validation successful.";
 		}
 
 		Toast.makeText(this, vLevel, Toast.LENGTH_SHORT).show();
@@ -713,11 +710,7 @@ public class LogbookShow extends Activity
 			return true;
 
 		case R.id.menu_logbook_validate:
-			doDBValidation(false);
-			return true;
-
-		case R.id.menu_logbook_validate_full:
-			doDBValidation(true);
+			doDBValidation();
 			return true;
 
 		case R.id.menu_logbook_export:
@@ -857,7 +850,6 @@ public class LogbookShow extends Activity
 			final boolean ok = (verifCache.verify(RDBVerifier.LEVEL_TDATA) == 0);
 			if (ok)
 			{
-				verifiedLevel = RDBVerifier.LEVEL_TDATA;
 				if (verifCache != null)
 				{
 					verifCache.release();

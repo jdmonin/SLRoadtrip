@@ -49,9 +49,6 @@
 	<item android:id="@+id/menu_logbook_validate"
 		android:title="@string/validate"
 		/>
-	<item android:id="@+id/menu_logbook_validate_full"
-		android:title="@string/validate_all"
-		/>
 	<item android:id="@+id/menu_logbook_export"
 		android:title="@string/export"
 		/>

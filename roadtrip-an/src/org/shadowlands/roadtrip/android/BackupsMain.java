@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  Copyright (C) 2010-2011 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2011,2013 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -30,10 +30,13 @@ import org.shadowlands.roadtrip.db.AppInfo;
 import org.shadowlands.roadtrip.db.RDBAdapter;
 import org.shadowlands.roadtrip.db.RDBKeyNotFoundException;
 import org.shadowlands.roadtrip.db.RDBSchema;
+import org.shadowlands.roadtrip.db.RDBVerifier;
 import org.shadowlands.roadtrip.db.Trip;
 import org.shadowlands.roadtrip.db.android.RDBOpenHelper;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -208,6 +211,80 @@ public class BackupsMain extends Activity
 		lvBackupsList.setAdapter(new ArrayAdapter<String>(this, R.layout.list_item, bklist));
 	}
 
+	/**
+	 * Perform all "quick" levels of DB validation
+	 *     ({@link RDBVerifier#LEVEL_PHYS} - {@link RDBVerifier#LEVEL_MDATA})
+	 * and, if failed, ask the user if should continue with the backup anyway.
+	 * @return true if validation passed
+	 */
+	private boolean doDBValidationAskIfFailed()
+	{
+		int res = 0;
+
+		/**
+		 * Level for successive calls to {@link RDBVerifier}
+		 * on {@link #verifCache} from {@link #doDBValidation()}
+		 */
+		int verifiedLevel = 0;
+
+		RDBOpenHelper db = new RDBOpenHelper(this);
+
+		/** Cached verifier object, for successive manual calls from {@link #doDBValidation()} */
+		RDBVerifier verifCache = new RDBVerifier(db);
+
+		// do "quick validation" levels (below LEVEL_TDATA)
+		int chkLevel;
+		for (chkLevel = RDBVerifier.LEVEL_PHYS; chkLevel < RDBVerifier.LEVEL_TDATA; ++chkLevel)
+		{			
+			if (verifiedLevel < chkLevel)
+			{
+				res = verifCache.verify(chkLevel);
+				if (res == 0)
+					verifiedLevel = chkLevel;
+				else
+					break;
+			}
+		}
+		verifCache.release();
+		db.close();
+
+		if (res == 0)
+		{
+			return true;  // <--- Early return: all OK ---
+		}
+
+		String vLevel;
+		switch(chkLevel)
+		{
+		case RDBVerifier.LEVEL_PHYS:
+			vLevel = "Physical (level 1)";
+			break;
+		case RDBVerifier.LEVEL_MDATA:
+			vLevel = "Master-data (level 2)";
+			break;
+		// case RDBVerifier.LEVEL_TDATA not used here; happens in LogbookShow background task
+		default:
+			vLevel = "";  // to satisfy compiler
+		}
+		vLevel += " validation failed at level " + chkLevel + ", back up anyway?";
+
+    	AlertDialog.Builder alert = new AlertDialog.Builder(this);
+
+    	alert.setTitle(R.string.validation_failed);
+    	alert.setMessage(vLevel);
+    	alert.setPositiveButton(R.string.backup_now, new DialogInterface.OnClickListener() {
+			  public void onClick(DialogInterface dialog, int whichButton) {
+				  backupNow();
+			  }
+	    	});
+    	alert.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+	    	  public void onClick(DialogInterface dialog, int whichButton) { }
+	    	});
+    	alert.show();
+
+    	return false;
+	}
+
 	@Override
 	public void onDestroy()
 	{
@@ -215,10 +292,22 @@ public class BackupsMain extends Activity
 	}
 
 	/**
-	 * Make a backup to sdcard of the database.
+	 * Do a quick validation of db structure by calling {@link #doDBValidationAskIfFailed()},
+	 * and if OK, call {@link #backupNow()}.
 	 * @param v  ignored
 	 */
 	public void onClick_BtnBackupNow(View v)
+	{
+		if (! doDBValidationAskIfFailed())
+			return;
+
+		backupNow();
+	}
+
+	/**
+	 * Make a backup to sdcard of the database; assumes {@link #doDBValidationAskIfFailed()} already called.
+	 */
+	private void backupNow()
 	{
 		StringBuffer sb = new StringBuffer("filename: ");
 		final int bktime = (int) (System.currentTimeMillis() / 1000L);

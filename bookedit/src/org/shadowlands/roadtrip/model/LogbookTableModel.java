@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010-2012 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2013 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -254,6 +254,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	/**
 	 * Common setup to all constructors (location mode, week mode).
 	 * Set veh, tData, locCache, etc.
+	 * Because of all the final fields for different modes, this isn't an actual private constructor.
 	 * @param veh  vehicle
 	 * @param dtFmt  date-time format for {@link #addRowsFromTrips(TripListTimeRange, RDBAdapter)}, or null for default
 	 * @throws IllegalArgumentException if veh is null
@@ -276,6 +277,50 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 		getValue_RangeRow0 = -1;
 		getValue_RangeRowN = -1;
 		hasCurrT = false;		
+	}
+
+	/**
+	 * Copy constructor.  Copies references to each {@link TripListTimeRange}'s Trip vector.
+	 * Re-renders all trip data rows as text.
+	 * Useful for copying an LTM's data but changing its display to/from {@link #trip_simple_mode}.
+	 * Does not copy the {@link TableChangeListener} field.
+	 * @param ltm  LTM to copy from
+	 * @param conn Use this connection for any db lookups
+	 * @since 0.9.20
+	 */
+	public LogbookTableModel(LogbookTableModel ltm, RDBAdapter conn)
+	{
+		initCommonConstruc(ltm.veh, ltm.dtf);
+		locCache.putAll(ltm.locCache);
+		viaCache.putAll(ltm.viaCache);
+		gasCache.putAll(ltm.gasCache);
+		tcatCache.putAll(ltm.tcatCache);
+		hasCurrT = ltm.hasCurrT;
+
+		// copy fields not set in initCommonConstruc
+		weekIncr = ltm.weekIncr;
+		tripIncr = ltm.tripIncr;
+		filterLocID = ltm.filterLocID;
+		filterLoc_showAllV = ltm.filterLoc_showAllV;
+		filterWeekModeStartDate = ltm.filterWeekModeStartDate;
+		addMode = ltm.addMode;
+		maxRowBeforeAdd = ltm.maxRowBeforeAdd;
+
+		// format trip data text, update tDataTextRowCount
+		if (! ltm.tData.isEmpty())
+		{
+			for (TripListTimeRange ttr : ltm.tData)
+			{
+				TripListTimeRange ttlocal = new TripListTimeRange(ttr.timeStart, ttr.timeEnd, ttr.tr);
+				tData.add(ttlocal);
+				addRowsFromTrips(ttlocal, conn);
+			}
+
+			if (ltm.tData.lastElement().noneLater)
+				tData.lastElement().noneLater = true;
+			if (ltm.tData.firstElement().noneEarlier)
+				tData.firstElement().noneEarlier = true;
+		}
 	}
 
 	/**

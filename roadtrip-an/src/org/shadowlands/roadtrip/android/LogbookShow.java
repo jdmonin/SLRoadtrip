@@ -345,13 +345,15 @@ public class LogbookShow extends Activity
 		{
 			final boolean prevMode = LogbookTableModel.trip_simple_mode;
 			LogbookTableModel.trip_simple_mode = true;
-			// TODO copy constructor for LTM with trip data?
-			LogbookTableModel expLTM = new LogbookTableModel
-				(showV, ltm.getRange(0).timeStart, ltm.getWeekIncrement(), true,
-				 new RTRAndroidDateTimeFormatter(getApplicationContext()), db);
+			LogbookTableModel expLTM = new LogbookTableModel(ltm, db);
 			DBExport.exportTripData(this, expLTM, fname);
 			LogbookTableModel.trip_simple_mode = prevMode;
 			Toast.makeText(this, R.string.logbook_show__export_complete, Toast.LENGTH_SHORT).show();
+			/*
+			 * For a selected date range, instead would use:
+			LogbookTableModel expLTM = new LogbookTableModel
+				(showV, ltm.getRange(0).timeStart, ... , db);
+			 */
 		}
 		catch (Throwable th)
 		{

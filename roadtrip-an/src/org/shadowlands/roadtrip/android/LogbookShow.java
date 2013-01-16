@@ -169,23 +169,24 @@ public class LogbookShow extends Activity
 	/** Used by {@link #onClick_BtnLater(View)} */
 	private int tripListBtnLaterPosition = -1;
 
-	/** Used by #askLocationAndShow(Activity, RDBAdapter); null if no location selected. */
+	/** Used by {@link #askLocationAndShow(int, Activity, RDBAdapter)}; null if no location selected. */
 	private static Location askLocationAndShow_locObj = null;
 
-	/** Used by #askLocationAndShow(Activity, RDBAdapter); show trips for all vehicles? */
+	/** Used by {@link #askLocationAndShow(int, Activity, RDBAdapter)}; show trips for all vehicles? */
 	private static boolean askLocationAndShow_allV = false;
 
-	/** Used by #askLocationAndShow(Activity, RDBAdapter); geoarea */
+	/** Used by {@link #askLocationAndShow(int, Activity, RDBAdapter)}; geoarea */
 	private static int askLocationAndShow_areaID = -1;
 
 	/**
 	 * Logbook in Location Mode: Show a popup with the current GeoArea's locations, the user picks
 	 * one and the LogbookShow activity is launched for it.
+	 * @param vID  A specific vehicle ID to show, or 0 for current vehicle
 	 * @param fromActivity  Current activity; will call {@link Activity#startActivity(Intent)} on it
 	 * @param db  Connection to use
-	 * @see #showTripsForLocation(int, boolean, Activity)
+	 * @see #showTripsForLocation(int, boolean, int, Activity)
 	 */
-	public static final void askLocationAndShow(final Activity fromActivity, final RDBAdapter db)
+	public static final void askLocationAndShow(final int vID, final Activity fromActivity, final RDBAdapter db)
 	{
 		if (askLocationAndShow_areaID == -1)
 		{
@@ -277,13 +278,15 @@ public class LogbookShow extends Activity
 		alert.setPositiveButton(android.R.string.search_go, new DialogInterface.OnClickListener() {
 			public void onClick(DialogInterface dialog, int whichButton)
 			{
+				final Vehicle showV = null;
 				CheckBox cb = (CheckBox) askItems.findViewById(R.id.logbook_show_popup_locs_allv);
 				if (cb != null)
 					askLocationAndShow_allV = cb.isChecked();
 
 				if (askLocationAndShow_locObj != null)
 				{
-					showTripsForLocation(askLocationAndShow_locObj.getID(), askLocationAndShow_allV, fromActivity);
+					showTripsForLocation
+						(askLocationAndShow_locObj.getID(), askLocationAndShow_allV, vID, fromActivity);
 				} else {
 					final int text;
 					if (loc.getText().length() == 0)
@@ -309,14 +312,17 @@ public class LogbookShow extends Activity
 	 * Start this activity in Location Mode: Only show trips including a given location.
 	 * @param locID  Location ID
 	 * @param allV  If true, show all vehicles' trips, not just the current vehicle
+	 * @param vID   If not <tt>allV</tt>, a specific vehicle ID to show, or 0 for current vehicle
 	 * @param fromActivity  Current activity; will call {@link Activity#startActivity(Intent)} on it
 	 */
-	public static final void showTripsForLocation(final int locID, final boolean allV, final Activity fromActivity)
+	public static final void showTripsForLocation(final int locID, final boolean allV, final int vID, final Activity fromActivity)
 	{
 		Intent i = new Intent(fromActivity, LogbookShow.class);
 		i.putExtra(EXTRAS_LOCID, locID);
 		if (allV)
 			i.putExtra(EXTRAS_LOCMODE_ALLV, true);
+		else if (vID != 0)
+			i.putExtra(EXTRAS_VEHICLE_ID, vID);
 		fromActivity.startActivity(i);
 	}
 
@@ -452,6 +458,10 @@ public class LogbookShow extends Activity
 				else if (i.hasExtra(EXTRAS_DATE))
 				{
 					goToDate = i.getIntExtra(EXTRAS_DATE, 0);
+				}
+
+				if (! locMode_allV)
+				{
 					final int vid = i.getIntExtra(EXTRAS_VEHICLE_ID, 0);
 					if (vid != 0)
 					{
@@ -698,7 +708,7 @@ public class LogbookShow extends Activity
 	        return true;
 
 		case R.id.menu_logbook_filter_location:
-			askLocationAndShow(this, db);
+			askLocationAndShow(((showV != null) ? showV.getID() : 0), this, db);
 			return true;
 
 		case R.id.menu_logbook_go_to_date:

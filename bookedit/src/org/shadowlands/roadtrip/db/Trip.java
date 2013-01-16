@@ -1130,6 +1130,7 @@ public class Trip extends RDBRecord
 	 * Get the trip comment, if any, or null.  Typically TStop comments are used instead;
 	 * use {@link Trip#readLatestTStop()} to get the tstop (and possible comment) nearest
 	 * the end of the trip.
+	 * @see #readLatestComment()
 	 */
 	public String getComment() {
 		return comment;
@@ -1144,6 +1145,31 @@ public class Trip extends RDBRecord
 	public void setComment(String comment) {
 		this.comment = comment;
 		dirty = true;
+	}
+
+	/**
+	 * Get the trip's comment or latest non-blank tstop comment.
+	 * @return  The trip comment, if not blank, or the comment from the most recent comment with one, or null.
+	 * @throws IllegalStateException if need to read TStops but the db connection is closed
+	 * @see #getComment()
+	 * @since 0.9.20
+	 */
+	public String readLatestComment()
+		throws IllegalStateException
+	{
+		if ((comment != null) && (comment.length() > 0))  // almost always null
+			return comment;
+
+		// Go through all stops to find a comment
+		final Vector<TStop> ts = readAllTStops();
+		for (int i = ts.size() - 1; i >= 0; --i)
+		{
+			final String tsComm = ts.elementAt(i).getComment();
+			if ((tsComm != null) && (tsComm.length() > 0))
+				return tsComm;
+		}
+
+		return null;
 	}
 
 	/**

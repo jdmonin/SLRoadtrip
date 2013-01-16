@@ -1058,33 +1058,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 				tr[6] = getTStopLocDescr(ts_end, conn);
 
 			// trip comment, or highest tstop comment:
-
-			String tripComment = t.getComment();  // t.getComment is almost always null
-			if ((tripComment != null) && (tripComment.length() == 0))
-				tripComment = null;
-
-			if (ts_end != null)
-			{
-				final String lsComment = ts_end.getComment();
-				if ((lsComment != null) && (lsComment.length() > 0))
-					tripComment = lsComment;
-			}
-
-			if ((stops != null) && (tripComment == null))
-			{
-				// Go through all stops to find a comment
-				for (int j = stops.size() - 1; j >= 0; --j)
-				{
-					final String tsComment = stops.get(j).getComment();
-					if ((tsComment != null) && (tsComment.length() > 0))
-					{
-						tripComment = tsComment;
-						break;
-					}
-				}
-			}
-
-			tr[7] = tripComment;
+			tr[7] = t.readLatestComment();
 
 			// Done with this row
 			tText.addElement(tr);

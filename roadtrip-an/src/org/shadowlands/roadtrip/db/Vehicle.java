@@ -479,11 +479,41 @@ public class Vehicle extends RDBRecord
 
 	/**
 	 * Get the id of the vehicle's last completed trip.
+	 * {@code last_tripid} is used to find the vehicle's previous stopping point, when starting a new trip.
 	 * @return trip ID, or 0 if no trip has been completed.
 	 * @see #setOdometerCurrentAndLastTrip(int, Trip, boolean)
+	 * @see #hasTripInProgress()
 	 */
 	public int getLastTripID() {
 		return last_tripid;
+	}
+
+	/**
+	 * Does this vehicle (which can't be the current vehicle) have a trip in progress?
+	 * Before calling this, check {@link Settings} for the {@code CURRENT_VEHICLE} and {@code CURRENT_TRIP}.
+	 * If this is the current vehicle, its {@link #getLastTripID()} won't be the current trip.
+	 *<P>
+	 * Checks {@link #getLastTripID()}.
+	 * If nonzero, checks that trip's {@link Trip#getOdo_end()} using the vehicle's open db connection.
+	 * If trip's {@code odo_end} is 0, that trip is still in progress.
+	 *<P>
+	 * @return  true if this non-current vehicle has a trip in progress.
+	 *          If the db connection is closed, or trip record not found somehow, returns false.
+	 * @since 0.9.20
+	 */
+	public boolean hasTripInProgress() {
+		if (0 == last_tripid)
+			return false;
+
+		Trip tr;
+		try {
+			tr = new Trip(dbConn, last_tripid);
+		} catch (IllegalStateException e) {
+			return false;
+		} catch (RDBKeyNotFoundException e) {
+			return false;
+		}
+		return (tr.getOdo_end() != 0);		
 	}
 
 	/**

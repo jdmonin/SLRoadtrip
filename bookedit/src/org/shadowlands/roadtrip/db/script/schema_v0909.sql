@@ -15,7 +15,7 @@ PRAGMA user_version = 0909;
 
 -- This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
 -- 
---  This file Copyright (C) 2010-2012 Jeremy D Monin (jdmonin@nand.net)
+--  This file Copyright (C) 2010-2013 Jeremy D Monin (jdmonin@nand.net)
 -- 
 --  This program is free software: you can redistribute it and/or modify
 --  it under the terms of the GNU General Public License as published by
@@ -70,8 +70,8 @@ create table settings ( _id integer PRIMARY KEY AUTOINCREMENT not null, sname va
 	-- DISTANCE_DISPLAY: KM or MI
 	-- CURRENT_AREA (int _id within geoarea)
 	-- CURRENT_DRIVER (int _id within people)
-	-- CURRENT_VEHICLE (int _id within vehicles)
-	-- CURRENT_TRIP (int _id, or 0)
+	-- CURRENT_VEHICLE (int _id within vehicles) -- if this changes, update CURRENT_TRIP too; see vehicle.last_tripid comment
+	-- CURRENT_TRIP (int _id, or 0) -- if the CURRENT_VEHICLE changes, update this setting too
 	-- CURRENT_TSTOP (int _id, or 0) -- 0 when not stopped, 0 when not on a trip
 	-- PREV_LOCATION (int _id, or 0) -- added in v0813; may be 0 between trips, esepcially if current vehicle has no prev trips.
 	-- CURRENT_FREQTRIP (int _id, or 0) -- added in v0900; 0 when not on a freqtrip; 0 when CURRENT_TRIP is 0
@@ -99,8 +99,11 @@ create table vehiclemake ( _id integer PRIMARY KEY AUTOINCREMENT not null, mname
 
 create table vehicle ( _id integer PRIMARY KEY AUTOINCREMENT not null, nickname varchar(255), driverid int not null, makeid int not null, model varchar(255), year integer not null, date_from integer, date_to integer, vin varchar(64), plate varchar(64), odo_orig integer not null, odo_curr integer not null, last_tripid integer, distance_storage varchar(2) not null, expense_currency varchar(3) not null, expense_curr_sym varchar(3) not null, expense_curr_deci integer not null, fuel_curr_deci integer not null, fuel_type varchar(1) not null, fuel_qty_unit varchar(2) not null, fuel_qty_deci integer not null, comment varchar(255), is_active int not null default 1 );
     -- To reduce write freq, update odo_curr only at end of each trip, not at each trip stop.
-    -- Also update last_trip_id at the end of each trip.
-    -- If the vehicle has never finished a trip, last_trip_id is 0 or null.
+    -- Also update last_tripid at the end of each trip, or if a trip was in progress and then the current vehicle changed.
+    --   If the vehicle has never finished a trip, last_tripid is 0 or null.
+    --   last_tripid is used to find the vehicle's previous stopping point, when starting a new trip.
+    --   If the CURRENT_VEHICLE setting changes during this vehicle's CURRENT_TRIP: Update last_tripid for this vehicle, and
+    --   then check the new vehicle's last_tripid.  If that trip's odo_end is 0, that trip is in progress, the new CURRENT_TRIP.
     -- distance_storage is 'KM' or 'MI'
     -- expense_currency is, for example, 'USD' or 'CAD'
     -- expense_curr_sym is, for example, '$'

@@ -1021,7 +1021,7 @@ public class Trip extends RDBRecord
 		return odo_start;
 	}
 
-	/** get the total-odometer value (not trip-odo) at the end of this trip */
+	/** Get the total-odometer value (not trip-odo) at the end of this trip, or 0 if still in progress. */
 	public int getOdo_end() {
 		return odo_end;
 	}
@@ -1149,7 +1149,7 @@ public class Trip extends RDBRecord
 
 	/**
 	 * Get the trip's comment or latest non-blank tstop comment.
-	 * @return  The trip comment, if not blank, or the comment from the most recent comment with one, or null.
+	 * @return  The trip comment, if not blank, or the comment from the most recent TStop with one, or null
 	 * @throws IllegalStateException if need to read TStops but the db connection is closed
 	 * @see #getComment()
 	 * @since 0.9.20

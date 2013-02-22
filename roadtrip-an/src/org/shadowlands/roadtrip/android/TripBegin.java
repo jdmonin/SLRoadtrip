@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010-2012 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2013 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -110,6 +110,8 @@ public class TripBegin extends Activity
 	private AutoCompleteTextView etLocNew;
 	/** starting date-time */
 	private Calendar startTime;
+	/** value of {@link #startTime} as set by Activity, not by user, in milliseconds;
+	 *  used to determine whether to leave {@link #startTime} unchanged */
 	private long startTimeAtCreate;
 
 	/**
@@ -298,6 +300,9 @@ public class TripBegin extends Activity
 	 * update odometer and start-date {@link #updateStartDateButton()} too.
 	 * {@link #startingPrevTStop}, {@link #locObj}, and
 	 * {@link #locObjOrig} are also set here.
+	 *<P>
+	 * Called when activity appears ({@link #onResume()})
+	 * and when a different driver or vehicle is chosen.
 	 */
 	private void updateDriverVehTripTextAndButtons()
 	{
@@ -367,19 +372,49 @@ public class TripBegin extends Activity
 				if ((latestVehTime != 0L)
 					&& (Math.abs(latestVehTime - currStartTime) >= TIMEDIFF_HISTORICAL_MILLIS))
 				{
-					startTime.setTimeInMillis(latestVehTime);
-					startTimeAtCreate = 1000L * latestVehTime;  // to allow further updates if veh changes again
-					tpStartTimeTime.setCurrentHour(startTime.get(Calendar.HOUR_OF_DAY));
-					tpStartTimeTime.setCurrentMinute(startTime.get(Calendar.MINUTE));
-					Toast.makeText(this,
-						getResources().getString(R.string.using_old_date_due_to_previous),
-						Toast.LENGTH_SHORT).show();
+					askStartNowOrHistorical(latestVehTime);
 				}
 			}
 		}
 		prevDId = dID;
 
 		updateStartDateButton();
+	}
+
+	/**
+	 * Ask whether to start now, or at the stop time of this vehicle's previous trip
+	 * ({@link #TIMEDIFF_HISTORICAL_MILLIS} ago or more: Historical Mode).
+	 * Default to start now.
+	 * @param latestVehTime Historical starting time, to set {@link #startTime} and {@link #tpStartTimeTime} if chosen
+	 * @since 0.9.20
+	 */
+	public void askStartNowOrHistorical(final long latestVehTime)
+	{
+    	AlertDialog.Builder alert = new AlertDialog.Builder(this);
+
+    	alert.setTitle(R.string.confirm);
+    	alert.setMessage(R.string.set_time_now_or_historical);
+    	alert.setNegativeButton(R.string.now, new DialogInterface.OnClickListener() {
+	    	public void onClick(DialogInterface dialog, int whichButton)
+	    	{
+	    		final long now = System.currentTimeMillis();
+	    		startTime.setTimeInMillis(now);
+	    		startTimeAtCreate = now;
+	    		tpStartTimeTime.setCurrentHour(startTime.get(Calendar.HOUR_OF_DAY));
+	    		tpStartTimeTime.setCurrentMinute(startTime.get(Calendar.MINUTE));   		
+	    	}
+	    	});
+    	alert.setPositiveButton(R.string.historical, new DialogInterface.OnClickListener() {
+	    	public void onClick(DialogInterface dialog, int whichButton)
+	    	{
+	    		startTime.setTimeInMillis(latestVehTime);
+	    		startTimeAtCreate = latestVehTime;  // set equal, to allow further updates if veh changes again
+	    		tpStartTimeTime.setCurrentHour(startTime.get(Calendar.HOUR_OF_DAY));
+	    		tpStartTimeTime.setCurrentMinute(startTime.get(Calendar.MINUTE));
+	    	}
+	    	});
+    	alert.setCancelable(true);
+    	alert.show();
 	}
 
 	/** Set the start-date button text based on {@link #startTime}'s value */

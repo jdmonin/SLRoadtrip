@@ -70,6 +70,7 @@
 <string name="from__colon">From:</string>
 <string name="gas__colon_sp">Gas: </string>
 <string name="gas__dots">Gas...</string>
+<string name="historical">Historical</string>
 <string name="home_area">Home area</string>
 <string name="internal__current_notfound_area_driver_veh_trip">Internal error: Current area/driver/vehicle/trip not found in db</string>
 <string name="internal__missing_required_bundle">Internal error: Missing required bundle when calling activity.</string>
@@ -91,6 +92,7 @@
 <string name="none">none</string>
 <string name="none__parens">(none)</string>
 <string name="not_found">Not found.</string>
+<string name="now">Now</string>
 <string name="original_odometer">Original\nodometer</string>
 <string name="other_stop">Other stop...</string>
 <string name="other_vehicle">Other vehicle...</string>
@@ -112,6 +114,7 @@
 <string name="save_changes">Save Changes</string>
 <string name="sdcard_not_mounted">The SD card is not mounted.</string>
 <string name="sdcard_read_only">The SD card is read-only.</string>
+<string name="set_time_now_or_historical">Historical Mode:\nShould the time be set to now, or to the previous date entered for this vehicle?</string>
 <string name="settings">Settings</string>
 <string name="show_logbook">Show Logbook</string>
 <string name="starting_time">Starting time</string>

@@ -23,10 +23,26 @@ import java.util.Vector;
 
 /**
  * In-memory representation, and database access for, a Trip Stop.
+ * Most TStops are created once, when the vehicle stops during a trip,
+ * and then updated when the vehicle leaves that stop to continue its journey.
+ * See SQL schema comments for details.
  *<P>
  * To indicate this TStop has related side tables such as {@link TStopGas},
  * there is a <tt>flag_sides</tt> field where flag bits such as
- * {@link #FLAG_GAS} can be set.
+ * {@link #FLAG_GAS} can be set.  See {@link #getFlags()}.
+ *<P>
+ * To temporarily note things about the TStop while stopped there,
+ * there are temporary flags such as {@link #TEMPFLAG_CREATED_LOCATION}.
+ * All the temporary flags are cleared when the vehicle continues
+ * its trip from the stop ({@link #clearTempFlags()}).
+ *<P>
+ * To tell if the app's {@link Settings#CURRENT_VEHICLE} is currently stopped
+ * at this TStop, see {@link Settings#CURRENT_TSTOP}.  For other vehicles
+ * besides the current vehicle, {@link #TEMPFLAG_CURRENT_TSTOP_AT_CURRV_CHANGE}
+ * indicates that the vehicle is stopped here and the {@code CURRENT_VEHICLE}
+ * was changed to a different vehicle at that point.  When the other vehicle
+ * becomes current again, {@code CURRENT_TSTOP} will be set to this TStop.
+ * (See also {@link Vehicle#getTripInProgress()} for that transition.)
  *
  * @author jdmonin
  */
@@ -59,6 +75,12 @@ public class TStop extends RDBRecord
     /** max(odo_total) for use in {@link #readHighestTStopOdoTotalWithinTrip(RDBAdapter, int)} */
     private static final String MAX_FIELD_ODO_TOTAL = "max(" + FIELD_ODO_TOTAL + ")";
 
+    /** Where-clause for use in {@link #readPreviousTStopWithinTrip(RDBAdapter, Trip, TStop)} */
+    private static final String WHERE_TRIPID_AND_TSTOPID = FIELD_TRIPID + " = ? AND _id < ?";
+
+    /** {@code max(_id)} for use in {@link #readPreviousTStopWithinTrip(RDBAdapter, Trip, TStop)} */
+    private static final String MAX_FIELD_ID = "max(_id)";
+
     /** db table fields.
      * The "descr" field is now used for the "location" of the stop.
      * @see #buildInsertUpdate()
@@ -80,7 +102,9 @@ public class TStop extends RDBRecord
 
     // All temporary flags have values 0x80 or lower,
     // and are cleared before continuing the trip from the stop
-    // (or, if this stop ends the trip, before ending it).
+    // (or, if this stop ends the trip, before ending it) by clearTempFlags().
+    // So, these flags may be set only on the TStop which is CURRENT_TSTOP (vehicle is currently stopped here)
+    // or on the TStop that was current for another vehicle (marked with TEMPFLAG_CURRENT_TSTOP_AT_CURRV_CHANGE).
 
     /** Temporary flag to indicate a new Location was created for this TStop */
     public static final int TEMPFLAG_CREATED_LOCATION = 0x01;
@@ -93,6 +117,21 @@ public class TStop extends RDBRecord
      * @since 0.9.06
      */
     public static final int TEMPFLAG_CREATED_GASBRANDGRADE = 0x04;
+
+    /**
+     * Temporary flag to indicate this was {@link Settings#CURRENT_TSTOP} before changing
+     * {@link Settings#CURRENT_VEHICLE}.  Unless you're changing the current vehicle setting,
+     * this flag should not be set for a TStop.
+     *<P>
+     * So, this flag is set for the current tstop, if any, of the current trip of a non-current vehicle.
+     *<P>
+     * When the current vehicle is changed back to this tstop's trip's vehicle,
+     * this flag will be used to set {@link Settings#CURRENT_TSTOP} again.
+     * For details on this transition, see class javadoc for TStop and {@link Vehicle},
+     * and the sql schema comments for those tables and settings.
+     * @since 0.9.20
+     */
+    public static final int TEMPFLAG_CURRENT_TSTOP_AT_CURRV_CHANGE = 0x08;
 
     /** Flag to indicate this TStop has a related {@link TStopGas} record */
     public static final int FLAG_GAS = 0x100;
@@ -114,7 +153,7 @@ public class TStop extends RDBRecord
     /** Location ID.  0 is empty/unused. */
     private int locid;
 
-    /** GeoArea ID.  0 is empty/unused. */
+    /** GeoArea ID.  0 is empty/unused.  See {@link #getAreaID()} javadoc. */
     private int areaid;
 
     /** may be null */
@@ -259,6 +298,37 @@ public class TStop extends RDBRecord
 			return null;
 		}
 	}
+
+    /**
+     * Retrieve the TStop preceding {@code ts} within this trip.
+     * Stops within a trip are added by increasing {@code _id},
+     * so find the highest TStop id less than {@code ts._id}.
+     * If necessary, the trip's {@link Trip#getStartTStopID()} is returned.  
+     * @param db  db connection
+     * @param tr  Trip to examine
+     * @param ts  TStop to look before
+     * @return  The previous TStop, or null if none found
+     * @throws IllegalStateException if db null or not open
+     * @since 0.9.20
+     */
+    public static TStop readPreviousTStopWithinTrip(RDBAdapter db, final Trip tr, final TStop ts)
+		throws IllegalStateException
+    {
+    	if (db == null)
+    		throw new IllegalStateException("db null");
+    	final String[] whereArgs = { Integer.toString(tr.getID()), Integer.toString(ts.getID()) };
+    	int ts_id = db.getRowIntField(TABNAME, MAX_FIELD_ID, WHERE_TRIPID_AND_TSTOPID, whereArgs, 0);
+    	if (ts_id == 0)
+    		ts_id = tr.getStartTStopID();
+		if (ts_id == 0)
+			return null;
+
+		try {
+			return new TStop(db, ts_id);
+		} catch (RDBKeyNotFoundException e) {
+			return null;
+		}
+    }
 
     /**
      * Retrieve this trip's maximum recorded odo_total within its TStops, if any.
@@ -698,7 +768,24 @@ public class TStop extends RDBRecord
 			toString_descr = null;
 	}
 
-	/** Get the GeoArea ID, or 0 if empty/unused. */
+	// getAreaID's javadoc should kept in sync with the schema comments for TStop.a_id.
+	/**
+	 * Get the GeoArea ID, or 0 if empty/unused.
+	 *<P>
+	 * For local trips: unused; use {@link Trip#getAreaID()} instead.
+	 *<P>
+	 * For roadtrips:
+	 *<UL>
+	 * <LI> A roadtrip's ending tstop's area id should be the ending area,
+	 *        same as {@link Trip#getRoadtripEndAreaID()}.
+	 * <LI> A roadtrip's starting tstop's area id is ignored, because it could be the
+	 *        ending tstop of a local trip. Use {@link Trip#getAreaID()} instead.
+	 * <LI> Other stops during roadtrip: area id is set for any roadtrip stop
+	 *        which is within the starting or ending geoarea.
+	 *        For stops 'in the middle' (neither start or end area), area id is unused.
+	 * <LI> 0 for area id is ok for a local tstop, but not ok for start/end location of trip.
+	 *</UL>
+	 */
 	public int getAreaID() {
 		return areaid;
 	}
@@ -849,6 +936,12 @@ public class TStop extends RDBRecord
 
     /**
      * Clear any temporary flags which are currently set (<tt>0x80</tt> or less).
+     * This is done when leaving a TStop, to continue the trip or end it.
+     * Example: {@link #TEMPFLAG_CREATED_VIAROUTE}.
+     *<P>
+     * These flags may be set only on the TStop which is {@link Settings#CURRENT_TSTOP} (vehicle is currently stopped here)
+     * or on the TStop that was current for another vehicle (marked with {@link #TEMPFLAG_CURRENT_TSTOP_AT_CURRV_CHANGE}).
+     *
      * @see #clearFlagSingle(int)
      */
     public void clearTempFlags()

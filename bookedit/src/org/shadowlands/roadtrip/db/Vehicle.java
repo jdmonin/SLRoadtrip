@@ -29,7 +29,14 @@ import java.util.Vector;
  *<P>
  * To reduce the write frequency, please wait until the end of a trip
  * before you update the vehicle's current odometer and last trip ID,  
- * instead of each trip stop.  Call {@link #setOdometerCurrentAndLastTrip(int, Trip)}.
+ * instead of each trip stop: Call {@link #setOdometerCurrentAndLastTrip(int, Trip, boolean)}
+ * only when the trip ends.
+ *<P>
+ * If changing the {@link Settings#CURRENT_VEHICLE} from this vehicle, and there is a
+ * trip in progress, call {@link #setOdometerCurrentAndLastTrip(int, Trip, boolean)}
+ * to save the current-trip info for the old vehicle, and then call {@link #getTripInProgress()}
+ * on the new vehicle.  See also {@link TStop} class comments about the current TStop
+ * when changing current vehicle.
  *<P>
  * See also bookedit.MiscTablesCRUDDialog.createEditVehicleDialog.
  *
@@ -482,7 +489,7 @@ public class Vehicle extends RDBRecord
 	 * {@code last_tripid} is used to find the vehicle's previous stopping point, when starting a new trip.
 	 * @return trip ID, or 0 if no trip has been completed.
 	 * @see #setOdometerCurrentAndLastTrip(int, Trip, boolean)
-	 * @see #hasTripInProgress()
+	 * @see #getTripInProgress()
 	 */
 	public int getLastTripID() {
 		return last_tripid;
@@ -497,23 +504,24 @@ public class Vehicle extends RDBRecord
 	 * If nonzero, checks that trip's {@link Trip#getOdo_end()} using the vehicle's open db connection.
 	 * If trip's {@code odo_end} is 0, that trip is still in progress.
 	 *<P>
-	 * @return  true if this non-current vehicle has a trip in progress.
-	 *          If the db connection is closed, or trip record not found somehow, returns false.
+	 * @return  This non-current vehicle's trip in progress, or {@code null} if none.
+	 *          If the db connection is closed, or trip record not found somehow, returns null.
 	 * @since 0.9.20
 	 */
-	public boolean hasTripInProgress() {
+	public Trip getTripInProgress() {
 		if (0 == last_tripid)
-			return false;
+			return null;
 
 		Trip tr;
 		try {
 			tr = new Trip(dbConn, last_tripid);
 		} catch (IllegalStateException e) {
-			return false;
+			return null;
 		} catch (RDBKeyNotFoundException e) {
-			return false;
+			return null;
 		}
-		return (tr.getOdo_end() != 0);		
+		
+		return (tr.getOdo_end() == 0) ? tr : null;
 	}
 
 	/**

@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010-2012 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2013 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -68,6 +68,11 @@ public class Settings extends RDBRecord
 
 	/**
 	 * int setting for previous {@link Location} ID, if any.
+	 * When stopped at a {@link TStop}, the previous stop's location ID;
+	 * at the trip's first stop, should be the trip start location.
+	 * May be 0 between trips, or the previous trip's ending location.
+	 * Used during trips to build dropdowns of {@link ViaRoute}s between
+	 * {@code PREV_LOCATION} and current TStop's location.
 	 * @since 0.8.13
 	 */
 	public static final String PREV_LOCATION = "PREV_LOCATION";

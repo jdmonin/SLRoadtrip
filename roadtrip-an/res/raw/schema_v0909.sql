@@ -73,7 +73,9 @@ create table settings ( _id integer PRIMARY KEY AUTOINCREMENT not null, sname va
 	-- CURRENT_VEHICLE (int _id within vehicles) -- if this changes, update CURRENT_TRIP too; see vehicle.last_tripid comment
 	-- CURRENT_TRIP (int _id, or 0) -- if the CURRENT_VEHICLE changes, update this setting too
 	-- CURRENT_TSTOP (int _id, or 0) -- 0 when not stopped, 0 when not on a trip
-	-- PREV_LOCATION (int _id, or 0) -- added in v0813; may be 0 between trips, esepcially if current vehicle has no prev trips.
+	-- PREV_LOCATION (int _id, or 0) -- added in v0813; may be 0 between trips, especially if current vehicle has no prev trips.
+	--      When at a TStop, the previous stop's location ID; at the trip's first stop, should be the trip start location.
+	--      Used during trips to get ViaRoutes between PREV_LOCATION and current TStop's location.
 	-- CURRENT_FREQTRIP (int _id, or 0) -- added in v0900; 0 when not on a freqtrip; 0 when CURRENT_TRIP is 0
 	-- CURRENT_FREQTRIP_TSTOPLIST (empty string, or comma-delimited _id)
 	--      added in v0900; unused IDs for this freqtrip in freqtrip_tstop
@@ -168,9 +170,6 @@ create table tstop ( _id integer PRIMARY KEY AUTOINCREMENT not null, tripid int 
 	--         which is within the starting or ending geoarea.
 	--         for stops 'in the middle' (neither start or end area), a_id is null.
 	--     0 for a_id is ok for a local tstop, but not ok for start/end location of trip.
-	--         A roadtrip's ending tstop's areaid should be the ending area.
-	--         A roadtrip's starting tstop's areaid is ignored, because it could be the
-	--         ending tstop of a local trip.
 	-- via_route, via_id are the route from the previous tstop's location;
 	--    they are ignored for the tstop which starts a trip. (via_id goes to the via_route table)
 	-- descr is null for all new rows (starting with app version 0.9.05), because the separate

@@ -735,6 +735,7 @@ public class Trip extends RDBRecord
      *     vehicle's previous trip ended
      * @throws IllegalStateException if the db connection is closed
      * @see #readAllTStops()
+     * @see #readLatestTStop()
      * @see #isStartTStopFromPrevTrip()
      */
     public TStop readStartTStop(final boolean orFirstTStop)
@@ -742,6 +743,7 @@ public class Trip extends RDBRecord
     {
     	if (tstop_start != null)
     	{
+    		// cached
     		if (orFirstTStop)
     			return tstop_start;  // might be from this or previous trip
     		else
@@ -786,6 +788,7 @@ public class Trip extends RDBRecord
      * @return that stop, or null if none yet on this trip
      * @throws IllegalStateException if the db connection is closed
      * @see #readAllTStops()
+     * @see #readStartTStop(boolean)
      * @see TStop#latestStopForTrip(RDBAdapter, int, boolean)
      */
     public TStop readLatestTStop()

@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2008 The Android Open Source Project
  *    Retrieved via http://www.quietlycoding.com/?p=5
- * Portions Copyright (C) 2010,2012 Jeremy D Monin <jdmonin@nand.net>
+ * Portions Copyright (C) 2010,2012-2013 Jeremy D Monin <jdmonin@nand.net>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,8 +49,9 @@ import android.widget.TextView;
  * This copy was obtained 2010-07-14 at <A href="http://www.quietlycoding.com/?p=5"
  *   >http://www.quietlycoding.com/?p=5</A>.
  *<P>
- * 2010-12-11 jdmonin Update mCurrent if mText is typed into
- * 2012-12-08 jdmonin Javadocs: setOnChangeListener
+ * 2010-12-11 jdmonin Update mCurrent if mText is typed into <br>
+ * 2012-12-08 jdmonin Javadocs: setOnChangeListener <br>
+ * 2013-04-29 jdmonin Add mLowest, javadocs <br>
  *
  * @author Google
  */
@@ -114,6 +115,13 @@ public class NumberPicker extends LinearLayout implements OnClickListener,
     protected int mEnd;
     protected int mCurrent;
     protected int mPrevious;
+    /**
+     * mLowest is the lowest observed {@link #mCurrent} value after increments/decrements;
+     * not updated by typing in the text field, because backspacing and entering a new value
+     * will temporarily set a very low {@link #mCurrent} value that won't be the final value.
+     */
+    protected int mLowest;
+
     private OnChangedListener mListener;
     private Formatter mFormatter;
     private long mSpeed = 300;
@@ -196,7 +204,8 @@ public class NumberPicker extends LinearLayout implements OnClickListener,
 
     /**
      * Set the range of numbers allowed for the number picker. The current
-     * value will be automatically set to the start.
+     * value will be automatically set to the start. The {@link #getLowest()} value
+     * will be set to the end, so that it can be decreased with decrements.
      *
      * @param start the start of the range (inclusive)
      * @param end the end of the range (inclusive)
@@ -205,13 +214,15 @@ public class NumberPicker extends LinearLayout implements OnClickListener,
         mStart = start;
         mEnd = end;
         mCurrent = start;
+        mLowest = end;
         updateView();
     }
  
     /**
      * Set the range of numbers allowed for the number picker. The current
-     * value will be automatically set to the start. Also provide a mapping
-     * for values used to display to the user.
+     * value will be automatically set to the start. The {@link #getLowest()} value
+     * will be set to the end, so that it can be decreased with decrements.
+     * Also provide a mapping for values used to display to the user.
      *
      * @param start the start of the range (inclusive)
      * @param end the end of the range (inclusive)
@@ -222,6 +233,7 @@ public class NumberPicker extends LinearLayout implements OnClickListener,
         mStart = start;
         mEnd = end;
         mCurrent = start;
+        mLowest = end;
         updateView();
     }
 
@@ -244,12 +256,15 @@ public class NumberPicker extends LinearLayout implements OnClickListener,
 
     /**
      * Decrement the number's value, if allowed by range.
-     * @return true if incremented, false if already at end of range (highest value).
+     * Update {@link #mLowest} but not {@link #mPrevious}.
+     * @return true if decremented, false if already at end of range (lowest value).
      */
     public boolean decrement() {
     	if (mCurrent <= mStart)
     		return false;
     	--mCurrent;
+    	if (mCurrent < mLowest)
+    		mLowest = mCurrent;
         updateView();
     	return true;
     }
@@ -280,6 +295,14 @@ public class NumberPicker extends LinearLayout implements OnClickListener,
                 : String.valueOf(value);
     }
 
+    /**
+     * Update {@link #mPrevious}, {@link #mCurrent}, and {@link #mLowest}
+     * from an increment/decrement button click.
+     * Call {@link #notifyChange()} and {@link #updateView()}.
+     *<P>
+     * Not called when text is typed into {@link #mText}.
+     * @param newCurrent
+     */
     protected void changeCurrent(int newCurrent) {
 
         // Wrap around the values if we go past the start or end
@@ -290,6 +313,8 @@ public class NumberPicker extends LinearLayout implements OnClickListener,
         }
         mPrevious = mCurrent;
         mCurrent = newCurrent;
+        if (mCurrent < mLowest)
+        	mLowest = mCurrent;
 
         notifyChange();
         updateView();
@@ -315,6 +340,13 @@ public class NumberPicker extends LinearLayout implements OnClickListener,
         mText.setSelection(mText.getText().length());
     }
 
+    /**
+     * Update {@link #mPrevious}, update {@link #mCurrent} from text {@code str}.
+     * Call {@link #notifyChange()} if valid, and {@link #updateView()}.
+     *<P>
+     * Does not call {@link #changeCurrent(int)}.
+     * @param str  Contents of {@link #mText} to parse and use in update
+     */
     private void validateCurrentView(CharSequence str) {
         int val = getSelectedPos(str.toString());
         if ((val >= mStart) && (val <= mEnd)) {
@@ -391,6 +423,7 @@ public class NumberPicker extends LinearLayout implements OnClickListener,
     	b.putInt("S", mStart);
     	b.putInt("E", mEnd);
     	b.putInt("C", mCurrent);
+    	b.putInt("L", mLowest);
     	if (mDisplayedValues != null)
     		b.putStringArray("D", mDisplayedValues);
     	// Log.i(TAG, "onSaveInstanceState put " + b.hashCode());
@@ -413,6 +446,7 @@ public class NumberPicker extends LinearLayout implements OnClickListener,
     	mStart = b.getInt("S", DEFAULT_MIN);
     	mEnd = b.getInt("E", DEFAULT_MAX);
     	mCurrent = b.getInt("C", DEFAULT_MIN);
+    	mLowest = b.getInt("L", mEnd);
     	if (b.containsKey("D"))
     		mDisplayedValues = b.getStringArray("D");
     	updateView();
@@ -520,6 +554,18 @@ public class NumberPicker extends LinearLayout implements OnClickListener,
      */
     public int getCurrent() {
         return mCurrent;
+    }
+
+    /**
+     * Get the lowest non-typed current value.
+     * This is the lowest {@link #getCurrent()} value after increments/decrements;
+     * not updated by typing in the text field, because backspacing and entering a new value
+     * will temporarily set a very low current value that won't be the final value.
+     * 
+     * @return the lowest non-typed value.
+     */
+    public int getLowest() {
+    	return mLowest;
     }
 
 	/** update current value when typed into */

@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  Copyright (C) 2010-2012 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2013 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -315,9 +315,15 @@ public class OdometerNumberPicker extends LinearLayout implements OnChangedListe
 
 		final int delta = newVal - oldVal;
 		if (picker == mWholeNum)
-			relatedOdoOnChanges.changeCurrentWhole(delta, false);
-		else
+		{
+			// avoid big delta jumps during odo text edits (temporarily fewer digits);
+			//   see getLowest javadoc for details.
+			final int lowest = mWholeNum.getLowest();
+			if ((newVal >= lowest) && (oldVal >= lowest))
+				relatedOdoOnChanges.changeCurrentWhole(delta, false);
+		} else {
 			relatedOdoOnChanges.changeCurrentTenths(delta);
+		}
 	}
 
 	/**

@@ -1010,6 +1010,20 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	}
 
 	/**
+	 * Convert n to a 2-digit string.
+	 * @param n  A non-negative integer
+	 * @return  {@code n} as a string with at least 2 digits, such as "51" or "09", including a leading 0 if needed
+	 * @since 0.9.20
+	 */
+	private final static String digits2(final int n)
+	{
+		if (n > 9)
+			return Integer.toString(n);
+		else
+			return "0" + Integer.toString(n);
+	}
+
+	/**
 	 * Add rows (simple mode) to strings from a list of {@link Trip}s and their {@link TStop}s.
 	 * Columns of added rows line up with {@link #COL_HEADINGS_SIMPLE}.
 	 * @param td    Trip data to add to <tt>tText</tt>
@@ -1028,9 +1042,13 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 
 			String[] tr = new String[COL_HEADINGS_SIMPLE.length];
 
-			// trip starting date
+			// trip starting date: yyyy-mm-dd (not localized date-time format)
 			final long tstart = t.getTime_start() * 1000L;
-			tr[0] = dtf.formatDate(tstart);
+			{
+				final Date tstartDate = new Date(tstart);
+				tr[0] = Integer.toString(tstartDate.getYear() + 1900)
+					+ '-' + digits2(tstartDate.getMonth() + 1) + '-' + digits2(tstartDate.getDate());
+			}
 
 			// start,end odo
 			tr[1] = Integer.toString((int) (t.getOdo_start() / 10.0f));

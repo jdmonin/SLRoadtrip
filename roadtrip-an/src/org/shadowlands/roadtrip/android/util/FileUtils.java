@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010-2012 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2013 Jeremy D Monin <jdmonin@nand.net>
  *
  *  Portions of this file Copyright (C) 2010 Miklos Keresztes (miklos.keresztes@gmail.com)
  *  via the AndiCar project (GPLv3) - see
@@ -35,6 +35,7 @@ import java.util.regex.PatternSyntaxException;
 
 import android.content.Context;
 import android.os.Environment;
+import android.os.StatFs;
 
 /**
  * File constants and utility methods.
@@ -194,6 +195,27 @@ public class FileUtils
         	} catch (IOException e2) {}
         	throw e;
         }
+    }
+
+    /**
+     * Get the amount of free space on this file's or directory's filesystem. 
+     * @param fullpath  Full path to a directory or a file
+     * @return  Amount of available free space (bytes) on {@code fullpath}'s filesystem, or 0 if the path doesn't exist
+     * @since 0.9.20
+     */
+    public static final long getFreeSpace(final String fullpath)
+    {
+    	try
+    	{
+	    	final StatFs sfs = new StatFs(new File(fullpath).getPath());
+	    	return sfs.getBlockSize() * (long) sfs.getAvailableBlocks();
+    	} catch (Throwable th) {
+    		// statfs constructor throws IllegalArgumentException if path doesn't exist,
+    		//   this isn't mentioned in its javadoc (as of june 2013); catching general
+    		//   throwable in case the undocumented exception ever changes.
+
+    		return 0;
+    	}
     }
 
 }

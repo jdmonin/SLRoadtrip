@@ -177,10 +177,12 @@
 <string name="main_roadtrip_start_area">Roadtrip start area:</string>
 <string name="main_trip_based_on_frequent">This trip is based on another frequent trip.</string>
 <string name="main_trip_in_progress">Trip in Progress.</string>
+<string name="backups_main_cannot_backup_need_free_space__fmt">Cannot back up: The SD card must have at least %d kB free.</string>
 <string name="backups_main_folder_nonefound">No backups found in the backup folder.</string>
 <string name="backups_main_last_bkuptime">Last backup time: </string>
 <string name="backups_main_last_triptime">Last trip time: </string>
 <string name="backups_main_no_previous">Logbook has never been backed up!</string>
+<string name="backups_main_not_enough_free_space">Not enough free space</string>
 <string name="backups_main_prevlist">Previous Backups on SD card: (Click to restore)</string>
 <string name="backups_main_title">Backup and Restore</string>
 <string name="backups_restore_are_you_sure">Are you sure you want to replace all current data with this backup?</string>

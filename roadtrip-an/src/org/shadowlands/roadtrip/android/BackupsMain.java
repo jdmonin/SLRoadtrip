@@ -19,12 +19,14 @@
 
 package org.shadowlands.roadtrip.android;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Calendar;
 
 import org.shadowlands.roadtrip.R;
 import org.shadowlands.roadtrip.android.util.DBBackup;
+import org.shadowlands.roadtrip.android.util.FileUtils;
 import org.shadowlands.roadtrip.android.util.Misc;
 import org.shadowlands.roadtrip.db.AppInfo;
 import org.shadowlands.roadtrip.db.RDBAdapter;
@@ -63,6 +65,9 @@ public class BackupsMain extends Activity
 	implements OnItemClickListener
 {
 	// db is not kept open, so we can backup/restore, so no RDBAdapter field.
+
+	/** Free-space additional margin (64 kB) for {@link #checkFreeSpaceForBackup()}. */
+	final private static int FREE_SPACE_MARGIN = 64 * 1024;
 
 	/** Can we write?  Set in {@link #onResume()}. */
 	private boolean isSDCardWritable = false;
@@ -212,6 +217,39 @@ public class BackupsMain extends Activity
 	}
 
 	/**
+	 * Check SD-card free space against the current size of the database.
+	 * If the check fails, pop up a message to let the user know how much is needed.
+	 * @return true if disk-space check passed 
+	 * @since 0.9.20
+	 */
+	private boolean checkFreeSpaceForBackup()
+	{
+		final String dbBackupsPath = DBBackup.getDBBackupPath(getApplicationContext());
+		if (dbBackupsPath == null)
+			return false;  // just in case; same conditions are checked elsewhere in this activity
+
+		RDBAdapter db = new RDBOpenHelper(this);
+		final String dbFilePath = db.getFilenameFullPath();
+		db.close();
+
+		final long dbSize = new File(dbFilePath).length() + FREE_SPACE_MARGIN;
+		final long sdFree = FileUtils.getFreeSpace(dbBackupsPath);
+
+		if (dbSize <= sdFree)
+			return true;
+
+		final long needFreeKB = (dbSize + 1023) / 1024;
+		final String sdFreeMsg = getResources().getString
+			(R.string.backups_main_cannot_backup_need_free_space__fmt, needFreeKB);
+
+		new AlertDialog.Builder(this).setMessage(sdFreeMsg).setTitle(R.string.backups_main_not_enough_free_space)
+			.setCancelable(true).setNegativeButton(android.R.string.cancel, new AlertDialog.OnClickListener() {				
+				public void onClick(DialogInterface dialog, int which) { }
+			}).show();
+		return false;
+	}
+
+	/**
 	 * Perform all "quick" levels of DB validation
 	 *     ({@link RDBVerifier#LEVEL_PHYS} - {@link RDBVerifier#LEVEL_MDATA})
 	 * and, if failed, ask the user if should continue with the backup anyway.
@@ -292,12 +330,15 @@ public class BackupsMain extends Activity
 	}
 
 	/**
-	 * Do a quick validation of db structure by calling {@link #doDBValidationAskIfFailed()},
+	 * Check disk space, do a quick validation of db structure by calling {@link #doDBValidationAskIfFailed()},
 	 * and if OK, call {@link #backupNow()}.
 	 * @param v  ignored
 	 */
 	public void onClick_BtnBackupNow(View v)
 	{
+		if (! checkFreeSpaceForBackup())
+			return;
+
 		if (! doDBValidationAskIfFailed())
 			return;
 

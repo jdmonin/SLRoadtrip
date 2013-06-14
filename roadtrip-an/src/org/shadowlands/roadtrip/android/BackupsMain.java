@@ -399,26 +399,19 @@ public class BackupsMain extends Activity
 
 			// TODO encapsulate this into AppInfo if possible:
 			final String[] cols = { "aivalue" };
-			c = bkupDB.query("appinfo", cols, "aifield = 'DB_BACKUP_THISTIME' or aifield = 'DB_CURRENT_SCHEMAVERSION'",
+			c = bkupDB.query("appinfo", cols, "aifield = 'DB_CURRENT_SCHEMAVERSION'",
 					null, null, null, "aifield");
 			if (c.moveToFirst())
 			{
-				java.util.Date bkupDate = new java.util.Date(1000L * c.getLong(0));
-				Toast.makeText(this, "Opened. Backup time was: " + bkupDate.toLocaleString(), Toast.LENGTH_SHORT).show();
-				if (c.moveToNext())
-				{
-					try {
-						bkupSchemaVersion = Integer.parseInt(c.getString(0));
-						Toast.makeText(this, "Schema version: " + bkupSchemaVersion, Toast.LENGTH_SHORT).show();
-						looksOK = true;
-					} catch (NumberFormatException e) {
-						Toast.makeText(this, "Cannot read appinfo(DB_CURRENT_SCHEMAVERSION)", Toast.LENGTH_SHORT).show();
-					}
-				} else {
+				try {
+					bkupSchemaVersion = Integer.parseInt(c.getString(0));
+					Toast.makeText(this, "Schema version: " + bkupSchemaVersion, Toast.LENGTH_SHORT).show();
+					looksOK = true;
+				} catch (NumberFormatException e) {
 					Toast.makeText(this, "Cannot read appinfo(DB_CURRENT_SCHEMAVERSION)", Toast.LENGTH_SHORT).show();
 				}
 			} else {
-				Toast.makeText(this, "Opened but cannot read appinfo(DB_BACKUP_THISTIME)", Toast.LENGTH_SHORT).show();
+				Toast.makeText(this, "Opened but cannot read appinfo(DB_CURRENT_SCHEMAVERSION)", Toast.LENGTH_SHORT).show();
 			}
 		} catch (SQLiteException e) {
 			Toast.makeText(this, "Cannot open: " + e, Toast.LENGTH_SHORT).show();

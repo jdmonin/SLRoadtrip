@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  Copyright (C) 2011 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2011,2013 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -90,7 +90,7 @@ public class BackupsRestore extends Activity
 	/** Schema version of backup, from {@link RDBSchema}. If -1, too old (very early beta) to restore. */
 	private int bkupSchemaVers = 0;
 
-	/** Backup file's timestamp */
+	/** Backup file's timestamp, or -1 if not yet read */
 	private int bkupAtTime = -1;
 
 	private boolean alreadyValidated = false;
@@ -270,8 +270,11 @@ public class BackupsRestore extends Activity
     	}
 	}
 
-	/** Set the "validating..." textfield to show % percent */
-	protected void updateValidateProgress(int percent)
+	/**
+	 * Set the "validating..." textfield to show % percent.
+	 * @param percent  How many % to show; if 1, also update backup date/time textfield
+	 */
+	protected void updateValidateProgress(final int percent)
 	{
 		TextView vfield = (TextView) findViewById(R.id.backups_restore_validating);
 		if (vfield == null)
@@ -279,6 +282,17 @@ public class BackupsRestore extends Activity
 		String t = getResources().getString(R.string.backups_restore_validating_file)
 			+ " " + percent + "%";
 		vfield.setText(t);
+
+		if ((percent == 1) && (bkupAtTime != -1))
+		{
+			vfield = (TextView) findViewById(R.id.backups_restore_bkuptime);
+			if (vfield != null)
+			{
+				if (fmt_dow_shortdate == null)
+					fmt_dow_shortdate = Misc.buildDateFormatDOWShort(BackupsRestore.this, false);
+				vfield.setText(DateFormat.format(fmt_dow_shortdate, bkupAtTime * 1000L));
+			}
+		}
 	}
 
 	/**
@@ -442,48 +456,6 @@ public class BackupsRestore extends Activity
 	    return super.onKeyUp(keyCode, event);
 	}
 
-	/** Temporary reference code for reading db fields; not used yet in this activity. */
-	@SuppressWarnings("unused")
-	private void temp_readSomeFields()
-	{
-		// TODO move this data-gathering into onResume
-		// TODO more than this (ask for restore? popup date/time info?)
-		final String bkPath = DBBackup.getDBBackupPath(this) + "/somedb.bak";
-		SQLiteDatabase bkupDB = null;
-		Cursor c = null;
-		try {
-			bkupDB = SQLiteDatabase.openDatabase
-				(bkPath, null, SQLiteDatabase.OPEN_READONLY);
-
-			final String[] cols = { "aivalue" };
-			c = bkupDB.query("appinfo", cols, "aifield = 'DB_BACKUP_THISTIME' or aifield = 'DB_CURRENT_SCHEMAVERSION'",
-					null, null, null, "aifield");
-			if (c.moveToFirst())
-			{
-				java.util.Date bkupDate = new java.util.Date(1000L * c.getLong(0));
-				Toast.makeText(this, "Opened. Backup time was: " + bkupDate.toLocaleString(), Toast.LENGTH_SHORT).show();
-				if (c.moveToNext())
-				{
-					try {
-						Toast.makeText(this, "Schema version: " + Integer.parseInt(c.getString(0)), Toast.LENGTH_SHORT).show();
-					} catch (NumberFormatException e) {
-						Toast.makeText(this, "Cannot read appinfo(DB_CURRENT_SCHEMAVERSION)", Toast.LENGTH_SHORT).show();
-					}
-				} else {
-					Toast.makeText(this, "Cannot read appinfo(DB_CURRENT_SCHEMAVERSION)", Toast.LENGTH_SHORT).show();
-				}
-			} else {
-				Toast.makeText(this, "Opened but cannot read appinfo(DB_BACKUP_THISTIME)", Toast.LENGTH_SHORT).show();
-			}
-		} catch (SQLiteException e) {
-			Toast.makeText(this, "Cannot open: " + e, Toast.LENGTH_SHORT).show();
-		}
-		if (c != null)
-			c.close();
-		if (bkupDB != null)
-			bkupDB.close();
-	}
-
 	/** Run db validation on a separate thread. */
 	private class ValidateDBTask extends AsyncTask<String, Integer, Boolean>
 	{
@@ -494,7 +466,10 @@ public class BackupsRestore extends Activity
 			// TODO encapsulate this into AppInfo:
 			final int bktime = bkupDB.getRowIntField("appinfo", "aifield", "DB_BACKUP_THISTIME", "aivalue", -1);
 			if (bktime != -1)
+			{
 				bkupAtTime = bktime;
+				publishProgress(Integer.valueOf(1));
+			}
 			// TODO else, something's missing from the backup.
 
 			RDBVerifier v = new RDBVerifier(bkupDB);
@@ -528,14 +503,6 @@ public class BackupsRestore extends Activity
 					vfield.setText(R.string.backups_restore_validation_ok);
 				else
 					vfield.setText(R.string.backups_restore_validation_error);
-			}
-	
-			vfield = (TextView) findViewById(R.id.backups_restore_bkuptime);
-			if (vfield != null)
-			{
-				if (fmt_dow_shortdate == null)
-					fmt_dow_shortdate = Misc.buildDateFormatDOWShort(BackupsRestore.this, false);
-				vfield.setText(DateFormat.format(fmt_dow_shortdate, bkupAtTime * 1000L));
 			}
 
 			btnRestore.setEnabled(validatedOK);

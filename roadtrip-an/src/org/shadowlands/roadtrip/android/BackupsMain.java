@@ -52,6 +52,7 @@ import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -59,6 +60,7 @@ import android.widget.Toast;
 /**
  * Backup and Restore activity.
  * Information and button to back up now, list of previous backups.
+ * There is a button to change to a different folder and restore from there, which defaults to the user's Download folder.
  *
  * @author jdmonin
  */
@@ -75,6 +77,12 @@ public class BackupsMain extends Activity
 
 	/** Most recent trip timestamp in current data, or -1 if none; set in {@link #readDBLastTripTime(RDBAdapter)} */
 	private int lastTripDataChange = -1;
+
+	/**
+	 * If browsing a different directory to restore from, the full path of that directory. Null otherwise.
+	 * @since 0.9.20
+	 */
+	private String restoreFromDirectory = null;
 
 	private Button btnBackupNow;
 	private TextView tvTimeOfLastBkup, tvTimeOfLastTrip;
@@ -207,6 +215,7 @@ public class BackupsMain extends Activity
 	/**
 	 * List the backups currently on the SD card.
 	 * If the card is not readable, just put a dummy entry to that effect.
+	 * Sets the activity titlebar if browsing in a different folder than the default.
 	 * @param isSDCardReadable as determined from {@link Environment#getExternalStorageState()}
 	 */
 	private void populateBackupsList(final boolean isSDCardReadable) {
@@ -216,7 +225,7 @@ public class BackupsMain extends Activity
 			bklist = new String[1];
 			bklist[0] = getResources().getString(R.string.sdcard_not_mounted);
 		} else {
-			ArrayList<String> bkfiles = DBBackup.getBkFiles(this);
+			ArrayList<String> bkfiles = DBBackup.getBkFiles(this, restoreFromDirectory);
 			if (bkfiles == null)
 			{
 				bklist = new String[1];
@@ -227,6 +236,14 @@ public class BackupsMain extends Activity
 			}
 		}
 		lvBackupsList.setAdapter(new ArrayAdapter<String>(this, R.layout.list_item, bklist));
+
+		if (restoreFromDirectory != null)
+		{
+			final String backups = getResources().getString(R.string.backups);
+			setTitle(backups + ": " + restoreFromDirectory);
+		} else {
+			setTitle(R.string.backups_main_title);
+		}
 	}
 
 	/**
@@ -343,6 +360,74 @@ public class BackupsMain extends Activity
 	}
 
 	/**
+	 * Prompt for a folder path to restore from  If null, default to user's Download directory.
+	 * @param v  ignored
+	 */
+	public void onClick_BtnChangeFolder(View v)
+	{
+    	AlertDialog.Builder alert = new AlertDialog.Builder(this);
+
+    	final EditText etDirPath = new EditText(this);
+    	if (restoreFromDirectory != null)
+    		etDirPath.setText(restoreFromDirectory);
+    	else
+    		etDirPath.setText(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).toString());
+
+    	alert.setMessage(R.string.backups_main_enter_browse_path);
+    	alert.setView(etDirPath);
+    	alert.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+	    	  public void onClick(DialogInterface dialog, int whichButton) { }
+	    	});
+    	alert.setPositiveButton(R.string.change, new DialogInterface.OnClickListener() {
+			  public void onClick(DialogInterface dialog, int whichButton) {
+				  boolean doRescan = false;
+				  String path = etDirPath.getText().toString().trim();
+				  if (path.length() == 0)
+				  {
+					  doRescan = (restoreFromDirectory != null);
+					  restoreFromDirectory = null;
+				  } else {
+					  if ((path.length() > 1) && path.endsWith(File.separator))
+						  path = path.substring(0, path.length() - 1);  // remove trailing '/'
+
+					  final int errorTextId;
+
+					  File dir = new File(path);
+					  if (! dir.exists())
+						  errorTextId = R.string.backups_main_folder_was_not_found;
+					  else if (! dir.isDirectory())
+						  errorTextId = R.string.backups_main_path_is_not_folder;
+					  else
+						  errorTextId = 0;
+
+					  if (errorTextId == 0)
+					  {
+						if (! path.equals(restoreFromDirectory))
+						{
+							doRescan = true;
+							restoreFromDirectory = path;
+						}
+					  } else {
+						AlertDialog.Builder alertErr = new AlertDialog.Builder(BackupsMain.this);
+						alertErr.setIcon(android.R.drawable.ic_dialog_alert);
+						alertErr.setMessage(errorTextId);
+						alertErr.setCancelable(true);
+						alertErr.setNegativeButton(android.R.string.cancel, new AlertDialog.OnClickListener() {				
+							public void onClick(DialogInterface dialog, int which) { }
+						});
+						alertErr.show();
+					  }
+				  }
+
+				  if (doRescan)
+					  populateBackupsList(true);  // ? isSDCardReadable  -- TODO
+			  }
+	    	});
+    	alert.show();
+
+	}
+
+	/**
 	 * Check disk space, do a quick validation of db structure by calling {@link #doDBValidationAskIfFailed()},
 	 * and if OK, call {@link #backupNow()}.
 	 * @param v  ignored
@@ -381,11 +466,14 @@ public class BackupsMain extends Activity
 		}
 	}
 
+	// btnSettings is currently not in the layout
+	/*
 	public void onClick_BtnSettings(View v)
 	{
 		;  // TODO	show settings window instead of just schema-vers popup
 		Toast.makeText(this, "Current db schema version: " + RDBSchema.DATABASE_VERSION, Toast.LENGTH_SHORT).show();
 	}
+	*/
 
 	/**
 	 * When a backup is selected in the list, open its file, show basic info,
@@ -394,14 +482,31 @@ public class BackupsMain extends Activity
 	 */
 	public void onItemClick(AdapterView<?> parent, View view, int position, long id)
 	{
-		final String basePath = DBBackup.getDBBackupPath(this);
+		String basePath = (restoreFromDirectory != null) ? restoreFromDirectory : DBBackup.getDBBackupPath(this);
+
 		if (basePath == null)
 		{
 			Toast.makeText(this, R.string.sdcard_not_mounted, Toast.LENGTH_SHORT).show();
 			return;
 		}
+		if (basePath.equals("/"))
+			basePath = "";  // the next line will re-add '/'
 		final String bkPath = basePath + "/" + ((TextView) view).getText();
 		boolean looksOK = false;
+
+		File bkFile = new File(bkPath);
+		if (bkFile.isDirectory())
+		{
+			if (bkFile.canRead())
+			{
+				restoreFromDirectory = bkPath;
+				populateBackupsList(true);  // ? isSDCardReadable  -- TODO
+			} else {
+				Toast.makeText(this, R.string.backups_main_cannot_browse_folder, Toast.LENGTH_SHORT).show();
+			}
+			return;  // <--- Early return: Tapped a subdirectory ---
+		}
+
 		SQLiteDatabase bkupDB = null;
 		int bkupSchemaVersion = 0;
 		Cursor c = null;

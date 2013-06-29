@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010-2012 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2013 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -271,13 +271,17 @@ public class DBBackup {
 	/**
 	 * Given our app context, get the SD Card backup files list, if any
 	 * @param appc  app context, from {@link Context#getApplicationContext()}
+	 * @param dirname  Directory to search, or {@code null} to use {@link #getDBBackupPath(Context)}
 	 * @return list of filenames, or null if none found or if SD isn't mounted
 	 */
-	public static ArrayList<String> getBkFiles(Context appc)
+	public static ArrayList<String> getBkFiles(Context appc, String dirname)
 	{
-		final String dirname = getDBBackupPath(appc);
 		if (dirname == null)
-			return null;
+		{
+			dirname = getDBBackupPath(appc);
+			if (dirname == null)
+				return null;
+		}
 		return FileUtils.getFileNames(dirname, null, -1);
     }
 

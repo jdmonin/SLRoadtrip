@@ -2,7 +2,7 @@
 <!--
  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
 
- Copyright (C) 2010-2011 Jeremy D Monin (jdmonin@nand.net)
+ This file Copyright (C) 2010-2011,2013 Jeremy D Monin (jdmonin@nand.net)
 
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
@@ -33,12 +33,12 @@
         android:layout_height="wrap_content"
         android:text="@string/backup_now"
         android:onClick="onClick_BtnBackupNow" />
-	<Button android:id="@+id/backups_main_btn_settings"
+	<Button android:id="@+id/backups_main_btn_changefolder"
         android:layout_width="fill_parent"
         android:layout_weight=".5"
         android:layout_height="wrap_content"
-        android:text="@string/settings"
-        android:onClick="onClick_BtnSettings" />
+        android:text="@string/backups_main_change_folder"
+        android:onClick="onClick_BtnChangeFolder" />
 </LinearLayout>
 <TextView android:id="@+id/backups_main_timeOfLastBkup"
     android:layout_width="fill_parent"

@@ -33,6 +33,7 @@ import org.shadowlands.roadtrip.db.RDBAdapter;
 import org.shadowlands.roadtrip.db.RDBKeyNotFoundException;
 import org.shadowlands.roadtrip.db.RDBSchema;
 import org.shadowlands.roadtrip.db.RDBVerifier;
+import org.shadowlands.roadtrip.db.Settings;
 import org.shadowlands.roadtrip.db.Trip;
 import org.shadowlands.roadtrip.db.android.RDBOpenHelper;
 
@@ -123,9 +124,9 @@ public class BackupsMain extends Activity
 			Environment.MEDIA_MOUNTED_READ_ONLY.equals
 			(Environment.getExternalStorageState());
 
-		btnBackupNow.setEnabled(isSDCardWritable);
 		readDBLastBackupTime(db, -1);
-		readDBLastTripTime(db);
+		final boolean dbContainsData = readDBLastTripTime(db);
+		btnBackupNow.setEnabled(isSDCardWritable && dbContainsData);
 
 		if (! isSDCardReadable)
 		{
@@ -173,13 +174,17 @@ public class BackupsMain extends Activity
 
 	/**
 	 * Read most recent current trip, update {@link #lastTripDataChange}.
+	 * @return true if the DB contains data (current vehicle setting exists); added in v0.9.20.
 	 */
-	private void readDBLastTripTime(RDBAdapter db) {
+	private boolean readDBLastTripTime(RDBAdapter db) {
+		try
+		{
+		final int currVID = Settings.getInt(db, Settings.CURRENT_VEHICLE, -1);
 		final Trip mostRecent = Trip.recentInDB(db);
 		if (mostRecent == null)
 		{
 			// lastTripDataChange remains -1.
-			return;
+			return (currVID != -1);
 		}
 
 		lastTripDataChange = mostRecent.readLatestTime();
@@ -189,6 +194,14 @@ public class BackupsMain extends Activity
 		sb.append(' ');
 		sb.append(DateFormat.format(fmt_dow_shortdate, lastTripDataChange * 1000L));
 		tvTimeOfLastTrip.setText(sb);
+
+		return (currVID != -1);
+
+		}
+		catch (RuntimeException e) {
+			// problem in Settings.getInt or Trip.recentInDB
+			return false;
+		}
 	}
 
 	/**

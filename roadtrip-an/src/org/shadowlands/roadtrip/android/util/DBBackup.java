@@ -269,20 +269,23 @@ public class DBBackup {
 	}
 
 	/**
-	 * Given our app context, get the SD Card backup files list, if any
+	 * Given our app context, get the SD Card backup files list, if any.
+	 * Names will be sorted alphabetically if {@code dirname} != {@code null},
+	 * otherwise reverse-alphabetically to place the most recent backup at the top of the list.
 	 * @param appc  app context, from {@link Context#getApplicationContext()}
 	 * @param dirname  Directory to search, or {@code null} to use {@link #getDBBackupPath(Context)}
 	 * @return list of filenames, or null if none found or if SD isn't mounted
 	 */
 	public static ArrayList<String> getBkFiles(Context appc, String dirname)
 	{
-		if (dirname == null)
+		final boolean useDBBackupPath = (dirname == null);
+		if (useDBBackupPath)
 		{
 			dirname = getDBBackupPath(appc);
 			if (dirname == null)
 				return null;
 		}
-		return FileUtils.getFileNames(dirname, null, -1);
+		return FileUtils.getFileNames(dirname, null, (useDBBackupPath) ? -1 : 1);
     }
 
 }

@@ -22,6 +22,7 @@
       android:versionCode="920" android:versionName="0.9.20">
 
     <uses-sdk android:minSdkVersion="8" android:targetSdkVersion="10" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
     <application android:icon="@drawable/icon"  android:label="@string/app_name" android:debuggable="true">
         <activity android:name=".AndroidStartup"
@@ -31,24 +32,23 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-	<activity android:name=".android.VehicleEntry" />
-	<activity android:name=".android.DriverEntry" />
-	<activity android:name=".android.Main" />
-	<activity android:name=".android.ChangeDriverOrVehicle"  android:label="@string/change_driver_vehicle" />
-	<activity android:name=".android.DriversEdit"  android:label="@string/edit_drivers" />
-	<activity android:name=".android.TripBegin"  android:label="@string/begin_trip" />
-	<activity android:name=".android.TripBeginChooseFreq"  android:label="@string/choose_a_frequent_trip" />
-	<activity android:name=".android.TripCreateFreq"  android:label="@string/trip_createfreq__title" />
-	<activity android:name=".android.LogbookShow" android:label="@string/logbook_show__title" />
-	<activity android:name=".android.LogbookRecentGas" android:label="@string/logbook_show__recent_gas" />
-	<activity android:name=".android.SettingsActivity"  android:label="@string/settings" />
-	<activity android:name=".android.TripTStopEntry"  android:label="@string/stop_during_a_trip" />
-	<activity android:name=".android.TripTStopGas"  android:label="@string/trip_tstop_gas__title" />
-	<activity android:name=".android.TripTStopChooseFreq"  android:label="@string/choose_a_stop" />
-	<activity android:name=".android.VehiclesEdit"  android:label="@string/edit_vehicles" />
-	<activity android:name=".android.BackupsMain" />
-	<activity android:name=".android.BackupsRestore"  android:label="@string/backups_restore__title" />
-</application>
+		<activity android:name=".android.VehicleEntry" />
+		<activity android:name=".android.DriverEntry" />
+		<activity android:name=".android.Main" />
+		<activity android:name=".android.ChangeDriverOrVehicle"  android:label="@string/change_driver_vehicle" />
+		<activity android:name=".android.DriversEdit"  android:label="@string/edit_drivers" />
+		<activity android:name=".android.TripBegin"  android:label="@string/begin_trip" />
+		<activity android:name=".android.TripBeginChooseFreq"  android:label="@string/choose_a_frequent_trip" />
+		<activity android:name=".android.TripCreateFreq"  android:label="@string/trip_createfreq__title" />
+		<activity android:name=".android.LogbookShow" android:label="@string/logbook_show__title" />
+		<activity android:name=".android.LogbookRecentGas" android:label="@string/logbook_show__recent_gas" />
+		<activity android:name=".android.SettingsActivity"  android:label="@string/settings" />
+		<activity android:name=".android.TripTStopEntry"  android:label="@string/stop_during_a_trip" />
+		<activity android:name=".android.TripTStopGas"  android:label="@string/trip_tstop_gas__title" />
+		<activity android:name=".android.TripTStopChooseFreq"  android:label="@string/choose_a_stop" />
+		<activity android:name=".android.VehiclesEdit"  android:label="@string/edit_vehicles" />
+		<activity android:name=".android.BackupsMain" />
+		<activity android:name=".android.BackupsRestore"  android:label="@string/backups_restore__title" />
+	</application>
 
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 </manifest> 

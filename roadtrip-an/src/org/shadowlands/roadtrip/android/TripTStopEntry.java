@@ -800,8 +800,9 @@ public class TripTStopEntry extends Activity
 	}
 
 	/**
-	 * Hilight the matching button, update {@link #areaLocs_areaID},
-	 * and optionally update related data.
+	 * Hilight the matching GeoArea's button with a green dot, update {@link #areaLocs_areaID},
+	 * and optionally update related data.  (Stops during a roadtrip have 3 GeoArea buttons
+	 * to select the starting area, no area, or ending area.)
 	 * @param areaID  GeoArea ID to hilight
 	 * @param newAreaText  New GeoArea's name, or null for "none" (no area).
 	 *   Not needed unless <tt>alsoUpdateData</tt>.
@@ -2570,6 +2571,7 @@ public class TripTStopEntry extends Activity
 		super.onSaveInstanceState(outState);
 		if (outState == null)
 			return;
+
 		outState.putBoolean(TSTOP_BUNDLE_SAVED_MARKER, true);
 		odo_total.onSaveInstanceState(outState, "OTO");
 		odo_trip.onSaveInstanceState(outState, "OTR");
@@ -2582,6 +2584,8 @@ public class TripTStopEntry extends Activity
 		outState.putInt("TCR", contTimeRunningHourMinute);
 		outState.putBoolean("TCRT", contTimeRunningAlreadyToasted);
 		outState.putInt("AID", areaLocs_areaID);
+		outState.putInt("LOCID", (locObj != null) ? locObj.getID() : 0);
+		outState.putInt("VIAID", (viaRouteObj != null) ? viaRouteObj.getID() : 0);
 	}
 
 	/**
@@ -2600,6 +2604,7 @@ public class TripTStopEntry extends Activity
 		super.onRestoreInstanceState(inState);
 		if ((inState == null) || ! inState.containsKey(TSTOP_BUNDLE_SAVED_MARKER))
 			return;
+
 		odo_total.onRestoreInstanceState(inState, "OTO");
 		odo_trip.onRestoreInstanceState(inState, "OTR");
 		odo_total_chk.setChecked(inState.getBoolean("OTOC"));
@@ -2616,6 +2621,22 @@ public class TripTStopEntry extends Activity
 		contTimeRunningHourMinute = inState.getInt("TCR");
 		contTimeRunningAlreadyToasted = inState.getBoolean("TCRT");
 		areaLocs_areaID = inState.getInt("AID", -1);
+
+		int id = inState.getInt("LOCID");
+		if (id > 0)
+			try {
+				locObj = new Location(db, id);
+			} catch (IllegalStateException e) {
+			} catch (RDBKeyNotFoundException e) {
+			}
+
+		id = inState.getInt("VIAID");
+		if (id > 0)
+			try {
+				viaRouteObj = new ViaRoute(db, id);
+			} catch (IllegalStateException e) {
+			} catch (RDBKeyNotFoundException e) {
+			}
 
 		if (contTimeRunningHourMinute != -1)
 			initContTimeRunning(null);

@@ -401,7 +401,8 @@ public class TripBegin extends Activity
 	    		startTime.setTimeInMillis(now);
 	    		startTimeAtCreate = now;
 	    		tpStartTimeTime.setCurrentHour(startTime.get(Calendar.HOUR_OF_DAY));
-	    		tpStartTimeTime.setCurrentMinute(startTime.get(Calendar.MINUTE));   		
+	    		tpStartTimeTime.setCurrentMinute(startTime.get(Calendar.MINUTE));
+	    		updateStartDateButton();
 	    	}
 	    	});
     	alert.setPositiveButton(R.string.historical, new DialogInterface.OnClickListener() {
@@ -411,6 +412,7 @@ public class TripBegin extends Activity
 	    		startTimeAtCreate = latestVehTime;  // set equal, to allow further updates if veh changes again
 	    		tpStartTimeTime.setCurrentHour(startTime.get(Calendar.HOUR_OF_DAY));
 	    		tpStartTimeTime.setCurrentMinute(startTime.get(Calendar.MINUTE));
+	    		updateStartDateButton();
 	    	}
 	    	});
     	alert.setCancelable(true);

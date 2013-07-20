@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+ List of vehicles to edit; Landscape mode. Temporary until ActionBar conversion.
+ This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
+
+ This file Copyright (C) 2013 Jeremy D Monin (jdmonin@nand.net)
+
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with this program.  If not, see http://www.gnu.org/licenses/ .
+ -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="horizontal"
+	android:layout_width="fill_parent"
+	android:layout_height="fill_parent"
+    android:gravity="top"
+	>
+	<LinearLayout android:id="@+id/vehicles_edit_btns"
+	    android:orientation="vertical"
+		android:layout_weight="25"
+		android:layout_width="0dip"
+		android:layout_height="wrap_content"
+	    android:gravity="top"
+		>
+		<Button android:id="@+id/vehicles_edit_new"
+			android:text="@string/new_vehicle"
+			android:layout_width="fill_parent"
+			android:layout_height="wrap_content"
+			android:onClick="onClick_BtnNewVehicle" />
+		<Button
+			android:text="@string/done"
+			android:layout_width="fill_parent"
+			android:layout_height="wrap_content"
+			android:onClick="onClick_BtnDone" />
+	</LinearLayout>
+	<ListView android:id="@+id/list"
+		android:minHeight="?android:attr/listPreferredItemHeight"
+		android:layout_weight="75"
+		android:layout_width="0dip"
+		android:layout_height="fill_parent" />
+</LinearLayout>

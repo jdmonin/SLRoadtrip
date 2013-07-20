@@ -92,10 +92,12 @@ public class DBBackup {
 	 * The DB should be closed before calling this method.
 	 *
 	 * @param ctx  Context from which to obtain db info
+	 * @param dirname  Full path of directory to write to, or {@code null} to use {@link #getDBBackupPath(Context)}
 	 * @throws IllegalStateException if SDCard isn't mounted or isn't writeable
 	 * @throws IOException if an error occurs
+	 * @return  Full path and filename of the new backup file
 	 */
-	public static void backupCurrentDB(Context ctx)
+	public static String backupCurrentDB(Context ctx, final String dirname)
 		throws IllegalStateException, IOException
 	{
 		/**
@@ -104,7 +106,7 @@ public class DBBackup {
 		RDBAdapter db = new RDBOpenHelper(ctx);
 		String fromFilePath = db.getFilenameFullPath();
 
-		final String toFileDir = getDBBackupPath(ctx);
+		final String toFileDir = (dirname != null) ? dirname : getDBBackupPath(ctx);
 		if (toFileDir == null)
 		{
 			db.close();
@@ -125,7 +127,7 @@ public class DBBackup {
 				throw new IOException("Not a directory: " + bkupDir);				
 			}
 		}
-		toFilePath.append('/');
+		toFilePath.append(File.separatorChar);
 		final int thistime = (int) (System.currentTimeMillis() / 1000L);
 		final String bkupFile = makeDBBackupFilename(thistime);
 		toFilePath.append(bkupFile);
@@ -230,6 +232,8 @@ public class DBBackup {
 
 			throw e;  // <--- Problem occurred ---
 		}
+
+		return toFilePath.toString();
 	}
 
 	/**

@@ -254,7 +254,8 @@ public class BackupsMain extends Activity
 	 */
 	private boolean checkFreeSpaceForBackup()
 	{
-		final String dbBackupsPath = DBBackup.getDBBackupPath(getApplicationContext());
+		final String dbBackupsPath =
+			(restoreFromDirectory != null) ? restoreFromDirectory : DBBackup.getDBBackupPath(getApplicationContext());
 		if (dbBackupsPath == null)
 			return false;  // just in case; same conditions are checked elsewhere in this activity
 
@@ -409,7 +410,7 @@ public class BackupsMain extends Activity
 						}
 					  } else {
 						AlertDialog.Builder alertErr = new AlertDialog.Builder(BackupsMain.this);
-						alertErr.setIcon(android.R.drawable.ic_dialog_alert);
+						alertErr.setIcon(android.R.drawable.ic_dialog_alert);  // TODO doesn't show without title text
 						alertErr.setMessage(errorTextId);
 						alertErr.setCancelable(true);
 						alertErr.setNegativeButton(android.R.string.cancel, new AlertDialog.OnClickListener() {				
@@ -456,7 +457,7 @@ public class BackupsMain extends Activity
 
 		try
 		{
-			DBBackup.backupCurrentDB(this);
+			DBBackup.backupCurrentDB(this, restoreFromDirectory);
 			Toast.makeText(this, "Backup successful.", Toast.LENGTH_SHORT).show();
 			readDBLastBackupTime(null, bktime);
 			// TODO how to refresh the list of backups?
@@ -491,7 +492,7 @@ public class BackupsMain extends Activity
 		}
 		if (basePath.equals("/"))
 			basePath = "";  // the next line will re-add '/'
-		final String bkPath = basePath + "/" + ((TextView) view).getText();
+		final String bkPath = basePath + File.separator + ((TextView) view).getText();
 		boolean looksOK = false;
 
 		File bkFile = new File(bkPath);

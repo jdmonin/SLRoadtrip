@@ -2,7 +2,7 @@
  *  Vehicles Editor list.
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2012 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2012-2013 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -27,13 +27,17 @@ import org.shadowlands.roadtrip.db.Vehicle;
 import org.shadowlands.roadtrip.db.android.RDBOpenHelper;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
+import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 /**
@@ -122,7 +126,27 @@ public class VehiclesEdit extends Activity
 		veh = allV;
 		if (allV == null)
 			return false;
-		lvVeh.setAdapter(new ArrayAdapter<Vehicle>(this, R.layout.list_item, allV));
+		lvVeh.setAdapter(new ArrayAdapter<Vehicle>(this, R.layout.vehicles_list_item, allV)
+			{
+				public View getView(final int pos, View convertView, final android.view.ViewGroup parent)
+				{
+					if (convertView == null)
+						convertView = ((LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE))
+							.inflate(R.layout.vehicles_list_item, null);
+
+					TextView vtxt = (TextView) convertView.findViewById(R.id.vehicles_listitem_text);
+					ImageView vstat = (ImageView) convertView.findViewById(R.id.vehicles_listitem_status);
+					if ((pos >= 0) && (pos < veh.length))
+					{
+						Vehicle v = veh[pos];
+						convertView.setTag(v);
+						vtxt.setText(v.toString());
+						vstat.setImageResource(v.isActive()
+							? android.R.drawable.presence_online : android.R.drawable.presence_offline);
+					}
+					return convertView;
+				};
+			} );
 		return true;
 	}
 

@@ -590,7 +590,7 @@ public class LogbookShow extends Activity
 		final View askItems = getLayoutInflater().inflate(R.layout.logbook_show_popup_date_veh, null);
 		final Spinner vehs =
 			(Spinner) askItems.findViewById(R.id.logbook_show_popup_date_vehs);
-		SpinnerDataFactory.setupVehiclesSpinner(db, this, vehs, showV.getID());
+		SpinnerDataFactory.setupVehiclesSpinner(db, false, this, vehs, showV.getID());
 		final DatePicker dpick =
 			(DatePicker) askItems.findViewById(R.id.logbook_show_popup_date_picker);
 		if (vehicleOnly)

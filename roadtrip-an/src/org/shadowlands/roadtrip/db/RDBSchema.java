@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010,2012 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010,2012-2013 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -477,7 +477,7 @@ public abstract class RDBSchema
     			if (! hasVehicle)
     			{
     				msgv.addElement("recov: no CURRENT_VEHICLE");
-    				Vehicle[] allV = Vehicle.getAll(db);
+    				Vehicle[] allV = Vehicle.getAll(db, true);
     				if (allV != null)
     				{
     					msgv.addElement("recov: fixed CURRENT_VEHICLE (guess)");  // TODO maybe not guess, if length 1
@@ -485,7 +485,7 @@ public abstract class RDBSchema
     					fixedSettings = true;
     					fixedGuessed = (allV.length > 1);
     				} else {
-    					msgv.addElement("recov: no vehicles found");
+    					msgv.addElement("recov: no active vehicles found");
     					rv.result = SettingsCheckLevel.SETT_VEHICLE;
     				}
     			}

@@ -122,7 +122,7 @@ public class VehiclesEdit extends Activity
 	 */
 	private boolean populateVehiclesList(RDBAdapter db)
 	{
-		Vehicle[] allV = Vehicle.getAll(db);
+		Vehicle[] allV = Vehicle.getAll(db, false);
 		veh = allV;
 		if (allV == null)
 			return false;

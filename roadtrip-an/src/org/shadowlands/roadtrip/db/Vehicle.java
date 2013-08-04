@@ -117,11 +117,13 @@ public class Vehicle extends RDBRecord
     /**
      * Get the Vehicles currently in the database.
      * @param db  database connection
+	 * @param activeOnly  If true, don't include inactive vehicles
      * @return an array of Vehicle objects from the database, ordered by name, or null if none
      */
-    public static Vehicle[] getAll(RDBAdapter db)
+    public static Vehicle[] getAll(final RDBAdapter db, final boolean activeOnly)
     {
-		Vector<String[]> ves = db.getRows(TABNAME, null, (String[]) null, FIELDS_AND_ID, "nickname COLLATE NOCASE", 0);
+		Vector<String[]> ves = db.getRows
+			(TABNAME, activeOnly ? "is_active = 1" : null, (String[]) null, FIELDS_AND_ID, "nickname COLLATE NOCASE", 0);
     	if (ves == null)
     		return null;
 

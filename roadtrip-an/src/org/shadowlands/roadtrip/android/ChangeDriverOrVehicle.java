@@ -95,7 +95,7 @@ public class ChangeDriverOrVehicle extends Activity
 			((Button) findViewById(R.id.change_cvd_vehicles_edit)).setText(R.string.view_vehicles);
 		}
 
-		SpinnerDataFactory.setupVehiclesSpinner(db, this, veh, currVID);
+		SpinnerDataFactory.setupVehiclesSpinner(db, true, this, veh, currVID);
 	}
 
 	/**
@@ -345,7 +345,7 @@ public class ChangeDriverOrVehicle extends Activity
 			{
 				if (db == null)
 					db = new RDBOpenHelper(this);
-				SpinnerDataFactory.setupVehiclesSpinner(db, this, veh, currVID);
+				SpinnerDataFactory.setupVehiclesSpinner(db, true, this, veh, currVID);
 			} else {
 				changed = false;
 			}
@@ -426,7 +426,7 @@ public class ChangeDriverOrVehicle extends Activity
 				SpinnerDataFactory.setupDriversSpinner(db, this, driver, currDID);
 			} else {
 				currVID = Settings.getCurrentVehicle(db, false).getID();
-				SpinnerDataFactory.setupVehiclesSpinner(db, this, veh, currVID);
+				SpinnerDataFactory.setupVehiclesSpinner(db, true, this, veh, currVID);
 			}
 		} catch (Throwable th) {
 			return;

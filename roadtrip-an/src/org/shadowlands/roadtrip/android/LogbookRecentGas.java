@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  Copyright (C) 2011 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2011,2013 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -283,7 +283,7 @@ _id|quant|price_per|price_total|fillup|station|vid|gas_brandgrade_id|odo_total|t
 	public final void askVehicleChange()
 	{
 		if (allV == null)
-    		allV = Vehicle.getAll(db);
+    		allV = Vehicle.getAll(db, false);
 
 		// Grab currently-showing vehicle, vehicle names
 		int idx = -1;

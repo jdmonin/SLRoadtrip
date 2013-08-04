@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  Copyright (C) 2010-2012 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2013 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -112,14 +112,16 @@ public class SpinnerDataFactory
 	/**
 	 * Populate a spinner from the Vehicles in the database.
 	 * @param db  connection to use
+	 * @param activeOnly  If true, don't include inactive vehicles
 	 * @param ctx  the calling Activity or Context
 	 * @param sp  spinner to fill with the vehicles
 	 * @param currentID  If not -1, the driver _id to select in the Spinner. 
 	 * @return true on success, false if could not populate from database
 	 */
-	public static boolean setupVehiclesSpinner(RDBAdapter db, Context ctx, Spinner sp, final int currentID)
+	public static boolean setupVehiclesSpinner
+		(final RDBAdapter db, final boolean activeOnly, final Context ctx, final Spinner sp, final int currentID)
 	{
-		Vehicle[] veh = populateVehiclesList(db);
+		Vehicle[] veh = populateVehiclesList(db, activeOnly);
 	    if (veh == null)
 	    	return false;
 
@@ -210,15 +212,16 @@ public class SpinnerDataFactory
 	 * gather the list of vehicles from the database.
 	 *
 	 * @param db  connection to use
+	 * @param activeOnly  If true, don't include inactive vehicles
 	 * @return array of vehicles, or null
 	 */
-	private static Vehicle[] populateVehiclesList(RDBAdapter db)
+	private static Vehicle[] populateVehiclesList(RDBAdapter db, final boolean activeOnly)
 	{
 		Vehicle[] veh = null; 
 
     	try
     	{
-    		veh = Vehicle.getAll(db);
+    		veh = Vehicle.getAll(db, activeOnly);
     	}
     	catch (SQLiteException e)
     	{}

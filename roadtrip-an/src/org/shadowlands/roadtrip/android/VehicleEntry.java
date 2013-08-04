@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  Copyright (C) 2010-2012 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2013 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -42,9 +42,11 @@ import android.text.format.DateFormat;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 
 /**
@@ -96,14 +98,22 @@ public class VehicleEntry
 	/**
 	 * If not null, {@link #EXTRAS_INT_EDIT_ID} was set to this vehicle's ID,
 	 * it was in the database, and we're editing that vehicle.
+	 * @see #isCurrentV
 	 */
 	private Vehicle cameFromEdit_veh;
+
+	/**
+	 * Is this vehicle {@link Settings#getCurrentVehicle(RDBAdapter, boolean)}?
+	 * @since 0.9.20
+	 */
+	private boolean isCurrentV;
 
 	private RDBAdapter db = null;
 
 	private EditText nickname, vmodel, vin, plate, comment, year;
 	private Spinner driver, vmake;
 	private OdometerNumberPicker odo_orig, odo_curr;
+	private CheckBox cbActive;
 
 	/** Button to set or change {@link #dateFrom} */
 	private Button btnDateFrom;
@@ -150,6 +160,7 @@ public class VehicleEntry
 	    if (cameFromAskNew)
 	    	odo_orig.setRelatedUncheckedOdoOnChanges(odo_curr, null);
 	    btnDateFrom = (Button) findViewById(R.id.vehicle_entry_btn_date_from);
+	    cbActive = (CheckBox) findViewById(R.id.vehicle_entry_active_cb);
 
 	    db = new RDBOpenHelper(this);
 
@@ -181,6 +192,8 @@ public class VehicleEntry
 				finish();
 				return;   // <--- Early return: Could not load from db to view fields ---
 			}
+	    } else {
+	    	cbActive.setChecked(true);
 	    }
 
 	    int currentDriverID = -1;
@@ -207,7 +220,9 @@ public class VehicleEntry
 	private void updateScreenFieldsFromVehicle()
 	{
 		final Vehicle veh = cameFromEdit_veh;
-		
+
+		isCurrentV = (veh.getID() == Settings.getInt(db, Settings.CURRENT_VEHICLE, 0));
+
 		nickname.setText(veh.getNickname());
 		// driver is already set
 		vmodel.setText(veh.getModel());
@@ -249,7 +264,16 @@ public class VehicleEntry
 			comment.setEnabled(false);
 			btnDateFrom.setEnabled(false);
 			vmake.setEnabled(false);
+			cbActive.setEnabled(false);
 		}
+
+    	cbActive.setChecked(veh.isActive());
+    	if (isCurrentV)
+    	{
+    		// Current Vehicle must stay active
+    		cbActive.setText(R.string.current_vehicle);
+    		cbActive.setEnabled(false);
+    	}
 	}
 
 	/** Update the date shown on {@link #btnDateFrom} from {@link #dateFrom} */
@@ -371,6 +395,7 @@ public class VehicleEntry
 			   datefrom_int, 0, vin.getText().toString(), plateText,
 			   odo_orig.getCurrent10d(), odo_curr.getCurrent10d(),
 			   comment.getText().toString());
+			nv.setActive(cbActive.isChecked());
 			nv.insert(db);
 		} else {
 			nv = cameFromEdit_veh;
@@ -384,6 +409,8 @@ public class VehicleEntry
 			nv.setPlate(plateText);
 			nv.setOdometerCurrent(odo_curr.getCurrent10d());
 			nv.setComment(comment.getText().toString());
+			if (! isCurrentV)
+				nv.setActive(cbActive.isChecked());
 			nv.commit();
 		}
 

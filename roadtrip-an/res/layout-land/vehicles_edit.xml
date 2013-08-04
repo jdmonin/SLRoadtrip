@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
  List of vehicles to edit; Landscape mode. Temporary until ActionBar conversion.
+ Uses vehicles_list_item listitem layout.
  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
 
  This file Copyright (C) 2013 Jeremy D Monin (jdmonin@nand.net)
@@ -42,6 +43,7 @@
 			android:layout_height="wrap_content"
 			android:onClick="onClick_BtnDone" />
 	</LinearLayout>
+	<!-- List is populated using item layout vehicles_list_item in VehiclesEdit.populateVehiclesList -->
 	<ListView android:id="@+id/list"
 		android:minHeight="?android:attr/listPreferredItemHeight"
 		android:layout_weight="75"

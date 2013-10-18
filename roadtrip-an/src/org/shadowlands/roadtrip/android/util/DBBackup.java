@@ -29,6 +29,8 @@ import org.shadowlands.roadtrip.db.RDBKeyNotFoundException;
 import org.shadowlands.roadtrip.db.android.RDBOpenHelper;
 
 import android.content.Context;
+import android.content.Intent;
+import android.net.Uri;
 import android.text.format.DateFormat;
 
 /**
@@ -115,16 +117,15 @@ public class DBBackup {
 		StringBuffer toFilePath = new StringBuffer(toFileDir);
 		// Make backup directory if needed
 		{
-			final String bkupDir = toFilePath.toString();
-			File fdir = new File(bkupDir);
+			File fdir = new File(toFileDir);
 			if (! fdir.exists())
 			{
 				if (! fdir.mkdirs())
-					throw new IOException("Could not create directory: " + bkupDir);
+					throw new IOException("Could not create directory: " + toFileDir);
 			}
 			else if (! fdir.isDirectory())
 			{
-				throw new IOException("Not a directory: " + bkupDir);				
+				throw new IOException("Not a directory: " + toFileDir);				
 			}
 		}
 		toFilePath.append(File.separatorChar);
@@ -152,12 +153,21 @@ public class DBBackup {
 
 		// Next: Retrieve "this backup" info (most recent), and save it to "previous".
 		// If the keys aren't found, there is no most-recent backup.
-		AppInfo thisBkfile_rec = null, thisBktime_rec = null;
+		AppInfo thisBkdir_rec = null, thisBkfile_rec = null, thisBktime_rec = null;
+		String prevBkDir = null;
 		try {
 			thisBkfile_rec = new AppInfo(db, AppInfo.KEY_DB_BACKUP_THISFILE);
 			lastBkupFile = thisBkfile_rec.getValue();
 			thisBktime_rec = new AppInfo(db, AppInfo.KEY_DB_BACKUP_THISTIME);
 			lasttime = Integer.parseInt(thisBktime_rec.getValue());
+
+			try
+			{
+				// optional record
+				thisBkdir_rec = new AppInfo(db, AppInfo.KEY_DB_BACKUP_THISDIR);
+				prevBkDir = thisBkdir_rec.getValue();
+			}
+			catch (RDBKeyNotFoundException e) { }
 
 			if (prevBkfile_rec != null)
 			{
@@ -180,6 +190,15 @@ public class DBBackup {
 		catch (NumberFormatException e) { }
 
 		// Next: Set the current ones to now
+		if (thisBkdir_rec != null)
+		{
+			thisBkdir_rec.setValue((dirname != null) ? dirname : "");
+			thisBkdir_rec.commit();
+		} else {
+			thisBkdir_rec = new AppInfo(AppInfo.KEY_DB_BACKUP_THISDIR, (dirname != null) ? dirname : "");
+			thisBkdir_rec.insert(db);
+		}
+
 		if (thisBkfile_rec != null)
 		{
 			thisBkfile_rec.setValue(bkupFile);
@@ -188,6 +207,7 @@ public class DBBackup {
 			thisBkfile_rec = new AppInfo(AppInfo.KEY_DB_BACKUP_THISFILE, bkupFile);
 			thisBkfile_rec.insert(db);
 		}
+
 		if (thisBktime_rec != null)
 		{
 			thisBktime_rec.setValue(Integer.toString(thistime));
@@ -206,7 +226,14 @@ public class DBBackup {
 		 */
 		try
 		{
-			FileUtils.copyFile(fromFilePath, toFilePath.toString(), false);
+			final String toFilePathStr = toFilePath.toString(); 
+			FileUtils.copyFile(fromFilePath, toFilePathStr, false);
+
+			// notify MediaScanner we created a new file that the user may want to copy off the device
+			Intent iBkupFile = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
+			iBkupFile.setData(Uri.fromFile(new File(toFilePathStr)));
+			ctx.sendBroadcast(iBkupFile);
+
 		} catch (IOException e)
 		{
 			/**
@@ -224,6 +251,20 @@ public class DBBackup {
 			{
 				AppInfo.insertOrUpdate(db, AppInfo.KEY_DB_BACKUP_THISFILE, lastBkupFile);
 				AppInfo.insertOrUpdate(db, AppInfo.KEY_DB_BACKUP_THISTIME, Integer.toString(lasttime));
+			}
+			if (prevBkDir != null)
+			{
+				AppInfo.insertOrUpdate(db, AppInfo.KEY_DB_BACKUP_THISDIR, prevBkDir);
+			}
+			else if (thisBkdir_rec != null)
+			{
+				// Delete the entry we created. Don't reuse thisBkdir_rec: db helper obj is different now
+				try
+				{
+					AppInfo newBkdir_rec = new AppInfo(db, AppInfo.KEY_DB_BACKUP_THISDIR);
+					newBkdir_rec.delete();
+				}
+				catch (RDBKeyNotFoundException ek) { }
 			}
 
 			// Done undoing AppInfo backup-status field changes.

@@ -31,7 +31,6 @@ import org.shadowlands.roadtrip.android.util.Misc;
 import org.shadowlands.roadtrip.db.AppInfo;
 import org.shadowlands.roadtrip.db.RDBAdapter;
 import org.shadowlands.roadtrip.db.RDBKeyNotFoundException;
-import org.shadowlands.roadtrip.db.RDBSchema;
 import org.shadowlands.roadtrip.db.RDBVerifier;
 import org.shadowlands.roadtrip.db.Settings;
 import org.shadowlands.roadtrip.db.Trip;
@@ -84,6 +83,9 @@ public class BackupsMain extends Activity
 	 */
 	private String restoreFromDirectory = null;
 
+	/** If true, we've already checked {@link AppInfo#KEY_DB_BACKUP_THISDIR} for {@link #restoreFromDirectory} during our first onResume. */
+	private boolean checkedDBBackupDir = false;
+
 	private Button btnBackupNow;
 	private TextView tvTimeOfLastBkup, tvTimeOfLastTrip;
 	private ListView lvBackupsList;
@@ -123,6 +125,22 @@ public class BackupsMain extends Activity
 	{
 		super.onResume();
 		RDBAdapter db = new RDBOpenHelper(this);
+
+		if (! checkedDBBackupDir)
+		{
+			try
+			{
+				// set restoreFromDirectory from optional backup dir db entry, if any
+				AppInfo thisBkdir_rec = new AppInfo(db, AppInfo.KEY_DB_BACKUP_THISDIR);
+				String bkDir = thisBkdir_rec.getValue();
+				tryDirPath(bkDir, false);
+				// TODO use it for isSDCardWritable etc
+			}
+			catch (RDBKeyNotFoundException e) { }
+			catch (IllegalStateException e) { }
+
+			checkedDBBackupDir = true;
+		}
 
 		isSDCardWritable =
 			Environment.MEDIA_MOUNTED.equals
@@ -213,7 +231,7 @@ public class BackupsMain extends Activity
 	}
 
 	/**
-	 * List the backups currently on the SD card.
+	 * List the backups currently on the SD card, or at {@link #restoreFromDirectory} if not null.
 	 * If the card is not readable, just put a dummy entry to that effect.
 	 * Sets the activity titlebar if browsing in a different folder than the default.
 	 * @param isSDCardReadable as determined from {@link Environment#getExternalStorageState()}
@@ -381,45 +399,7 @@ public class BackupsMain extends Activity
 	    	});
     	alert.setPositiveButton(R.string.change, new DialogInterface.OnClickListener() {
 			  public void onClick(DialogInterface dialog, int whichButton) {
-				  boolean doRescan = false;
-				  String path = etDirPath.getText().toString().trim();
-				  if (path.length() == 0)
-				  {
-					  doRescan = (restoreFromDirectory != null);
-					  restoreFromDirectory = null;
-				  } else {
-					  if ((path.length() > 1) && path.endsWith(File.separator))
-						  path = path.substring(0, path.length() - 1);  // remove trailing '/'
-
-					  final int errorTextId;
-
-					  File dir = new File(path);
-					  if (! dir.exists())
-						  errorTextId = R.string.backups_main_folder_was_not_found;
-					  else if (! dir.isDirectory())
-						  errorTextId = R.string.backups_main_path_is_not_folder;
-					  else
-						  errorTextId = 0;
-
-					  if (errorTextId == 0)
-					  {
-						if (! path.equals(restoreFromDirectory))
-						{
-							doRescan = true;
-							restoreFromDirectory = path;
-						}
-					  } else {
-						AlertDialog.Builder alertErr = new AlertDialog.Builder(BackupsMain.this);
-						alertErr.setIcon(android.R.drawable.ic_dialog_alert);  // TODO doesn't show without title text
-						alertErr.setMessage(errorTextId);
-						alertErr.setCancelable(true);
-						alertErr.setNegativeButton(android.R.string.cancel, new AlertDialog.OnClickListener() {				
-							public void onClick(DialogInterface dialog, int which) { }
-						});
-						alertErr.show();
-					  }
-				  }
-
+				  boolean doRescan = tryDirPath(etDirPath.getText().toString().trim(), true);
 				  if (doRescan)
 					  populateBackupsList(true);  // ? isSDCardReadable  -- TODO
 			  }
@@ -442,6 +422,58 @@ public class BackupsMain extends Activity
 			return;
 
 		backupNow();
+	}
+
+	/**
+	 * Checks a directory path to see if it's valid for reading or writing backups.
+	 * If so, sets {@link #restoreFromDirectory}.
+	 * @param path  Proposed path, or "" for the default ({@link DBBackup#getDBBackupPath(android.content.Context)})
+	 * @param showMessage  If true, and there is a problem with {@code path}, show an AlertDialog
+	 * @return  True if {@code path} is valid and caller should call {@link #populateBackupsList(boolean)} with the new {@link #restoreFromDirectory}
+	 * @since 0.9.20
+	 */
+	private boolean tryDirPath(String path, final boolean showMessage)
+	{
+		boolean doRescan = false;
+
+		if (path.length() == 0)
+		  {
+			  doRescan = (restoreFromDirectory != null);
+			  restoreFromDirectory = null;
+		  } else {
+			  if ((path.length() > 1) && path.endsWith(File.separator))
+				  path = path.substring(0, path.length() - 1);  // remove trailing '/'
+
+			  final int errorTextId;
+
+			  File dir = new File(path);
+			  if (! dir.exists())
+				  errorTextId = R.string.backups_main_folder_was_not_found;
+			  else if (! dir.isDirectory())
+				  errorTextId = R.string.backups_main_path_is_not_folder;
+			  else
+				  errorTextId = 0;
+
+			  if (errorTextId == 0)
+			  {
+				if (! path.equals(restoreFromDirectory))
+				{
+					doRescan = true;
+					restoreFromDirectory = path;
+				}
+			  } else if (showMessage) {
+				AlertDialog.Builder alertErr = new AlertDialog.Builder(BackupsMain.this);
+				alertErr.setIcon(android.R.drawable.ic_dialog_alert);  // TODO doesn't show without title text
+				alertErr.setMessage(errorTextId);
+				alertErr.setCancelable(true);
+				alertErr.setNegativeButton(android.R.string.cancel, new AlertDialog.OnClickListener() {				
+					public void onClick(DialogInterface dialog, int which) { }
+				});
+				alertErr.show();
+			  }
+		  }
+
+		return doRescan;
 	}
 
 	/**

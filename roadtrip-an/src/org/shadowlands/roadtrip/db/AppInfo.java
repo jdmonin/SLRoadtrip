@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  Copyright (C) 2010 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010,2013 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -46,10 +46,21 @@ public class AppInfo extends RDBRecord
 	public static final String KEY_DB_BACKUP_PREVTIME = "DB_BACKUP_PREVTIME";
 
 	/**
+	 * Optional: Directory path on device of currently-being-backed-up backup. Do not include trailing slash.
+	 * Useful when the user wants to use a non-default backup folder for ongoing backups.
+	 * Value is "" if using the default backup location {@code DBBackup.getDBBackupPath(Context)}.
+	 *<P>
+	 * This table entry is optional; see also the required key {@link #KEY_DB_BACKUP_THISFILE}.
+	 * @since 0.9.20
+	 */
+	public static final String KEY_DB_BACKUP_THISDIR = "DB_BACKUP_THISDIR";
+
+	/**
 	 * filename of currently-being-backed-up backup, if any. Filename only, not full path.
 	 * Written just before closing db for backup copy; if backup fails, clear it afterwards
 	 * (copy its value back from {@link #DB_BACKUP_PREVFILE}).
 	 * Time of backup is stored in {@link #KEY_DB_BACKUP_THISTIME}.
+	 * Directory path is optionally stored in {@link #KEY_DB_BACKUP_THISDIR}.
 	 */
 	public static final String KEY_DB_BACKUP_THISFILE = "DB_BACKUP_THISFILE";
 

@@ -57,6 +57,8 @@ create table appinfo ( _id integer PRIMARY KEY AUTOINCREMENT not null, aifield v
 	-- DB_CREATE_APPNAME: 'org.shadowlands.roadtrip'
 	-- DB_BACKUP_PREVFILE: copied from previous DB_BACKUP_THISFILE when user asks to back up; doesn't include path, only filename
 	-- DB_BACKUP_PREVTIME: (unix format) time of DB_BACKUP_PREVFILE
+	-- DB_BACKUP_THISDIR:  optional directory path, for user preferences, of the backup being written. Do not include trailing slash.
+	--                       	 value is '' if using the default backup location DBBackup.getDBBackupPath(Context).
 	-- DB_BACKUP_THISFILE: written just before closing db for backup copy; if backup fails, clear it afterwards (copy it back from DB_BACKUP_PREVFILE)
 	-- DB_BACKUP_THISTIME: (unix format) time of DB_BACKUP_THISFILE
 	-- DB_CURRENT_SCHEMAVERSION (0909 unless it was upgraded)

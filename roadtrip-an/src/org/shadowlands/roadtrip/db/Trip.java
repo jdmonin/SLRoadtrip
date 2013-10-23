@@ -22,7 +22,7 @@ import java.util.Vector;
 
 /**
  * In-memory representation, and database access for, a Trip.
- * See schema file for details.
+ * See schema file and its comments for details.
  *<P>
  * Several static methods of this class select trips from the
  * database by different criteria, see method list for details.
@@ -160,7 +160,7 @@ public class Trip extends RDBRecord
     	Vector<String[]> sv;
     	if (veh != null)
     	    sv = db.getRows
-    	    (TABNAME, "vid", Integer.toString(veh.getID()), FIELDS_AND_ID, "time_start", 0);
+    	    (TABNAME, "vid", Integer.toString(veh.getID()), FIELDS_AND_ID, "_id", 0);
     	else
     	    sv = db.getRows
     	    (TABNAME, null, (String[]) null, FIELDS_AND_ID, "time_start", 0);
@@ -173,7 +173,7 @@ public class Trip extends RDBRecord
     /**
      * Retrieve all Trips within a date range for a Vehicle.
      * @param db  db connection
-     * @param veh  vehicle to look for
+     * @param veh  vehicle to look for; not null
      * @param timeStart  Starting date/time of trip range, in Unix format
      * @param weeks   Retrieve this many weeks past timeStart
      * @param searchBeyondWeeks  If true, and if no trips found within
@@ -214,7 +214,7 @@ public class Trip extends RDBRecord
 			final String[] whereArgs = {
 				Integer.toString(t0), Integer.toString(t1), vIDstr
 			};
-			sv = db.getRows(TABNAME, WHERE_TIME_START_AND_VID, whereArgs, FIELDS_AND_ID, "time_start", 0);
+			sv = db.getRows(TABNAME, WHERE_TIME_START_AND_VID, whereArgs, FIELDS_AND_ID, "_id", 0);
     	}
 
 		final boolean searchedBeyond;
@@ -313,7 +313,7 @@ public class Trip extends RDBRecord
 			Integer.toString(t0), Integer.toString(t1), vIDstr
 		};
 		Vector<String[]> sv = db.getRows
-			(TABNAME, WHERE_TIME_START_AND_VID, whereArgs, FIELDS_AND_ID, FIELD_TIME_START, 0);
+			(TABNAME, WHERE_TIME_START_AND_VID, whereArgs, FIELDS_AND_ID, "_id", 0);
 
 		return sv;
 	}
@@ -368,6 +368,7 @@ public class Trip extends RDBRecord
 		whereArgs[0] = Integer.toString(locID);
 
 		String whereClause;
+		final String orderClause;
 		if (prevTripID != 0)
 		{
 			if (towardsNewer)
@@ -377,9 +378,13 @@ public class Trip extends RDBRecord
 		} else {
 			whereClause = WHERE_LOCID;
 		}
-		if (veh != null)
+		if (veh != null) {
 			whereClause = whereClause + " and vid = ?";
-		sv = db.getRows(TABNAME, whereClause, whereArgs, FIELDS_AND_ID, "time_start", 0);
+			orderClause = "_id";
+		} else {
+			orderClause = FIELD_TIME_START;
+		}
+		sv = db.getRows(TABNAME, whereClause, whereArgs, FIELDS_AND_ID, orderClause, 0);
 
     	if (sv == null)
     	{
@@ -417,9 +422,9 @@ public class Trip extends RDBRecord
      * Get the most recent local trip or roadtrip for this vehicle, if any.
      * Does not call {@link #readAllTStops()} on the returned trip.
      * @param db  db connection
-     * @param veh  vehicle to look for
+     * @param veh  vehicle to look for; not null
      * @param wantsLocal  If true, local trip only; if false, roadtrip only.
-     * @return Most recent Trip for this Vehicle, sorted by time_start descending, or null if none
+     * @return Most recent Trip for this Vehicle, sorted by _id descending, or null if none
      * @throws IllegalStateException if db not open
      * @since 0.9.03
      * @see #recentInDB(RDBAdapter)
@@ -431,7 +436,7 @@ public class Trip extends RDBRecord
     		throw new IllegalStateException("db null");
     	final String where = (wantsLocal) ? WHERE_VID_AND_NOT_ROADTRIP : WHERE_VID_AND_IS_ROADTRIP;
     	Vector<String[]> sv = db.getRows
-    		(TABNAME, where, new String[]{ Integer.toString(veh.getID()) }, FIELDS_AND_ID, "time_start DESC", 1);
+    		(TABNAME, where, new String[]{ Integer.toString(veh.getID()) }, FIELDS_AND_ID, "_id DESC", 1);
     		// LIMIT 1
     	if (sv == null)
     		return null;

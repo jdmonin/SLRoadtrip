@@ -129,10 +129,13 @@ create table trip ( _id integer PRIMARY KEY AUTOINCREMENT not null, vid integer 
 	-- aid is the geoarea ID (most other tables use a_id)
 	-- catid is the optional trip category, or null (table tripcategory)
 	-- The starting and ending location are taken from the trip's TStops.
+	-- A vehicle's trips are inserted in their chronological order.
+	--    So, ORDER BY trip._id will give the proper order for any one vehicle's trips.
+	--    If selecting trips for multiple vehicles, order by time_start instead.
 	-- Convention for chronological order of stops within a trip:
 	--    (Needed because any useful field can be null)
 	--    Stops are inserted in their chronological order.
-	--    So, ORDER BY _id will give the proper ordering.
+	--    So, ORDER BY tstop._id will give the proper order within a trip.
 	-- Each trip ends with an "ending TStop", even if it has no intermediate stops.
 	-- This last stop of a trip may be referenced by a field in
 	--    the next trip, for its locid and descr.

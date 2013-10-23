@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  Copyright (C) 2010-2011 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2011,2013 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -66,9 +66,9 @@ public class Location extends RDBRecord
     	if (areaID != -1)
     	{
     		final String kv = (areaID > 0) ? Integer.toString(areaID) : null;
-    		locs = db.getRows(TABNAME, "a_id", kv, FIELDS_AND_ID, "loc_descr", 0);
+    		locs = db.getRows(TABNAME, "a_id", kv, FIELDS_AND_ID, "loc_descr COLLATE NOCASE", 0);
     	} else {
-    		locs = db.getRows(TABNAME, (String) null, (String[]) null, FIELDS_AND_ID, "loc_descr", 0);
+    		locs = db.getRows(TABNAME, (String) null, (String[]) null, FIELDS_AND_ID, "loc_descr COLLATE NOCASE", 0);
     	}
     	if (locs == null)
     		return null;

@@ -182,8 +182,12 @@ public class TripBegin extends Activity
 		if (isRoadtrip)
 			etGeoArea = (AutoCompleteTextView) findViewById(R.id.trip_begin_roadtrip_desti);
 		btnStartTimeDate = (Button) findViewById(R.id.trip_begin_btn_start_date);
+
 		tpStartTimeTime = (TimePicker) findViewById(R.id.trip_begin_start_time);
 		tpStartTimeTime.setIs24HourView(DateFormat.is24HourFormat(this));
+		// make sure hour is correct after noon ("pm" hour < 12 seen in 4.2.2 in 24-hour mode)
+		tpStartTimeTime.setCurrentHour(startTime.get(Calendar.HOUR_OF_DAY));
+
 		if (Settings.getBoolean(db, Settings.SHOW_TRIP_PAX, false))
 		{
 			etPax = (EditText) findViewById(R.id.trip_begin_pax);

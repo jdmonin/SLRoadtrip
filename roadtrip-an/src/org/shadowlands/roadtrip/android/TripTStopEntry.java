@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010-2013 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2014 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -1338,9 +1338,10 @@ public class TripTStopEntry extends Activity
 			contTimeSec = (int) (contTime.getTimeInMillis() / 1000L);
 
 			// Validate continue-time:
-			if (stopTimeSec == 0)
-				stopTimeSec = currT.getTime_start();
-			if ((stopTimeSec != 0) && (contTimeSec < stopTimeSec)) 
+			int stopSec = stopTimeSec;
+			if (stopSec == 0)
+				stopSec = currT.getTime_start();
+			if ((stopSec != 0) && (contTimeSec < stopSec)) 
 			{
 				tp_time_cont.requestFocus();
 	        	Toast.makeText(this,

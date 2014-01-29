@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010-2013 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2014 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -119,8 +119,8 @@ public class TripBegin extends Activity
 	 * initialized once in {@link #updateStartDateButton()}.
 	 */
 	private StringBuffer fmt_dow_shortdate;
-	private Button btnStartTimeDate;
-	private TimePicker tpStartTimeTime;  // TODO on wraparound: Chg date
+	private Button btnStartDate;
+	private TimePicker tpStartTime;  // TODO on wraparound: Chg date
 	/** optional passenger count */
 	private EditText etPax;
 	/** optional {@link TripCategory} */
@@ -181,12 +181,12 @@ public class TripBegin extends Activity
 		etLocNew.addTextChangedListener(this);  // for related radiobutton
 		if (isRoadtrip)
 			etGeoArea = (AutoCompleteTextView) findViewById(R.id.trip_begin_roadtrip_desti);
-		btnStartTimeDate = (Button) findViewById(R.id.trip_begin_btn_start_date);
+		btnStartDate = (Button) findViewById(R.id.trip_begin_btn_start_date);
 
-		tpStartTimeTime = (TimePicker) findViewById(R.id.trip_begin_start_time);
-		tpStartTimeTime.setIs24HourView(DateFormat.is24HourFormat(this));
+		tpStartTime = (TimePicker) findViewById(R.id.trip_begin_start_time);
+		tpStartTime.setIs24HourView(DateFormat.is24HourFormat(this));
 		// make sure hour is correct after noon ("pm" hour < 12 seen in 4.2.2 in 24-hour mode)
-		tpStartTimeTime.setCurrentHour(startTime.get(Calendar.HOUR_OF_DAY));
+		tpStartTime.setCurrentHour(startTime.get(Calendar.HOUR_OF_DAY));
 
 		if (Settings.getBoolean(db, Settings.SHOW_TRIP_PAX, false))
 		{
@@ -363,7 +363,8 @@ public class TripBegin extends Activity
 				rbLocContinue.setEnabled(true);
 				rbLocGroup.check(R.id.trip_begin_radio_loc_cont);
 				// rbLocContinue.setChecked(true);
-				tvLocContinue.setText(tvLocContinue.getText() + " " + startingPrevTStop.readLocationText());
+				tvLocContinue.setText
+					(getResources().getString(R.string.continue_from_colon) + " " + startingPrevTStop.readLocationText());
 			}
 
 			// How recent was that vehicle's most recent trip? (Historical Mode)
@@ -389,7 +390,7 @@ public class TripBegin extends Activity
 	 * Ask whether to start now, or at the stop time of this vehicle's previous trip
 	 * ({@link #TIMEDIFF_HISTORICAL_MILLIS} ago or more: Historical Mode).
 	 * Default to start now.
-	 * @param latestVehTime Historical starting time, to set {@link #startTime} and {@link #tpStartTimeTime} if chosen
+	 * @param latestVehTime Historical starting time, to set {@link #startTime} and {@link #tpStartTime} if chosen
 	 * @since 0.9.20
 	 */
 	public void askStartNowOrHistorical(final long latestVehTime)
@@ -404,8 +405,8 @@ public class TripBegin extends Activity
 	    		final long now = System.currentTimeMillis();
 	    		startTime.setTimeInMillis(now);
 	    		startTimeAtCreate = now;
-	    		tpStartTimeTime.setCurrentHour(startTime.get(Calendar.HOUR_OF_DAY));
-	    		tpStartTimeTime.setCurrentMinute(startTime.get(Calendar.MINUTE));
+	    		tpStartTime.setCurrentHour(startTime.get(Calendar.HOUR_OF_DAY));
+	    		tpStartTime.setCurrentMinute(startTime.get(Calendar.MINUTE));
 	    		updateStartDateButton();
 	    	}
 	    	});
@@ -414,8 +415,8 @@ public class TripBegin extends Activity
 	    	{
 	    		startTime.setTimeInMillis(latestVehTime);
 	    		startTimeAtCreate = latestVehTime;  // set equal, to allow further updates if veh changes again
-	    		tpStartTimeTime.setCurrentHour(startTime.get(Calendar.HOUR_OF_DAY));
-	    		tpStartTimeTime.setCurrentMinute(startTime.get(Calendar.MINUTE));
+	    		tpStartTime.setCurrentHour(startTime.get(Calendar.HOUR_OF_DAY));
+	    		tpStartTime.setCurrentMinute(startTime.get(Calendar.MINUTE));
 	    		updateStartDateButton();
 	    	}
 	    	});
@@ -430,7 +431,7 @@ public class TripBegin extends Activity
 			fmt_dow_shortdate = Misc.buildDateFormatDOWShort(this, true);
 
 		// update btn text to current startTime:
-		btnStartTimeDate.setText(DateFormat.format(fmt_dow_shortdate, startTime));
+		btnStartDate.setText(DateFormat.format(fmt_dow_shortdate, startTime));
 	}
 
 	@Override
@@ -515,8 +516,8 @@ public class TripBegin extends Activity
 	public void onClick_BtnBeginTrip(View v)
 	{
 		// Check the time first:
-		startTime.set(Calendar.HOUR_OF_DAY, tpStartTimeTime.getCurrentHour());
-		startTime.set(Calendar.MINUTE, tpStartTimeTime.getCurrentMinute());
+		startTime.set(Calendar.HOUR_OF_DAY, tpStartTime.getCurrentHour());
+		startTime.set(Calendar.MINUTE, tpStartTime.getCurrentMinute());
 		final int startTimeSec;
 		// If start time hasn't been changed since onCreate,
 		// then update it to the current time when button was clicked.

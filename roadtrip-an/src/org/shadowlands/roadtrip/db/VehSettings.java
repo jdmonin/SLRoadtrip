@@ -56,6 +56,12 @@ public class VehSettings extends RDBRecord
 	public static final String CURRENT_DRIVER = "CURRENT_DRIVER";
 
 	/**
+	 * int setting for current {@link Trip} ID, if any.
+	 * @see #getCurrentTrip(RDBAdapter, Vehicle, boolean)
+	 */
+	public static final String CURRENT_TRIP = "CURRENT_TRIP";
+
+	/**
 	 * int setting for current {@link TStop} ID, if any.
 	 * @see #getCurrentTStop(RDBAdapter, Vehicle, boolean)
 	 */
@@ -546,6 +552,10 @@ public class VehSettings extends RDBRecord
 	private static Person currentD = null;
 	private static int currentD_vid;
 
+	/** cached record for {@link #getCurrentTrip(RDBAdapter, Vehicle, boolean)} */
+	private static Trip currentT = null;
+	private static int currentT_vid;
+
 	/** cached record for {@link #getCurrentFreqTrip(RDBAdapter, Vehicle, boolean)} */
 	private static FreqTrip currentFT = null;
 	private static int currentFT_vid;
@@ -571,6 +581,7 @@ public class VehSettings extends RDBRecord
 	{
 		currentA = null;
 		currentD = null;
+		currentT = null;
 		currentFT = null;
 		currentFTS = null;
 		currentTS = null;
@@ -745,6 +756,81 @@ public class VehSettings extends RDBRecord
 		currentD_vid = v.getID();
 		final int id = (dr != null) ? dr.id : 0;
 		insertOrUpdate(db, CURRENT_DRIVER, v, id);
+	}
+
+	/**
+	 * Get the Setting for {@link #CURRENT_TRIP} if set.
+	 *<P>
+	 * The record is cached after the first call, so if it changes,
+	 * please call {@link #setCurrentTrip(RDBAdapter, Vehicle, Trip)}.
+	 *
+	 * @param db  connection to use
+	 * @param v  Vehicle to retrieve for
+	 * @param clearIfBad  If true, clear the setting to 0 if no record by its ID is found
+	 * @return the Person for {@code CURRENT_DRIVER}, or null
+	 * @throws IllegalArgumentException if {@code v} is null
+	 * @throws IllegalStateException if the db is null or isn't open
+	 */
+	public static Trip getCurrentTrip(RDBAdapter db, final Vehicle v, final boolean clearIfBad)
+		throws IllegalArgumentException, IllegalStateException
+	{
+		if (db == null)
+			throw new IllegalStateException("null db");
+		if (v == null)
+			throw new IllegalArgumentException("null vehicle");
+
+		final int vid = v.getID();
+		if ((currentT != null) && (currentT_vid == vid))
+		{
+			if (! currentT.dbConn.hasSameOwner(db))
+				currentT.dbConn = db;
+			return currentT;
+		}
+
+		VehSettings sCT = null;
+		try
+		{
+			sCT = new VehSettings(db, CURRENT_TRIP, v);
+			// Sub-try: cleanup in case the setting exists, but the record doesn't
+			try {
+				int id = sCT.getIntValue();
+				if (id != 0)
+				{
+					currentT = new Trip(db, id);
+					currentT_vid = vid;
+				}
+			} catch (Throwable th) {
+				currentT = null;
+				if (clearIfBad)
+					sCT.delete();
+			}
+		} catch (Throwable th) {
+			return null;
+		}
+		return currentT;  // will be null if sCD not found
+	}
+
+	/**
+	 * Store the Setting for {@link #CURRENT_TRIP}, or clear it to 0.
+	 * @param db  connection to use
+	 * @param v  Vehicle to set for
+	 * @param tr  new trip, or null for none
+	 * @throws IllegalStateException if the db isn't open
+	 * @throws IllegalArgumentException if {@code v} is null, or if a non-null {@code tr}'s dbconn isn't db;
+	 *         if {@code tr}'s dbconn is null, this will be in the exception detail text.
+	 */
+	public static void setCurrentTrip(RDBAdapter db, final Vehicle v, Trip tr)
+		throws IllegalArgumentException, IllegalStateException 
+	{
+		if (tr != null)
+			matchDBOrThrow(db, tr);
+		if (v == null)
+			throw new IllegalArgumentException("null vehicle");
+
+		currentT = tr;
+		currentT_vid = v.getID();
+		final int id = (tr != null) ? tr.id : 0;
+		insertOrUpdate(db, CURRENT_TRIP, v, id);
 	}
 
 	/**
@@ -1135,5 +1221,174 @@ public class VehSettings extends RDBRecord
 		final int id = (loc != null) ? loc.id : 0;
 		insertOrUpdate(db, PREV_LOCATION, v, id);
 	}
+
+	/**
+	 * Change the current vehicle to this one, and update setting fields if their new values aren't
+	 * directly known: Current GeoArea, Trip, TStop, etc.
+	 *<P>
+	 * Before changing vehicles, updates the old vehicle's current odometer and trip by calling
+	 * {@link Vehicle#setOdometerCurrentAndLastTrip(int, Trip, boolean)}, and setting the
+	 * current TStop's {@link TStop#TEMPFLAG_CURRENT_TSTOP_AT_CURRV_CHANGE} flag if currently stopped.
+	 *<P>
+	 * TODO: This code is in transition. Currently it doesn't use the per-vehicle settings, but just encapsulates
+	 * the work done by ChangeDriverOrVehicle.changeCurrentVehicle.
+	 *
+	 * @param db  connection to use
+	 * @param oldV  Current (old) vehicle, or null if no info needs to be updated for the old vehicle
+	 * @param newV  New current vehicle
+	 * @throws IllegalArgumentException if {@code newV} is null
+	 * @throws IllegalStateException if the db isn't open
+	 * @see RDBSchema#checkSettings(RDBAdapter, int, boolean)
+	 */
+	public static boolean changeCurrentVehicle(RDBAdapter db, final Vehicle oldV, final Vehicle newV)
+		throws IllegalArgumentException, IllegalStateException
+	{
+		if (newV == null)
+			throw new IllegalArgumentException("null vehicle");
+
+		int oldCurrDID = 0;
+		{
+			final Person currD = Settings.getCurrentDriver(db, false);
+			if (currD != null)
+				oldCurrDID = currD.getID();
+		}
+		final Trip oldCurrT;
+		if (oldV != null)
+			oldCurrT = Settings.getCurrentTrip(db, false);
+		else
+			oldCurrT = null;
+
+		if (oldCurrT != null)
+		{
+			// before changing, update old current-vehicle with its current-trip info
+			oldV.setOdometerCurrentAndLastTrip
+				(oldV.getOdometerCurrent(), oldCurrT, true);
+
+			TStop currTS = Settings.getCurrentTStop(db, false); // CURRENT_TSTOP
+			if (currTS != null)
+			{
+				currTS.setFlagSingle(TStop.TEMPFLAG_CURRENT_TSTOP_AT_CURRV_CHANGE);
+				currTS.commit();
+
+				// Will soon call Settings.setCurrentTStop based on new vehicle.
+			}
+		}
+
+		int tripAreaIDCheck = -1;  // area ID to check, current area might change with vehicle
+
+		final Trip newCurrT = newV.getTripInProgress();
+		final boolean hasCurrentTrip = (newCurrT != null);
+		Settings.setCurrentTrip(db, newCurrT);
+		Settings.setCurrentVehicle(db, newV);
+
+		if (hasCurrentTrip)
+		{
+			// try to find vehicle's previous location and current TStop, if any
+
+			final boolean isStopped;
+			TStop ts = newCurrT.readLatestTStop();  // tstop may have a different trip id
+			if (ts == null)
+			{
+				isStopped = false;   // no TStops yet for this trip
+				ts = newCurrT.readStartTStop(true);
+			} else {
+				isStopped = (newCurrT.getID() == ts.getTripID())
+					&& ts.isSingleFlagSet(TStop.TEMPFLAG_CURRENT_TSTOP_AT_CURRV_CHANGE);
+			}
+			Location lo = null;
+			if (ts != null)
+			{
+				// if not stopped, then ts.getLocationID is the trip's previous location.
+				// If stopped, need to find the previous TStop to get the prev location.
+				int locID;
+				if (! isStopped) {
+					locID = ts.getLocationID();
+				} else {
+					locID = 0;
+					TStop tsPrev = TStop.readPreviousTStopWithinTrip(db, newCurrT, ts);
+					if (tsPrev != null)
+						locID = tsPrev.getLocationID();
+					if (locID == 0)
+						locID = ts.getLocationID();  // fallback
+				}
+				if (locID != 0) {	    						
+					try {
+						lo = new Location(db, locID);
+					} catch (Exception e) {  /* not found: db closed or inconsistent: TODO */  }
+				}
+			}
+			Settings.setPreviousLocation(db, lo);
+			if (isStopped) {
+				Settings.setCurrentTStop(db, ts);
+				tripAreaIDCheck = newCurrT.getAreaID();
+				if (newCurrT.isRoadtrip()) {
+					final int tsAID = ts.getAreaID();
+					if (tsAID != 0)
+						tripAreaIDCheck = tsAID;
+				}
+			} else {
+				Settings.setCurrentTStop(db, null);
+				if (newCurrT.isRoadtrip()) {
+					tripAreaIDCheck = newCurrT.getRoadtripEndAreaID();
+					if (lo != null) {
+    					final int locAID = lo.getAreaID();
+    					if (locAID != 0)
+    						tripAreaIDCheck = locAID;
+					}
+				} else {
+					tripAreaIDCheck = newCurrT.getAreaID();
+				}
+			}
+
+			final int newDID = newCurrT.getDriverID();
+			if (newDID != oldCurrDID)
+			{
+				// can't change driver within trip -> set new current driver from new vehicle's trip
+
+				try {
+					final Person newCurrDriver = new Person(db, newDID);
+					Settings.setCurrentDriver(db, newCurrDriver);
+				} catch (Exception e) {  /* not found: db closed or inconsistent: TODO */  }
+			}
+		} else {
+			// no current trip
+
+			Settings.setCurrentTStop(db, null);
+
+			Location prevLoc = null;
+			final int lastTID = newV.getLastTripID();
+			if (lastTID != 0)
+			{
+				try {
+					final Trip lastTrip = new Trip(db, lastTID);
+    				if (lastTrip.isRoadtrip())
+    					tripAreaIDCheck = lastTrip.getRoadtripEndAreaID();
+    				else
+    					tripAreaIDCheck = lastTrip.getAreaID();
+
+    				TStop endTS = lastTrip.readLatestTStop();
+    				if (endTS != null)
+    					prevLoc = endTS.readLocation();
+
+				} catch (Exception e) {  /* not found: db closed or inconsistent: TODO */  }
+			}
+
+			Settings.setPreviousLocation(db, prevLoc);
+		}
+
+		if (tripAreaIDCheck != -1) {
+			// did current area change?
+			final int currA = Settings.getInt(db, Settings.CURRENT_AREA, 0);
+			if (currA != tripAreaIDCheck)
+			{
+				try {
+					Settings.setCurrentArea(db, new GeoArea(db, tripAreaIDCheck));
+				} catch (Exception e) {  /* not found: db closed or inconsistent: TODO */  }
+			}
+		}
+
+		return hasCurrentTrip;
+	}
+
 
 }  // public class VehSettings

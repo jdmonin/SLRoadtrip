@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010-2013 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2014 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -20,13 +20,11 @@
 package org.shadowlands.roadtrip.android;
 
 import org.shadowlands.roadtrip.R;
-import org.shadowlands.roadtrip.db.GeoArea;
-import org.shadowlands.roadtrip.db.Location;
 import org.shadowlands.roadtrip.db.Person;
 import org.shadowlands.roadtrip.db.RDBAdapter;
 import org.shadowlands.roadtrip.db.Settings;
-import org.shadowlands.roadtrip.db.TStop;
 import org.shadowlands.roadtrip.db.Trip;
+import org.shadowlands.roadtrip.db.VehSettings;
 import org.shadowlands.roadtrip.db.Vehicle;
 import org.shadowlands.roadtrip.db.android.RDBOpenHelper;
 
@@ -110,6 +108,8 @@ public class ChangeDriverOrVehicle extends Activity
 	 * Change current driver/vehicle, {@link #finish()} the activity.
 	 * Set our result to {@link #RESULT_OK} if any current setting was changed,
 	 * {@link #RESULT_CANCEL} otherwise (even if drivers/vehicles were edited).
+	 * Also updates other settings from the new current vehicle if changed:
+	 * Current GeoArea, Trip, TStop, etc.
 	 */
 	public void onClick_BtnChange(View v)
 	{
@@ -133,7 +133,7 @@ public class ChangeDriverOrVehicle extends Activity
     	if ((ve != null) && (ve.getID() != currVID))
     	{
     		anyChange = true;
-    		changeCurrentVehicle(ve);
+    		VehSettings.changeCurrentVehicle(db, currV, ve);
     	}
 
     	setResult(anyChange ? RESULT_OK : RESULT_CANCELED);
@@ -173,6 +173,8 @@ public class ChangeDriverOrVehicle extends Activity
     /**
      * The "Edit Vehicles" button was clicked. Before editing the list of vehicles,
      * update the current vehicle setting if the dropdown was changed.
+     * Also updates other settings from the new current vehicle if changed:
+     * Current GeoArea, Trip, TStop, etc.
      * @param v  ignored
      */
     public void onClick_BtnVehiclesEdit(View v)
@@ -181,7 +183,10 @@ public class ChangeDriverOrVehicle extends Activity
     	if ((ve != null) && (ve.getID() != currVID))
     	{
     		anyChange = true;
-    		changeCurrentVehicle(ve);
+    		hasCurrentTrip = VehSettings.changeCurrentVehicle(db, currV, ve);
+    		currV = ve;
+    		currVID = ve.getID();
+		currT = Settings.getCurrentTrip(db, false);
     	}
  
     	Intent i = new Intent(this, VehiclesEdit.class);
@@ -241,147 +246,6 @@ public class ChangeDriverOrVehicle extends Activity
 		{
 			Button b = (Button) findViewById(R.id.change_cvd_btn_cancel);
 			b.setText(R.string.done);
-		}
-	}
-
-	/**
-	 * Change the current vehicle to this one.
-	 * Used by "Change" button, and if "Edit Vehicles" is called without hitting "Change".
-	 * @param ve  New current vehicle
-	 * @since 0.9.20
-	 */
-	private void changeCurrentVehicle(final Vehicle ve)
-	{
-		if (hasCurrentTrip)
-		{
-			// before changing, update old current-vehicle with its current-trip info
-			currV.setOdometerCurrentAndLastTrip
-				(currV.getOdometerCurrent(), currT, true);
-
-			TStop currTS = Settings.getCurrentTStop(db, false); // CURRENT_TSTOP
-			if (currTS != null)
-			{
-				currTS.setFlagSingle(TStop.TEMPFLAG_CURRENT_TSTOP_AT_CURRV_CHANGE);
-				currTS.commit();
-
-				// Will soon call Settings.setCurrentTStop based on new vehicle.
-			}
-		}
-
-		int tripAreaIDCheck = -1;  // area ID to check, current area might change with vehicle
-
-		final Trip newCurrT = ve.getTripInProgress();
-		hasCurrentTrip = (newCurrT != null);
-		Settings.setCurrentTrip(db, newCurrT);
-
-		Settings.setCurrentVehicle(db, ve);
-		currVID = ve.getID();
-
-		if (hasCurrentTrip)
-		{
-			// try to find vehicle's previous location and current TStop, if any
-
-			final boolean isStopped;
-			TStop ts = newCurrT.readLatestTStop();  // tstop may have a different trip id
-			if (ts == null)
-			{
-				isStopped = false;   // no TStops yet for this trip
-				ts = newCurrT.readStartTStop(true);
-			} else {
-				isStopped = (newCurrT.getID() == ts.getTripID())
-					&& ts.isSingleFlagSet(TStop.TEMPFLAG_CURRENT_TSTOP_AT_CURRV_CHANGE);
-			}
-			Location lo = null;
-			if (ts != null)
-			{
-				// if not stopped, then ts.getLocationID is the trip's previous location.
-				// If stopped, need to find the previous TStop to get the prev location.
-				int locID;
-				if (! isStopped) {
-					locID = ts.getLocationID();
-				} else {
-					locID = 0;
-					TStop tsPrev = TStop.readPreviousTStopWithinTrip(db, newCurrT, ts);
-					if (tsPrev != null)
-						locID = tsPrev.getLocationID();
-					if (locID == 0)
-						locID = ts.getLocationID();  // fallback
-				}
-				if (locID != 0) {	    						
-					try {
-						lo = new Location(db, locID);
-					} catch (Exception e) {  /* not found: db closed or inconsistent: TODO */  }
-				}
-			}
-			Settings.setPreviousLocation(db, lo);
-			if (isStopped) {
-				Settings.setCurrentTStop(db, ts);
-				tripAreaIDCheck = newCurrT.getAreaID();
-				if (newCurrT.isRoadtrip()) {
-					final int tsAID = ts.getAreaID();
-					if (tsAID != 0)
-						tripAreaIDCheck = tsAID;
-				}
-			} else {
-				Settings.setCurrentTStop(db, null);
-				if (newCurrT.isRoadtrip()) {
-					tripAreaIDCheck = newCurrT.getRoadtripEndAreaID();
-					if (lo != null) {
-    					final int locAID = lo.getAreaID();
-    					if (locAID != 0)
-    						tripAreaIDCheck = locAID;
-					}
-				} else {
-					tripAreaIDCheck = newCurrT.getAreaID();
-				}
-			}
-
-			final int newDID = newCurrT.getDriverID();
-			if (newDID != currDID)
-			{
-				// can't change driver within trip -> make sure current trip sets current driver
-
-				try {
-					final Person newCurrDriver = new Person(db, newDID);
-					Settings.setCurrentDriver(db, newCurrDriver);
-					// no need to call driver.setSelection, because activity is finishing
-				} catch (Exception e) {  /* not found: db closed or inconsistent: TODO */  }
-			}
-		} else {
-			// no current trip
-
-			Settings.setCurrentTStop(db, null);
-
-			Location prevLoc = null;
-			final int lastTID = ve.getLastTripID();
-			if (lastTID != 0)
-			{
-				try {
-					final Trip lastTrip = new Trip(db, lastTID);
-    				if (lastTrip.isRoadtrip())
-    					tripAreaIDCheck = lastTrip.getRoadtripEndAreaID();
-    				else
-    					tripAreaIDCheck = lastTrip.getAreaID();
-
-    				TStop endTS = lastTrip.readLatestTStop();
-    				if (endTS != null)
-    					prevLoc = endTS.readLocation();
-
-				} catch (Exception e) {  /* not found: db closed or inconsistent: TODO */  }
-			}
-
-			Settings.setPreviousLocation(db, prevLoc);
-		}
-
-		if (tripAreaIDCheck != -1) {
-			// did current area change?
-			final int currA = Settings.getInt(db, Settings.CURRENT_AREA, 0);
-			if (currA != tripAreaIDCheck)
-			{
-				try {
-					Settings.setCurrentArea(db, new GeoArea(db, tripAreaIDCheck));
-				} catch (Exception e) {  /* not found: db closed or inconsistent: TODO */  }
-			}
 		}
 	}
 

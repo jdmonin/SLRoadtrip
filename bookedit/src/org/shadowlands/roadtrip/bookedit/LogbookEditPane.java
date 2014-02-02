@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  Copyright (C) 2010-2011 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2011,2014 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -63,6 +63,7 @@ import org.shadowlands.roadtrip.model.TableChangeListener;
 // TODO: needs buttons to control open/close/etc
 // TODO dropdowns for driver change, maybe area change
 // TODO show current driver, area, etc at top
+// TODO VehicleChooserDialog: indicate inactive vehicles; consider read-only log if inactive
 
 @SuppressWarnings("serial")
 public class LogbookEditPane extends JPanel implements ActionListener, WindowListener
@@ -245,7 +246,7 @@ public class LogbookEditPane extends JPanel implements ActionListener, WindowLis
 
 	private void actionChangeVehicle()
 	{
-		Vehicle[] allV = Vehicle.getAll(conn);
+		Vehicle[] allV = Vehicle.getAll(conn, false);
 		if (allV.length < 2)
 		{
 			// TODO allow add new veh

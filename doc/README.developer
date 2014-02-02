@@ -74,9 +74,16 @@ r118		2011-07-21
 r149		2011-08-25
 r164		2011-09-22
 r173            2011-12-11
-r246	0.9.08	2012-04-01	first version released as an APK
-r271	0.9.12	2012-05-06
--	0.9.20			being developed now
+r246	0.9.08	2012-04-01	First version released as an APK
+r271	0.9.12	2012-05-06	Add Settings screen to make some fields required, optional, or hidden;
+				LogbookShow add search for locations in geoarea "(none)"; move validation to background task
+r315	0.9.20b	2013-01-15	Beta. Allow save without continuing from stop; at startup, button to restore backup;
+				Vehicle +plate/tag#; trip +#passengers; 1-step validation in LogbookShow; beta csv log export
+r347	0.9.20	2013-10-22	Change vehicle & some related settings during trip; add landscape layouts;
+				allow Backup/Restore with any folder; TripBegin ask before using historical mode
+-	0.9.40	-		Being developed now; some current settings are now per-vehicle
+
+Also see doc/hist/*.sql for previous schema updates.
 
 
 

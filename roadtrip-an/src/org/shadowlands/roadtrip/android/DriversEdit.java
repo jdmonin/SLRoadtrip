@@ -2,7 +2,7 @@
  *  Drivers (people) Editor list.
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2012 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2012,2014 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -24,6 +24,7 @@ import org.shadowlands.roadtrip.R;
 import org.shadowlands.roadtrip.db.Person;
 import org.shadowlands.roadtrip.db.RDBAdapter;
 import org.shadowlands.roadtrip.db.Settings;
+import org.shadowlands.roadtrip.db.VehSettings;
 import org.shadowlands.roadtrip.db.Vehicle;
 import org.shadowlands.roadtrip.db.android.RDBOpenHelper;
 
@@ -90,7 +91,9 @@ public class DriversEdit extends Activity
 			setResult(RESULT_OK);  // No vehicle changes made yet
 		}
 
-		if (null != Settings.getCurrentTrip(db, false))
+		// Read-only if we have a current trip
+		final Vehicle currV = Settings.getCurrentVehicle(db, false);
+		if ((null != currV) && (null != VehSettings.getCurrentTrip(db, currV, false)))
 		{
 			setTitle(R.string.view_drivers);
 			findViewById(R.id.drivers_edit_new).setVisibility(View.INVISIBLE);

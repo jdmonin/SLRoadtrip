@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010-2012 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2012,2014 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -33,6 +33,7 @@ import org.shadowlands.roadtrip.db.Settings;
 import org.shadowlands.roadtrip.db.TStop;
 import org.shadowlands.roadtrip.db.Trip;
 import org.shadowlands.roadtrip.db.TripCategory;
+import org.shadowlands.roadtrip.db.VehSettings;
 import org.shadowlands.roadtrip.db.Vehicle;
 import org.shadowlands.roadtrip.db.android.RDBOpenHelper;
 
@@ -146,7 +147,7 @@ public class Main extends Activity
 		super.onPrepareOptionsMenu(menu);
 		MenuItem item = menu.findItem(R.id.menu_main_canceltrip);
 		if (item != null)
-			item.setEnabled(null != Settings.getCurrentTrip(db, false));
+			item.setEnabled(null != VehSettings.getCurrentTrip(db, currV, false));
 
 		return true;
 	}
@@ -302,8 +303,8 @@ public class Main extends Activity
 	public void confirmCancelCurrentTrip()
 	{
 		boolean canCancel = true;
-		final Trip currT = Settings.getCurrentTrip(db, false);
-		TStop currTS = ((currT != null) ? Settings.getCurrentTStop(db, false) : null);
+		final Trip currT = VehSettings.getCurrentTrip(db, currV, false);
+		TStop currTS = ((currT != null) ? VehSettings.getCurrentTStop(db, currV, false) : null);
 		if (currTS != null)
 		{
 			canCancel = false;
@@ -330,7 +331,7 @@ public class Main extends Activity
 	    		  try
 	    		  {
 		    		  currT.cancelAndDeleteCurrentTrip();
-		    		  Settings.setCurrentTrip(db, null);
+		    		  VehSettings.setCurrentTrip(db, currV, null);
 		    		  if (isFreq)
 		    			  Settings.setCurrentFreqTrip(db, null);		    		  
 	    		  } catch (IllegalStateException e) {}
@@ -372,8 +373,8 @@ public class Main extends Activity
 		GeoArea currA = Settings.getCurrentArea(db, false);
 		Person currD = Settings.getCurrentDriver(db, false);
 		currV = Settings.getCurrentVehicle(db, false);
-		Trip currT = Settings.getCurrentTrip(db, false);
-		TStop currTS = ((currT != null) ? Settings.getCurrentTStop(db, false) : null);
+		Trip currT = VehSettings.getCurrentTrip(db, currV, true);
+		TStop currTS = ((currT != null) ? VehSettings.getCurrentTStop(db, currV, false) : null);
 		FreqTrip currFT = Settings.getCurrentFreqTrip(db, false);
 
 		final Resources res = getResources();		
@@ -452,7 +453,7 @@ public class Main extends Activity
 		tvCurrentSet.setText(txt);
 
 		final int visTrip, visNotTrip;
-		if (Settings.getCurrentTrip(db, false) != null)
+		if (VehSettings.getCurrentTrip(db, currV, false) != null)
 		{
 			visTrip = View.VISIBLE;
 			visNotTrip = View.INVISIBLE;

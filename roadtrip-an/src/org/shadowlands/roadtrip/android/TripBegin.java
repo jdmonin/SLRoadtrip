@@ -34,6 +34,7 @@ import org.shadowlands.roadtrip.db.Settings;
 import org.shadowlands.roadtrip.db.TripCategory;
 import org.shadowlands.roadtrip.db.TStop;
 import org.shadowlands.roadtrip.db.Trip;
+import org.shadowlands.roadtrip.db.VehSettings;
 import org.shadowlands.roadtrip.db.Vehicle;
 import org.shadowlands.roadtrip.db.android.RDBOpenHelper;
 
@@ -710,8 +711,8 @@ public class TripBegin extends Activity
 			Settings.setCurrentFreqTrip(db, wantsFT);
 
 		// set CURRENT_TRIP, clear CURRENT_TSTOP, set PREV_LOCATION 
-		Settings.setCurrentTrip(db, t);
-		Settings.setCurrentTStop(db, null);
+		VehSettings.setCurrentTrip(db, currV, t);
+		VehSettings.setCurrentTStop(db, currV, null);
 
 		if (startingPrevTStop == null)
 		{

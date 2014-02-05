@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010,2012 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010,2012,2014 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -24,6 +24,8 @@ import org.shadowlands.roadtrip.db.GeoArea;
 import org.shadowlands.roadtrip.db.Person;
 import org.shadowlands.roadtrip.db.RDBAdapter;
 import org.shadowlands.roadtrip.db.Settings;
+import org.shadowlands.roadtrip.db.VehSettings;
+import org.shadowlands.roadtrip.db.Vehicle;
 import org.shadowlands.roadtrip.db.android.RDBOpenHelper;
 
 import android.app.Activity;
@@ -79,7 +81,7 @@ public class DriverEntry extends Activity
 	private boolean cameFromAskNew;
 
 	/**
-	 * Are we on a trip? Is the {@link Settings#getCurrentTrip(RDBAdapter, boolean)} != null?
+	 * Are we on a trip? Is {@link VehSettings#getCurrentTrip(RDBAdapter, Vehicle, boolean)} != null?
 	 */
 	private boolean hasCurrentTrip;
 
@@ -144,12 +146,18 @@ public class DriverEntry extends Activity
 				v.setVisibility(View.GONE);
 		}
 
-		hasCurrentTrip = (null != Settings.getCurrentTrip(db, false));
-		if (hasCurrentTrip)
+		final Vehicle currV = Settings.getCurrentVehicle(db, false);
+		if (currV != null)
 		{
-			setTitle(R.string.view_drivers);
-			name.setEnabled(false);
-			comment.setEnabled(false);
+			hasCurrentTrip = (null != VehSettings.getCurrentTrip(db, currV, false));
+			if (hasCurrentTrip)
+			{
+				setTitle(R.string.view_drivers);
+				name.setEnabled(false);
+				comment.setEnabled(false);
+			}
+		} else {
+			hasCurrentTrip = false;
 		}
     }
 

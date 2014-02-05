@@ -2,7 +2,7 @@
  *  Vehicles Editor list.
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2012-2013 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2012-2014 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -23,6 +23,7 @@ package org.shadowlands.roadtrip.android;
 import org.shadowlands.roadtrip.R;
 import org.shadowlands.roadtrip.db.RDBAdapter;
 import org.shadowlands.roadtrip.db.Settings;
+import org.shadowlands.roadtrip.db.VehSettings;
 import org.shadowlands.roadtrip.db.Vehicle;
 import org.shadowlands.roadtrip.db.android.RDBOpenHelper;
 
@@ -92,7 +93,8 @@ public class VehiclesEdit extends Activity
 			setResult(RESULT_OK);  // No vehicle changes made yet
 		}
 
-		if (null != Settings.getCurrentTrip(db, false))
+		Vehicle currV = Settings.getCurrentVehicle(db, false);		
+		if ((null != currV) && (null != VehSettings.getCurrentTrip(db, currV, false)))
 		{
 			setTitle(R.string.view_vehicles);
 			findViewById(R.id.vehicles_edit_new).setVisibility(View.INVISIBLE);

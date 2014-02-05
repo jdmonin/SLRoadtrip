@@ -1,6 +1,6 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
- *  This file Copyright (C) 2010-2013 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2014 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -1222,8 +1222,9 @@ public class Trip extends RDBRecord
 	 * Requiring the current trip simplifies the assumptions and
 	 * maintains database history and integrity.
 	 *<P>
-	 * Checks {@link Settings#getCurrentTrip(RDBAdapter, boolean)}, but
-	 * does not clear {@link Settings#CURRENT_TRIP} or other settings.
+	 * Checks {@link VehSettings#getCurrentTrip(RDBAdapter, Vehicle, boolean)}, but
+	 * does not clear {@link VehSettings#CURRENT_TRIP} or other settings:
+	 * Caller must do so after calling this method.
 	 *
 	 * @throws IllegalStateException if the trip has intermediate stops,
 	 *   other than its start, or isn't the current trip ID,
@@ -1235,9 +1236,16 @@ public class Trip extends RDBRecord
 	{
 		if (odo_end != 0)
 			throw new IllegalStateException("Trip has ended");
-		Trip currT = Settings.getCurrentTrip(dbConn, false);
-		if (this.id != currT.id)
-			throw new IllegalStateException("Not current trip");
+
+		// Ensure current trip
+		{
+			final Vehicle currV = Settings.getCurrentVehicle(dbConn, false);
+			if (currV == null)
+				throw new IllegalStateException("Not current trip: No current vehicle");
+			Trip currT = VehSettings.getCurrentTrip(dbConn, currV, false);
+			if (this.id != currT.id)
+				throw new IllegalStateException("Not current trip");
+		}
 
 		// Any intermediate stops? / (TODO) same code as hasIntermediateTStops
 		Vector<TStop> ts = readAllTStops(true);  // TODO can we use allStops field instead?

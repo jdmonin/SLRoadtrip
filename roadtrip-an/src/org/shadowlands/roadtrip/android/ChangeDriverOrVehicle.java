@@ -85,7 +85,7 @@ public class ChangeDriverOrVehicle extends Activity
 		currDID = Settings.getCurrentDriver(db, false).getID();
 		currV = Settings.getCurrentVehicle(db, false);
 		currVID = currV.getID();
-		currT = Settings.getCurrentTrip(db, false);
+		currT = VehSettings.getCurrentTrip(db, currV, false);
 		hasCurrentTrip = (null != currT);
 
 		driver = (Spinner) findViewById(R.id.change_cvd_driver);
@@ -186,7 +186,7 @@ public class ChangeDriverOrVehicle extends Activity
     		hasCurrentTrip = VehSettings.changeCurrentVehicle(db, currV, ve);
     		currV = ve;
     		currVID = ve.getID();
-		currT = Settings.getCurrentTrip(db, false);
+		currT = VehSettings.getCurrentTrip(db, ve, false);
     	}
  
     	Intent i = new Intent(this, VehiclesEdit.class);
@@ -262,7 +262,7 @@ public class ChangeDriverOrVehicle extends Activity
     	final int newID = idata.getIntExtra("_id", 0);
     	if (newID == 0)
     		return;
-    	if (null != Settings.getCurrentTrip(db, false))
+    	if (null != VehSettings.getCurrentTrip(db, currV, false))
     		return;
 
     	final int toastMsg =

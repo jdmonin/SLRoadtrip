@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010-2013 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2014 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -32,6 +32,7 @@ import org.shadowlands.roadtrip.db.TStop;
 import org.shadowlands.roadtrip.db.TStopGas;
 import org.shadowlands.roadtrip.db.Trip;
 import org.shadowlands.roadtrip.db.TripCategory;
+import org.shadowlands.roadtrip.db.VehSettings;
 import org.shadowlands.roadtrip.db.Vehicle;
 import org.shadowlands.roadtrip.db.ViaRoute;
 import org.shadowlands.roadtrip.db.Trip.TripListTimeRange;
@@ -350,19 +351,11 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 
 		if (veh != null)
 		{
-			// Set currT only if it's for this vehicle
-			Trip currT = Settings.getCurrentTrip(conn, false);
+			Trip currT = VehSettings.getCurrentTrip(conn, veh, false);
 			TStop currTS = null;
 			if (currT != null)
-			{
-				if (currT.getVehicleID() == veh.getID())
-				{
-					hasCurrT = true;
-					currTS = Settings.getCurrentTStop(conn, false);
-				} else {
-					currT = null;
-				}
-			}
+				currTS = VehSettings.getCurrentTStop(conn, veh, false);
+
 			int ltime = 0;
 			if (currTS != null)
 			{

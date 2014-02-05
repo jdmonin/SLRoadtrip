@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010-2013 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2014 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -37,7 +37,7 @@ import java.util.Vector;
  * its trip from the stop ({@link #clearTempFlags()}).
  *<P>
  * To tell if the app's {@link Settings#CURRENT_VEHICLE} is currently stopped
- * at this TStop, see {@link Settings#CURRENT_TSTOP}.  For other vehicles
+ * at this TStop, see {@link VehSettings#CURRENT_TSTOP}.  For other vehicles
  * besides the current vehicle, {@link #TEMPFLAG_CURRENT_TSTOP_AT_CURRV_CHANGE}
  * indicates that the vehicle is stopped here and the {@code CURRENT_VEHICLE}
  * was changed to a different vehicle at that point.  When the other vehicle
@@ -119,15 +119,18 @@ public class TStop extends RDBRecord
     public static final int TEMPFLAG_CREATED_GASBRANDGRADE = 0x04;
 
     /**
-     * Temporary flag to indicate this was {@link Settings#CURRENT_TSTOP} before changing
-     * {@link Settings#CURRENT_VEHICLE}.  Unless you're changing the current vehicle setting,
-     * this flag should not be set for a TStop.
+     * Temporary flag to indicate this was {@link VehSettings#CURRENT_TSTOP} before changing
+     * {@link Settings#CURRENT_VEHICLE}.  Unless you're changing the current vehicle setting
+     * away from a vehicle stopped here, this flag should not be set for a TStop.
      *<P>
      * So, this flag is set for the current tstop, if any, of the current trip of a non-current vehicle.
      *<P>
      * When the current vehicle is changed back to this tstop's trip's vehicle,
-     * this flag will be used to set {@link Settings#CURRENT_TSTOP} again.
-     * For details on this transition, see class javadoc for TStop and {@link Vehicle},
+     * this flag can be used to set {@link VehSettings#CURRENT_TSTOP} again if that
+     * setting was somehow lost.
+     *<P>
+     * For details on this transition, see class javadoc for TStop and {@link Vehicle};
+     * {@link VehSettings#changeCurrentVehicle(RDBAdapter, Vehicle, Vehicle)};
      * and the sql schema comments for those tables and settings.
      * @since 0.9.20
      */
@@ -939,8 +942,9 @@ public class TStop extends RDBRecord
      * This is done when leaving a TStop, to continue the trip or end it.
      * Example: {@link #TEMPFLAG_CREATED_VIAROUTE}.
      *<P>
-     * These flags may be set only on the TStop which is {@link Settings#CURRENT_TSTOP} (vehicle is currently stopped here)
-     * or on the TStop that was current for another vehicle (marked with {@link #TEMPFLAG_CURRENT_TSTOP_AT_CURRV_CHANGE}).
+     * These flags may be set only on the TStop which is {@link VehSettings#CURRENT_TSTOP} (vehicle
+     * is currently stopped here) or on the TStop that was current for another vehicle (marked with
+     * {@link #TEMPFLAG_CURRENT_TSTOP_AT_CURRV_CHANGE}).
      *
      * @see #clearFlagSingle(int)
      */

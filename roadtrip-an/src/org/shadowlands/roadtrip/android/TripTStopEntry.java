@@ -37,6 +37,7 @@ import org.shadowlands.roadtrip.db.TStop;
 import org.shadowlands.roadtrip.db.TStopGas;
 import org.shadowlands.roadtrip.db.Trip;
 import org.shadowlands.roadtrip.db.TripCategory;
+import org.shadowlands.roadtrip.db.VehSettings;
 import org.shadowlands.roadtrip.db.Vehicle;
 import org.shadowlands.roadtrip.db.ViaRoute;
 import org.shadowlands.roadtrip.db.android.RDBOpenHelper;
@@ -73,7 +74,7 @@ import android.widget.Toast;
 
 /**
  * Confirm a trip stop during a trip, or end the trip, from Main activity.
- * Called when the stop begins (no {@link Settings#CURRENT_TSTOP} in the database),
+ * Called when the stop begins (no {@link VehSettings#CURRENT_TSTOP} in the database for current vehicle),
  * when resuming the trip from the current stop (has <tt>CURRENT_TSTOP</tt>), and when
  * ending the trip (show this with the boolean intent extra
  * {@link #EXTRAS_FLAG_ENDTRIP}).
@@ -971,8 +972,8 @@ public class TripTStopEntry extends Activity
 		}
 		currD = Settings.getCurrentDriver(db, false);
 		currV = Settings.getCurrentVehicle(db, false);
-		currT = Settings.getCurrentTrip(db, true);
-		currTS = Settings.getCurrentTStop(db, false);
+		currT = VehSettings.getCurrentTrip(db, currV, true);
+		currTS = VehSettings.getCurrentTStop(db, currV, false);
 		prevLocObj = Settings.getPreviousLocation(db, false);
 
 		return ((currA != null) && (currD != null) && (currV != null) && (currT != null));
@@ -1616,7 +1617,7 @@ public class TripTStopEntry extends Activity
 			tsid = newStop.insert(db);
 			currT.addCommittedTStop(newStop);  // add it to the Trip's list
 			if (! stopEndsTrip)
-				Settings.setCurrentTStop(db, newStop);
+				VehSettings.setCurrentTStop(db, currV, newStop);
 			// Don't set currTS field yet, it needs to be null for code here.
 
 			// Now set the gas info, if any:
@@ -1700,7 +1701,7 @@ public class TripTStopEntry extends Activity
 
 		if ((currTS != null) && ! saveOnly)  // if we were stopped already, now continuing trip...
 		{
-			Settings.setCurrentTStop(db, null);
+			VehSettings.setCurrentTStop(db, currV, null);
 			Settings.setPreviousLocation(db, locObj); // update prev_loc
 		}
 
@@ -2001,7 +2002,7 @@ public class TripTStopEntry extends Activity
 		currV.setOdometerCurrentAndLastTrip(odo_total, currT, true);
 		  // that also calls currV.commit()
 
-		Settings.setCurrentTrip(db, null);
+		VehSettings.setCurrentTrip(db, currV, null);
 		if (currT.isFrequent())
 			Settings.setCurrentFreqTrip(db, null);
 

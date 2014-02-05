@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010-2013 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2014 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -30,6 +30,8 @@ import java.util.Vector;
  *<P>
  * If you restore the database from a backup, call {@link #clearSettingsCache()}
  * to remove cached references to the overwritten db's settings objects.
+ *<P>
+ * In version 0.9.40, some settings became per-vehicle {@link VehSettings}. In older versions they're all here.
  *
  * @see RDBSchema#checkSettings(RDBAdapter, int, boolean)
  * @see AppInfo
@@ -59,12 +61,6 @@ public class Settings extends RDBRecord
 	 * @see #getCurrentTrip(RDBAdapter, boolean)
 	 */
 	public static final String CURRENT_TRIP = "CURRENT_TRIP";
-
-	/**
-	 * int setting for current {@link TStop} ID, if any.
-	 * @see #getCurrentTStop(RDBAdapter, boolean)
-	 */
-	public static final String CURRENT_TSTOP = "CURRENT_TSTOP";
 
 	/**
 	 * int setting for previous {@link Location} ID, if any.
@@ -556,15 +552,13 @@ public class Settings extends RDBRecord
 	/** cached record for {@link #getCurrentFreqTripTStops(RDBdapter)}; length enver 0, is null in that case. */
 	private static Vector<FreqTripTStop> currentFTS = null;
 
-	/** cached record for {@link #getCurrentTStop(RDBAdapter, boolean)} */
-	private static TStop currentTS = null;
-
 	/** cached record for {@link #getPreviousLocation(RDBAdapter, boolean)} */
 	private static Location prevL = null;
 
 	/**
 	 * Clear cached settings records and associated objects (such
 	 * as the Current {@link Vehicle}). Necessary after restoring from a backup.
+	 * Also calls {@link VehSettings#clearSettingsCache()}.
 	 */
 	public static void clearSettingsCache()
 	{
@@ -574,8 +568,8 @@ public class Settings extends RDBRecord
 		currentT = null;
 		currentFT = null;
 		currentFTS = null;
-		currentTS = null;
 		prevL = null;
+		VehSettings.clearSettingsCache();
 	}
 
 	/**
@@ -780,14 +774,12 @@ public class Settings extends RDBRecord
 
 	/**
 	 * Get the Setting for {@link #CURRENT_TRIP} if set.
-	 *<P>
-	 * The record is cached after the first call, so if it changes,
-	 * please call {@link #setCurrentTrip(RDBAdapter, Trip)}.
 	 *
 	 * @param db  connection to use
 	 * @param clearIfBad  If true, clear the setting to 0 if no record by its ID is found
 	 * @return the Trip for <tt>CURRENT_TRIP</tt>, or null
      * @throws IllegalStateException if the db is null or isn't open
+	 * @deprecated v0.9.40: Use {@link VehSettings#getCurrentTrip(RDBAdapter, Vehicle, boolean)} instead.
 	 */
 	public static Trip getCurrentTrip(RDBAdapter db, final boolean clearIfBad)
 		throws IllegalStateException
@@ -818,24 +810,6 @@ public class Settings extends RDBRecord
 			return null;
 		}
 		return currentT;  // will be null if sCT not found
-	}
-
-	/**
-	 * Store the Setting for {@link #CURRENT_TRIP}, or clear it to 0.
-	 * @param db  connection to use
-	 * @param tr  new trip, or null for none
-     * @throws IllegalStateException if the db isn't open
-     * @throws IllegalArgumentException if a non-null <tt>tr</tt>'s dbconn isn't db;
-     *         if tr's dbconn is <tt>null</tt>, this will be in the exception detail text.
-	 */
-	public static void setCurrentTrip(RDBAdapter db, Trip tr)
-		throws IllegalStateException, IllegalArgumentException
-	{
-		if (tr != null)
-			matchDBOrThrow(db, tr);
-		currentT = tr;
-		final int id = (tr != null) ? tr.id : 0;
-		insertOrUpdate(db, CURRENT_TRIP, id);
 	}
 
 	/**
@@ -1037,66 +1011,6 @@ public class Settings extends RDBRecord
 				insertOrUpdateCurrentFreqTripTStops(db);
 			}
 		}
-	}
-
-	/**
-	 * Get the Setting for {@link #CURRENT_TSTOP} if set.
-	 *<P>
-	 * The record is cached after the first call, so if it changes,
-	 * please call {@link #setCurrentTStop(RDBAdapter, TStop)}.
-	 *
-	 * @param db  connection to use
-	 * @param clearIfBad  If true, clear the setting to 0 if no record by its ID is found
-	 * @return the TStop for <tt>CURRENT_TSTOP</tt>, or null
-     * @throws IllegalStateException if the db is null or isn't open
-	 */
-	public static TStop getCurrentTStop(RDBAdapter db, final boolean clearIfBad)
-		throws IllegalStateException
-	{
-		if (db == null)
-			throw new IllegalStateException("null db");
-		if (currentTS != null)
-		{
-			if (! currentTS.dbConn.hasSameOwner(db))
-				currentTS.dbConn = db;
-			return currentTS;
-		}
-
-		Settings sCT = null;
-		try
-		{
-			sCT = new Settings(db, Settings.CURRENT_TSTOP);
-			// Sub-try: cleanup in case the setting exists, but the record doesn't
-			try {
-				int id = sCT.getIntValue();
-				if (id != 0)
-					currentTS = new TStop(db, id);
-			} catch (Throwable th) {
-				if (clearIfBad)
-					sCT.delete();
-			}
-		} catch (Throwable th) {
-			return null;
-		}
-		return currentTS;  // will be null if sCT not found
-	}
-
-	/**
-	 * Store the Setting for {@link #CURRENT_TSTOP}, or clear it to 0.
-	 * @param db  connection to use
-	 * @param ts  new tstop, or null for none
-     * @throws IllegalStateException if the db isn't open
-     * @throws IllegalArgumentException if a non-null <tt>ts</tt>'s dbconn isn't db;
-     *         if ts's dbconn is <tt>null</tt>, this will be in the exception detail text.
-	 */
-	public static void setCurrentTStop(RDBAdapter db, TStop ts)
-		throws IllegalStateException, IllegalArgumentException
-	{
-		if (ts != null)
-			matchDBOrThrow(db, ts);
-		currentTS = ts;
-		final int id = (ts != null) ? ts.id : 0;
-		insertOrUpdate(db, CURRENT_TSTOP, id);
 	}
 
 	/**

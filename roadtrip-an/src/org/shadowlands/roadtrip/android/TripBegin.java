@@ -472,7 +472,7 @@ public class TripBegin extends Activity
 			if (locObj != null)
 			{
 				locObjOrig = locObj;  // since using with freqtrip
-				i.putExtra(Settings.PREV_LOCATION, locObj.getID());
+				i.putExtra(VehSettings.PREV_LOCATION, locObj.getID());
 			}
 			startActivityForResult
 			    (i, R.id.main_btn_freq_local);
@@ -735,7 +735,7 @@ public class TripBegin extends Activity
 			} catch (RDBKeyNotFoundException e) {}
 		}
 
-		Settings.setPreviousLocation(db, locObj);  // PREV_LOCATION
+		VehSettings.setPreviousLocation(db, currV, locObj);  // PREV_LOCATION
 
 		finish();
 	}

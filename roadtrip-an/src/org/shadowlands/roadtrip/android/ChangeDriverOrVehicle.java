@@ -40,7 +40,7 @@ import android.widget.Spinner;
 /**
  * Change the current driver or the current vehicle
  * ({@link Settings#CURRENT_DRIVER}, {@link Settings#CURRENT_VEHICLE}.
- * If the vehicle changes, also clear {@link Settings#PREV_LOCATION}.
+ * If the vehicle changes, also clear {@link VehSettings#PREV_LOCATION}.
  *<P>
  * Will call {@link #setResult(int) setResult}<tt>(RESULT_OK)</tt> if changed,
  *    <tt>setResult(RESULT_CANCELED)</tt> otherwise.

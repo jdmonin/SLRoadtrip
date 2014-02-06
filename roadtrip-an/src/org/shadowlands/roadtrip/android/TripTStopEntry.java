@@ -256,7 +256,7 @@ public class TripTStopEntry extends Activity
 
 	/**
 	 * When at a stop, the previous stop's location ID; for trip's first stop, the trip start location;
-	 * from {@link Settings#getPreviousLocation(RDBAdapter, boolean)}.
+	 * from {@link VehSettings#getPreviousLocation(RDBAdapter, Vehicle, boolean)}.
 	 * Used for {@link #viaRouteObj}.
 	 */
 	private Location prevLocObj;
@@ -974,7 +974,7 @@ public class TripTStopEntry extends Activity
 		currV = Settings.getCurrentVehicle(db, false);
 		currT = VehSettings.getCurrentTrip(db, currV, true);
 		currTS = VehSettings.getCurrentTStop(db, currV, false);
-		prevLocObj = Settings.getPreviousLocation(db, false);
+		prevLocObj = VehSettings.getPreviousLocation(db, currV, false);
 
 		return ((currA != null) && (currD != null) && (currV != null) && (currT != null));
 		// null prevTS OK, null prevLocObj OK
@@ -1175,7 +1175,7 @@ public class TripTStopEntry extends Activity
 
 	/**
 	 * Read fields, and record this TStop in the database.
-	 * If {@link #isCurrentlyStopped continuing} from the stop, update {@link Settings#PREV_LOCATION}.
+	 * If {@link #isCurrentlyStopped continuing} from the stop, update {@link VehSettings#PREV_LOCATION}.
 	 * If {@link #EXTRAS_FLAG_ENDTRIP}, end the Trip too.
 	 * Finish this Activity.
 	 *<P>
@@ -1702,7 +1702,7 @@ public class TripTStopEntry extends Activity
 		if ((currTS != null) && ! saveOnly)  // if we were stopped already, now continuing trip...
 		{
 			VehSettings.setCurrentTStop(db, currV, null);
-			Settings.setPreviousLocation(db, locObj); // update prev_loc
+			VehSettings.setPreviousLocation(db, currV, locObj); // update PREV_LOCATION
 		}
 
 		finish();

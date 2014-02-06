@@ -63,17 +63,6 @@ public class Settings extends RDBRecord
 	public static final String CURRENT_TRIP = "CURRENT_TRIP";
 
 	/**
-	 * int setting for previous {@link Location} ID, if any.
-	 * When stopped at a {@link TStop}, the previous stop's location ID;
-	 * at the trip's first stop, should be the trip start location.
-	 * May be 0 between trips, or the previous trip's ending location.
-	 * Used during trips to build dropdowns of {@link ViaRoute}s between
-	 * {@code PREV_LOCATION} and current TStop's location.
-	 * @since 0.8.13
-	 */
-	public static final String PREV_LOCATION = "PREV_LOCATION";
-
-	/**
 	 * int setting for current {@link FreqTrip} ID, if any.
 	 * Should be set only when {@link #CURRENT_TRIP} is set.
 	 * @see #getCurrentFreqTrip(RDBAdapter, boolean)
@@ -552,9 +541,6 @@ public class Settings extends RDBRecord
 	/** cached record for {@link #getCurrentFreqTripTStops(RDBdapter)}; length enver 0, is null in that case. */
 	private static Vector<FreqTripTStop> currentFTS = null;
 
-	/** cached record for {@link #getPreviousLocation(RDBAdapter, boolean)} */
-	private static Location prevL = null;
-
 	/**
 	 * Clear cached settings records and associated objects (such
 	 * as the Current {@link Vehicle}). Necessary after restoring from a backup.
@@ -568,7 +554,6 @@ public class Settings extends RDBRecord
 		currentT = null;
 		currentFT = null;
 		currentFTS = null;
-		prevL = null;
 		VehSettings.clearSettingsCache();
 	}
 
@@ -1011,66 +996,6 @@ public class Settings extends RDBRecord
 				insertOrUpdateCurrentFreqTripTStops(db);
 			}
 		}
-	}
-
-	/**
-	 * Get the Setting for {@link #PREV_LOCATION} if set.
-	 *<P>
-	 * The record is cached after the first call, so if it changes,
-	 * please call {@link #setPreviousLocation(RDBAdapter, Location)}.
-	 *
-	 * @param db  connection to use
-	 * @param clearIfBad  If true, clear the setting to 0 if no record by its ID is found
-	 * @return the TStop for <tt>PREV_LOCATION</tt>, or null
-     * @throws IllegalStateException if the db is null or isn't open
-	 */
-	public static Location getPreviousLocation(RDBAdapter db, final boolean clearIfBad)
-		throws IllegalStateException
-	{
-		if (db == null)
-			throw new IllegalStateException("null db");
-		if (prevL != null)
-		{
-			if (! prevL.dbConn.hasSameOwner(db))
-				prevL.dbConn = db;
-			return prevL;
-		}
-
-		Settings sPL = null;
-		try
-		{
-			sPL = new Settings(db, Settings.PREV_LOCATION);
-			// Sub-try: cleanup in case the setting exists, but the record doesn't
-			try {
-				int id = sPL.getIntValue();
-				if (id != 0)
-					prevL = new Location(db, id);
-			} catch (Throwable th) {
-				if (clearIfBad)
-					sPL.delete();
-			}
-		} catch (Throwable th) {
-			return null;
-		}
-		return prevL;  // will be null if sPL not found
-	}
-
-	/**
-	 * Store the Setting for {@link #PREV_LOCATION}, or clear it to 0.
-	 * @param db  connection to use
-	 * @param loc new previous Location, or null for none
-     * @throws IllegalStateException if the db isn't open
-     * @throws IllegalArgumentException if a non-null <tt>loc</tt>'s dbconn isn't db;
-     *         if loc's dbconn is <tt>null</tt>, this will be in the exception detail text.
-	 */
-	public static void setPreviousLocation(RDBAdapter db, Location loc)
-		throws IllegalStateException, IllegalArgumentException
-	{
-		if (loc != null)
-			matchDBOrThrow(db, loc);
-		prevL = loc;
-		final int id = (loc != null) ? loc.id : 0;
-		insertOrUpdate(db, PREV_LOCATION, id);
 	}
 
 }  // public class Settings

@@ -424,7 +424,7 @@ public class VehicleEntry
     	if (! Settings.exists(db, Settings.CURRENT_VEHICLE))
     	{
     		Settings.setCurrentVehicle(db, nv);
-    		Settings.setPreviousLocation(db, null);
+    		VehSettings.setPreviousLocation(db, nv, null);
     	}
 		// TODO also popup to ask user whether to change setting to the new one, if no curr_trip
 

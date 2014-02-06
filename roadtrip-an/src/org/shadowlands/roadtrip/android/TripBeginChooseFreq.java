@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010,2012 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010,2012,2014 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -27,6 +27,7 @@ import org.shadowlands.roadtrip.db.GeoArea;
 import org.shadowlands.roadtrip.db.Location;
 import org.shadowlands.roadtrip.db.RDBAdapter;
 import org.shadowlands.roadtrip.db.Settings;
+import org.shadowlands.roadtrip.db.VehSettings;
 import org.shadowlands.roadtrip.db.android.RDBOpenHelper;
 
 import android.app.Activity;
@@ -50,7 +51,7 @@ import android.widget.Toast;
  * and {@link Activity#RESULT_CANCELED} is returned.
  *<P>
  * If the starting location is known, pass its id as a bundle extra with
- * the key {@link Settings#PREV_LOCATION}.  (This does not affect the actual setting.)
+ * the key {@link VehSettings#PREV_LOCATION}.  (This does not affect the actual setting.)
  * Otherwise, {@link Settings#getCurrentArea(RDBAdapter, boolean)} will be called.
  *<P>
  * If it's a roadtrip, start this activity with {@link TripBegin#EXTRAS_FLAG_NONLOCAL}
@@ -94,7 +95,7 @@ public class TripBeginChooseFreq extends Activity
 		if (i != null)
 		{
 			isRoadtrip = i.getBooleanExtra(TripBegin.EXTRAS_FLAG_NONLOCAL, false);
-			locID = i.getIntExtra(Settings.PREV_LOCATION, 0);
+			locID = i.getIntExtra(VehSettings.PREV_LOCATION, 0);
 		}
 
 		// see onResume for rest of initialization.

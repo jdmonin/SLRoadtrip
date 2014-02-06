@@ -1267,7 +1267,7 @@ public class VehSettings extends RDBRecord
 			oldV.setOdometerCurrentAndLastTrip
 				(oldV.getOdometerCurrent(), oldCurrT, true);
 
-			TStop currTS = VehSettings.getCurrentTStop(db, oldV, false); // CURRENT_TSTOP
+			TStop currTS = getCurrentTStop(db, oldV, false); // CURRENT_TSTOP
 			if (currTS != null)
 			{
 				currTS.setFlagSingle(TStop.TEMPFLAG_CURRENT_TSTOP_AT_CURRV_CHANGE);
@@ -1303,7 +1303,8 @@ public class VehSettings extends RDBRecord
 
 		if (hasCurrentTrip)
 		{
-			// try to find new vehicle's current TStop and previous location, if any
+			// try to find new vehicle's current TStop and previous location, if any,
+			// and set tripAreaIDCheck
 
 			boolean isStopped = false;
 			TStop ts = null;  // for current tstop or prev location
@@ -1328,43 +1329,60 @@ public class VehSettings extends RDBRecord
 					isStopped = (newCurrT.getID() == ts.getTripID())
 						&& ts.isSingleFlagSet(TStop.TEMPFLAG_CURRENT_TSTOP_AT_CURRV_CHANGE);
 
-				VehSettings.setCurrentTStop(db, newV, (isStopped) ? ts : null);
+				setCurrentTStop(db, newV, (isStopped) ? ts : null);
 			}
 
 			Location lo = null;
-			if (ts == null)
-			{
-				// temporarily still need ts to determine prev location
 
-				ts = newCurrT.readLatestTStop();  // tstop may have a different trip id
+			try
+			{
+				VehSettings vs = new VehSettings(db, PREV_LOCATION, newV);
+				final int loc_id = vs.ivalue;
+				if (loc_id != 0)
+				{
+					lo = new Location(db, loc_id);
+						// throws RDBKeyNotFoundException if loc_id doesn't exist: 
+						// inconsistency will be fixed below as if no setting was found
+				}
+			} catch (RDBKeyNotFoundException e) {
+				// no PREV_LOCATION (0 or otherwise) setting for new vehicle, so
+				// look at the vehicle's most recent tstop.
+
 				if (ts == null)
-					// no TStops yet for this trip
-					ts = newCurrT.readStartTStop(true);				
-			}
+				{
+					// need ts to determine prev location
 
-			if (ts != null)
-			{
-				// if not stopped, then ts.getLocationID is the trip's previous location.
-				// If stopped, need to find the previous TStop to get the prev location.
+					ts = newCurrT.readLatestTStop();  // tstop may have a different trip id
+					if (ts == null)
+						// no TStops yet for this trip
+						ts = newCurrT.readStartTStop(true);				
+				}
 
-				int locID;
-				if (! isStopped) {
-					locID = ts.getLocationID();
-				} else {
-					locID = 0;
-					TStop tsPrev = TStop.readPreviousTStopWithinTrip(db, newCurrT, ts);
-					if (tsPrev != null)
-						locID = tsPrev.getLocationID();
-					if (locID == 0)
-						locID = ts.getLocationID();  // fallback
+				if (ts != null)
+				{
+					// if not stopped, then ts.getLocationID is the trip's previous location.
+					// If stopped, need to find the previous TStop to get the prev location.
+
+					int locID;
+					if (! isStopped) {
+						locID = ts.getLocationID();
+					} else {
+						locID = 0;
+						TStop tsPrev = TStop.readPreviousTStopWithinTrip(db, newCurrT, ts);
+						if (tsPrev != null)
+							locID = tsPrev.getLocationID();
+						if (locID == 0)
+							locID = ts.getLocationID();  // fallback
+					}
+					if (locID != 0) {	    						
+						try {
+							lo = new Location(db, locID);
+						} catch (Exception e2) {  /* not found: db closed or inconsistent: TODO */  }
+					}
 				}
-				if (locID != 0) {	    						
-					try {
-						lo = new Location(db, locID);
-					} catch (Exception e) {  /* not found: db closed or inconsistent: TODO */  }
-				}
+
+				setPreviousLocation(db, newV, lo);
 			}
-			Settings.setPreviousLocation(db, lo);
 
 			if (isStopped) {
 				tripAreaIDCheck = newCurrT.getAreaID();
@@ -1377,9 +1395,9 @@ public class VehSettings extends RDBRecord
 				if (newCurrT.isRoadtrip()) {
 					tripAreaIDCheck = newCurrT.getRoadtripEndAreaID();
 					if (lo != null) {
-    					final int locAID = lo.getAreaID();
-    					if (locAID != 0)
-    						tripAreaIDCheck = locAID;
+						final int locAID = lo.getAreaID();
+						if (locAID != 0)
+							tripAreaIDCheck = locAID;
 					}
 				} else {
 					tripAreaIDCheck = newCurrT.getAreaID();
@@ -1398,29 +1416,41 @@ public class VehSettings extends RDBRecord
 			}
 		} else {
 			// no current trip
+			// Check CURRENT_TSTOP, PREV_LOCATION, set tripAreaIDCheck
 
 			if (getCurrentTStop(db, newV, false) != null)
-				VehSettings.setCurrentTStop(db, newV, null);
+				setCurrentTStop(db, newV, null);
 
-			Location prevLoc = null;
-			final int lastTID = newV.getLastTripID();
-			if (lastTID != 0)
-			{
-				try {
-					final Trip lastTrip = new Trip(db, lastTID);
-    				if (lastTrip.isRoadtrip())
-    					tripAreaIDCheck = lastTrip.getRoadtripEndAreaID();
-    				else
-    					tripAreaIDCheck = lastTrip.getAreaID();
+			try {
+				VehSettings vs = new VehSettings(db, PREV_LOCATION, newV);
+				if (vs.ivalue != 0)
+				{
+					Location prevLoc = new Location(db, vs.ivalue);
+					final int aID = prevLoc.getAreaID();
+					if (aID != 0)
+						tripAreaIDCheck = aID;
+				}
+			} catch (RDBKeyNotFoundException e) {
+				Location prevLoc = null;
+				final int lastTID = newV.getLastTripID();
+				if (lastTID != 0)
+				{
+					try {
+						final Trip lastTrip = new Trip(db, lastTID);
+						if (lastTrip.isRoadtrip())
+							tripAreaIDCheck = lastTrip.getRoadtripEndAreaID();
+						else
+							tripAreaIDCheck = lastTrip.getAreaID();
 
-    				TStop endTS = lastTrip.readLatestTStop();
-    				if (endTS != null)
-    					prevLoc = endTS.readLocation();
+						TStop endTS = lastTrip.readLatestTStop();
+						if (endTS != null)
+							prevLoc = endTS.readLocation();
 
-				} catch (Exception e) {  /* not found: db closed or inconsistent: TODO */  }
+					} catch (Exception e2) {  /* not found: db closed or inconsistent: TODO */  }
+				}
+
+				setPreviousLocation(db, newV, prevLoc);				
 			}
-
-			Settings.setPreviousLocation(db, prevLoc);
 		}
 
 		if (tripAreaIDCheck != -1) {

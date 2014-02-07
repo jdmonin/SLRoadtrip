@@ -333,7 +333,7 @@ public class Main extends Activity
 		    		  currT.cancelAndDeleteCurrentTrip();
 		    		  VehSettings.setCurrentTrip(db, currV, null);
 		    		  if (isFreq)
-		    			  Settings.setCurrentFreqTrip(db, null);		    		  
+		    			  VehSettings.setCurrentFreqTrip(db, currV, null);		    		  
 	    		  } catch (IllegalStateException e) {}
 	    		  checkCurrentDriverVehicleSettings();
 	    		  updateDriverVehTripTextAndButtons();
@@ -375,7 +375,7 @@ public class Main extends Activity
 		currV = Settings.getCurrentVehicle(db, false);
 		Trip currT = VehSettings.getCurrentTrip(db, currV, true);
 		TStop currTS = ((currT != null) ? VehSettings.getCurrentTStop(db, currV, false) : null);
-		FreqTrip currFT = Settings.getCurrentFreqTrip(db, false);
+		FreqTrip currFT = VehSettings.getCurrentFreqTrip(db, currV, false);
 
 		final Resources res = getResources();		
 		StringBuffer txt = new StringBuffer(res.getString(R.string.driver));

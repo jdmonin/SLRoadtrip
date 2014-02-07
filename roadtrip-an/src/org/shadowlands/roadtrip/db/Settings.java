@@ -63,25 +63,6 @@ public class Settings extends RDBRecord
 	public static final String CURRENT_TRIP = "CURRENT_TRIP";
 
 	/**
-	 * int setting for current {@link FreqTrip} ID, if any.
-	 * Should be set only when {@link #CURRENT_TRIP} is set.
-	 * @see #getCurrentFreqTrip(RDBAdapter, boolean)
-	 * @see #setCurrentFreqTrip(RDBAdapter, FreqTrip)
-	 * @since 0.9.00
-	 */
-	public static final String CURRENT_FREQTRIP = "CURRENT_FREQTRIP";
-
-	/**
-	 * string setting for unused TStops in the current {@link FreqTrip}, if any,
-	 * as a comma-delimited list of IDs into {@link FreqTripTSTop}.
-	 * Should not be set if {@link #CURRENT_TRIP} isn't currently set.
-	 * @see #setCurrentFreqTrip(RDBAdapter, FreqTrip)
-	 * @see #reduceCurrentFreqTripTStops(RDBAdapter, FreqTripTStop)
-	 * @since 0.9.00
-	 */
-	public static final String CURRENT_FREQTRIP_TSTOPLIST = "CURRENT_FREQTRIP_TSTOPLIST";
-
-	/**
 	 * boolean setting for requiring a Trip Category for each trip.
 	 * Default is false.
 	 * @since 0.9.12
@@ -535,12 +516,6 @@ public class Settings extends RDBRecord
 	/** cached record for {@link #getCurrentTrip(RDBAdapter, boolean)} */
 	private static Trip currentT = null;
 
-	/** cached record for {@link #getCurrentFreqTrip(RDBAdapter, boolean)} */
-	private static FreqTrip currentFT = null;
-
-	/** cached record for {@link #getCurrentFreqTripTStops(RDBdapter)}; length enver 0, is null in that case. */
-	private static Vector<FreqTripTStop> currentFTS = null;
-
 	/**
 	 * Clear cached settings records and associated objects (such
 	 * as the Current {@link Vehicle}). Necessary after restoring from a backup.
@@ -552,8 +527,6 @@ public class Settings extends RDBRecord
 		currentD = null;
 		currentV = null;
 		currentT = null;
-		currentFT = null;
-		currentFTS = null;
 		VehSettings.clearSettingsCache();
 	}
 
@@ -795,207 +768,6 @@ public class Settings extends RDBRecord
 			return null;
 		}
 		return currentT;  // will be null if sCT not found
-	}
-
-	/**
-	 * Get the Setting for {@link #CURRENT_FREQTRIP} if set.
-	 *<P>
-	 * The record is cached after the first call, so if it changes,
-	 * please call {@link #setCurrentFreqTrip(RDBAdapter, Trip)}.
-	 *
-	 * @param db  connection to use
-	 * @param clearIfBad  If true, clear the setting to 0 if no record by its ID is found
-	 * @return the FreqTrip for <tt>CURRENT_FREQTRIP</tt>, or null
-     * @throws @throws IllegalStateException if the db is null or isn't open
-     *
-     * @see #getCurrentFreqTripTStops(RDBAdapter, boolean)
-	 */
-	public static FreqTrip getCurrentFreqTrip(RDBAdapter db, final boolean clearIfBad)
-		throws IllegalStateException
-	{
-		if (db == null)
-			throw new IllegalStateException("null db");
-		if (currentFT != null)
-		{
-			if (! currentFT.dbConn.hasSameOwner(db))
-				currentFT.dbConn = db;
-			return currentFT;
-		}
-
-		Settings sCT = null;
-		try
-		{
-			sCT = new Settings(db, Settings.CURRENT_FREQTRIP);
-			// Sub-try: cleanup in case the setting exists, but the record doesn't
-			try {
-				int id = sCT.getIntValue();
-				if (id != 0)
-					currentFT = new FreqTrip(db, id);
-			} catch (Throwable th) {
-				if (clearIfBad)
-					sCT.delete();
-			}
-		} catch (Throwable th) {
-			return null;
-		}
-		return currentFT;
-	}
-
-	/**
-	 * Store the Setting for {@link #CURRENT_FREQTRIP}, or clear it to 0.
-	 * Will also set or clear {@link #CURRENT_FREQTRIP_TSTOPLIST}, based on <tt>ft</tt>
-	 * == <tt>null</tt> or on {@link FreqTrip#readAllTStops()}.
-	 * @param db  connection to use
-	 * @param ft  new freqtrip, or null for none
-     * @throws IllegalStateException if the db isn't open
-     * @throws IllegalArgumentException if a non-null <tt>ft</tt>'s dbconn isn't db;
-     *         if ft's dbconn is <tt>null</tt>, this will be in the exception detail text.
-     * @see #reduceCurrentFreqTripTStops(RDBAdapter, FreqTripTStop)
-	 */
-	public static void setCurrentFreqTrip(RDBAdapter db, FreqTrip ft)
-		throws IllegalStateException, IllegalArgumentException
-	{
-		if (ft != null)
-			matchDBOrThrow(db, ft);
-		currentFT = ft;
-		final int id = (ft != null) ? ft.id : 0;
-		insertOrUpdate(db, CURRENT_FREQTRIP, id);
-		if (ft == null)
-		{
-			currentFTS = null;
-			insertOrUpdate(db, CURRENT_FREQTRIP_TSTOPLIST, null);
-		} else {
-			Vector<FreqTripTStop> allStops = ft.readAllTStops();
-			if (allStops == null)
-			{
-				currentFTS = null;
-				insertOrUpdate(db, CURRENT_FREQTRIP_TSTOPLIST, null);
-				return;
-			}
-			currentFTS = allStops;
-			insertOrUpdateCurrentFreqTripTStops(db);
-		}
-	}
-
-	/**
-	 * Write {@link #currentFTS}, as a string of IDs, to {@link #CURRENT_FREQTRIP_TSTOPLIST}.
-	 * @param db  connection to use
-	 */
-	private static void insertOrUpdateCurrentFreqTripTStops(RDBAdapter db)
-	{
-		if (currentFTS == null)
-			return;  // shouldn't happen
-		StringBuffer sb = new StringBuffer();
-		for (int i = 0; i < currentFTS.size(); ++i)
-		{
-			if (i > 0)
-				sb.append(",");
-			sb.append(currentFTS.elementAt(i).getID());
-		}
-		insertOrUpdate(db, CURRENT_FREQTRIP_TSTOPLIST, sb.toString());
-	}
-
-	/**
-	 * Get the objects listed in the Setting for {@link #CURRENT_FREQTRIP_TSTOPLIST}, if set.
-	 * This is set only when {@link #CURRENT_FREQTRIP} is set, and when
-	 * that {@link FreqTrip} contains {@link FreqTripTStop}s.
-	 *<P>
-	 * If you only want to see whether this setting is active or not,
-	 * and don't need to read the objects from the database:
-	 * Call {@link #getCurrentFreqTrip(RDBAdapter, boolean) getCurrentFreqTrip},
-	 * then {@link #Settings(RDBAdapter, String) new Settings(db, CURRENT_FREQTRIP_TSTOPLIST)}
-	 * and then {@link #getStrValue()}.
-	 *<P>
-	 * The record is cached after the first call, so if it changes,
-	 * please call {@link #setCurrentFreqTrip(RDBAdapter, Trip)} to update
-	 * both the current freqtrip and the tstop list from the database,
-	 * or call {@link #reduceCurrentFreqTripTStops(RDBAdapter, FreqTripTStop)}.
-	 *
-	 * @param db  connection to use; must be open, must not be null, or null will be returned
-	 * @param clearIfBad  If true, clear the setting to null if no record by its ID is found
-	 * @return the FreqTripTStops for <tt>CURRENT_FREQTRIP_TSTOPLIST</tt>, or null;
-	 *            will never be 0-length, will return null in that case.
-     *
-     * @see #getCurrentFreqTrip(RDBAdapter, boolean)
-	 */
-	public static Vector<FreqTripTStop> getCurrentFreqTripTStops(RDBAdapter db, final boolean clearIfBad)
-	{
-		if (currentFTS != null)
-		{
-			if ((currentFTS.size() > 0) && ! currentFTS.firstElement().dbConn.hasSameOwner(db))
-			{
-				for (int i = currentFTS.size() - 1; i >= 0; --i)
-					currentFTS.elementAt(i).dbConn = db;
-			}
-			return currentFTS;
-		}
-
-		try
-		{
-			Settings sFSL = new Settings(db, Settings.CURRENT_FREQTRIP_TSTOPLIST);
-			// Sub-try: to cleanup in case the setting exists, but a record doesn't.
-			// We'll read each freq stop with an ID in the list.
-			try {
-				final String slist = sFSL.getStrValue();
-				if (slist == null)
-					return null;
-				final String[] ids = slist.split(",");
-				Vector<FreqTripTStop> allStops = new Vector<FreqTripTStop>(ids.length);
-				for (int i = 0; i < ids.length; ++i)
-					allStops.addElement(new FreqTripTStop(db, Integer.parseInt(ids[i])));
-				currentFTS = allStops;
-			} catch (Throwable th) {
-				if (clearIfBad)
-					sFSL.delete();
-			}
-		} catch (Throwable th) {
-			return null;
-		}
-		return currentFTS;
-	}
-
-	/**
-	 * If {@link #CURRENT_FREQTRIP_TSTOPLIST} contains the given frequent stop,
-	 * remove it from the list, and update the list in the database.
-	 *
-	 * @param db  connection to use
-	 * @param removeStop  Remove this stop's ID from the list
-     * @throws IllegalStateException if the db isn't open
-	 */
-	public static void reduceCurrentFreqTripTStops(RDBAdapter db, final FreqTripTStop removeStop)
-		throws IllegalStateException
-	{
-		if (removeStop == null)
-			return;  // shouldn't happen
-		if (currentFTS == null)
-		{
-			getCurrentFreqTripTStops(db, false);
-			if (currentFTS == null)
-				return;
-		}
-
-		final int ftsID = removeStop.getID();
-		boolean found = false;
-		for (int i = currentFTS.size() - 1; i >= 0; --i)
-		{
-			FreqTripTStop s = currentFTS.elementAt(i);
-			if (ftsID == s.getID())
-			{
-				found = true;
-				currentFTS.removeElementAt(i);			
-				break;
-			}
-		}
-		if (found)
-		{
-			if (currentFTS.isEmpty())
-			{
-				currentFTS = null;
-				insertOrUpdate(db, CURRENT_FREQTRIP_TSTOPLIST, null);
-			} else {
-				insertOrUpdateCurrentFreqTripTStops(db);
-			}
-		}
 	}
 
 }  // public class Settings

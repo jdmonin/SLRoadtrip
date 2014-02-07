@@ -84,7 +84,7 @@ import android.widget.Toast;
  * to enter the driver/vehicle data.
  *<P>
  * If we're not ending the trip right now, and we're on a frequent trip
- * with stops ({@link Settings#CURRENT_FREQTRIP_TSTOPLIST} is set),
+ * with stops ({@link VehSettings#CURRENT_FREQTRIP_TSTOPLIST} is set),
  * then {@link #onCreate(Bundle)} will bring up another activity to ask the
  * user if we've stopped at one of those {@link FreqTripTStop frequent TStops}.
  * If that activity is canceled, this one will be too.
@@ -183,7 +183,7 @@ public class TripTStopEntry extends Activity
 
 	/**
 	 * Frequent TStop chosen by user, if we'e on a freq trip and
-	 * {@link Settings#CURRENT_FREQTRIP_TSTOPLIST} isn't empty.
+	 * {@link VehSettings#CURRENT_FREQTRIP_TSTOPLIST} isn't empty.
 	 * Null otherwise.
 	 */
 	private FreqTripTStop wantsFTS;
@@ -652,7 +652,7 @@ public class TripTStopEntry extends Activity
 		// See if we're stopping on a frequent trip:
 		if ((! isCurrentlyStopped) && currT.isFrequent())
 		{
-			FreqTrip ft = Settings.getCurrentFreqTrip(db, false);
+			FreqTrip ft = VehSettings.getCurrentFreqTrip(db, currV, false);
 			if (stopEndsTrip)
 			{
 				// Ending frequent trip. Copy default field values from FreqTrip.
@@ -662,12 +662,16 @@ public class TripTStopEntry extends Activity
 			{
 				// Not ending trip yet. Should ask the user to choose a FreqTripTStop, if available.
 				try {
-					Settings cTSL = new Settings(db, Settings.CURRENT_FREQTRIP_TSTOPLIST);
+					// Get list string directly, not via getter, to skip parsing it;
+					// we only care whether it's empty
+					VehSettings cTSL = new VehSettings
+						(db, VehSettings.CURRENT_FREQTRIP_TSTOPLIST, currV);
 					if (cTSL.getStrValue() != null)
 					{
 						startActivityForResult
 							(new Intent(this, TripTStopChooseFreq.class),
 							 R.id.main_btn_freq_local);
+
 						// When it returns with the result, its intent should contain
 						// an int extra "_id" that's the chosen
 						// FreqTripTStop ID, or 0 for a new non-freq TStop.
@@ -1531,7 +1535,7 @@ public class TripTStopEntry extends Activity
 		if ((wantsFTS != null) && (locID == wantsFTS.getLocationID())
 			 && isCurrentlyStopped && (! stopEndsTrip) && (! saveOnly))
 		{
-			Settings.reduceCurrentFreqTripTStops(db, wantsFTS);
+			VehSettings.reduceCurrentFreqTripTStops(db, currV, wantsFTS);
 		}
 
 		// If the stop has gas, check for a new GasBrandGrade.
@@ -2004,7 +2008,7 @@ public class TripTStopEntry extends Activity
 
 		VehSettings.setCurrentTrip(db, currV, null);
 		if (currT.isFrequent())
-			Settings.setCurrentFreqTrip(db, null);
+			VehSettings.setCurrentFreqTrip(db, currV, null);
 
 		// For roadtrip, set current geoarea too
 		final int endAreaID = currT.getRoadtripEndAreaID();

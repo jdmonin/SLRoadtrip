@@ -708,7 +708,7 @@ public class TripBegin extends Activity
 
 		// if wanted, set CURRENT_FREQTRIP and CURRENT_FREQTRIP_TSTOPLIST
 		if (wantsFT != null)
-			Settings.setCurrentFreqTrip(db, wantsFT);
+			VehSettings.setCurrentFreqTrip(db, currV, wantsFT);
 
 		// set CURRENT_TRIP, clear CURRENT_TSTOP, set PREV_LOCATION 
 		VehSettings.setCurrentTrip(db, currV, t);

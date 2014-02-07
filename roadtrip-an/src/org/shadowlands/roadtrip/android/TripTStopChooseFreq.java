@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  Copyright (C) 2010 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010,2014 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,13 +19,15 @@
 
 package org.shadowlands.roadtrip.android;
 
-import java.util.Vector;
+import java.util.List;
 
 import org.shadowlands.roadtrip.R;
 import org.shadowlands.roadtrip.db.FreqTrip;
 import org.shadowlands.roadtrip.db.FreqTripTStop;
 import org.shadowlands.roadtrip.db.RDBAdapter;
 import org.shadowlands.roadtrip.db.Settings;
+import org.shadowlands.roadtrip.db.VehSettings;
+import org.shadowlands.roadtrip.db.Vehicle;
 import org.shadowlands.roadtrip.db.android.RDBOpenHelper;
 
 import android.app.Activity;
@@ -57,7 +59,7 @@ public class TripTStopChooseFreq extends Activity
 	/** Available frequent stops; contents of {@link #freqStops} */
 	private ListView lvFreqStopsList;
 	/** frequent stops; contents of {@link #lvFreqStopsList}, once {@link #populateStopsList(RDBAdapter)} is called */
-	private Vector<FreqTripTStop> freqStops;
+	private List<FreqTripTStop> freqStops;
 
 	/** Called when the activity is first created.
 	 * See {@link #onResume()} for remainder of init work,
@@ -113,12 +115,16 @@ public class TripTStopChooseFreq extends Activity
 	}
 
 	/**
-	 * List the frequent trip TStops currently available.
+	 * List the frequent trip TStops currently available for the current vehicle.
 	 * @return true if {@link FreqTripTStop}s found, false otherwise
 	 */
 	private boolean populateStopsList(RDBAdapter db)
 	{
-		freqStops = Settings.getCurrentFreqTripTStops(db, false);
+		final Vehicle currV = Settings.getCurrentVehicle(db, false);
+		if (currV == null)
+			return false;
+
+		freqStops = VehSettings.getCurrentFreqTripTStops(db, currV, false);
 		if (freqStops == null)
 			return false;
 		lvFreqStopsList.setAdapter(new ArrayAdapter<FreqTripTStop>(this, R.layout.list_item, freqStops));
@@ -141,7 +147,7 @@ public class TripTStopChooseFreq extends Activity
 		if ((freqStops == null) || (position >= freqStops.size()))
 			return;  // unlikely, but just in case
 
-		FreqTripTStop stop = freqStops.elementAt(position);
+		FreqTripTStop stop = freqStops.get(position);
 		Toast.makeText(this, "got stop id " + stop.getID(),
 			Toast.LENGTH_SHORT).show();
 		finish(stop.getID());

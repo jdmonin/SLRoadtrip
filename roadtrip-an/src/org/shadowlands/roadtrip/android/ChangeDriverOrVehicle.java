@@ -39,8 +39,7 @@ import android.widget.Spinner;
 
 /**
  * Change the current driver or the current vehicle
- * ({@link Settings#CURRENT_DRIVER}, {@link Settings#CURRENT_VEHICLE}.
- * If the vehicle changes, also clear {@link VehSettings#PREV_LOCATION}.
+ * ({@link VehSettings#CURRENT_DRIVER}, {@link Settings#CURRENT_VEHICLE}.
  *<P>
  * Will call {@link #setResult(int) setResult}<tt>(RESULT_OK)</tt> if changed,
  *    <tt>setResult(RESULT_CANCELED)</tt> otherwise.
@@ -82,9 +81,9 @@ public class ChangeDriverOrVehicle extends Activity
 	    hasCurrentTrip = false;
 
 		db = new RDBOpenHelper(this);
-		currDID = Settings.getCurrentDriver(db, false).getID();
 		currV = Settings.getCurrentVehicle(db, false);
 		currVID = currV.getID();
+		currDID = VehSettings.getCurrentDriver(db, currV, false).getID();
 		currT = VehSettings.getCurrentTrip(db, currV, false);
 		hasCurrentTrip = (null != currT);
 
@@ -113,27 +112,36 @@ public class ChangeDriverOrVehicle extends Activity
 	 */
 	public void onClick_BtnChange(View v)
 	{
-    	if (! hasCurrentTrip)
-    	{
-	    	Person d = (Person) driver.getSelectedItem();
-	    	if (d != null)
-	    	{
-	    		final int newID = d.getID();
-	    		if (newID != currDID)
-	    		{
-	    			anyChange = true;
-	    			Settings.setCurrentDriver(db, d);
-	    		}
-	    	}
-
-	    	// eventually will allow change driver within trip, but not yet.
-    	}
-
     	Vehicle ve = (Vehicle) veh.getSelectedItem();
     	if ((ve != null) && (ve.getID() != currVID))
     	{
     		anyChange = true;
     		VehSettings.changeCurrentVehicle(db, currV, ve);
+    		currV = ve;
+    		currVID = ve.getID();
+    	}
+
+    	if (! hasCurrentTrip)
+    	{
+	    	Person d = (Person) driver.getSelectedItem();
+	    	if (d != null)
+	    	{
+	    		if (anyChange)
+	    		{
+	    			// currV changed: get new one's current driver ID
+	    			Person cvd = VehSettings.getCurrentDriver(db, ve, false);
+	    			currDID = (cvd != null) ? cvd.getID() : 0;
+	    		}
+
+	    		final int newID = d.getID();
+	    		if (newID != currDID)
+	    		{
+	    			anyChange = true;
+	    			VehSettings.setCurrentDriver(db, currV, d);
+	    		}
+	    	}
+
+	    	// eventually will allow change driver within trip, but not yet.
     	}
 
     	setResult(anyChange ? RESULT_OK : RESULT_CANCELED);
@@ -290,7 +298,7 @@ public class ChangeDriverOrVehicle extends Activity
 	 * Update the Driver or Vehicle spinner contents after adding a new one.
 	 * @param isDriver  True for driver, false for vehicle
 	 * @param  sp  Spinner to update
-	 * @param  doChange  True to change current, false to keep it
+	 * @param  doChange  True to change current setting, false to keep it
 	 * @param newID  newly added item's ID
 	 */
     private void spinnerAddNewItem(final boolean isDriver, final Spinner sp, final boolean doChange, final int newID)
@@ -301,7 +309,7 @@ public class ChangeDriverOrVehicle extends Activity
     		{
 	    		if (isDriver)
 	    		{
-	    			Settings.setCurrentDriver(db, new Person(db, newID));
+	    			VehSettings.setCurrentDriver(db, currV, new Person(db, newID));
 	    		} else {
 	    			Settings.setCurrentVehicle(db, new Vehicle(db, newID));	    			
 	    		}
@@ -312,10 +320,15 @@ public class ChangeDriverOrVehicle extends Activity
 		{
 	    	if (isDriver)
 	    	{
-				currDID = Settings.getCurrentDriver(db, false).getID();
+	    		Person dr = VehSettings.getCurrentDriver(db, currV, false);
+	    		if (dr != null)
+	    			currDID = dr.getID();
+	    		else
+	    			currDID = 0;
 				SpinnerDataFactory.setupDriversSpinner(db, this, driver, currDID);
 			} else {
-				currVID = Settings.getCurrentVehicle(db, false).getID();
+				currV = Settings.getCurrentVehicle(db, false);
+				currVID = currV.getID();
 				SpinnerDataFactory.setupVehiclesSpinner(db, true, this, veh, currVID);
 			}
 		} catch (Throwable th) {

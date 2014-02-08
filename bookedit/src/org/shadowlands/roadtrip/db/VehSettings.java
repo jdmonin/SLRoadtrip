@@ -28,7 +28,7 @@ import java.util.Vector;
  * For setting names, see static fields here or see the schema.
  *<P>
  * Convenience methods: {@link #insertOrUpdate(RDBAdapter, String, Vehicle, int)},
- *  {@link #insertOrUpdate(RDBAdapter, String, Vehicle, String)}.
+ * {@link #insertOrUpdate(RDBAdapter, String, Vehicle, String)}.
  *<P>
  * If you restore the database from a backup, call {@link Settings#clearSettingsCache()}
  * to remove cached references to the overwritten db's settings objects.
@@ -956,6 +956,7 @@ public class VehSettings extends RDBRecord
 				sb.append(",");
 			sb.append(currFTS.get(i).getID());
 		}
+
 		currentFTS = currFTS;
 		currentFTS_vid = v.getID();
 		insertOrUpdate(db, CURRENT_FREQTRIP_TSTOPLIST, v, sb.toString());
@@ -1002,6 +1003,7 @@ public class VehSettings extends RDBRecord
 				for (int i = currentFTS.size() - 1; i >= 0; --i)
 					currentFTS.get(i).dbConn = db;
 			}
+
 			return currentFTS;
 		}
 
@@ -1032,6 +1034,7 @@ public class VehSettings extends RDBRecord
 		} catch (Throwable th) {
 			return null;
 		}
+
 		return currentFTS;
 	}
 
@@ -1224,7 +1227,8 @@ public class VehSettings extends RDBRecord
 
 	/**
 	 * Change the current vehicle to this one, and update setting fields if their new values aren't
-	 * directly known: Current GeoArea, Trip, TStop, etc.
+	 * directly in the VehSettings table: Current GeoArea, Trip, TStop, etc.
+	 * If new vehicle has current trip, validates current driver setting from trip's driver field.
 	 *<P>
 	 * Before changing vehicles, updates the old vehicle's current odometer and trip by calling
 	 * {@link Vehicle#setOdometerCurrentAndLastTrip(int, Trip, boolean)}, and setting the
@@ -1249,12 +1253,6 @@ public class VehSettings extends RDBRecord
 		if (newV == null)
 			throw new IllegalArgumentException("null vehicle");
 
-		int oldCurrDID = 0;
-		{
-			final Person currD = Settings.getCurrentDriver(db, false);
-			if (currD != null)
-				oldCurrDID = currD.getID();
-		}
 		final Trip oldCurrT;
 		if (oldV != null)
 			oldCurrT = getCurrentTrip(db, oldV, false);
@@ -1273,7 +1271,7 @@ public class VehSettings extends RDBRecord
 				currTS.setFlagSingle(TStop.TEMPFLAG_CURRENT_TSTOP_AT_CURRV_CHANGE);
 				currTS.commit();
 
-				// Will soon call Settings.setCurrentTStop based on new vehicle.
+				// Will soon call setCurrentTStop based on new vehicle.
 			}
 		}
 
@@ -1405,13 +1403,13 @@ public class VehSettings extends RDBRecord
 			}
 
 			final int newDID = newCurrT.getDriverID();
-			if (newDID != oldCurrDID)
+			final Person newCurrD = getCurrentDriver(db, newV, false);
+			if ((newCurrD == null) || (newCurrD.getID() != newDID))
 			{
-				// can't change driver within trip -> set new current driver from new vehicle's trip
+				// fix incorrect current driver from new vehicle's trip
 
 				try {
-					final Person newCurrDriver = new Person(db, newDID);
-					Settings.setCurrentDriver(db, newCurrDriver);
+					VehSettings.setCurrentDriver(db, newV, new Person(db, newDID));
 				} catch (Exception e) {  /* not found: db closed or inconsistent: TODO */  }
 			}
 		} else {
@@ -1455,11 +1453,11 @@ public class VehSettings extends RDBRecord
 
 		if (tripAreaIDCheck != -1) {
 			// did current area change?
-			final int currA = Settings.getInt(db, Settings.CURRENT_AREA, 0);
+			final int currA = getInt(db, CURRENT_AREA, newV, 0);
 			if (currA != tripAreaIDCheck)
 			{
 				try {
-					Settings.setCurrentArea(db, new GeoArea(db, tripAreaIDCheck));
+					setCurrentArea(db, newV, new GeoArea(db, tripAreaIDCheck));
 				} catch (Exception e) {  /* not found: db closed or inconsistent: TODO */  }
 			}
 		}

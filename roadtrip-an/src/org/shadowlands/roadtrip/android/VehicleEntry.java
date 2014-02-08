@@ -47,7 +47,6 @@ import android.widget.CheckBox;
 import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.Spinner;
-import android.widget.TextView;
 import android.widget.Toast;
 
 /**
@@ -206,7 +205,8 @@ public class VehicleEntry
 	    int currentDriverID = -1;
 	    if (cameFromAskNew)
 	    {
-	    	Person dr = Settings.getCurrentDriver(db, false);
+		Vehicle v = Settings.getCurrentVehicle(db, false);
+	    	Person dr = (v != null) ? VehSettings.getCurrentDriver(db, v, false) : null;
 	    	if (dr != null)
 	    		currentDriverID = dr.getID();
 	    }
@@ -222,6 +222,7 @@ public class VehicleEntry
 
 	/**
 	 * During onCreate, show this vehicle's fields, except the Driver spinner.
+	 * {@link #cameFromEdit_veh} must not be null. Also sets {@link #isCurrentV}.
 	 * Spinners are set in {@link #onCreate(Bundle)}.
 	 */
 	private void updateScreenFieldsFromVehicle()
@@ -391,12 +392,13 @@ public class VehicleEntry
 		if (plateText.length() == 0)
 			plateText = null;
 
+		final Person nvDriv = (Person) driver.getSelectedItem();
 		Vehicle nv;
 		if (cameFromEdit_veh == null)
 		{
 			nv = new Vehicle
 			  (nickname.getText().toString(),
-			   (Person) driver.getSelectedItem(), ((VehicleMake) vmake.getSelectedItem()).getID(),
+			   nvDriv, ((VehicleMake) vmake.getSelectedItem()).getID(),
 			   vmodel.getText().toString(),
 			   yr,
 			   datefrom_int, 0, vin.getText().toString(), plateText,
@@ -407,7 +409,7 @@ public class VehicleEntry
 		} else {
 			nv = cameFromEdit_veh;
 			nv.setNickname(nickname.getText().toString());
-			nv.setDriverID((Person) driver.getSelectedItem());
+			nv.setDriverID(nvDriv);
 			nv.setMakeID(((VehicleMake) vmake.getSelectedItem()).getID());
 			nv.setModel(vmodel.getText().toString());
 			nv.setYear(yr);
@@ -426,7 +428,12 @@ public class VehicleEntry
     		Settings.setCurrentVehicle(db, nv);
     		VehSettings.setPreviousLocation(db, nv, null);
     	}
-		// TODO also popup to ask user whether to change setting to the new one, if no curr_trip
+		// TODO also popup to ask user whether to change currV setting to the new one, if no curr_trip
+
+    	if (! VehSettings.exists(db, VehSettings.CURRENT_DRIVER, nv))
+    	{
+    		VehSettings.setCurrentDriver(db, nv, nvDriv);
+    	}
 
     	if ((cameFromEdit_veh == null) && ! cameFromAskNew)
 		{

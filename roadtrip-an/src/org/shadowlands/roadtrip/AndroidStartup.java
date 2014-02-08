@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  Copyright (C) 2010,2012 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010,2012,2014 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -25,6 +25,7 @@ import org.shadowlands.roadtrip.android.Main;
 import org.shadowlands.roadtrip.android.VehicleEntry;
 import org.shadowlands.roadtrip.android.util.Misc;
 import org.shadowlands.roadtrip.db.GeoArea;
+import org.shadowlands.roadtrip.db.Person;
 import org.shadowlands.roadtrip.db.RDBAdapter;
 import org.shadowlands.roadtrip.db.RDBSchema;
 import org.shadowlands.roadtrip.db.Settings;
@@ -39,10 +40,10 @@ import android.widget.Toast;
 
 /**
  * Create db/schema if needed.
- * Look for preferences.
+ * Check database for preferences and current settings:
  * Check for driver & vehicle already in db.
- * If needed, go to enter these.
- * Otherwise, go to Main.
+ * If this data is missing, show buttons to Continue to enter these, or Restore from Backup.
+ * Otherwise, go immediately to {@link Main} activity.
  *
  * @author jdmonin
  */
@@ -97,6 +98,7 @@ public class AndroidStartup extends Activity
         		rv = RDBSchema.checkSettings(db, RDBSchema.SettingsCheckLevel.SETT_VEHICLE, false);
         		ret = rv.result;
         	}
+
         	missingSettings = (ret > RDBSchema.SettingsCheckLevel.SETT_OK);
         	final boolean recovered =
         		(ret < RDBSchema.SettingsCheckLevel.SETT_OK);
@@ -124,6 +126,8 @@ public class AndroidStartup extends Activity
         {
         	String txt = getResources().getString(R.string.androidstartup_pleaseCreate);
         	tv.setText(txt);
+
+        	// See onClick_BtnContinue for next data-entry intent when user hits Continue button
         } else {
 			Intent intent = new Intent(AndroidStartup.this, Main.class);
 			startActivity(intent);
@@ -136,12 +140,13 @@ public class AndroidStartup extends Activity
     public void onClick_BtnContinue(View v)
     {
     	Intent intent;  // where to go?
-    	if (! Settings.exists(db, Settings.CURRENT_DRIVER))
+    	if (null == Person.getMostRecent(db, true))
     		intent = new Intent(AndroidStartup.this, DriverEntry.class);
     	else if (! Settings.exists(db, Settings.CURRENT_VEHICLE))
     		intent = new Intent(AndroidStartup.this, VehicleEntry.class);
     	else
     		intent = new Intent(AndroidStartup.this, Main.class);
+
     	startActivity(intent);
     	if (missingSettings)
     		finish();

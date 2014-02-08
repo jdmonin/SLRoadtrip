@@ -295,9 +295,13 @@ public class TripBegin extends Activity
 				}
 			}
 		}
-		currD = Settings.getCurrentDriver(db, true);
+
 		currV = Settings.getCurrentVehicle(db, true);
-		return ((currD != null) && (currV != null));
+		if (currV == null)
+			return false;
+
+		currD = VehSettings.getCurrentDriver(db, currV, true);
+		return (currD != null);
 	}
 
 	/**

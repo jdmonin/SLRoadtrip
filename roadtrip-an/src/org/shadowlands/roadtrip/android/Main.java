@@ -356,8 +356,11 @@ public class Main extends Activity
 	 */
 	private boolean checkCurrentDriverVehicleSettings()
 	{
-		return (Settings.getCurrentDriver(db, true) != null)
-			&& (Settings.getCurrentVehicle(db, true) != null);
+		Vehicle v = Settings.getCurrentVehicle(db, true);
+		if (v == null)
+			return false;
+		else
+			return (VehSettings.getCurrentDriver(db, v, true) != null);
 	}
 
 	/**
@@ -370,9 +373,9 @@ public class Main extends Activity
 	 */
 	private void updateDriverVehTripTextAndButtons()
 	{
-		GeoArea currA = Settings.getCurrentArea(db, false);
-		Person currD = Settings.getCurrentDriver(db, false);
 		currV = Settings.getCurrentVehicle(db, false);
+		GeoArea currA = Settings.getCurrentArea(db, false);
+		Person currD = VehSettings.getCurrentDriver(db, currV, false);
 		Trip currT = VehSettings.getCurrentTrip(db, currV, true);
 		TStop currTS = ((currT != null) ? VehSettings.getCurrentTStop(db, currV, false) : null);
 		FreqTrip currFT = VehSettings.getCurrentFreqTrip(db, currV, false);

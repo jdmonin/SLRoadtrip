@@ -231,22 +231,21 @@ public class DriverEntry extends Activity
   			p.insert(db);
   		}
 
-    	if (! Settings.exists(db, Settings.CURRENT_DRIVER))
-    	{
-    		Settings.setCurrentDriver(db, p);
-    	}
-
     	// where to go next?
     	if (doingInitialSetup)
     	{
     		// Initial setup of app
+	    	final Vehicle currV = Settings.getCurrentVehicle(db, true);
 	    	Intent intent;
-	    	if (Settings.exists(db, Settings.CURRENT_VEHICLE))
+	    	if (currV != null)
 	    	{
-				intent = new Intent(DriverEntry.this, Main.class);
+	    	    	if (! VehSettings.exists(db, VehSettings.CURRENT_DRIVER, currV))
+	    	    		VehSettings.setCurrentDriver(db, currV, p);
+
+	    	    	intent = new Intent(DriverEntry.this, Main.class);
 	    	} else {
-				// current vehicle not found
-				intent = new Intent(DriverEntry.this, VehicleEntry.class);
+	    		// current vehicle not found
+	    		intent = new Intent(DriverEntry.this, VehicleEntry.class);
 	    	}
 	    	startActivity(intent);
     	} else {

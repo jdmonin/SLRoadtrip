@@ -974,13 +974,15 @@ public class TripTStopEntry extends Activity
     		currA.insert(db);
     		Settings.setCurrentArea(db, currA);
 		}
-		currD = Settings.getCurrentDriver(db, false);
 		currV = Settings.getCurrentVehicle(db, false);
+		if (currV == null)
+			return false;
+		currD = VehSettings.getCurrentDriver(db, currV, false);
 		currT = VehSettings.getCurrentTrip(db, currV, true);
 		currTS = VehSettings.getCurrentTStop(db, currV, false);
 		prevLocObj = VehSettings.getPreviousLocation(db, currV, false);
 
-		return ((currA != null) && (currD != null) && (currV != null) && (currT != null));
+		return ((currA != null) && (currD != null) && (currT != null));
 		// null prevTS OK, null prevLocObj OK
 	}
 
@@ -2015,7 +2017,7 @@ public class TripTStopEntry extends Activity
 		if (endAreaID != 0)
 		{
 			try {
-				Settings.setCurrentArea(db, new GeoArea(db, endAreaID));
+				VehSettings.setCurrentArea(db, currV, new GeoArea(db, endAreaID));
 			}
 			catch (IllegalStateException e) { }
 			catch (IllegalArgumentException e) { }

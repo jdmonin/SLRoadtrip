@@ -19,8 +19,6 @@
 
 package org.shadowlands.roadtrip.db;
 
-import java.util.Vector;
-
 /**
  * Read the Settings db table: Settings which change frequently.
  * For some common settings, see the schema.
@@ -45,22 +43,10 @@ public class Settings extends RDBRecord
 	public static final String CURRENT_AREA = "CURRENT_AREA";
 
 	/**
-	 * int setting for current driver ID (in {@link Person} table).
-	 * @see #getCurrentDriver(RDBAdapter, boolean)
-	 */
-	public static final String CURRENT_DRIVER = "CURRENT_DRIVER";
-
-	/**
 	 * int setting for current {@link Vehicle} ID.
 	 * @see #getCurrentVehicle(RDBAdapter, boolean)
 	 */
 	public static final String CURRENT_VEHICLE = "CURRENT_VEHICLE";
-
-	/**
-	 * int setting for current {@link Trip} ID, if any.
-	 * @see #getCurrentTrip(RDBAdapter, boolean)
-	 */
-	public static final String CURRENT_TRIP = "CURRENT_TRIP";
 
 	/**
 	 * boolean setting for requiring a Trip Category for each trip.
@@ -507,14 +493,8 @@ public class Settings extends RDBRecord
 	/** cached record for {@link #getCurrentArea(RDBAdapter, boolean)} */
 	private static GeoArea currentA = null;
 
-	/** cached record for {@link #getCurrentDriver(RDBAdapter, boolean)} */
-	private static Person currentD = null;
-
 	/** cached record for {@link #getCurrentVehicle(RDBAdapter, boolean)} */
 	private static Vehicle currentV = null;
-
-	/** cached record for {@link #getCurrentTrip(RDBAdapter, boolean)} */
-	private static Trip currentT = null;
 
 	/**
 	 * Clear cached settings records and associated objects (such
@@ -524,9 +504,7 @@ public class Settings extends RDBRecord
 	public static void clearSettingsCache()
 	{
 		currentA = null;
-		currentD = null;
 		currentV = null;
-		currentT = null;
 		VehSettings.clearSettingsCache();
 	}
 
@@ -611,66 +589,6 @@ public class Settings extends RDBRecord
 	}
 
 	/**
-	 * Get the Setting for {@link #CURRENT_DRIVER} if set.
-	 *<P>
-	 * The record is cached after the first call, so if it changes,
-	 * please call {@link #setCurrentDriver(RDBAdapter, Person)}.
-	 *
-	 * @param db  connection to use
-	 * @param clearIfBad  If true, clear the setting to 0 if no record by its ID is found
-	 * @return the Person for <tt>CURRENT_DRIVER</tt>, or null
-     * @throws IllegalStateException if the db is null or isn't open
-	 */
-	public static Person getCurrentDriver(RDBAdapter db, final boolean clearIfBad)
-		throws IllegalStateException
-	{
-		if (db == null)
-			throw new IllegalStateException("null db");
-		if (currentD != null)
-		{
-			if (! currentD.dbConn.hasSameOwner(db))
-				currentD.dbConn = db;
-			return currentD;
-		}
-
-		Settings sCD = null;
-		try
-		{
-			sCD = new Settings(db, Settings.CURRENT_DRIVER);
-			// Sub-try: cleanup in case the setting exists, but the record doesn't
-			try {
-				int id = sCD.getIntValue();
-				if (id != 0)
-					currentD = new Person(db, id);
-			} catch (Throwable th) {
-				if (clearIfBad)
-					sCD.delete();
-			}
-		} catch (Throwable th) {
-			return null;
-		}
-		return currentD;  // will be null if sCD not found
-	}
-
-	/**
-	 * Store the Setting for {@link #CURRENT_DRIVER}, or clear it to 0.
-	 * @param db  connection to use
-	 * @param dr  new driver, or null for none
-     * @throws IllegalStateException if the db isn't open
-     * @throws IllegalArgumentException if a non-null <tt>dr</tt>'s dbconn isn't db;
-     *         if dr's dbconn is <tt>null</tt>, this will be in the exception detail text.
-	 */
-	public static void setCurrentDriver(RDBAdapter db, Person dr)
-		throws IllegalStateException, IllegalArgumentException
-	{
-		if (dr != null)
-			matchDBOrThrow(db, dr);
-		currentD = dr;
-		final int id = (dr != null) ? dr.id : 0;
-		insertOrUpdate(db, CURRENT_DRIVER, id);
-	}
-
-	/**
 	 * Get the Setting for {@link #CURRENT_VEHICLE} if set.
 	 *<P>
 	 * The record is cached after the first call, so if it changes,
@@ -728,46 +646,6 @@ public class Settings extends RDBRecord
 		currentV = ve;
 		final int id = (ve != null) ? ve.id : 0;
 		insertOrUpdate(db, CURRENT_VEHICLE, id);
-	}
-
-	/**
-	 * Get the Setting for {@link #CURRENT_TRIP} if set.
-	 *
-	 * @param db  connection to use
-	 * @param clearIfBad  If true, clear the setting to 0 if no record by its ID is found
-	 * @return the Trip for <tt>CURRENT_TRIP</tt>, or null
-     * @throws IllegalStateException if the db is null or isn't open
-	 * @deprecated v0.9.40: Use {@link VehSettings#getCurrentTrip(RDBAdapter, Vehicle, boolean)} instead.
-	 */
-	public static Trip getCurrentTrip(RDBAdapter db, final boolean clearIfBad)
-		throws IllegalStateException
-	{
-		if (db == null)
-			throw new IllegalStateException("null db");
-		if (currentT != null)
-		{
-			if (! currentT.dbConn.hasSameOwner(db))
-				currentT.dbConn = db;
-			return currentT;
-		}
-
-		Settings sCT = null;
-		try
-		{
-			sCT = new Settings(db, Settings.CURRENT_TRIP);
-			// Sub-try: cleanup in case the setting exists, but the record doesn't
-			try {
-				int id = sCT.getIntValue();
-				if (id != 0)
-					currentT = new Trip(db, id);
-			} catch (Throwable th) {
-				if (clearIfBad)
-					sCT.delete();
-			}
-		} catch (Throwable th) {
-			return null;
-		}
-		return currentT;  // will be null if sCT not found
 	}
 
 }  // public class Settings

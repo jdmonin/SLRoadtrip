@@ -371,6 +371,11 @@ public abstract class RDBSchema
 
 	/**
 	 * Consistency-check, and possibly retrieve, the current settings from the database.
+	 *<P>
+	 * Most settings are per-vehicle in v0.9.40 and later, so the first check will be for
+	 * {@link Settings#getCurrentVehicle(RDBAdapter, boolean)}.  If no vehicles are found in the db,
+	 * the returned {@link SettingsCheckResult#result} will be {@link SettingsCheckLevel#SETT_VEHICLE}.
+	 *
 	 * @param db  An open database
 	 * @param level  How many settings to request?
 	 *          The lowest value is {@link SettingsCheckLevel#SETT_GEOAREA},
@@ -400,8 +405,45 @@ public abstract class RDBSchema
 		boolean fixedGuessed = false;   // to recover, did we have to guess? Ignored if ! fixedSettings. Check guessedArea too.
 		boolean guessedArea = false;    // did we guess from multiple GeoAreas?  Ignored if ! fixedSettings.
 
+		rv.currV = Settings.getCurrentVehicle(db, true);
+		if (rv.currV == null)
+		{
+			// Most other settings are per-vehicle: Try to recover it
+    			msgv.addElement("recov: no CURRENT_VEHICLE");
+    			missingSettings = true;
+
+			Trip rTrip = Trip.recentInDB(db);
+			if (rTrip != null)
+			{
+				try {
+					rv.currV = new Vehicle(db, rTrip.getVehicleID());
+				} catch (RDBKeyNotFoundException e) {}
+			}
+
+			if (rv.currV == null)
+			{
+				// No trips in DB, or most recent has bad vehicle ID. Use most recent vehicle.
+				// (If we recover this, all trips' vehicle IDs will be checked below.)
+
+				rv.currV = Vehicle.getMostRecent(db);
+
+				if (rv.currV == null)
+				{
+    					msgv.addElement("recov: no active vehicles found");
+					rv.result = SettingsCheckLevel.SETT_VEHICLE;
+					rv.messages = msgv;
+
+					return rv;   // <--- Early return: Other settings need vehicle ---
+				}
+			}
+
+    			msgv.addElement("recov: fixed CURRENT_VEHICLE");
+			fixedSettings = true;
+			VehSettings.changeCurrentVehicle(db, null, rv.currV);  // calls Settings.setCurrentVehicle
+		}
+
 		// Check the area first, because if it doesn't exist,
-		// it might get created and we'll be called again soon.
+		// it might get created with default values and we'll be called again soon.
 		rv.currA = Settings.getCurrentArea(db, true);
 		if (rv.currA == null)
 		{
@@ -423,32 +465,19 @@ public abstract class RDBSchema
 			}
 		}
 
-		final boolean hasDriver = Settings.exists(db, Settings.CURRENT_DRIVER);
-    	final boolean hasVehicle = Settings.exists(db, Settings.CURRENT_VEHICLE);
-    	if (! (hasDriver && hasVehicle))
+	final boolean hasDriver = VehSettings.exists(db, VehSettings.CURRENT_DRIVER, rv.currV);
+
+	if (! hasDriver)
     	{
-    		boolean hasTrip = Settings.exists(db, Settings.CURRENT_TRIP);
+    		boolean hasTrip = VehSettings.exists(db, VehSettings.CURRENT_TRIP, rv.currV);
     		if (hasTrip)
     		{
-				rv.currT = Settings.getCurrentTrip(db, false);
+				rv.currT = VehSettings.getCurrentTrip(db, rv.currV, false);
 				if (rv.currT == null)
 				{
 					hasTrip = false;
 				} else {
         			msgv.addElement("recov: has CURRENT_TRIP");
-        			if (! hasVehicle)
-        			{
-            			msgv.addElement("recov: no CURRENT_VEHICLE");
-        				final int vid = rv.currT.getVehicleID();
-        				try
-        				{
-        					rv.currV = new Vehicle(db, vid);  // read to make sure it exists
-	        				Settings.setCurrentVehicle(db, rv.currV);
-	            			msgv.addElement("recov: fixed CURRENT_VEHICLE");
-	        				fixedSettings = true;
-        				}
-        				catch (RDBKeyNotFoundException e) { }
-        			}
         			if (! hasDriver)
         			{
         				msgv.addElement("recov: no CURRENT_DRIVER");
@@ -459,7 +488,7 @@ public abstract class RDBSchema
         					Person dr = new Person(db, did);
         					if (dr.isDriver())
         					{
-		        				Settings.setCurrentDriver(db, dr);
+		        				VehSettings.setCurrentDriver(db, rv.currV, dr);
 		        				msgv.addElement("recov: fixed CURRENT_DRIVER");
 		        				fixedSettings = true;
         					}
@@ -471,43 +500,21 @@ public abstract class RDBSchema
     		if (! hasTrip)
     		{
     			// No current trip.
-    			// For missing vehicle or driver, we'll have
-    			// to best-guess from table contents.
-    			msgv.addElement("recov: no CURRENT_TRIP, ok");
-    			if (! hasVehicle)
-    			{
-    				msgv.addElement("recov: no CURRENT_VEHICLE");
-    				Vehicle[] allV = Vehicle.getAll(db, true);
-    				if (allV != null)
-    				{
-    					msgv.addElement("recov: fixed CURRENT_VEHICLE (guess)");  // TODO maybe not guess, if length 1
-    					Settings.setCurrentVehicle(db, allV[allV.length - 1]);  // guess most recent
-    					fixedSettings = true;
-    					fixedGuessed = (allV.length > 1);
-    				} else {
-    					msgv.addElement("recov: no active vehicles found");
-    					rv.result = SettingsCheckLevel.SETT_VEHICLE;
-    				}
-    			}
+    			// For missing driver, we'll have to best-guess from table contents.
     			if (! hasDriver)
     			{
     				msgv.addElement("recov: no CURRENT_DRIVER");
     				rv.currD = null;
+
+    				try
     				{
-    					rv.currV = Settings.getCurrentVehicle(db, false);
-    					if (rv.currV != null)
-    					{
-	        				try
-	        				{
-	        					rv.currD = new Person(db, rv.currV.getDriverID());
-	        					if (rv.currD.isDriver())
-	        						fixedGuessed = true;
-	        					else
-	        						rv.currD = null;
-	        				}
-	        				catch (RDBKeyNotFoundException e) { }
-    					}
-    				}
+    					rv.currD = new Person(db, rv.currV.getDriverID());
+    					if (rv.currD.isDriver())
+    						fixedGuessed = true;
+    					else
+    						rv.currD = null;
+    				} catch (RDBKeyNotFoundException e) { }
+
     				if (rv.currD == null)
     				{
         				Person[] allDr = Person.getAll(db, true);
@@ -519,7 +526,7 @@ public abstract class RDBSchema
     				}
     				if (rv.currD != null)
     				{
-    					Settings.setCurrentDriver(db, rv.currD);
+    					VehSettings.setCurrentDriver(db, rv.currV, rv.currD);
     					msgv.addElement("recov: fixed CURRENT_DRIVER (guess)");  // TODO maybe not guessed
     					fixedSettings = true;
     				} else {
@@ -546,9 +553,9 @@ public abstract class RDBSchema
 
     		if (fixedSettings)
     		{
-    			msgv.addElement("Recovered settings: Current driver/vehicle");
+    			msgv.addElement("Recovered settings: Current driver");
     		} else {
-    			msgv.addElement("Could not recover settings: Current driver/vehicle");
+    			msgv.addElement("Could not recover settings: Current driver");
     			missingSettings = true;
     		}
     	}

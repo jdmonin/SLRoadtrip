@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  Copyright (C) 2010-2011 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2011,2014 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -350,6 +350,7 @@ public class RDBJDBCAdapter implements RDBAdapter
 		(final String[] fieldnames, ResultSet rs)
 	{
 		Vector<String[]> rv = new Vector<String[]>();
+
 	    try
 	    {
 	    	int L = fieldnames.length;
@@ -387,6 +388,7 @@ public class RDBJDBCAdapter implements RDBAdapter
 	private static String[] get_extractRowFieldsAndCloseRS(final String[] fieldnames, ResultSet rs)
 	{
 		String[] res;
+
 	    try
 	    {
 			if (rs.next())
@@ -605,9 +607,14 @@ public class RDBJDBCAdapter implements RDBAdapter
 		try
 		{
 			if (rs.next())
+			{
+				// If fn is aggregate with no matching rows, aggregates except COUNT return null.
+				// rs.next() is true but getInt returns 0.
+
 				retval = rs.getInt(1);
-			// If fn is aggregate with no matching rows,
-			// rs.next() is true but getString returns null.
+				if ((def != 0) && rs.wasNull())
+					retval = def;
+			}
 		} catch (SQLException e) { }
 		try {
 			rs.close();
@@ -667,9 +674,14 @@ public class RDBJDBCAdapter implements RDBAdapter
 		try
 		{
 			if (rs.next())
+			{
+				// If fn is aggregate with no matching rows, aggregates except COUNT return null.
+				// rs.next() is true but getLong returns 0.
+
 				retval = rs.getLong(1);
-			// If fn is aggregate with no matching rows,
-			// rs.next() is true but getString returns null.
+				if ((def != 0) && rs.wasNull())
+					retval = def;
+			}
 		} catch (SQLException e) { }
 		try {
 			rs.close();

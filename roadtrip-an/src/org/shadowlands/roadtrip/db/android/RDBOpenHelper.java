@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  Copyright (C) 2010-2012 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2012,2014 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -208,11 +208,12 @@ public class RDBOpenHelper
 		final String[] whereValue = new String[]{ Integer.toString(id) };
 		Cursor dbqc = db.query(tabname, fields, WHERE_ID, whereValue, null, null, null);
 		String[] rv;
+
     	if (dbqc.moveToFirst())
     	{
     		rv = new String[fields.length];
     		for (int i = fields.length - 1; i >= 0; --i)
-    			rv[i] = dbqc.getString(i);
+    			rv[i] = dbqc.isNull(i) ? null : dbqc.getString(i);
     	} else {
     		rv = null;
     	}
@@ -244,11 +245,12 @@ public class RDBOpenHelper
 
 		Cursor dbqc = db.query(tabname, fields, tWhere, tWhereArg, null, null, null /* ORDERBY */ );
 		String[] rv;
+
     	if (dbqc.moveToFirst())
     	{
     		rv = new String[fields.length];
     		for (int i = fields.length - 1; i >= 0; --i)
-    			rv[i] = dbqc.getString(i);
+    			rv[i] = dbqc.isNull(i) ? null : dbqc.getString(i);
     	} else {
     		rv = null;
     	}
@@ -336,6 +338,7 @@ public class RDBOpenHelper
 		final String limitStr = (limit == 0) ? null : Integer.toString(limit);
 		Cursor dbqc = db.query(tabname, fieldnames, where, whereArgs, null, null, orderby, limitStr);
 		Vector<String[]> rv;
+
     	if (dbqc.moveToFirst())
     	{
     		rv = new Vector<String[]>();
@@ -345,7 +348,7 @@ public class RDBOpenHelper
     		{
 	    		String[] fv = new String[L];
 	    		for (int i = 0; i < fieldnames.length; ++i)
-	    			fv[i] = dbqc.getString(i);
+	    			fv[i] = dbqc.isNull(i) ? null : dbqc.getString(i);
 	    		rv.add(fv);
     		} while (dbqc.moveToNext());
     	} else {
@@ -407,13 +410,14 @@ public class RDBOpenHelper
 
 		Cursor dbqc = db.query(tabname, new String[]{ fn }, where, whereArgs, null, null, null /* ORDERBY */ );
 		String rv;
-    	if (dbqc.moveToFirst())
+
+    	if (dbqc.moveToFirst() && ! dbqc.isNull(0))
+		// If fn is aggregate with no matching rows, aggregates except COUNT return null.
+		// moveToFirst is true but getString might return null, might throw an exception.
+
     		rv = dbqc.getString(0);
     	else
     		rv = null;
-
-		// If fn is aggregate with no matching rows,
-		// moveToFirst is true but getString returns null.
 
     	dbqc.close();
     	return rv;
@@ -467,13 +471,14 @@ public class RDBOpenHelper
 
 		Cursor dbqc = db.query(tabname, new String[]{ fn }, where, whereArgs, null, null, null /* ORDERBY */ );
 		int rv;
-    	if (dbqc.moveToFirst())
+
+    	if (dbqc.moveToFirst() && ! dbqc.isNull(0))
+		// If fn is aggregate with no matching rows, aggregates except COUNT return null.
+		// moveToFirst() is true but getInt might return 0, might throw an exception.
+
     		rv = dbqc.getInt(0);
     	else
     		rv = def;
-
-		// If fn is aggregate with no matching rows,
-		// moveToFirst is true but getInt returns 0.
 
     	dbqc.close();
     	return rv;
@@ -527,13 +532,14 @@ public class RDBOpenHelper
 
 		Cursor dbqc = db.query(tabname, new String[]{ fn }, where, whereArgs, null, null, null /* ORDERBY */ );
 		long rv;
-    	if (dbqc.moveToFirst())
+
+    	if (dbqc.moveToFirst() && ! dbqc.isNull(0))
+		// If fn is aggregate with no matching rows, aggregates except COUNT return null.
+		// moveToFirst is true but getLong might throw an exception.
+
     		rv = dbqc.getLong(0);
     	else
     		rv = def;
-
-		// If fn is aggregate with no matching rows,
-		// moveToFirst is true but getString returns null.
 
     	dbqc.close();
     	return rv;

@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010-2012 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2012,2014 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -46,19 +46,21 @@ public class Person extends RDBRecord
      * @param db  database connection
      * @param driversOnly  Only drivers, not all Persons
      * @return an array of Person objects from the database, ordered by name, or null if none
+     * @see #getMostRecent(RDBAdapter, boolean)
+     * @throws IllegalStateException if db not open
      */
     public static Person[] getAll(RDBAdapter db, final boolean driversOnly)
+	throws IllegalStateException
     {
-    	String kf, kv;
-    	if (driversOnly)
+	final Vector<String[]> names;
+
+	if (driversOnly)
     	{
-    		kf = "is_driver";
-    		kv = "1";
+    		String kf = "is_driver", kv = "1";
+    		names = db.getRows(TABNAME, kf, kv, FIELDS_AND_ID, "name COLLATE NOCASE", 0);
     	} else {
-    		kf = null;
-    		kv = null;
+    		names = db.getRows(TABNAME, null, (String[]) null, FIELDS_AND_ID, "name COLLATE NOCASE", 0);
     	}
-		Vector<String[]> names = db.getRows(TABNAME, kf, kv, FIELDS_AND_ID, "name COLLATE NOCASE", 0);
     	if (names == null)
     		return null;
 
@@ -73,6 +75,31 @@ public class Person extends RDBRecord
     	}
     	return rv;
     }
+
+	/**
+	 * Get the most recently entered Person (or driver) in the database.
+	 * @param db  database connection
+	 * @param driversOnly  Only drivers, not all Persons
+	 * @return The most recent person or driver, by {@code _id}, or null if none
+	 * @throws IllegalStateException if db not open
+	 * @since 0.9.40
+	 * @see #getAll(RDBAdapter, boolean)
+	 */
+	public static Person getMostRecent(RDBAdapter db, final boolean driversOnly)
+		throws IllegalStateException
+	{
+		final String whereClause = (driversOnly) ? "is_driver=1 and is_active=1" : "is_active=1";
+		final int pID = db.getRowIntField
+			(TABNAME, "MAX(_id)", whereClause, (String[]) null, 0);
+		if (pID == 0)
+			return null;
+
+		try {
+			return new Person(db, pID);
+		} catch (RDBKeyNotFoundException e) {
+			return null;  // required by compiler, but we know the ID exists
+		}
+	}
 
     /**
      * Retrieve an existing person, by id, from the database.

@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010-2013 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2014 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -119,6 +119,7 @@ public class Vehicle extends RDBRecord
      * @param db  database connection
 	 * @param activeOnly  If true, don't include inactive vehicles
      * @return an array of Vehicle objects from the database, ordered by name, or null if none
+     * @see #getMostRecent(RDBAdapter)
      */
     public static Vehicle[] getAll(final RDBAdapter db, final boolean activeOnly)
     {
@@ -137,6 +138,31 @@ public class Vehicle extends RDBRecord
 			return null;  // catch is req'd but won't happen; record came from db.
 		}
     }
+
+	/**
+	 * Get the most recent active vehicle in the database, if any.
+	 * @param db  db connection
+	 * @return the newest active vehicle by {@code _id}, or null if none in the database
+	 * @throws IllegalStateException if db not open
+	 * @see #getAll(RDBAdapter, boolean)
+	 * @since 0.9.40
+	 */
+	public static Vehicle getMostRecent(RDBAdapter db)
+		throws IllegalStateException
+	{
+		if (db == null)
+			throw new IllegalStateException("db null");
+
+		final int vID = db.getRowIntField(TABNAME, "MAX(_id)", "is_active=1", (String[]) null, 0);
+		if (vID == 0)
+			return null;
+
+		try {
+			return new Vehicle(db, vID);
+		} catch (RDBKeyNotFoundException e) {
+			return null;  // required by compiler, but we know the ID exists
+		}
+	}
 
     /**
      * Retrieve an existing vehicle, by id, from the database.

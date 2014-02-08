@@ -554,6 +554,7 @@ public class Vehicle extends RDBRecord
 
 	/**
 	 * At the end of a trip, set the current odometer and last trip ID.
+	 * Also used when saving vehicle's current trip just before changing current vehicle. 
 	 * @param commitNow commit these 2 fields ONLY, right now; if false, just set {@link #isDirty()}.
 	 */
 	public void setOdometerCurrentAndLastTrip(int newValue10ths, Trip tr, final boolean commitNow)

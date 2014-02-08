@@ -184,6 +184,8 @@ public class DriverEntry extends Activity
     	if (doingInitialSetup)
     	{
     		// Set our home area
+    		// If we don't have a vehicle yet, the GeoArea row will be written but
+    		// we won't write the per-vehicle current setting with it.
 
     		EditText etHomeGeoArea = (EditText) findViewById(R.id.driver_entry_init_local_geoarea);
         	String name = etHomeGeoArea.getText().toString().trim();
@@ -193,12 +195,18 @@ public class DriverEntry extends Activity
         		Toast.makeText(this, R.string.driver_entry_init_geoarea_toast, Toast.LENGTH_SHORT).show();
         		return;        		
         	}
-        	GeoArea homeArea;
-        	GeoArea current = Settings.getCurrentArea(db, false);
-        	if (current == null)
+
+        	GeoArea homeArea = null;
+        	final Vehicle lv = Vehicle.getMostRecent(db);
+        	if (lv != null)
+        		homeArea = VehSettings.getCurrentArea(db, lv, false);
+
+        	if (homeArea == null)
         	{
         		GeoArea[] all_one = GeoArea.getAll(db, -1);
-	        	if (all_one == null)
+        			// db setup might have auto-created a single default GeoArea
+
+        		if (all_one == null)
 	        	{
 	        		homeArea = new GeoArea(name);
 	        		homeArea.insert(db);
@@ -207,9 +215,10 @@ public class DriverEntry extends Activity
 	        		homeArea.setName(name);
 	        		homeArea.commit();
 	        	}
-        		Settings.setCurrentArea(db, homeArea);
+
+        		if (lv != null)
+	        		VehSettings.setCurrentArea(db, lv, homeArea);
         	} else {
-        		homeArea = current;
         		homeArea.setName(name);
         		homeArea.commit();
         	}

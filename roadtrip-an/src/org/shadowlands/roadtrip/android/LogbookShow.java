@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010-2013 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2014 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -26,8 +26,10 @@ import org.shadowlands.roadtrip.android.util.DBExport;
 import org.shadowlands.roadtrip.db.GeoArea;
 import org.shadowlands.roadtrip.db.Location;
 import org.shadowlands.roadtrip.db.RDBAdapter;
+import org.shadowlands.roadtrip.db.RDBKeyNotFoundException;
 import org.shadowlands.roadtrip.db.RDBVerifier;
 import org.shadowlands.roadtrip.db.Settings;
+import org.shadowlands.roadtrip.db.VehSettings;
 import org.shadowlands.roadtrip.db.Vehicle;
 import org.shadowlands.roadtrip.db.android.RDBOpenHelper;
 import org.shadowlands.roadtrip.model.LogbookTableModel;
@@ -190,9 +192,23 @@ public class LogbookShow extends Activity
 	{
 		if (askLocationAndShow_areaID == -1)
 		{
-			final GeoArea currA = Settings.getCurrentArea(db, false);
+			final Vehicle av;
+			if (vID == 0) {
+				av = Settings.getCurrentVehicle(db, false);
+			} else {
+				try {
+					av = new Vehicle(db, vID);
+				} catch (RDBKeyNotFoundException e) {
+					return;
+				}
+			}
+			if (av == null)
+				return;
+
+			final GeoArea currA = VehSettings.getCurrentArea(db, av, false);
 			if (currA == null)
 				return;
+
 			askLocationAndShow_areaID = currA.getID();
 		}
 

@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010,2012-2013 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010,2012-2014 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -444,7 +444,7 @@ public abstract class RDBSchema
 
 		// Check the area first, because if it doesn't exist,
 		// it might get created with default values and we'll be called again soon.
-		rv.currA = Settings.getCurrentArea(db, true);
+		rv.currA = VehSettings.getCurrentArea(db, rv.currV, true);
 		if (rv.currA == null)
 		{
 			// Any areas to guess from?
@@ -541,7 +541,7 @@ public abstract class RDBSchema
     				try
     				{
     					rv.currA = new GeoArea(db, rv.currT.getAreaID());
-    					Settings.setCurrentArea(db, rv.currA);
+    					VehSettings.setCurrentArea(db, rv.currV, rv.currA);
     					guessedArea = false;
     				}
     				catch (RDBKeyNotFoundException e) {

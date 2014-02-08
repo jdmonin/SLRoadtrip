@@ -1236,9 +1236,10 @@ public class VehSettings extends RDBRecord
 	 *<P>
 	 * This method first attempts to find per-vehicle settings for the new vehicle's current trip, tstop, etc.
 	 * If not found, it uses other data to determine these settings (backward-compatible mode).
-	 *<P>  
-	 * TODO: This code is in transition. Currently it uses some per-vehicle settings, for other settings it encapsulates
-	 * the work done by ChangeDriverOrVehicle.changeCurrentVehicle.
+	 *<P>
+	 * If an old copy of the app was upgraded to v0.9.40 or newer, only the settings for the current vehicle at
+	 * that time were copied to VehSettings.  When any other vehicle becomes current for the first time after
+	 * the upgrade, this method will use backward-compatible mode to find that vehicle's settings. 
 	 *
 	 * @param db  connection to use
 	 * @param oldV  Current (old) vehicle, or null if no settings or info of the old vehicle should be updated
@@ -1270,12 +1271,10 @@ public class VehSettings extends RDBRecord
 			{
 				currTS.setFlagSingle(TStop.TEMPFLAG_CURRENT_TSTOP_AT_CURRV_CHANGE);
 				currTS.commit();
-
-				// Will soon call setCurrentTStop based on new vehicle.
 			}
 		}
 
-		int tripAreaIDCheck = -1;  // area ID to check, current area might change with vehicle
+		int tripAreaIDCheck = -1;  // area ID to check for new vehicle
 
 		Trip newCurrT = null;
 		try

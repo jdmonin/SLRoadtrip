@@ -258,13 +258,17 @@ public class TripBegin extends Activity
 	 */
 	private boolean checkCurrentDriverVehicleSettings()  // TODO refactor common
 	{
-		currA = Settings.getCurrentArea(db, false);
+		currV = Settings.getCurrentVehicle(db, true);
+		if (currV == null)
+			return false;
+
+		currA = VehSettings.getCurrentArea(db, currV, false);
 		if (currA == null)
 		{
     		final String homearea = getResources().getString(R.string.home_area);
     		currA = new GeoArea(homearea);
     		currA.insert(db);
-    		Settings.setCurrentArea(db, currA);
+    		VehSettings.setCurrentArea(db, currV, currA);
 		}
 		if (currA != prevA)
 		{
@@ -295,10 +299,6 @@ public class TripBegin extends Activity
 				}
 			}
 		}
-
-		currV = Settings.getCurrentVehicle(db, true);
-		if (currV == null)
-			return false;
 
 		currD = VehSettings.getCurrentDriver(db, currV, true);
 		return (currD != null);

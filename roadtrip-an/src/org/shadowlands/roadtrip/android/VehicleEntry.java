@@ -24,6 +24,7 @@ import java.util.Vector;
 
 import org.shadowlands.roadtrip.R;
 import org.shadowlands.roadtrip.android.util.Misc;
+import org.shadowlands.roadtrip.db.GeoArea;
 import org.shadowlands.roadtrip.db.Person;
 import org.shadowlands.roadtrip.db.RDBAdapter;
 import org.shadowlands.roadtrip.db.Settings;
@@ -386,7 +387,7 @@ public class VehicleEntry
 			datefrom_int = 0;
 		else
 			datefrom_int = (int) (dateFrom.getTimeInMillis() / 1000L);
-		// TODO on edit: check against trips' minimum date
+		// TODO on edit: check against first trip's minimum date
 
 		String plateText = plate.getText().toString().trim();
 		if (plateText.length() == 0)
@@ -422,6 +423,25 @@ public class VehicleEntry
 				nv.setActive(cbActive.isChecked());
 			nv.commit();
 		}
+
+		// Before setting CURRENT_VEHICLE, copy its CURRENT_AREA to new vehicle, or use first geoarea
+	    	if (! VehSettings.exists(db, VehSettings.CURRENT_AREA, nv))
+	    	{
+	    		GeoArea currA = null;
+			Vehicle cv = Settings.getCurrentVehicle(db, false);
+			if (cv != null)
+				currA = VehSettings.getCurrentArea(db, cv, false);
+
+			if (currA == null) {
+				// No GeoArea setting, or no current vehicle: Probably initial setup
+				GeoArea[] areas = GeoArea.getAll(db, -1);
+				if (areas != null)
+					currA = areas[0];
+			}
+
+			if (currA != null)
+				VehSettings.setCurrentArea(db, nv, currA);
+	    	}
 
     	if (! Settings.exists(db, Settings.CURRENT_VEHICLE))
     	{

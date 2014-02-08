@@ -38,11 +38,6 @@ package org.shadowlands.roadtrip.db;
 public class Settings extends RDBRecord
 {
 	/**
-	 * int setting for current {@link GeoArea} area ID.
-	 */
-	public static final String CURRENT_AREA = "CURRENT_AREA";
-
-	/**
 	 * int setting for current {@link Vehicle} ID.
 	 * @see #getCurrentVehicle(RDBAdapter, boolean)
 	 */
@@ -490,9 +485,6 @@ public class Settings extends RDBRecord
 	 * --- CURRENT_ setting getters/setters ---
 	 */
 
-	/** cached record for {@link #getCurrentArea(RDBAdapter, boolean)} */
-	private static GeoArea currentA = null;
-
 	/** cached record for {@link #getCurrentVehicle(RDBAdapter, boolean)} */
 	private static Vehicle currentV = null;
 
@@ -503,7 +495,6 @@ public class Settings extends RDBRecord
 	 */
 	public static void clearSettingsCache()
 	{
-		currentA = null;
 		currentV = null;
 		VehSettings.clearSettingsCache();
 	}
@@ -526,66 +517,6 @@ public class Settings extends RDBRecord
 			throw new IllegalArgumentException("null dbConn in RDBRecord");
 		else
 			throw new IllegalArgumentException("Wrong dbConn in RDBRecord");
-	}
-
-	/**
-	 * Get the Setting for {@link #CURRENT_AREA} if set.
-	 *<P>
-	 * The record is cached after the first call, so if it changes,
-	 * please call {@link #setCurrentArea(RDBAdapter, GeoArea)}.
-	 *
-	 * @param db  connection to use
-	 * @param clearIfBad  If true, clear the setting to 0 if no record by its ID is found
-	 * @return the GeoArea for <tt>CURRENT_AREA</tt>, or null
-     * @throws IllegalStateException if the db is null or isn't open
-	 */
-	public static GeoArea getCurrentArea(RDBAdapter db, final boolean clearIfBad)
-		throws IllegalStateException
-	{
-		if (db == null)
-			throw new IllegalStateException("null db");
-		if (currentA != null)
-		{
-			if (! currentA.dbConn.hasSameOwner(db))
-				currentA.dbConn = db;
-			return currentA;
-		}
-
-		Settings sCA = null;
-		try
-		{
-			sCA = new Settings(db, Settings.CURRENT_AREA);
-			// Sub-try: cleanup in case the setting exists, but the record doesn't
-			try {
-				int id = sCA.getIntValue();
-				if (id != 0)
-					currentA = new GeoArea(db, id);
-			} catch (Throwable th) {
-				if (clearIfBad)
-					sCA.delete();
-			}
-		} catch (Throwable th) {
-			return null;
-		}
-		return currentA;  // will be null if sCA not found
-	}
-
-	/**
-	 * Store the Setting for {@link #CURRENT_AREA}, or clear it to 0.
-	 * @param db  connection to use
-	 * @param a  new area, or null for none
-     * @throws IllegalStateException if the db isn't open
-     * @throws IllegalArgumentException if a non-null <tt>a</tt>'s dbconn isn't db;
-     *         if a's dbconn is <tt>null</tt>, this will be in the exception detail text.
-	 */
-	public static void setCurrentArea(RDBAdapter db, GeoArea a)
-		throws IllegalStateException, IllegalArgumentException
-	{
-		if (a != null)
-			matchDBOrThrow(db, a);
-		currentA = a;
-		final int id = (a != null) ? a.id : 0;
-		insertOrUpdate(db, CURRENT_AREA, id);
 	}
 
 	/**

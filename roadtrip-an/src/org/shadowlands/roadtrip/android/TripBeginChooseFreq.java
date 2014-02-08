@@ -28,6 +28,7 @@ import org.shadowlands.roadtrip.db.Location;
 import org.shadowlands.roadtrip.db.RDBAdapter;
 import org.shadowlands.roadtrip.db.Settings;
 import org.shadowlands.roadtrip.db.VehSettings;
+import org.shadowlands.roadtrip.db.Vehicle;
 import org.shadowlands.roadtrip.db.android.RDBOpenHelper;
 
 import android.app.Activity;
@@ -52,7 +53,7 @@ import android.widget.Toast;
  *<P>
  * If the starting location is known, pass its id as a bundle extra with
  * the key {@link VehSettings#PREV_LOCATION}.  (This does not affect the actual setting.)
- * Otherwise, {@link Settings#getCurrentArea(RDBAdapter, boolean)} will be called.
+ * Otherwise, {@link VehSettings#getCurrentArea(RDBAdapter, Vehicle, boolean)} will be called.
  *<P>
  * If it's a roadtrip, start this activity with {@link TripBegin#EXTRAS_FLAG_NONLOCAL}
  * just as when starting TripBegin.
@@ -165,7 +166,12 @@ public class TripBeginChooseFreq extends Activity
 		{
 			fts = FreqTrip.tripsForLocation(db, locID, false, false);  // TODO isLocal / isRoadtrip
 		} else {
-			GeoArea currA = Settings.getCurrentArea(db, false);
+			final Vehicle currV = Settings.getCurrentVehicle(db, false);
+			if (currV == null) {
+				freqTrips = null;
+				return false;
+			}
+			GeoArea currA = VehSettings.getCurrentArea(db, currV, false);
 			Log.d(TAG, "no locID, Checking freqtrips for area " + currA);
 			if (currA != null)
 				fts = FreqTrip.tripsForArea(db, currA.getID(), false, false);  // TODO isLocal / isRoadtrip

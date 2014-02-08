@@ -959,24 +959,24 @@ public class TripTStopEntry extends Activity
 	 * Set {@link #currTS} if <tt>CURRENT_TSTOP</tt> is set.
 	 * Set {#link {@link #prevLocObj}} if <tt>PREV_LOCATION</tt> is set.
 	 *<P>
-	 * If there's an inconsistency between Settings and GeoArea/Vehicle/Person tables, don't fix it,
-	 * but don't load objects either.
+	 * If there's an inconsistency between Settings and GeoArea/Vehicle/Person tables, don't fix it
+	 * in those tables, but don't load objects either.  The current GeoArea setting may be updated if missing.
 	 *
 	 * @return true if settings exist and are OK, false otherwise.
 	 */
 	private boolean checkCurrentDriverVehicleTripSettings()  // TODO refactor common
 	{
-		currA = Settings.getCurrentArea(db, false);
+		currV = Settings.getCurrentVehicle(db, false);
+		if (currV == null)
+			return false;
+		currA = VehSettings.getCurrentArea(db, currV, false);
 		if (currA == null)
 		{
     		final String homearea = getResources().getString(R.string.home_area);
     		currA = new GeoArea(homearea);
     		currA.insert(db);
-    		Settings.setCurrentArea(db, currA);
+    		VehSettings.setCurrentArea(db, currV, currA);
 		}
-		currV = Settings.getCurrentVehicle(db, false);
-		if (currV == null)
-			return false;
 		currD = VehSettings.getCurrentDriver(db, currV, false);
 		currT = VehSettings.getCurrentTrip(db, currV, true);
 		currTS = VehSettings.getCurrentTStop(db, currV, false);

@@ -29,6 +29,8 @@ import org.shadowlands.roadtrip.db.Person;
 import org.shadowlands.roadtrip.db.RDBAdapter;
 import org.shadowlands.roadtrip.db.RDBSchema;
 import org.shadowlands.roadtrip.db.Settings;
+import org.shadowlands.roadtrip.db.VehSettings;
+import org.shadowlands.roadtrip.db.Vehicle;
 import org.shadowlands.roadtrip.db.android.RDBOpenHelper;
 
 import android.app.Activity;
@@ -41,7 +43,7 @@ import android.widget.Toast;
 /**
  * Create db/schema if needed.
  * Check database for preferences and current settings:
- * Check for driver & vehicle already in db.
+ * Check for geoarea, driver, and vehicle already in db.
  * If this data is missing, show buttons to Continue to enter these, or Restore from Backup.
  * Otherwise, go immediately to {@link Main} activity.
  *
@@ -91,12 +93,16 @@ public class AndroidStartup extends Activity
         	if (ret == RDBSchema.SettingsCheckLevel.SETT_GEOAREA)
         	{
         		// create it and re-check
-        		final String homearea = getResources().getString(R.string.home_area);
-        		GeoArea a = new GeoArea(homearea);
-        		a.insert(db);
-        		Settings.setCurrentArea(db, a);
-        		rv = RDBSchema.checkSettings(db, RDBSchema.SettingsCheckLevel.SETT_VEHICLE, false);
-        		ret = rv.result;
+        		Vehicle currV = Settings.getCurrentVehicle(db, true);
+        		if (currV != null)
+        		{
+	        		final String homearea = getResources().getString(R.string.home_area);
+	        		GeoArea a = new GeoArea(homearea);
+	        		a.insert(db);
+	        		VehSettings.setCurrentArea(db, currV, a);
+	        		rv = RDBSchema.checkSettings(db, RDBSchema.SettingsCheckLevel.SETT_VEHICLE, false);
+	        		ret = rv.result;
+        		}
         	}
 
         	missingSettings = (ret > RDBSchema.SettingsCheckLevel.SETT_OK);

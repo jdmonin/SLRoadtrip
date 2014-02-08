@@ -351,16 +351,35 @@ public class Main extends Activity
 	 * Set {@link #currD} and {@link #currV}.
 	 * If there's an inconsistency between Settings and Vehicle/Person tables, delete the Settings entry.
 	 * <tt>currD</tt> and <tt>currV</tt> will be null unless they're set consistently in Settings.
+	 *<P>
+	 * For initial setup, if {@link VehSettings#CURRENT_AREA} is missing, set it.
 	 *
 	 * @return true if settings exist and are OK, false otherwise.
 	 */
 	private boolean checkCurrentDriverVehicleSettings()
 	{
-		Vehicle v = Settings.getCurrentVehicle(db, true);
-		if (v == null)
+		Vehicle cv = Settings.getCurrentVehicle(db, true);
+		if (cv == null) {
 			return false;
-		else
-			return (VehSettings.getCurrentDriver(db, v, true) != null);
+		} else {
+			// check current GeoArea, update if missing
+			// Before setting CURRENT_VEHICLE, copy its CURRENT_AREA to new vehicle, or use first geoarea
+
+			GeoArea currA = VehSettings.getCurrentArea(db, cv, true);
+			if (currA == null)
+		    	{
+				// No GeoArea setting, or no current vehicle: Probably initial setup
+				GeoArea[] areas = GeoArea.getAll(db, -1);
+				if (areas != null)
+					currA = areas[0];
+
+				if (currA != null)
+					VehSettings.setCurrentArea(db, cv, currA);
+		    	}
+
+			// check current driver
+			return (VehSettings.getCurrentDriver(db, cv, true) != null);
+		}
 	}
 
 	/**
@@ -374,7 +393,7 @@ public class Main extends Activity
 	private void updateDriverVehTripTextAndButtons()
 	{
 		currV = Settings.getCurrentVehicle(db, false);
-		GeoArea currA = Settings.getCurrentArea(db, false);
+		GeoArea currA = VehSettings.getCurrentArea(db, currV, false);
 		Person currD = VehSettings.getCurrentDriver(db, currV, false);
 		Trip currT = VehSettings.getCurrentTrip(db, currV, true);
 		TStop currTS = ((currT != null) ? VehSettings.getCurrentTStop(db, currV, false) : null);
@@ -393,7 +412,8 @@ public class Main extends Activity
 			txt.append("\n");
 			txt.append(res.getString(R.string.area__colon));
 			txt.append(' ');
-			txt.append(currA.toString());
+			if (currA != null)
+				txt.append(currA.toString());
 			txt.append("\n\n");
 			txt.append(res.getString(R.string.main_no_current_trip));
 			changeDriverOrVeh.setText(R.string.change_driver_vehicle);
@@ -405,7 +425,8 @@ public class Main extends Activity
 			else
 				txt.append(res.getString(R.string.area__colon));
 			txt.append(' ');
-			txt.append(currA.toString());
+			if (currA != null)
+				txt.append(currA.toString());
 
 			String currTCateg = null;
 			if (currT.getTripCategoryID() != 0)

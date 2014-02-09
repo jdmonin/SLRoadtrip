@@ -85,10 +85,10 @@ public class AndroidStartup extends Activity
 
         // read from DB; this will call back to create or upgrade the schema if needed.
         // Check for current settings, to prompt for data entry if needed.
-        // TODO move this to a generic android-class
+        // TODO move default-geoarea creation to a generic android class
         {
         	RDBSchema.SettingsCheckResult rv
-        		= RDBSchema.checkSettings(db, RDBSchema.SettingsCheckLevel.SETT_VEHICLE, false);
+        		= RDBSchema.checkSettings(db, RDBSchema.SettingsCheckLevel.SETT_VEHICLE);
         	int ret = rv.result;
         	if (ret == RDBSchema.SettingsCheckLevel.SETT_GEOAREA)
         	{
@@ -100,7 +100,7 @@ public class AndroidStartup extends Activity
 	        		GeoArea a = new GeoArea(homearea);
 	        		a.insert(db);
 	        		VehSettings.setCurrentArea(db, currV, a);
-	        		rv = RDBSchema.checkSettings(db, RDBSchema.SettingsCheckLevel.SETT_VEHICLE, false);
+	        		rv = RDBSchema.checkSettings(db, RDBSchema.SettingsCheckLevel.SETT_VEHICLE);
 	        		ret = rv.result;
         		}
         	}

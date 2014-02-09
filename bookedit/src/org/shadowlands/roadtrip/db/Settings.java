@@ -21,17 +21,17 @@ package org.shadowlands.roadtrip.db;
 
 /**
  * Read the Settings db table: Settings which change frequently.
- * For some common settings, see the schema.
+ * For some common settings, see static string fields here or see the schema.
  *<P>
  * Convenience methods: {@link #insertOrUpdate(RDBAdapter, String, int)},
- *  {@link #insertOrUpdate(RDBAdapter, String, String)}.
+ * {@link #insertOrUpdate(RDBAdapter, String, String)}.
  *<P>
  * If you restore the database from a backup, call {@link #clearSettingsCache()}
  * to remove cached references to the overwritten db's settings objects.
  *<P>
  * In version 0.9.40, some settings became per-vehicle {@link VehSettings}. In older versions they're all here.
  *
- * @see RDBSchema#checkSettings(RDBAdapter, int, boolean)
+ * @see RDBSchema#checkSettings(RDBAdapter, int)
  * @see AppInfo
  * @author jdmonin
  */

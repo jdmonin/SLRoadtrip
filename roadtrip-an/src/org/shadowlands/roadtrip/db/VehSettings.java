@@ -25,7 +25,7 @@ import java.util.Vector;
 
 /**
  * Read the VehSettings db table: Per-vehicle settings which change frequently.
- * For setting names, see static fields here or see the schema.
+ * For setting names, see static string fields here or see the schema.
  *<P>
  * Convenience methods: {@link #insertOrUpdate(RDBAdapter, String, Vehicle, int)},
  * {@link #insertOrUpdate(RDBAdapter, String, Vehicle, String)}.
@@ -37,7 +37,7 @@ import java.util.Vector;
  * Static fields here with setting names show their original version ("since 0.8.13" etc),
  * which often is older than 0.9.40.
  *
- * @see RDBSchema#checkSettings(RDBAdapter, int, boolean)
+ * @see RDBSchema#checkSettings(RDBAdapter, int)
  * @see Settings
  * @author jdmonin
  * @since 0.9.40
@@ -1246,7 +1246,7 @@ public class VehSettings extends RDBRecord
 	 * @param newV  New current vehicle
 	 * @throws IllegalArgumentException if {@code newV} is null
 	 * @throws IllegalStateException if the db isn't open
-	 * @see RDBSchema#checkSettings(RDBAdapter, int, boolean)
+	 * @see RDBSchema#checkSettings(RDBAdapter, int)
 	 */
 	public static boolean changeCurrentVehicle(RDBAdapter db, final Vehicle oldV, final Vehicle newV)
 		throws IllegalArgumentException, IllegalStateException

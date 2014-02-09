@@ -293,7 +293,7 @@ public abstract class RDBSchema
 	}
 
 	/**
-	 * For {@link RDBSchema#checkSettings(RDBAdapter, int, boolean)}:
+	 * For {@link RDBSchema#checkSettings(RDBAdapter, int)}:
 	 * Possible value levels   Request, require, and report the current settings.
 	 * For the return value, settings are missing if greater than {@link #SETT_OK}.
 	 *<P>
@@ -341,7 +341,7 @@ public abstract class RDBSchema
 	};
 
 	/**
-	 * For {@link RDBSchema#checkSettings(RDBAdapter, int, boolean)}:
+	 * For {@link RDBSchema#checkSettings(RDBAdapter, int)}:
 	 * All possible portions of the return value, reporting the current settings.
 	 */
 	public static class SettingsCheckResult
@@ -375,13 +375,16 @@ public abstract class RDBSchema
 	 * Most settings are per-vehicle in v0.9.40 and later, so the first check will be for
 	 * {@link Settings#getCurrentVehicle(RDBAdapter, boolean)}.  If no vehicles are found in the db,
 	 * the returned {@link SettingsCheckResult#result} will be {@link SettingsCheckLevel#SETT_VEHICLE}.
+	 *<P>
+	 * If there's a current trip, {@link VehSettings#getCurrentArea(RDBAdapter, Vehicle, boolean)}
+	 * is checked against that {@link Trip#getAreaID()} and fixed if different.
+	 * If {@link VehSettings#getCurrentDriver(RDBAdapter, Vehicle, boolean)} returns a person
+	 * without the {@link Person#isDriver()} flag, this method will set that flag in the db.
 	 *
 	 * @param db  An open database
 	 * @param level  How many settings to request?
 	 *          The lowest value is {@link SettingsCheckLevel#SETT_GEOAREA},
 	 *          highest value is {@link SettingsCheckLevel#SETT_TSTOP_REQUIRED}.
-	 * @param retrieveToo  Also return the current settings as data objects.
-	 *          Any settings not requested will be null In the result.
 	 * @return the overall result, any logging messages, and the current settings if requested.
 	 *          <P> The overall result is a constant from {@link SettingsCheckLevel}.
 	 *          <P> If settings were recovered/fixed, the last message should be logged as a
@@ -389,10 +392,16 @@ public abstract class RDBSchema
 	 *          <P> If the result is {@link SettingsCheckLevel#SETT_GEOAREA},
 	 *          create a GeoArea and set it current, then call this method again.
 	 *          (The name of the GeoArea is localized, so it can't be created here.)
+	 *          <P> Also returns the current settings as data objects.
+	 *          Any settings not requested might be null in the result.
+	 *          For example, if {@code level} is less than
+	 *          {@link SettingsCheckLevel#SETT_TSTOP_OPTIONAL},
+	 *          then {@link SettingsCheckResult#currTS} is probably not retrieved and null.
+	 *
 	 * @throws IllegalArgumentException  if <tt>level</tt> is out of range 
 	 */
 	public static SettingsCheckResult checkSettings
-		(RDBAdapter db, final int level, final boolean retrieveToo)
+		(RDBAdapter db, final int level)
 		throws IllegalArgumentException 
 	{
 		if ((level < SettingsCheckLevel.SETT_GEOAREA) || (level > SettingsCheckLevel.SETT_MAX))
@@ -423,10 +432,10 @@ public abstract class RDBSchema
 			if (rv.currV == null)
 			{
 				// No trips in DB, or most recent has bad vehicle ID. Use most recent vehicle.
-				// (If we recover this, all trips' vehicle IDs will be checked below.)
+				// (Ignore bad vehicle ID here; all trips' vehicle IDs can be checked in
+				//  RDBVerifier.verify_tdata_trip)
 
 				rv.currV = Vehicle.getMostRecent(db);
-
 				if (rv.currV == null)
 				{
     					msgv.addElement("recov: no active vehicles found");
@@ -442,8 +451,9 @@ public abstract class RDBSchema
 			VehSettings.changeCurrentVehicle(db, null, rv.currV);  // calls Settings.setCurrentVehicle
 		}
 
-		// Check the area first, because if it doesn't exist,
+		// Check the area before other settings, because if it doesn't exist,
 		// it might get created with default values and we'll be called again soon.
+
 		rv.currA = VehSettings.getCurrentArea(db, rv.currV, true);
 		if (rv.currA == null)
 		{
@@ -454,158 +464,138 @@ public abstract class RDBSchema
 				rv.result = SettingsCheckLevel.SETT_GEOAREA;
 				return rv;  // <--- Early return: No geoarea in db ---
 			}
+
 			fixedSettings = true;
 			if (allA.length == 1)
 			{
 				rv.currA = allA[0];
-			} else
-			{
+			} else {
 				rv.currA = allA[allA.length - 1];
 				guessedArea = true;
 			}
+
+			VehSettings.setCurrentArea(db, rv.currV, rv.currA);
 		}
 
-	final boolean hasDriver = VehSettings.exists(db, VehSettings.CURRENT_DRIVER, rv.currV);
+		// Check currT for recovering other settings, even if level < SETT_TRIP.
+		// Does current trip have a different geoarea than currA?
 
-	if (! hasDriver)
-    	{
-    		boolean hasTrip = VehSettings.exists(db, VehSettings.CURRENT_TRIP, rv.currV);
-    		if (hasTrip)
-    		{
-				rv.currT = VehSettings.getCurrentTrip(db, rv.currV, false);
-				if (rv.currT == null)
-				{
-					hasTrip = false;
-				} else {
+		rv.currT = VehSettings.getCurrentTrip(db, rv.currV, false);
+		if ((rv.currT != null) && (rv.currA.getID() != rv.currT.getAreaID()))
+		{			
+			try
+			{
+				rv.currA = new GeoArea(db, rv.currT.getAreaID());
+				VehSettings.setCurrentArea(db, rv.currV, rv.currA);
+				fixedSettings = true;
+				guessedArea = false;
+			} catch (RDBKeyNotFoundException e) {
+				// TODO somehow deal with the inconsistency
+				msgv.addElement("The current trip's area is not found; id=" + rv.currT.getAreaID());
+			}
+		}
+
+		rv.currD = VehSettings.getCurrentDriver(db, rv.currV, false);
+		if (rv.currD == null)
+		{
+			msgv.addElement("recov: no CURRENT_DRIVER");
+			if (rv.currT != null)
+			{
         			msgv.addElement("recov: has CURRENT_TRIP");
-        			if (! hasDriver)
+        			try
         			{
-        				msgv.addElement("recov: no CURRENT_DRIVER");
-        				fixedSettings = false;  // in case was set just above
-        				final int did = rv.currT.getDriverID();
-        				try
-        				{
-        					Person dr = new Person(db, did);
-        					if (dr.isDriver())
-        					{
-		        				VehSettings.setCurrentDriver(db, rv.currV, dr);
-		        				msgv.addElement("recov: fixed CURRENT_DRIVER");
-		        				fixedSettings = true;
-        					}
-        				}
-        				catch (RDBKeyNotFoundException e) { }
-        			}
-				}
-    		}
-    		if (! hasTrip)
-    		{
-    			// No current trip.
-    			// For missing driver, we'll have to best-guess from table contents.
-    			if (! hasDriver)
-    			{
-    				msgv.addElement("recov: no CURRENT_DRIVER");
-    				rv.currD = null;
+        				rv.currD = new Person(db, rv.currT.getDriverID());
+        			} catch (RDBKeyNotFoundException e) { }
+			} else {
+				// No current trip.
+				// For missing driver, we'll have to best-guess from table contents.
+				// Default to current vehicle's driver, then to most recently added driver.
 
-    				try
+				try
     				{
-    					rv.currD = new Person(db, rv.currV.getDriverID());
-    					if (rv.currD.isDriver())
-    						fixedGuessed = true;
-    					else
-    						rv.currD = null;
+					rv.currD = new Person(db, rv.currV.getDriverID());
+					fixedGuessed = true;
     				} catch (RDBKeyNotFoundException e) { }
 
     				if (rv.currD == null)
     				{
-        				Person[] allDr = Person.getAll(db, true);
-        				if (allDr != null)
-        				{
-        					rv.currD = allDr[allDr.length - 1];  // guess most recent
-        					fixedGuessed = (allDr.length > 1);
-        				}
+    					rv.currD = Person.getMostRecent(db, true);
+    					if (rv.currD != null)
+    						fixedGuessed = (Person.getAll(db, true).length > 1);
     				}
-    				if (rv.currD != null)
-    				{
-    					VehSettings.setCurrentDriver(db, rv.currV, rv.currD);
-    					msgv.addElement("recov: fixed CURRENT_DRIVER (guess)");  // TODO maybe not guessed
-    					fixedSettings = true;
-    				} else {
-    					msgv.addElement("recov: no drivers found");
-    					rv.result = SettingsCheckLevel.SETT_DRIVER;
-    					fixedSettings = false;
-    				}
+			}
+
+			if (rv.currD != null)
+			{
+				VehSettings.setCurrentDriver(db, rv.currV, rv.currD);
+	    			msgv.addElement("Recovered settings: Current driver");
+				fixedSettings = true;
+			} else {
+	    			msgv.addElement("Could not recover settings: Current driver: No drivers found");
+				rv.result = SettingsCheckLevel.SETT_DRIVER;
+				fixedSettings = false;
+	    			missingSettings = true;
+			}
+		}
+
+		if ((rv.currD != null) && ! rv.currD.isDriver())
+		{
+			rv.currD.setIsDriver(true);
+			rv.currD.commit();
+			msgv.addElement("recov: Set isDriver flag for CURRENT_DRIVER");
+		}
+
+    		// TODO if no trip, check for a current tstop to get trip id
+
+    		if ((level >= SettingsCheckLevel.SETT_TSTOP_OPTIONAL) && (rv.currT != null))
+    		{
+    			rv.currTS = VehSettings.getCurrentTStop(db, rv.currV, true);
+    				// might be null; reported in switch below
+    		}
+
+    		/**
+    		 * Final check for anything missing.
+    		 * Fall-through switch-case, highest to lowest.
+    		 */
+    		switch(level)
+    		{
+    		default:
+    		case SettingsCheckLevel.SETT_TSTOP_REQUIRED:
+    			if (rv.currTS == null)
+    			{
+    				rv.result = SettingsCheckLevel.SETT_TSTOP_REQUIRED;
+    				break;
     			}
-    		} else {
-    			// OK, we have a current trip.  Did we guess currA earlier?
-    			if (guessedArea) {
-    				try
-    				{
-    					rv.currA = new GeoArea(db, rv.currT.getAreaID());
-    					VehSettings.setCurrentArea(db, rv.currV, rv.currA);
-    					guessedArea = false;
-    				}
-    				catch (RDBKeyNotFoundException e) {
-    					// TODO somehow deal with the inconsistency
-    					msgv.addElement("The current trip's area is not found; id=" + rv.currT.getAreaID());
-    				}
+    		case SettingsCheckLevel.SETT_TSTOP_OPTIONAL:
+    		case SettingsCheckLevel.SETT_TRIP:
+    			if (rv.currT == null)
+    			{
+    				rv.result = SettingsCheckLevel.SETT_TRIP;
+    				break;
     			}
-    		}
+    		case SettingsCheckLevel.SETT_VEHICLE:
+    			if (rv.currV == null)
+    			{
+    				rv.result = SettingsCheckLevel.SETT_VEHICLE;
+    				break;
+    			}
+    		case SettingsCheckLevel.SETT_DRIVER:
+    			if (rv.currD == null)
+    			{
+    				rv.result = SettingsCheckLevel.SETT_DRIVER;
+    				break;
+    			}
+    		case SettingsCheckLevel.SETT_GEOAREA:  // handled near top of method, checked here again for completeness
+    			if (rv.currA == null)
+    			{
+    				rv.result = SettingsCheckLevel.SETT_GEOAREA;
+    				break;
+    			}
 
-    		if (fixedSettings)
-    		{
-    			msgv.addElement("Recovered settings: Current driver");
-    		} else {
-    			msgv.addElement("Could not recover settings: Current driver");
-    			missingSettings = true;
+    			// Fell through all cases, nothing missing.
+    			// rv.result is set below, after the switch.
+    			missingSettings = false;
     		}
-    	}
-
-    	// TODO if no trip, check for a tstop
-
-    	/**
-    	 * Final check for anything missing.
-    	 * Fall-through switch-case, highest to lowest.
-    	 */
-    	switch(level)
-    	{
-    	default:
-    	case SettingsCheckLevel.SETT_TSTOP_REQUIRED:
-    		if (rv.currTS == null)
-    		{
-    			rv.result = SettingsCheckLevel.SETT_TSTOP_REQUIRED;
-    			break;
-    		}
-    	case SettingsCheckLevel.SETT_TSTOP_OPTIONAL:
-    	case SettingsCheckLevel.SETT_TRIP:
-    		if (rv.currT == null)
-    		{
-    			rv.result = SettingsCheckLevel.SETT_TRIP;
-    			break;
-    		}
-    	case SettingsCheckLevel.SETT_VEHICLE:
-    		if (rv.currV == null)
-    		{
-    			rv.result = SettingsCheckLevel.SETT_VEHICLE;
-    			break;
-    		}
-    	case SettingsCheckLevel.SETT_DRIVER:
-    		if (rv.currD == null)
-    		{
-    			rv.result = SettingsCheckLevel.SETT_DRIVER;
-    			break;
-    		}
-    	case SettingsCheckLevel.SETT_GEOAREA:  // handled near top of method,
-    		if (rv.currA == null)              // checked here again for completeness.
-    		{
-    			rv.result = SettingsCheckLevel.SETT_GEOAREA;
-    			break;
-    		}
-
-		// Fell through all cases, nothing missing.
-		// rv.result is set below, after the switch.
-			missingSettings = false;
-
-    	}
 
 		if (! missingSettings)
 		{
@@ -626,4 +616,5 @@ public abstract class RDBSchema
 
 		return rv;
 	}
+
 }

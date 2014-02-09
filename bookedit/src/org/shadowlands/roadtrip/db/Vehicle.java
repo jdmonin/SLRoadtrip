@@ -62,7 +62,9 @@ public class Vehicle extends RDBRecord
     /** optional nickname or color */
     private String nickname;
 
+    /** usual driver, a {@link Person} ID */
     private int driverid;
+
     private int makeid;
     private String model;
 
@@ -414,15 +416,23 @@ public class Vehicle extends RDBRecord
 		dirty = true;
 	}
 
+	/** Get the vehicle's usual driver, a {@link Person} ID */
 	public int getDriverID() {
 		return driverid;
 	}
 
+	/**
+	 * Set the vehicle's usual driver.
+	 * @param driver  New driver; not null
+	 * @throws IllegalArgumentException  if ! {@link Person#isDriver() driver.isDriver()}
+	 * @throws NullPointerException  if {@code driver} is null
+	 */
 	public void setDriverID(Person driver)
-	    throws IllegalArgumentException
+	    throws IllegalArgumentException, NullPointerException
 	{
-    	if (! driver.isDriver())
-    		throw new IllegalArgumentException("person.isDriver false: " + driver.getName());
+		if (! driver.isDriver())
+			throw new IllegalArgumentException("person.isDriver false: " + driver.getName());
+
 		driverid = driver.getID();
 		dirty = true;
 	}

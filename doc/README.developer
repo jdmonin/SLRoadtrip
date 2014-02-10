@@ -1,13 +1,16 @@
 This is the Developer ReadMe file for Shadowlands Roadtrip.
+Currently this is an incomplete draft.
 
-(description here)
+Shadowlands RoadTrip is a simple app to keep track of your vehicles' mileage,
+trips, gas, and service. The project includes the Android app, and a Java Swing
+application for viewing database backups on a PC or Mac.
 
 Contents:
 - How to get the latest source
 - Programs included
 - Java/Android versions required
-- Overview of source dir (location of schema files, etc)
 - How to build
+- Overview of source dir (location of schema files, etc)
 - Before testing, reminder how to back up / export data
 - Coding style
 - Version history
@@ -16,33 +19,51 @@ Contents:
 (those sections here)
 
 
-Some common files are duplicated between the android and
-bookedit source directories.
-
-In the bookedit source, the android directories are empty or missing.
-In the android source, the bookedit and jdbc directories are empty or missing.
-
-The SQL scripts (schemas and database upgrade scripts)
-are found in bookedit src/org/shadowlands/roadtrip/db/script/*.sql
-and in android res/raw/*.sql.
-
-The bookedit and roadtrip-an versions should be fairly close to each other.
-roadtrip-an's version is kept in AndroidMainfest.xml.
-bookedit's version is kept in org/shadowlands/roadtrip/bookedit/Main.java.
-
-
-
-(more sections here)
-
-
-
 How to build:
 
+In Eclipse, ...
 (more details here)
 
 Android: If you want the svn revision to show in the About box, then before
-building, you must first manually edit res/raw/svnversion.txt and refresh
-that file in Eclipse.
+building, you must first manually edit res/raw/svnversion.txt to contain the
+revision number, and refresh that file in Eclipse.
+
+
+Overview of source dir:
+
+Some common files, mostly db-related, are duplicated between the android and
+bookedit source directories: src/org/shadowlands/roadtrip/db and model, and
+SQL scripts to create and upgrade the schema.
+
+In the bookedit source, the android directories are empty or missing.
+In the android source, the bookedit and jdbc directories are empty or missing.
+The SQL scripts (schemas and database upgrade scripts) are found in
+bookedit src/org/shadowlands/roadtrip/db/script/*.sql and in
+android res/raw/*.sql. The schema scripts have comments about table fields'
+meaning and expected contents and related tables.
+
+SQL Foreign Keys: To simplify Android support, for now Roadtrip manually
+enforces foreign keys. Although Android 2.2 contained sqlite 3.6.19 with
+support for FKs, they are off by default, and can't be turned on during a
+transaction such as onUpgrade. Until Android 4.1 added onConfig, it was
+difficult to configure the open database before the call to onUpgrade, so
+for now we aren't using this feature of SQLite.
+
+The bookedit and roadtrip-an version numbers should be fairly close to
+each other. roadtrip-an's version is kept in AndroidMainfest.xml.
+bookedit's version is kept in org/shadowlands/roadtrip/bookedit/Main.java.
+
+More info about the SQLite versions and features available in Android is found
+by comparing the version numbers in http://www.sqlite.org/changes.html against
+those in http://stackoverflow.com/questions/2421189/version-of-sqlite-used-in-android
+As of January 2014, that table is summarized as:
+	1.6 Cupcake, 2.1 Eclair:       3.5.9   2008-05-14
+	2.2 Froyo, 2.3 Gingerbread:    3.6.22  2010-01-06
+	3.0 Honeycomb, 4.0 ICS:        3.7.4   2010-12-08
+	4.1-4.3 Jellybean, 4.4 KitKat: 3.7.11  2012-03-20
+
+
+(more sections here)
 
 
 

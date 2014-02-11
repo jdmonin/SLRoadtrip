@@ -20,6 +20,7 @@
 package org.shadowlands.roadtrip.bookedit;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
@@ -29,13 +30,11 @@ import java.awt.event.ItemListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
-import java.text.DateFormat;
-import java.util.Date;
-import java.util.Vector;
 
 import javax.swing.DefaultCellEditor;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
+import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -45,6 +44,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.TableCellRenderer;
 
 import org.shadowlands.roadtrip.db.AppInfo;
 import org.shadowlands.roadtrip.db.Person;
@@ -53,8 +53,6 @@ import org.shadowlands.roadtrip.db.RDBKeyNotFoundException;
 import org.shadowlands.roadtrip.db.RDBSchema;
 import org.shadowlands.roadtrip.db.RDBVerifier;
 import org.shadowlands.roadtrip.db.Settings;
-import org.shadowlands.roadtrip.db.TStop;
-import org.shadowlands.roadtrip.db.Trip;
 import org.shadowlands.roadtrip.db.Vehicle;
 import org.shadowlands.roadtrip.db.jdbc.RDBJDBCAdapter;
 import org.shadowlands.roadtrip.model.LogbookTableModel;
@@ -113,7 +111,21 @@ public class LogbookEditPane extends JPanel implements ActionListener, WindowLis
 		lbef = new JFrame
 		    ( (isReadOnly ? "Quick Viewer - " : "Quick Editor - ") + fname);
 		lbef.addWindowListener(this);  // needed for conn.close() when window closes
-		tb = new JTable(mdata);
+		tb = new JTable(mdata)
+		{
+			/** Show tooltip with cell's full text if truncated by narrow column width */
+			public Component prepareRenderer(final TableCellRenderer tcr, final int vr, final int vc)
+			{
+				Component co = super.prepareRenderer(tcr, vr, vc);
+				if (co instanceof JComponent)
+					if (co.getPreferredSize().width > getCellRect(vr, vc, false).width)
+						((JComponent) co).setToolTipText((String) getValueAt(vr, vc));
+					else
+						((JComponent) co).setToolTipText(null);
+
+				return co;
+			}			
+		};
 		setLayout(new BorderLayout());  // stretch JTable on resize
 		setupTbColumnModel();
 		sp = new JScrollPane(tb);
@@ -265,6 +277,7 @@ public class LogbookEditPane extends JPanel implements ActionListener, WindowLis
 	/** Verify the DB consistency with {@link RDBVerifier#verify(int)}, and show a passed/failed message box. */
 	public void actionVerifyDB()
 	{
+
 		RDBVerifier verif = new RDBVerifier(conn);
 		final int vResult = verif.verify(RDBVerifier.LEVEL_TDATA);
 		verif.release();
@@ -652,13 +665,11 @@ public class LogbookEditPane extends JPanel implements ActionListener, WindowLis
 	private class VehicleChooserDialog extends JDialog
 		implements ItemListener, ActionListener
 	{
-		private final Vehicle[] veh;
 		private final int currV;
 		private JComboBox dropdown;
 
 		public VehicleChooserDialog(Vehicle[] vlist, final int currV)
 		{
-			veh = vlist;
 			this.currV = currV;
 			setLayout(new FlowLayout());
 			add(new JLabel("Choose a vehicle to display."));

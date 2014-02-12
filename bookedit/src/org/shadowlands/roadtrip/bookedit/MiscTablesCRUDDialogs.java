@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010,2012 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010,2012,2014 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -40,10 +40,11 @@ public abstract class MiscTablesCRUDDialogs
 	 * @param p  Existing person, or null if new
 	 * @param driverIfNew  For new person, default to "Y" or "N" for driver question
 	 * @return  The {@link Person} created/edited, or null if cancelled.
-     * @throws IllegalStateException if the db insert/update fails
+	 * @throws IllegalStateException if the db insert/update fails
+	 * @throws NullPointerException if anything other than {@code p} is null
 	 */
 	public static Person createEditPersonDialog(JFrame owner, RDBAdapter conn, Person p, final boolean driverIfNew)
-	    throws IllegalStateException
+	    throws IllegalStateException, NullPointerException
 	{
 		final String[] labels = { "Name", "Driver?", "Comment" };
 		String[] vals = new String[3];
@@ -92,10 +93,11 @@ public abstract class MiscTablesCRUDDialogs
 	 * @param v  Existing vehicle, or null if new
 	 * @param ownerIfNew  For new vehicle, the owner / main driver (for ID#)
 	 * @return  The {@link Vehicle} created/edited, or null if cancelled.
-     * @throws IllegalStateException if the db insert/update fails
+	 * @throws IllegalStateException if the db insert/update fails
+	 * @throws NullPointerException if anything other than {@code v} is null
 	 */
 	public static Vehicle createEditVehicleDialog(JFrame owner, RDBAdapter conn, Vehicle v, final Person ownerIfNew)
-	    throws IllegalStateException
+	    throws IllegalStateException, NullPointerException
 	{
 		final String[] labels = { "Nickname", "DriverID", "MakeID", "Model", "Year", "Owned from", "Owned to", "VIN", "License plate/tag", "Original odometer", "Current odometer", "Comment" };
 		String[] vals = new String[12];
@@ -141,6 +143,7 @@ public abstract class MiscTablesCRUDDialogs
 		{
 			v.setNickname(vals[0]);
 			// TODO driverid retrieve
+			// TODO any other permitted field changes
 			v.commit();
 		}
 

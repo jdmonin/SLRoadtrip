@@ -97,12 +97,12 @@ public class VehSettings extends RDBRecord
 	 */
 	public static final String CURRENT_FREQTRIP_TSTOPLIST = "CURRENT_FREQTRIP_TSTOPLIST";
 
-	private static final String TABNAME = "vehsettings";
+	private static final String TABNAME = "veh_settings";
 	private static final String KEYFIELD_S = "sname";
 	private static final String KEYFIELD_V = "vid";
 	private static final String VALFIELD_STR = "svalue";
 	private static final String VALFIELD_INT = "ivalue";
-	private static final String WHERE_KEYFIELDS = "svalue=? and ivalue=?";
+	private static final String WHERE_KEYFIELDS = "sname=? and vid=?";
 	private static final String[] FIELDS = { KEYFIELD_S, KEYFIELD_V, VALFIELD_STR, VALFIELD_INT };
 	private static final String[] VALFIELDS = { VALFIELD_STR, VALFIELD_INT };
 	private static final String[] VALFIELDS_AND_ID = { VALFIELD_STR, VALFIELD_INT, "_id" };
@@ -369,7 +369,7 @@ public class VehSettings extends RDBRecord
 		final String[] kv = { settname, Integer.toString(vid) };
 		final List<String[]> rv = db.getRows(TABNAME, WHERE_KEYFIELDS, kv, VALFIELDS_AND_ID, null, 0);
 		if (rv == null)
-			throw new RDBKeyNotFoundException(settname);
+			throw new RDBKeyNotFoundException(settname + "," + kv[1]);
 
 		// keys are together unique, so there won't be more than 1 row in fv
 		final String[] fv = rv.get(0);
@@ -1463,6 +1463,5 @@ public class VehSettings extends RDBRecord
 
 		return hasCurrentTrip;
 	}
-
 
 }  // public class VehSettings

@@ -53,6 +53,7 @@ import org.shadowlands.roadtrip.db.RDBKeyNotFoundException;
 import org.shadowlands.roadtrip.db.RDBSchema;
 import org.shadowlands.roadtrip.db.RDBVerifier;
 import org.shadowlands.roadtrip.db.Settings;
+import org.shadowlands.roadtrip.db.VehSettings;
 import org.shadowlands.roadtrip.db.Vehicle;
 import org.shadowlands.roadtrip.db.jdbc.RDBJDBCAdapter;
 import org.shadowlands.roadtrip.model.LogbookTableModel;
@@ -435,6 +436,10 @@ public class LogbookEditPane extends JPanel implements ActionListener, WindowLis
 			} catch (Throwable e) {
 				// TODO capture it somewhere accessible?
 				e.printStackTrace();
+				try {
+					conn.close();
+				} catch (Throwable th) {}
+
 				JOptionPane.showMessageDialog(parentf,
 				    "An error occurred during the upgrade. Please run again from the command line to see the stack trace.\n"
 					  + e.toString() + " " + e.getMessage(),
@@ -447,116 +452,114 @@ public class LogbookEditPane extends JPanel implements ActionListener, WindowLis
 		//
 		// CURRENT_DRIVER
 		//
-		Settings currentDriverID = null;
-		Person cdriv = null;
+		Person currD = null;
 		boolean newDriver = true;
 
-		try
 		{
-			currentDriverID = new Settings(conn, "CURRENT_DRIVER");
-			System.out.println("Current Driver ID is " + currentDriverID.getIntValue());
-			cdriv = new Person(conn, currentDriverID.getIntValue());
-			newDriver = false;
-		} catch (RDBKeyNotFoundException e)
-		{
-			System.err.println("Could not find CURRENT_DRIVER");
-			System.err.println("Error was: " + e.getClass() + " " + e.getMessage());
-			e.printStackTrace();
-			System.err.println("Continuing without current driver.");
+			Vehicle currV = Settings.getCurrentVehicle(conn, false);
+			if (currV != null)
+			{
+				currD = VehSettings.getCurrentDriver(conn, currV, false);
+				if (currD != null)
+					newDriver = false;
+			}
 		}
 
 		try
 		{
-			if (cdriv == null)
+			if (currD == null)
 			{
+				System.err.println("Could not find CURRENT_DRIVER");
+				System.err.println("Continuing without current driver.");					
+
 				JOptionPane.showMessageDialog(parentf,
 				    "Please enter information about the vehicle's driver.",
 				    "No driver found",
 				    JOptionPane.WARNING_MESSAGE);
 			}
-			cdriv = MiscTablesCRUDDialogs.createEditPersonDialog(parentf, conn, cdriv, true);
+
+			// Create or edit driver info. New variable to preserve currD if cancel edit existing driver
+			Person driv = MiscTablesCRUDDialogs.createEditPersonDialog(parentf, conn, currD, true);
 			if (newDriver)
-			{
-				if (cdriv == null)
-				{
-					System.err.println("Cancelled.");
-					// TODO EXIT IF CANCEL ?
-				} else {
-					final int cdid = cdriv.getID();
-					if (currentDriverID == null)
-					{
-						currentDriverID = new Settings("CURRENT_DRIVER", cdid);
-						currentDriverID.insert(conn);
-					} else {
-						currentDriverID.setIntValue(cdid);
-						currentDriverID.commit();
-					}
-				}
+				currD = driv;
+
+			if (currD == null)
+			{				
+				System.err.println("Cancelled.");
+				try {
+					conn.close();
+				} catch (Throwable th) {}
+
+				return;
 			}
 		} catch (Throwable t)
 		{
 			System.err.println("Could not read/create/write the current driver");
 			System.err.println("Error was: " + t.getClass() + " " + t.getMessage());
-			t.printStackTrace();			
+			t.printStackTrace();
+			try {
+				conn.close();
+			} catch (Throwable th) {}
+
+			// TODO error dialog
+			return;
 		}
 
 		//
 		// CURRENT_VEHICLE
 		//
-		Vehicle cveh = null;
-		if (cdriv != null)
+		Vehicle cveh;
 		{
-			Settings currentVehicleID = null;
 			boolean newVehicle = true;
-			try
-			{
-				currentVehicleID = new Settings(conn, "CURRENT_VEHICLE");
-				System.out.println("Current Vehicle ID is " + currentVehicleID.getIntValue());
-				cveh = new Vehicle(conn, currentVehicleID.getIntValue());
+			cveh = Settings.getCurrentVehicle(conn, false);
+			if (cveh != null)
 				newVehicle = false;
-			} catch (RDBKeyNotFoundException e)
-			{
-				System.err.println("Could not find CURRENT_VEHICLE");
-				System.err.println("Error was: " + e.getClass() + " " + e.getMessage());
-				e.printStackTrace();
-				System.err.println("Continuing without current vehicle.");
-			}
 
 			try
 			{
 				if (cveh == null)
 				{
+					System.err.println("Could not find CURRENT_VEHICLE");
+					System.err.println("Continuing without current vehicle.");
+
 					JOptionPane.showMessageDialog(parentf,
 					    "Please enter information about the vehicle.",
 					    "No vehicle found",
 					    JOptionPane.WARNING_MESSAGE);
 				}
-				cveh = MiscTablesCRUDDialogs.createEditVehicleDialog(parentf, conn, cveh, cdriv);
+
+				cveh = MiscTablesCRUDDialogs.createEditVehicleDialog(parentf, conn, cveh, currD);
 				if (newVehicle)
 				{
 					if (cveh == null)
 					{
 						System.err.println("Cancelled.");
-						// TODO EXIT IF CANCEL ?
-					} else {
-						final int cvid = cveh.getID();
-						if (currentVehicleID == null)
-						{
-							currentVehicleID = new Settings("CURRENT_VEHICLE", cvid);
-							currentVehicleID.insert(conn);
-						} else {
-							currentVehicleID.setIntValue(cvid);
-							currentVehicleID.commit();
-						}
+						try {
+							conn.close();
+						} catch (Throwable th) {}
+
+						return;
 					}
+
+					Settings.setCurrentVehicle(conn, cveh);
 				}
 			} catch (Throwable t)
 			{
 				System.err.println("Could not read/create/write the current vehicle");
 				System.err.println("Error was: " + t.getClass() + " " + t.getMessage());
-				t.printStackTrace();			
+				t.printStackTrace();
+				try {
+					conn.close();
+				} catch (Throwable th) {}
+
+				// TODO dialog
+				return;
 			}
 		}  // CURRENT_VEHICLE
+
+		// Now that we have driver and vehicle, set current driver if missing
+		if (newDriver)
+			VehSettings.setCurrentDriver(conn, cveh, currD);
 
 		new LogbookEditPane(fnshort, cveh, conn, isReadOnly);
 

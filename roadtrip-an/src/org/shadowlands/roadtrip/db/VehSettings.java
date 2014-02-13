@@ -30,6 +30,9 @@ import java.util.Vector;
  * Convenience methods: {@link #insertOrUpdate(RDBAdapter, String, Vehicle, int)},
  * {@link #insertOrUpdate(RDBAdapter, String, Vehicle, String)}.
  *<P>
+ * Call {@link #changeCurrentVehicle(RDBAdapter, Vehicle, Vehicle)} to check per-vehicle settings
+ * and update {@link Settings#getCurrentVehicle(RDBAdapter, boolean)}.
+ *<P>
  * If you restore the database from a backup, call {@link Settings#clearSettingsCache()}
  * to remove cached references to the overwritten db's settings objects.
  *<P>
@@ -97,12 +100,12 @@ public class VehSettings extends RDBRecord
 	 */
 	public static final String CURRENT_FREQTRIP_TSTOPLIST = "CURRENT_FREQTRIP_TSTOPLIST";
 
-	private static final String TABNAME = "vehsettings";
+	private static final String TABNAME = "veh_settings";
 	private static final String KEYFIELD_S = "sname";
 	private static final String KEYFIELD_V = "vid";
 	private static final String VALFIELD_STR = "svalue";
 	private static final String VALFIELD_INT = "ivalue";
-	private static final String WHERE_KEYFIELDS = "svalue=? and ivalue=?";
+	private static final String WHERE_KEYFIELDS = "sname=? and vid=?";
 	private static final String[] FIELDS = { KEYFIELD_S, KEYFIELD_V, VALFIELD_STR, VALFIELD_INT };
 	private static final String[] VALFIELDS = { VALFIELD_STR, VALFIELD_INT };
 	private static final String[] VALFIELDS_AND_ID = { VALFIELD_STR, VALFIELD_INT, "_id" };
@@ -346,6 +349,23 @@ public class VehSettings extends RDBRecord
 	}
 
 	/**
+	 * Delete all settings for a {@link Vehicle}.
+	 * Called by {@link Vehicle#delete()}.
+	 * @param db  connection to use
+	 * @param v  Vehicle to write for
+	 * @throws IllegalArgumentException if db or v is null
+	 * @throws IllegalStateException if conn has been closed, table not found, etc.
+	 */
+	public static void deleteAll(final RDBAdapter db, final Vehicle v)
+		throws IllegalArgumentException, IllegalStateException
+	{
+		if ((db == null) || (v == null))
+			throw new IllegalArgumentException();
+
+		db.delete(TABNAME, "vid=?", v.getID());
+	}
+
+	/**
 	 * Look up a VehSetting from the database.
 	 * @param db  db connection
 	 * @param settname field to retrieve
@@ -369,7 +389,7 @@ public class VehSettings extends RDBRecord
 		final String[] kv = { settname, Integer.toString(vid) };
 		final List<String[]> rv = db.getRows(TABNAME, WHERE_KEYFIELDS, kv, VALFIELDS_AND_ID, null, 0);
 		if (rv == null)
-			throw new RDBKeyNotFoundException(settname);
+			throw new RDBKeyNotFoundException(settname + "," + kv[1]);
 
 		// keys are together unique, so there won't be more than 1 row in fv
 		final String[] fv = rv.get(0);
@@ -528,8 +548,13 @@ public class VehSettings extends RDBRecord
 
 	/**
 	 * Delete an existing record.
+	 *<P>
+	 * Usually it's better to set its int value to 0 and string value to null instead of deleting the setting,
+	 * so that the app knows this isn't currently set and doesn't try to find the current setting through other
+	 * data (backward-compatible mode, see {@link #changeCurrentVehicle(RDBAdapter, Vehicle, Vehicle)}).
 	 *
 	 * @throws NullPointerException if dbConn was null because this is a new record, not an existing one
+	 * @see #deleteAll(RDBAdapter, Vehicle)
 	 */
 	public void delete()
 		throws NullPointerException
@@ -1228,6 +1253,7 @@ public class VehSettings extends RDBRecord
 	/**
 	 * Change the current vehicle to this one, and update setting fields if their new values aren't
 	 * directly in the VehSettings table: Current GeoArea, Trip, TStop, etc.
+	 * Calls {@link Settings#setCurrentVehicle(RDBAdapter, Vehicle)}.
 	 * If new vehicle has current trip, validates current driver setting from trip's driver field.
 	 *<P>
 	 * Before changing vehicles, updates the old vehicle's current odometer and trip by calling
@@ -1463,6 +1489,5 @@ public class VehSettings extends RDBRecord
 
 		return hasCurrentTrip;
 	}
-
 
 }  // public class VehSettings

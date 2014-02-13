@@ -619,7 +619,8 @@ public class Vehicle extends RDBRecord
 	}
 
 	/**
-	 * Delete an existing record.
+	 * Delete an existing Vehicle record, and also delete related {@link VehSettings} records.
+	 * Does not delete trips, TStops, etc.
 	 *
      * @throws NullPointerException if dbConn was null because
      *     this is a new record, not an existing one
@@ -628,6 +629,7 @@ public class Vehicle extends RDBRecord
 	    throws NullPointerException
 	{
 		dbConn.delete(TABNAME, id);
+		VehSettings.deleteAll(dbConn, this);
 		deleteCleanup();
 	}
 

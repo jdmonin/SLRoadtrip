@@ -528,7 +528,7 @@ public class Settings extends RDBRecord
 	 * @param db  connection to use
 	 * @param clearIfBad  If true, clear the setting to 0 if no record by its ID is found
 	 * @return the Vehicle for <tt>CURRENT_VEHICLE</tt>, or null
-     * @throws @throws IllegalStateException if the db is null or isn't open
+	 * @throws IllegalStateException if the db is null or isn't open
 	 */
 	public static Vehicle getCurrentVehicle(RDBAdapter db, final boolean clearIfBad)
 		throws IllegalStateException
@@ -552,6 +552,7 @@ public class Settings extends RDBRecord
 				if (id != 0)
 					currentV = new Vehicle(db, id);
 			} catch (Throwable th) {
+				currentV = null;
 				if (clearIfBad)
 					sCV.delete();
 			}
@@ -562,7 +563,9 @@ public class Settings extends RDBRecord
 	}
 
 	/**
-	 * Store the Setting for {@link #CURRENT_VEHICLE}, or clear it to 0.
+	 * Store the Setting for {@link #CURRENT_VEHICLE}, or clear it to 0.  For DB consistency,
+	 * it's better to call {@link VehSettings#changeCurrentVehicle(RDBAdapter, Vehicle, Vehicle)}
+	 * instead of directly calling this method.
 	 * @param db  connection to use
 	 * @param ve  new vehicle, or null for none
      * @throws IllegalStateException if the db isn't open
@@ -574,6 +577,7 @@ public class Settings extends RDBRecord
 	{
 		if (ve != null)
 			matchDBOrThrow(db, ve);
+
 		currentV = ve;
 		final int id = (ve != null) ? ve.id : 0;
 		insertOrUpdate(db, CURRENT_VEHICLE, id);

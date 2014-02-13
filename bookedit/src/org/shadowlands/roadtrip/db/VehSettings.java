@@ -30,6 +30,9 @@ import java.util.Vector;
  * Convenience methods: {@link #insertOrUpdate(RDBAdapter, String, Vehicle, int)},
  * {@link #insertOrUpdate(RDBAdapter, String, Vehicle, String)}.
  *<P>
+ * Call {@link #changeCurrentVehicle(RDBAdapter, Vehicle, Vehicle)} to check per-vehicle settings
+ * and update {@link Settings#getCurrentVehicle(RDBAdapter, boolean)}.
+ *<P>
  * If you restore the database from a backup, call {@link Settings#clearSettingsCache()}
  * to remove cached references to the overwritten db's settings objects.
  *<P>
@@ -346,6 +349,23 @@ public class VehSettings extends RDBRecord
 	}
 
 	/**
+	 * Delete all settings for a {@link Vehicle}.
+	 * Called by {@link Vehicle#delete()}.
+	 * @param db  connection to use
+	 * @param v  Vehicle to write for
+	 * @throws IllegalArgumentException if db or v is null
+	 * @throws IllegalStateException if conn has been closed, table not found, etc.
+	 */
+	public static void deleteAll(final RDBAdapter db, final Vehicle v)
+		throws IllegalArgumentException, IllegalStateException
+	{
+		if ((db == null) || (v == null))
+			throw new IllegalArgumentException();
+
+		db.delete(TABNAME, "vid=?", v.getID());
+	}
+
+	/**
 	 * Look up a VehSetting from the database.
 	 * @param db  db connection
 	 * @param settname field to retrieve
@@ -528,8 +548,13 @@ public class VehSettings extends RDBRecord
 
 	/**
 	 * Delete an existing record.
+	 *<P>
+	 * Usually it's better to set its int value to 0 and string value to null instead of deleting the setting,
+	 * so that the app knows this isn't currently set and doesn't try to find the current setting through other
+	 * data (backward-compatible mode, see {@link #changeCurrentVehicle(RDBAdapter, Vehicle, Vehicle)}).
 	 *
 	 * @throws NullPointerException if dbConn was null because this is a new record, not an existing one
+	 * @see #deleteAll(RDBAdapter, Vehicle)
 	 */
 	public void delete()
 		throws NullPointerException
@@ -1228,6 +1253,7 @@ public class VehSettings extends RDBRecord
 	/**
 	 * Change the current vehicle to this one, and update setting fields if their new values aren't
 	 * directly in the VehSettings table: Current GeoArea, Trip, TStop, etc.
+	 * Calls {@link Settings#setCurrentVehicle(RDBAdapter, Vehicle)}.
 	 * If new vehicle has current trip, validates current driver setting from trip's driver field.
 	 *<P>
 	 * Before changing vehicles, updates the old vehicle's current odometer and trip by calling

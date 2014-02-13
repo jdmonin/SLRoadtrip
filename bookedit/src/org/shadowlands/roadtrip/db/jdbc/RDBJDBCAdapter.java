@@ -40,7 +40,7 @@ public class RDBJDBCAdapter implements RDBAdapter
 {
 	private static boolean didDriverInit = false;
 
-	/** sql-scripts location within jar; includes trailing slash. */
+	/** sql-scripts location within JAR; includes trailing slash. */
 	private static final String SQL_SCRIPTS_DIR = "/org/shadowlands/roadtrip/db/script/";
 
 	private Connection conn;
@@ -972,23 +972,74 @@ public class RDBJDBCAdapter implements RDBAdapter
 	 * @param tabname  Table to delete from
 	 * @param id      ID field value, for primary key field "_id"
 	 * @throws IllegalStateException if conn has been closed, table not found, etc.
-	 * @throws IllegalArgumentException  if record not found
 	 */
 	public void delete(final String tabname, final int id)
-	    throws IllegalStateException, IllegalArgumentException
+	    throws IllegalStateException
     {
+		delete(tabname, "_id = ?", id);
+    }
+
+	/**
+	 * Delete one or more rows matching a simple WHERE clause with an int parameter (such as a foreign key).
+	 * @param tabname  Table to delete from
+	 * @param where  Where-clause, not null; may contain a {@code ?} which will be
+	 *       filled from {@code whereArg} contents, as with PreparedStatements.
+	 *       Do not include the "where" keyword.
+	 * @param whereArg  Value to bind against the {@code ?} in {@code where}, or 0 if {@code where} has no argument
+	 * @throws IllegalStateException if conn has been closed, table not found, etc.
+	 * @throws IllegalArgumentException  if {@code where} is null
+	 * @since 0.9.40
+	 */
+	public void delete(final String tabname, final String where, final int whereArg)
+		throws IllegalStateException, IllegalArgumentException
+	{
 		if (conn == null)
 			throw new IllegalStateException("conn not open");
+		if (where == null)
+			throw new IllegalArgumentException("null: where");
+
 		try
 		{
 			PreparedStatement prep = conn.prepareStatement
-			    ("delete from " + tabname + " where _id = ? ;");
-			prep.setInt(1, id);
-			prep.execute();  // TODO does not check for IllegalArgumentException, do we need it?
+			    ("delete from " + tabname + " where " + where + " ;");
+			if (where.indexOf('?') != -1)
+				prep.setInt(1, whereArg);
+			prep.execute();  // TODO does not check for IllegalArgumentException, do we need to?
 		} catch (SQLException e) {
 			throw new IllegalStateException("error: " + e.getClass() + ":" + e.getMessage());
 		}
-    }
+	}
+
+	/**
+	 * Delete one or more rows matching a simple WHERE clause with a string parameter.
+	 * @param tabname  Table to delete from
+	 * @param where  Where-clause, not null; may contain a {@code ?} which will be
+	 *       filled from {@code whereArg} contents, as with PreparedStatements.
+	 *       Do not include the "where" keyword.
+	 * @param whereArg  Value to bind against the {@code ?} in {@code where}, or null if {@code where} has no argument
+	 * @throws IllegalStateException if conn has been closed, table not found, etc.
+	 * @throws IllegalArgumentException  if {@code where} is null
+	 * @since 0.9.40
+	 */
+	public void delete(final String tabname, final String where, final String whereArg)
+		throws IllegalStateException, IllegalArgumentException
+	{
+		if (conn == null)
+			throw new IllegalStateException("conn not open");
+		if (where == null)
+			throw new IllegalArgumentException("null: where");
+
+		try
+		{
+			PreparedStatement prep = conn.prepareStatement
+			    ("delete from " + tabname + " where " + where + " ;");
+			if (where.indexOf('?') != -1)
+				prep.setString(1, whereArg);
+			prep.execute();  // TODO does not check for IllegalArgumentException, do we need to?
+		} catch (SQLException e) {
+			throw new IllegalStateException("error: " + e.getClass() + ":" + e.getMessage());
+		}
+	}
 
 	/**
 	 * Get the full path of this open database's filename.

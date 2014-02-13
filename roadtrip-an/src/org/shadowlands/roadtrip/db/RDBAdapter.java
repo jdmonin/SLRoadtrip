@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  Copyright (C) 2010-2011 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2011,2014 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -313,9 +313,36 @@ public interface RDBAdapter
 	 * @param tabname  Table to delete from
 	 * @param id      ID field value, for primary key field "_id"
 	 * @throws IllegalStateException if conn has been closed, table not found, etc.
-	 * @throws IllegalArgumentException  if record not found
 	 */
 	public void delete(final String tabname, final int id)
+	    throws IllegalStateException;
+
+	/**
+	 * Delete one or more rows matching a simple WHERE clause with an int parameter (such as a foreign key).
+	 * @param tabname  Table to delete from
+	 * @param where  Where-clause, not null; may contain a {@code ?} which will be
+	 *       filled from {@code whereArg} contents, as with PreparedStatements.
+	 *       Do not include the "where" keyword.
+	 * @param whereArg  Value to bind against the {@code ?} in {@code where}, or 0 if {@code where} has no argument
+	 * @throws IllegalStateException if conn has been closed, table not found, etc.
+	 * @throws IllegalArgumentException  if {@code where} is null
+	 * @since 0.9.40
+	 */
+	public void delete(final String tabname, final String where, final int whereArg)
+	    throws IllegalStateException, IllegalArgumentException;
+
+	/**
+	 * Delete one or more rows matching a simple WHERE clause with a string parameter.
+	 * @param tabname  Table to delete from
+	 * @param where  Where-clause, not null; may contain a {@code ?} which will be
+	 *       filled from {@code whereArg} contents, as with PreparedStatements.
+	 *       Do not include the "where" keyword.
+	 * @param whereArg  Value to bind against the {@code ?} in {@code where}, or null if {@code where} has no argument
+	 * @throws IllegalStateException if conn has been closed, table not found, etc.
+	 * @throws IllegalArgumentException  if {@code where} is null
+	 * @since 0.9.40
+	 */
+	public void delete(final String tabname, final String where, final String whereArg)
 	    throws IllegalStateException, IllegalArgumentException;
 
 	/**

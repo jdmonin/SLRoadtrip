@@ -45,10 +45,11 @@ import android.util.Log;
  * Calling any insert/update/query method will call {@link #getWritableDatabase()}.
  * Be sure to call {@link #close()} when you are done.
  *<P>
- * The schema is stored in <tt> res/raw/schema_v0908.sql </tt>.
+ * The schema is stored in {@code res/raw/schema_v0909.sql}.
  * This location is hardcoded in {@link #getSQLScript(int)}.
  * If you update the schema, please update {@link #getSQLScript(int)}
- * and {@link RDBSchema#DATABASE_VERSION}.
+ * and {@link RDBSchema#DATABASE_VERSION}; see the {@code DATABASE_VERSION} javadoc
+ * for other things you will need to update.
  */
 public class RDBOpenHelper
 	implements RDBAdapter
@@ -177,11 +178,12 @@ public class RDBOpenHelper
 
 		if (opener != null)
 		{
-			db = opener.getWritableDatabase();
+			db = opener.getWritableDatabase();  // TODO chk SQLiteException
 			return db;
 		}
 		db = SQLiteDatabase.openDatabase
 			(dbPath, null, SQLiteDatabase.OPEN_READWRITE);
+			// TODO chk SQLiteException
 		return db;
 	}
 
@@ -733,19 +735,56 @@ public class RDBOpenHelper
 	 * @param tabname  Table to delete from
 	 * @param id      ID field value, for primary key field "_id"
 	 * @throws IllegalStateException  if conn has been closed, table not found, etc.
-	 * @throws IllegalArgumentException  if record not found
 	 */
 	public void delete(final String tabname, final int id)
-	    throws IllegalStateException, IllegalArgumentException
+	    throws IllegalStateException
     {
-		if (db == null)
-			db = getWritableDatabase();  // TODO chk exceptions
-
-		final String[] whereArg = new String[]{ Integer.toString(id) };
-		int reccount = db.delete(tabname, "_id=?", whereArg);
-		if (reccount == 0)
-			throw new IllegalArgumentException("id not found: " + tabname + " id " + id);
+		delete(tabname, "_id=?", Integer.toString(id));
     }
+
+	/**
+	 * Delete one or more rows matching a simple WHERE clause with an int parameter (such as a foreign key).
+	 * @param tabname  Table to delete from
+	 * @param where  Where-clause, not null; may contain a {@code ?} which will be
+	 *       filled from {@code whereArg} contents, as with PreparedStatements.
+	 *       Do not include the "where" keyword.
+	 * @param whereArg  Value to bind against the {@code ?} in {@code where}, or 0 if {@code where} has no argument
+	 * @throws IllegalStateException if conn has been closed, table not found, etc.
+	 * @throws IllegalArgumentException  if {@code where} is null
+	 * @since 0.9.40
+	 */
+	public void delete(final String tabname, final String where, final int whereArg)
+		throws IllegalStateException, IllegalArgumentException
+	{
+		delete(tabname, where, Integer.toString(whereArg));
+	}
+
+	/**
+	 * Delete one or more rows matching a simple WHERE clause with a string parameter.
+	 * @param tabname  Table to delete from
+	 * @param where  Where-clause, not null; may contain a {@code ?} which will be
+	 *       filled from {@code whereArg} contents, as with PreparedStatements.
+	 *       Do not include the "where" keyword.
+	 * @param whereArg  Value to bind against the {@code ?} in {@code where}, or null if {@code where} has no argument
+	 * @throws IllegalStateException if conn has been closed, table not found, etc.
+	 * @throws IllegalArgumentException  if {@code where} is null
+	 * @since 0.9.40
+	 */
+	public void delete(final String tabname, final String where, final String whereArg)
+		throws IllegalStateException, IllegalArgumentException
+	{
+		if (db == null)
+		{
+			db = getWritableDatabase();
+			if (db == null)
+				throw new IllegalStateException("conn not open");
+		}
+		if (where == null)
+			throw new IllegalArgumentException("null: where");
+
+		final String[] whereArr = new String[]{ whereArg };
+		db.delete(tabname, where, whereArr);
+	}
 
 	/** Do these db-connections share the same owner? */
 	public boolean hasSameOwner(RDBAdapter other)
@@ -818,7 +857,7 @@ public class RDBOpenHelper
 	 * Be sure to set <tt>{@link #dbSQLRsrcs} = getApplicationContext().getResources();</tt> before calling.
 	 *<P>
 	 * The schema script and upgrade script filenames are
-	 * hardcoded here as resource names under res/raw/ .
+	 * hardcoded here as android resource references under {@code res/raw/} .
 	 *
 	 * @param upgScriptToVersion  0 for the create script,
 	 *    otherwise a db version number, to get the script to upgrade

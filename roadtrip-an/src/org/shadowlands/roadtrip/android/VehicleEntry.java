@@ -57,6 +57,9 @@ import android.widget.Toast;
  * <b>When no intent extras are used:</b><BR>
  * will next go to Main.
  *<P>
+ * If no vehicles in db, new vehicle entered here must be active:
+ * The cbActive checkbox will be made checked and hidden.
+ *<P>
  * <b>When {@link #EXTRAS_FLAG_ASKED_NEW} is set:</b><BR>
  * Wait for the new vehicle to be entered.
  * Finish this activity and return to what the user was previously doing.
@@ -158,7 +161,7 @@ public class VehicleEntry
 	    odo_curr = (OdometerNumberPicker) findViewById(R.id.vehicle_entry_odo_curr);
 	    odo_orig.setTenthsVisibility(false);
 	    odo_curr.setTenthsVisibility(false);
-	    if (cameFromAskNew)
+	    if (cameFromEdit_id == 0)
 	    	odo_orig.setRelatedUncheckedOdoOnChanges(odo_curr, null);
 	    btnDateFrom = (Button) findViewById(R.id.vehicle_entry_btn_date_from);
 	    cbActive = (CheckBox) findViewById(R.id.vehicle_entry_active_cb);
@@ -176,6 +179,14 @@ public class VehicleEntry
 			}
 		} else {
 			hasCurrentTrip = false;
+		}
+
+		if ((cameFromEdit_id == 0) && (Vehicle.getMostRecent(db) == null))
+		{
+			// initial setup
+			cbActive.setChecked(true);
+			cbActive.setVisibility(View.GONE);
+			findViewById(R.id.vehicle_entry_active_txt).setVisibility(View.GONE);
 		}
 
 	    populateVehMakesList();

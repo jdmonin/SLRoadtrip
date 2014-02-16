@@ -89,6 +89,7 @@ create table veh_settings ( _id integer PRIMARY KEY AUTOINCREMENT not null, vid 
 	-- so for now they aren't declared. See doc/README.developer for details.
 	--
 	-- CURRENT_AREA (int _id within geoarea)
+	--      During a roadtrip, the starting area (setting changes only when trip ends)
 	-- CURRENT_DRIVER (int _id within people)
 	-- CURRENT_TRIP (int _id, or 0) -- if the CURRENT_VEHICLE changes, update this setting too
 	-- CURRENT_TSTOP (int _id, or 0) -- 0 when not stopped, 0 when not on a trip

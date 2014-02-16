@@ -118,7 +118,7 @@ public class TripTStopEntry extends Activity
 	private Trip currT;
 	private TStop currTS;
 
-	/** all locations in the area, or null; set from {@link #currA} in {@link #onCreate(Bundle)} */
+	/** all locations in the {@link #areaLocs_areaID} area, or null; set from {@link #currA} in {@link #onCreate(Bundle)} */
 	private Location[] areaLocs;
 
 	/**
@@ -126,7 +126,7 @@ public class TripTStopEntry extends Activity
 	 * For roadtrips, also the currently selected area ID of
 	 * {@link #btnRoadtripArea_chosen}.
 	 * 0 is used for all local trips.
-	 * 0 OK for tstops/locations within a roadtrip, but not
+	 * Geoarea id 0 is OK for tstops/locations within a roadtrip, but not
 	 * for the start or end tstop/location.
 	 */
 	private int areaLocs_areaID;
@@ -222,7 +222,9 @@ public class TripTStopEntry extends Activity
 	/** optional {@link TripCategory}; null unless {@link #stopEndsTrip} */
 	private Spinner spTripCat;
 
-	/** location; uses, sets {@link #locObj} */
+	/** location; uses, sets {@link #locObj}. Autocomplete list is {@link #areaLocs}.
+	 *  During a roadtrip, its geoarea is selected and hilighted as {@link #btnRoadtripArea_chosen}.
+	 */
 	private AutoCompleteTextView loc;
 	/** via_route; see {@link #updateViaRouteAutocomplete(ViaRoute, boolean)} */
 	private AutoCompleteTextView via;
@@ -303,7 +305,12 @@ public class TripTStopEntry extends Activity
 	private StringBuffer fmt_dow_shortdate;
 	private Button btnStopTimeDate, btnContTimeDate;
 
-	/** null unless currT.isRoadtrip */
+	/**
+	 * When stopping during a roadtrip, buttons to pick the geoarea for
+	 * the Location textfield {@link #loc} and {@link #areaLocs_areaID}.
+	 * Null unless currT.isRoadtrip.
+	 * @see #btnRoadtripArea_chosen
+	 */
 	private Button btnRoadtripAreaStart, btnRoadtripAreaNone, btnRoadtripAreaEnd;
 
 	/**
@@ -366,6 +373,8 @@ public class TripTStopEntry extends Activity
 	 * and hiding/showing buttons as appropriate.
 	 * Also calls {@link #onRestoreInstanceState(Bundle)} if
 	 * our state was saved.
+	 * Sets {@link #areaLocs_areaID} and fills {@link #areaLocs} based
+	 * on current TStop, prev location, or trip/roadtrip fields. 
 	 */
 	@Override
 	public void onCreate(Bundle savedInstanceState)
@@ -2006,7 +2015,7 @@ public class TripTStopEntry extends Activity
 		currT.commit();
 
 		currV.setOdometerCurrentAndLastTrip(odo_total, currT, true);
-		  // that also calls currV.commit()
+			// also calls currV.commit() for those 2 fields only
 
 		VehSettings.setCurrentTrip(db, currV, null);
 		if (currT.isFrequent())

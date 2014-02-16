@@ -49,6 +49,8 @@ public class VehSettings extends RDBRecord
 {
 	/**
 	 * int setting for current {@link GeoArea} area ID.
+	 * During a roadtrip, this is the trip's starting area ID; when the
+	 * roadtrip ends, will be changed to {@link Trip#getRoadtripEndAreaID()}.
 	 */
 	public static final String CURRENT_AREA = "CURRENT_AREA";
 
@@ -1327,7 +1329,9 @@ public class VehSettings extends RDBRecord
 		if (hasCurrentTrip)
 		{
 			// try to find new vehicle's current TStop and previous location, if any,
-			// and set tripAreaIDCheck
+			// also set tripAreaIDCheck
+
+			tripAreaIDCheck = newCurrT.getAreaID();
 
 			boolean isStopped = false;
 			TStop ts = null;  // for current tstop or prev location
@@ -1407,26 +1411,6 @@ public class VehSettings extends RDBRecord
 				setPreviousLocation(db, newV, lo);
 			}
 
-			if (isStopped) {
-				tripAreaIDCheck = newCurrT.getAreaID();
-				if (newCurrT.isRoadtrip()) {
-					final int tsAID = ts.getAreaID();
-					if (tsAID != 0)
-						tripAreaIDCheck = tsAID;
-				}
-			} else {
-				if (newCurrT.isRoadtrip()) {
-					tripAreaIDCheck = newCurrT.getRoadtripEndAreaID();
-					if (lo != null) {
-						final int locAID = lo.getAreaID();
-						if (locAID != 0)
-							tripAreaIDCheck = locAID;
-					}
-				} else {
-					tripAreaIDCheck = newCurrT.getAreaID();
-				}
-			}
-
 			final int newDID = newCurrT.getDriverID();
 			final Person newCurrD = getCurrentDriver(db, newV, false);
 			if ((newCurrD == null) || (newCurrD.getID() != newDID))
@@ -1444,17 +1428,20 @@ public class VehSettings extends RDBRecord
 			if (getCurrentTStop(db, newV, false) != null)
 				setCurrentTStop(db, newV, null);
 
+			Location prevLoc = null;
 			try {
 				VehSettings vs = new VehSettings(db, PREV_LOCATION, newV);
 				if (vs.ivalue != 0)
 				{
-					Location prevLoc = new Location(db, vs.ivalue);
+					prevLoc = new Location(db, vs.ivalue);
 					final int aID = prevLoc.getAreaID();
 					if (aID != 0)
 						tripAreaIDCheck = aID;
 				}
-			} catch (RDBKeyNotFoundException e) {
-				Location prevLoc = null;
+			} catch (RDBKeyNotFoundException e) {}
+
+			if ((prevLoc == null) || (tripAreaIDCheck == -1))
+			{
 				final int lastTID = newV.getLastTripID();
 				if (lastTID != 0)
 				{
@@ -1466,13 +1453,15 @@ public class VehSettings extends RDBRecord
 							tripAreaIDCheck = lastTrip.getAreaID();
 
 						TStop endTS = lastTrip.readLatestTStop();
-						if (endTS != null)
+						if ((endTS != null) && (prevLoc == null))
+						{
 							prevLoc = endTS.readLocation();
+							if (prevLoc != null)
+								setPreviousLocation(db, newV, prevLoc);
+						}
 
 					} catch (Exception e2) {  /* not found: db closed or inconsistent: TODO */  }
 				}
-
-				setPreviousLocation(db, newV, prevLoc);				
 			}
 		}
 

@@ -524,7 +524,7 @@ public class Vehicle extends RDBRecord
 
 	/**
 	 * Get the id of the vehicle's last completed trip.
-	 * {@code last_tripid} is used to find the vehicle's previous stopping point, when starting a new trip.
+	 * When starting a new trip, {@code last_tripid} is used to find the vehicle's previous stopping point.
 	 * @return trip ID, or 0 if no trip has been completed.
 	 * @see #setOdometerCurrentAndLastTrip(int, Trip, boolean)
 	 * @see #getTripInProgress()
@@ -536,7 +536,8 @@ public class Vehicle extends RDBRecord
 	/**
 	 * Does this vehicle (which can't be the current vehicle) have a trip in progress?
 	 * Before calling this, check {@link Settings} for the {@code CURRENT_VEHICLE} and {@code CURRENT_TRIP}.
-	 * If this is the current vehicle, its {@link #getLastTripID()} won't be the current trip.
+	 * If this is the current vehicle, its {@link #getLastTripID()} won't be the current trip,
+	 * so call {@link VehSettings#getCurrentTrip(RDBAdapter, Vehicle, boolean)} instead.
 	 *<P>
 	 * Checks {@link #getLastTripID()}.
 	 * If nonzero, checks that trip's {@link Trip#getOdo_end()} using the vehicle's open db connection.
@@ -564,10 +565,14 @@ public class Vehicle extends RDBRecord
 
 	/**
 	 * At the end of a trip, set the current odometer and last trip ID.
-	 * Also used when saving vehicle's current trip just before changing current vehicle. 
+	 * Also used when saving vehicle's current trip just before changing current vehicle.
+	 * @param newValue10ths  New current odometer
+	 * @param tr  New latest trip; not null
 	 * @param commitNow commit these 2 fields ONLY, right now; if false, just set {@link #isDirty()}.
+	 * @throws NullPointerException if {@code tr} is null
 	 */
 	public void setOdometerCurrentAndLastTrip(int newValue10ths, Trip tr, final boolean commitNow)
+		throws NullPointerException
 	{
 		odo_curr = newValue10ths;
 		last_tripid = tr.getID();
@@ -622,14 +627,14 @@ public class Vehicle extends RDBRecord
 	 * Delete an existing Vehicle record, and also delete related {@link VehSettings} records.
 	 * Does not delete trips, TStops, etc.
 	 *
-     * @throws NullPointerException if dbConn was null because
-     *     this is a new record, not an existing one
+	 * @throws NullPointerException if dbConn was null because
+	 *     this is a new record, not an existing one
 	 */
 	public void delete()
 	    throws NullPointerException
 	{
+		VehSettings.deleteAll(dbConn, this);  // remove related records before Vehicle
 		dbConn.delete(TABNAME, id);
-		VehSettings.deleteAll(dbConn, this);
 		deleteCleanup();
 	}
 

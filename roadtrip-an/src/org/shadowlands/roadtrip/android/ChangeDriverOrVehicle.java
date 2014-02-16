@@ -72,6 +72,7 @@ public class ChangeDriverOrVehicle
 	private Spinner driver, veh;
 	private int currDID = 0, currVID = 0;
 	private Vehicle currV;
+	/** Does the selected vehicle have a current trip? Update by calling {@link #updateAtTripStatus(boolean)}. */
 	private boolean hasCurrentTrip;
 	private Trip currT;
 
@@ -88,23 +89,42 @@ public class ChangeDriverOrVehicle
 		currVID = currV.getID();
 		currDID = VehSettings.getCurrentDriver(db, currV, false).getID();
 		currT = VehSettings.getCurrentTrip(db, currV, false);
-		hasCurrentTrip = (null != currT);
 
 		driver = (Spinner) findViewById(R.id.change_cvd_driver);
 		veh = (Spinner) findViewById(R.id.change_cvd_vehicle);
 		SpinnerDataFactory.setupDriversSpinner(db, this, driver, currDID);
 
-		if (hasCurrentTrip)
-		{
-			setTitle(R.string.view_drivers_chg_vehicle);
-			driver.setEnabled(false);
-			findViewById(R.id.change_cvd_driver_new).setEnabled(false);
-			((Button) findViewById(R.id.change_cvd_drivers_edit)).setText(R.string.view_drivers);
-			((Button) findViewById(R.id.change_cvd_vehicles_edit)).setText(R.string.view_vehicles);
-		}
+		if (null != currT)
+			updateAtTripStatus(true);  // set hasCurrentTrip, enable/disable items, update button text
 
 		SpinnerDataFactory.setupVehiclesSpinner(db, true, this, veh, currVID);
 		veh.setOnItemSelectedListener(this);  // onItemSelected: when v changes, ask about driver
+	}
+
+	/**
+	 * When the selected vehicle has a current trip, some items are read-only.
+	 * Set {@link #hasCurrentTrip} field, enable/disable items, update button text.
+	 * @param hasCurrent  Does the selected vehicle have a current trip?
+	 * @since 0.9.40
+	 */
+	private void updateAtTripStatus(final boolean hasCurrent) {
+		if (hasCurrentTrip == hasCurrent)
+			return;
+
+		hasCurrentTrip = hasCurrent;
+		if (hasCurrent) {
+			setTitle(R.string.view_drivers_chg_vehicle);
+			((Button) findViewById(R.id.change_cvd_drivers_edit)).setText(R.string.view_drivers);
+			((Button) findViewById(R.id.change_cvd_vehicles_edit)).setText(R.string.view_vehicles);
+		} else {
+			setTitle(R.string.change_driver_vehicle);
+			((Button) findViewById(R.id.change_cvd_drivers_edit)).setText(R.string.edit_drivers);
+			((Button) findViewById(R.id.change_cvd_vehicles_edit)).setText(R.string.edit_vehicles);
+		}
+		driver.setEnabled(! hasCurrent);
+		findViewById(R.id.change_cvd_driver_new).setEnabled(! hasCurrent);
+
+		// Remember: Keep button text sync'd with any updates to the change_vehicle_or_driver.xml layout.
 	}
 
 	/**
@@ -138,8 +158,7 @@ public class ChangeDriverOrVehicle
 	    			currDID = (cvd != null) ? cvd.getID() : 0;
 	    		}
 
-	    		final int newID = d.getID();
-	    		if (newID != currDID)
+	    		if (d.getID() != currDID)
 	    		{
 	    			anyChange = true;
 	    			VehSettings.setCurrentDriver(db, currV, d);
@@ -196,10 +215,12 @@ public class ChangeDriverOrVehicle
     	if ((ve != null) && (ve.getID() != currVID))
     	{
     		anyChange = true;
-    		hasCurrentTrip = VehSettings.changeCurrentVehicle(db, currV, ve);
+    		final boolean newHasCurrent = VehSettings.changeCurrentVehicle(db, currV, ve);
     		currV = ve;
     		currVID = ve.getID();
 		currT = VehSettings.getCurrentTrip(db, ve, false);
+
+		updateAtTripStatus(newHasCurrent);
     	}
  
     	Intent i = new Intent(this, VehiclesEdit.class);
@@ -341,9 +362,11 @@ public class ChangeDriverOrVehicle
     	}
 	}
 
+	// implement OnItemSelectedListener:
+
 	/**
-	 * When a vehicle is selected, ask whether to select its current driver
-	 * in the {@link #driver} spinner. (OnItemSelectedListener)
+	 * When a vehicle is selected, update {@link #hasCurrentTrip} and ask whether to
+	 * select its current driver in the {@link #driver} spinner.
 	 * @since 0.9.40
 	 */
 	public void onItemSelected(AdapterView<?> parent, View itemv, final int pos, final long idOrPos)
@@ -354,8 +377,19 @@ public class ChangeDriverOrVehicle
 		Object obj = parent.getItemAtPosition(pos);
 		if ((obj == null) || ! (obj instanceof Vehicle))
 			return;  // just in case
+		final Vehicle selV = (Vehicle) obj;
 
-		Person vDriv = VehSettings.findCurrentDriver(db, (Vehicle) obj);
+		// Check whether has a current trip
+		{
+			Trip tr = VehSettings.getCurrentTrip(db, selV, false);
+			if (tr == null)
+				tr = selV.getTripInProgress();
+
+			updateAtTripStatus((tr != null));
+		}
+
+		// Check current driver
+		Person vDriv = VehSettings.findCurrentDriver(db, selV);
 		if (vDriv == null)
 			return;
 

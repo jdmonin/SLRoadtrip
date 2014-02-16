@@ -23,6 +23,7 @@ import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.SQLException;
+import java.util.Locale;
 import java.util.Vector;
 
 /**
@@ -32,19 +33,29 @@ import java.util.Vector;
  * Also has some utility methods related to db content, such as
  * {@link #parseFixedDecOr0(CharSequence, int)}.
  *<P>
- * <b>If you update the schema:</b> please update:
+ * <b>If you update the schema:</b> Please remember to:
+ *<UL>
+ *<LI> Test the upgrade script with cut and paste in sqlite3
+ *<LI> Add the upgrade script, such as {@code upg_v0909.sql}, to android {@code res/raw/}
+ *     and bookedit {@code src/org/shadowlands/roadtrip/db/script/}
+ *<LI> Save the old schema and the upgrade script to <tt> /doc/hist/ </tt>
+ *<LI> Rename the old schema to new schema filename, such as {@code schema_v0909.sql}
+ *</UL>
+ * Then, please update:
  *<UL>
  *<LI> {@link #DATABASE_VERSION}
  *<LI> {@link #DB_SCHEMA_CREATE_FILENAME}
- *<LI> {@link #upgradeToCurrent(RDBAdapter, int, boolean)},
- *<LI> Under roadtrip-an, the <tt>RDBOpenHelper</tt> override of {@link RDBAdapter#getSQLScript(int)}.
- *<LI> Save the old schema and the upgrade script to <tt> /doc/hist/ </tt>
+ *<LI> {@link #upgradeToCurrent(RDBAdapter, int, boolean)}
+ *<LI> Under roadtrip-an, the {@code RDBOpenHelper} class javadoc
+ *     and override of {@link RDBAdapter#getSQLScript(int)}
+ *     (update case 0, add case for new schema version)
  *</UL>
+ * At that point the update can be tested in android.
  */
 public abstract class RDBSchema
 {
 	/**
-	 * Database version; 1204 represents version 1.2.04; below 1000 represents pre-1.0 (0.8.09, etc).
+	 * Database version: 1204 would represent version 1.2.04; below 1000 represents pre-1.0 (0.8.09, etc).
 	 *<P> See the class javadoc for what to change in the code when you update the schema version.
 	 */
 	public static final int DATABASE_VERSION = 909;
@@ -91,7 +102,7 @@ public abstract class RDBSchema
 				else
 					sqline = sqline.trim();
 
-				String sqlower = sqline.toLowerCase();
+				String sqlower = sqline.toLowerCase(Locale.US);
 				if (sqlower.startsWith("pragma"))
 					continue;
 				//if (sqlower.startsWith("begin transaction"))

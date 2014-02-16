@@ -22,6 +22,7 @@ package org.shadowlands.roadtrip.db.android;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.SQLException;
+import java.util.Locale;
 import java.util.Vector;
 
 import org.shadowlands.roadtrip.R;
@@ -925,7 +926,7 @@ public class RDBOpenHelper
 		// First check for un-allowed items
 		{
 			// TODO how _should_ we do transactions?  Is this sqlexception only during onCreate?
-			final String sqlc = sql.toLowerCase().trim();
+			final String sqlc = sql.toLowerCase(Locale.US).trim();
 			if (sqlc.startsWith("begin transaction")
 				|| sqlc.startsWith("end transaction")
 				|| sqlc.startsWith("commit"))

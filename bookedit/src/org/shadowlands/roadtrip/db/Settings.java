@@ -535,6 +535,7 @@ public class Settings extends RDBRecord
 	{
 		if (db == null)
 			throw new IllegalStateException("null db");
+
 		if (currentV != null)
 		{
 			if (! currentV.dbConn.hasSameOwner(db))
@@ -551,6 +552,8 @@ public class Settings extends RDBRecord
 				int id = sCV.getIntValue();
 				if (id != 0)
 					currentV = new Vehicle(db, id);
+				else
+					currentV = null;
 			} catch (Throwable th) {
 				currentV = null;
 				if (clearIfBad)

@@ -1,6 +1,8 @@
 -- org.shadowlands.roadtrip
--- version 0.9.09 schema (2012-12-06) for SQLite 3.4 or higher
+-- version 0.9.40 schema (2014-02-15) for SQLite 3.4 or higher
+--
 -- The db schema version may be lower than the app version.
+--
 -- Remember: When you upgrade the schema version, be sure to
 -- make all code changes listed in RDBSchema's class javadoc, and
 -- add the upgrade script to RtrDBOpenHelper.getSQLScript().
@@ -11,11 +13,11 @@
 -- and doing a fresh install with the new schema, then restoring a
 -- previous backup that has an older schema (which will also upgrade).
 
-PRAGMA user_version = 0909;
+PRAGMA user_version = 0940;
 
 -- This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
 -- 
---  This file Copyright (C) 2010-2013 Jeremy D Monin (jdmonin@nand.net)
+--  This file Copyright (C) 2010-2014 Jeremy D Monin (jdmonin@nand.net)
 -- 
 --  This program is free software: you can redistribute it and/or modify
 --  it under the terms of the GNU General Public License as published by
@@ -52,7 +54,7 @@ PRAGMA auto_vacuum = INCREMENTAL;
 
 create table appinfo ( _id integer PRIMARY KEY AUTOINCREMENT not null, aifield varchar(32) not null unique, aivalue varchar(64) not null );
 	-- Important keys: (See also db.AppInfo javadocs, where some of these are static final string fields)
-	-- DB_CREATE_SCHEMAVERSION: 0909
+	-- DB_CREATE_SCHEMAVERSION: '0909' if created with schema v0909
 	-- DB_CREATE_DATETIME
 	-- DB_CREATE_APPNAME: 'org.shadowlands.roadtrip'
 	-- DB_BACKUP_PREVFILE: copied from previous DB_BACKUP_THISFILE when user asks to back up; doesn't include path, only filename
@@ -61,18 +63,33 @@ create table appinfo ( _id integer PRIMARY KEY AUTOINCREMENT not null, aifield v
 	--                       	 value is '' if using the default backup location DBBackup.getDBBackupPath(Context).
 	-- DB_BACKUP_THISFILE: written just before closing db for backup copy; if backup fails, clear it afterwards (copy it back from DB_BACKUP_PREVFILE)
 	-- DB_BACKUP_THISTIME: (unix format) time of DB_BACKUP_THISFILE
-	-- DB_CURRENT_SCHEMAVERSION (0909 unless it was upgraded)
+	-- DB_CURRENT_SCHEMAVERSION '0940' if upgraded to current schema version
 	-- DB_UPGRADED_DATETIME (may not be present)
 	-- DB_UPGRADED_APPNAME (may not be present)
 
-insert into appinfo (aifield, aivalue) values ('DB_CREATE_SCHEMAVERSION', '0909');
-insert into appinfo (aifield, aivalue) values ('DB_CURRENT_SCHEMAVERSION', '0909');
+insert into appinfo (aifield, aivalue) values ('DB_CREATE_SCHEMAVERSION', '0940');
+insert into appinfo (aifield, aivalue) values ('DB_CURRENT_SCHEMAVERSION', '0940');
 
 create table settings ( _id integer PRIMARY KEY AUTOINCREMENT not null, sname varchar(32) not null unique, svalue varchar(64), ivalue int );
+	-- General current settings. See also veh_settings.
+	-- Each setting uses svalue or ivalue. Empty strings (svalues) are stored as null, not as a string of length 0.
+	--
 	-- DISTANCE_DISPLAY: KM or MI
+	-- CURRENT_VEHICLE (int _id within vehicles) -- if this changes, update CURRENT_TRIP too; see vehicle.last_tripid comment
+	-- REQUIRE_TRIPCAT (bool) -- is trip category required for new trips?  Added in app version 0.9.12.
+	-- LOGVIEW_ODO_TRIP_DELTA (int) -- logview trip odometers normal (0), delta (1), or both (2)  Added in 0.9.12.
+	-- HIDE_FREQTRIP (bool) -- Hide the Frequent Trip buttons?  Added in app version 0.9.12.
+	-- HIDE_VIA (bool) -- Hide the Via entry field?  Added in app version 0.9.12.
+	-- SHOW_TRIP_PAX (bool) -- Show the optional Passenger Count field for trip?  Added in app version 0.9.13.
+
+create table veh_settings ( _id integer PRIMARY KEY AUTOINCREMENT not null, vid int not null, sname varchar(32) not null, svalue varchar(64), ivalue int );
+	-- Per-vehicle settings, added in v0940: More flexible than adding fields to the vehicle table.
+	-- Each setting uses svalue or ivalue. Empty strings (svalues) are stored as null, not as a string of length 0.
+	-- vid is the vehicle (int _id within vehicle); foreign keys aren't as easily enforced before android 4.1,
+	-- so for now they aren't declared. See doc/README.developer for details.
+	--
 	-- CURRENT_AREA (int _id within geoarea)
 	-- CURRENT_DRIVER (int _id within people)
-	-- CURRENT_VEHICLE (int _id within vehicles) -- if this changes, update CURRENT_TRIP too; see vehicle.last_tripid comment
 	-- CURRENT_TRIP (int _id, or 0) -- if the CURRENT_VEHICLE changes, update this setting too
 	-- CURRENT_TSTOP (int _id, or 0) -- 0 when not stopped, 0 when not on a trip
 	-- PREV_LOCATION (int _id, or 0) -- added in v0813; may be 0 between trips, especially if current vehicle has no prev trips.
@@ -81,11 +98,8 @@ create table settings ( _id integer PRIMARY KEY AUTOINCREMENT not null, sname va
 	-- CURRENT_FREQTRIP (int _id, or 0) -- added in v0900; 0 when not on a freqtrip; 0 when CURRENT_TRIP is 0
 	-- CURRENT_FREQTRIP_TSTOPLIST (empty string, or comma-delimited _id)
 	--      added in v0900; unused IDs for this freqtrip in freqtrip_tstop
-	-- REQUIRE_TRIPCAT (bool) -- is trip category required for new trips?  Added in app version 0.9.12.
-	-- LOGVIEW_ODO_TRIP_DELTA (int) -- logview trip odometers normal (0), delta (1), or both (2)  Added in 0.9.12.
-	-- HIDE_FREQTRIP (bool) -- Hide the Frequent Trip buttons?  Added in app version 0.9.12.
-	-- HIDE_VIA (bool) -- Hide the Via entry field?  Added in app version 0.9.12.
-	-- SHOW_TRIP_PAX (bool) -- Show the optional Passenger Count field for trip?  Added in app version 0.9.13.
+
+create unique index "veh_settings~vs" ON veh_settings(vid,sname);
 
 create table app_db_upgrade_hist ( db_vers_to int not null, db_vers_from not null, upg_time int not null );
     -- May be empty, if db never upgraded
@@ -269,6 +283,10 @@ insert into vehiclemake(mname) values ('Volvo');
 -- vehiclemake adds 2012-04-01 v0908: citroen = 52 renault = 53
 insert into vehiclemake(mname) values ('Citroen');
 insert into vehiclemake(mname) values ('Renault');
+-- vehiclemake adds 2014-02-15 v0940: geely = 54 saic = 55 tata = 56
+insert into vehiclemake(mname) values ('Geely');
+insert into vehiclemake(mname) values ('SAIC');
+insert into vehiclemake(mname) values ('Tata');
 commit;
 
 begin transaction;

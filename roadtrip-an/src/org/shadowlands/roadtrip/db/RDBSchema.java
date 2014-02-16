@@ -58,10 +58,10 @@ public abstract class RDBSchema
 	 * Database version: 1204 would represent version 1.2.04; below 1000 represents pre-1.0 (0.8.09, etc).
 	 *<P> See the class javadoc for what to change in the code when you update the schema version.
 	 */
-	public static final int DATABASE_VERSION = 909;
+	public static final int DATABASE_VERSION = 940;
 
 	/** Filename of schema create sql script for the current {@link #DATABASE_VERSION}. */
-	public static final String DB_SCHEMA_CREATE_FILENAME = "schema_v0909.sql";
+	public static final String DB_SCHEMA_CREATE_FILENAME = "schema_v0940.sql";
 
 	/**
 	 * Filename prefix of schema upgrade sql script.
@@ -174,8 +174,8 @@ public abstract class RDBSchema
 			*
 			*/
 
-		case 909:
-			// Nothing to do, current. Don't set anythingDone.
+		case 940:
+			// Nothing to do, current version already. Don't fall through, don't set anythingDone.
 			break;
 
 		case 901:  // 901 -> 905   2010-11-30
@@ -186,6 +186,8 @@ public abstract class RDBSchema
 			upgradeStep(db, 908);
 		case 908:  // 908 -> 909   2012-12-06
 			upgradeStep(db, 909);
+		case 909:  // 909 -> 940   2014-02-15
+			upgradeStep(db, 940);
 
 		// after all cases, but NOT default case or already-current case
 			anythingDone = true;

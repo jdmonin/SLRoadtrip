@@ -574,6 +574,11 @@ public class Vehicle extends RDBRecord
 	public void setOdometerCurrentAndLastTrip(int newValue10ths, Trip tr, final boolean commitNow)
 		throws NullPointerException
 	{
+		// if no changes, don't update db
+		if (commitNow && (! dirty) && (allTrips == null)
+		    && (odo_curr == newValue10ths) && (last_tripid == tr.getID()))
+			return;
+
 		odo_curr = newValue10ths;
 		last_tripid = tr.getID();
 		if ((allTrips != null) && (allTrips.size() > 0))

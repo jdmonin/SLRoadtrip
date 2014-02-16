@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010-2013 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2014 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -83,6 +83,7 @@ public class OdometerNumberPicker extends LinearLayout implements OnChangedListe
      * update this other odometer's value on user value changes, if not null.
      * @see #relatedCheckOnChanges
      * @see #controllingRelatedOdoUntilChangedDirectly
+     * @see #setRelatedUncheckedOdoOnChanges(OdometerNumberPicker, CheckBox)
      */
     private OdometerNumberPicker relatedOdoOnChanges;
 
@@ -274,12 +275,14 @@ public class OdometerNumberPicker extends LinearLayout implements OnChangedListe
 	    		relatedOdoOnChanges.mTenths.setRelatedOdoPicker(null);
 	    		relatedOdoOnChanges.controllingRelatedOdoUntilChangedDirectly = null;
 	    	}
+
 	    	relatedOdoOnChanges = related;
 	    	relatedOdoOnChanges.mTenths.setRelatedOdoPicker(this);
 
 	    	if (relatedCB == null)
 	    		relatedOdoOnChanges.controllingRelatedOdoUntilChangedDirectly = this;
     	}
+
     	relatedCheckOnChanges = relatedCB;
     }
 
@@ -317,9 +320,12 @@ public class OdometerNumberPicker extends LinearLayout implements OnChangedListe
 		if (picker == mWholeNum)
 		{
 			// avoid big delta jumps during odo text edits (temporarily fewer digits);
-			//   see getLowest javadoc for details.
+			//   see getLowest javadoc for details.  The checks against 0 are because
+			//   getLowest() starts high and will already be the new value (1 or more), not 0.
+
 			final int lowest = mWholeNum.getLowest();
-			if ((newVal >= lowest) && (oldVal >= lowest))
+			if (((newVal >= lowest) && ((oldVal == 0) || (oldVal >= lowest)))
+			    || ((newVal != 0) && (relatedOdoOnChanges.getCurrent10d() == 0)))
 				relatedOdoOnChanges.changeCurrentWhole(delta, false);
 		} else {
 			relatedOdoOnChanges.changeCurrentTenths(delta);

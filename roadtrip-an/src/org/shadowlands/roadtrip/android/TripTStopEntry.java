@@ -260,6 +260,8 @@ public class TripTStopEntry extends Activity
 	 * When at a stop, the previous stop's location ID; for trip's first stop, the trip start location;
 	 * from {@link VehSettings#getPreviousLocation(RDBAdapter, Vehicle, boolean)}.
 	 * Used for {@link #viaRouteObj}.
+	 * If {@code null} because of a missing {@link VehSettings}, ViaRoutes can't be created or autocompleted,
+	 * but causes no other problems: Make sure code checks != null before using prevLocObj.
 	 */
 	private Location prevLocObj;
 

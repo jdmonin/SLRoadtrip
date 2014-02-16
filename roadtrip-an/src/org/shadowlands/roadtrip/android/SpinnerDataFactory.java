@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010-2013 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2014 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -53,6 +53,7 @@ public class SpinnerDataFactory
 	 * @param sp  spinner to fill with the drivers
 	 * @param currentID  If not -1, the driver _id to select in the Spinner. 
 	 * @return true on success, false if could not populate from database
+	 * @see #selectDriver(Spinner, int)
 	 */
 	public static boolean setupDriversSpinner(RDBAdapter db, Context ctx, Spinner sp, final int currentID)
 	{
@@ -69,12 +70,36 @@ public class SpinnerDataFactory
     		for (int i = drivers.length - 1; i >= 0; --i)
     			if (currentID == drivers[i].getID())
     			{
-    				sp.setSelection(i, true);
+    				sp.setSelection(i, false);
     				break;
     			}
     	}
 
     	return true;
+	}
+
+	/**
+	 * Set the selected driver in a spinner previously set up with
+	 * {@link #setupDriversSpinner(RDBAdapter, Context, Spinner, int)}.
+	 * If the spinner is any other type, the spinner's current selection is not changed.
+	 * @param sp  A driver spinner.  This spinner's {@code getItemAtPosition(int)} should always
+	 *     return a {@link Person}. Any other item type is ignored.
+	 * @param currentID  Current driver ID to select; if nothing matches, the spinner's current selection is not changed.
+	 * @since 0.9.40
+	 */
+	public static void selectDriver(Spinner sp, final int currentID)
+	{
+		for (int i = sp.getCount() - 1; i >= 0; --i)
+		{
+			Object itm = sp.getItemAtPosition(i);
+			if ((itm instanceof Person) && (((Person) itm).getID() == currentID))
+			{
+				if (sp.getSelectedItemPosition() != i)
+					sp.setSelection(i, false);
+
+				return;
+			}
+		}
 	}
 
 	/**

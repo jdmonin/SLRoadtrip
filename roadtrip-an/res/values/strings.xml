@@ -18,6 +18,7 @@
  along with this program.  If not, see http://www.gnu.org/licenses/ .
 
  Remember that trailing spaces are trimmed away automatically.
+ Remember that string formatter placeholders such as %1s require parameters in getResources().getString().
 
  The "About..." text is found here; the version number is found in AndroidManifest.xml.
  -->
@@ -141,7 +142,7 @@
 <string name="via_routes_changed">Via Routes Changed</string>
 <string name="view">View</string>
 <string name="view_drivers">View Drivers</string>
-<string name="view_drivers_vehicles">View Drivers / Vehicles</string>
+<string name="view_drivers_chg_vehicle">View Drivers / Change Vehicle</string>
 <string name="view_vehicles">View Vehicles</string>
 <string name="vin">VIN</string>
 <string name="year">Year</string>
@@ -206,6 +207,8 @@
 <string name="settings_hide_trip_pax">Hide trip "Passengers" entry field</string>
 <string name="settings_hide_via">Hide "Via Route" entry field</string>
 <string name="settings_require_tripcat">Require trip category</string>
+<string name="change_driver_vehicle_ask_chg_driv">Change current driver to this vehicle\'s driver %1s?</string>
+<string name="change_driver_vehicle_ask_chg_driv_btn_keep">Keep %1s</string>
 <string name="change_vehicle_driver_ask_chg_title">Change current setting?</string>
 <string name="change_vehicle_driver_ask_chg_new_d">Change current driver to the new one?</string>
 <string name="change_vehicle_driver_ask_chg_new_v">Change current vehicle to the new one?</string>

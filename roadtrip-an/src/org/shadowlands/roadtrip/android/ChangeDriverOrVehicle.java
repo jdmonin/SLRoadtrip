@@ -34,6 +34,8 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemSelectedListener;
 import android.widget.Button;
 import android.widget.Spinner;
 
@@ -55,7 +57,8 @@ import android.widget.Spinner;
  *
  * @author jdmonin
  */
-public class ChangeDriverOrVehicle extends Activity
+public class ChangeDriverOrVehicle
+	extends Activity implements OnItemSelectedListener
 {
 	/**
 	 * Activity result to indicate changes were made; used in callback from {@link VehiclesEdit} to here.
@@ -93,7 +96,7 @@ public class ChangeDriverOrVehicle extends Activity
 
 		if (hasCurrentTrip)
 		{
-			setTitle(R.string.view_drivers_vehicles);
+			setTitle(R.string.view_drivers_chg_vehicle);
 			driver.setEnabled(false);
 			findViewById(R.id.change_cvd_driver_new).setEnabled(false);
 			((Button) findViewById(R.id.change_cvd_drivers_edit)).setText(R.string.view_drivers);
@@ -101,6 +104,7 @@ public class ChangeDriverOrVehicle extends Activity
 		}
 
 		SpinnerDataFactory.setupVehiclesSpinner(db, true, this, veh, currVID);
+		veh.setOnItemSelectedListener(this);  // onItemSelected: when v changes, ask about driver
 	}
 
 	/**
@@ -119,9 +123,10 @@ public class ChangeDriverOrVehicle extends Activity
     		VehSettings.changeCurrentVehicle(db, currV, ve);
     		currV = ve;
     		currVID = ve.getID();
+    		// don't update hasCurrentTrip, we're finishing the activity.
     	}
 
-    	if (! hasCurrentTrip)
+    	if (driver.isEnabled())
     	{
 	    	Person d = (Person) driver.getSelectedItem();
 	    	if (d != null)
@@ -129,7 +134,7 @@ public class ChangeDriverOrVehicle extends Activity
 	    		if (anyChange)
 	    		{
 	    			// currV changed: get new one's current driver ID
-	    			Person cvd = VehSettings.getCurrentDriver(db, ve, false);
+	    			Person cvd = VehSettings.getCurrentDriver(db, currV, false);
 	    			currDID = (cvd != null) ? cvd.getID() : 0;
 	    		}
 
@@ -336,6 +341,54 @@ public class ChangeDriverOrVehicle extends Activity
     	}
 	}
 
+	/**
+	 * When a vehicle is selected, ask whether to select its current driver
+	 * in the {@link #driver} spinner. (OnItemSelectedListener)
+	 * @since 0.9.40
+	 */
+	public void onItemSelected(AdapterView<?> parent, View itemv, final int pos, final long idOrPos)
+	{
+		if (parent != veh)
+			return;
+
+		Object obj = parent.getItemAtPosition(pos);
+		if ((obj == null) || ! (obj instanceof Vehicle))
+			return;  // just in case
+
+		Person vDriv = VehSettings.findCurrentDriver(db, (Vehicle) obj);
+		if (vDriv == null)
+			return;
+
+		final int dID = vDriv.getID();
+		Object selDriv = driver.getSelectedItem();
+		if ((selDriv != null) && (selDriv instanceof Person)
+		    && (((Person) selDriv).getID() == dID))
+		{
+			return;  // driver already selected
+		}
+
+		String msg = getResources().getString(R.string.change_driver_vehicle_ask_chg_driv, vDriv);
+			// "Change current driver to this vehicle\'s driver %1s?"
+		String btnTextKeep = getResources().getString(R.string.change_driver_vehicle_ask_chg_driv_btn_keep, selDriv);
+			// "Keep %1s"
+
+		AlertDialog.Builder alert = new AlertDialog.Builder(this);
+		alert.setMessage(msg);
+		alert.setPositiveButton(R.string.change, new DialogInterface.OnClickListener() {
+			public void onClick(DialogInterface dialog, int whichButton) {
+				SpinnerDataFactory.selectDriver(driver, dID);
+			}
+		  });
+	    	alert.setNegativeButton(btnTextKeep, null);
+	    	alert.show();
+	}
+
+	/**
+	 * Stub for OnItemSelectedListener.
+	 * @since 0.9.40
+	 */
+	public void onNothingSelected(AdapterView<?> arg0) { }
+
 	@Override
 	public void onPause()
 	{
@@ -351,4 +404,5 @@ public class ChangeDriverOrVehicle extends Activity
 		if (db != null)
 			db.close();
 	}
+
 }

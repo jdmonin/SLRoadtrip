@@ -467,7 +467,7 @@ public class Main extends Activity
 				txt.append(' ');
 				txt.append(currFT.toString());
 			}
-			changeDriverOrVeh.setText(R.string.view_drivers_vehicles);
+			changeDriverOrVeh.setText(R.string.view_drivers_chg_vehicle);
 			if (currTS != null)
 				stopContinue.setText(R.string.continu_from_stop);
 			else
@@ -595,7 +595,7 @@ public class Main extends Activity
 			return;
 
 		if (requestCode == R.id.main_btn_change_driver_vehicle)
-			updateDriverVehTripTextAndButtons();			
+			updateDriverVehTripTextAndButtons();
 	}
 
 	/** Start the {@link TripBegin} activity with these flags */

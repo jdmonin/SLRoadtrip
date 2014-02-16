@@ -722,6 +722,7 @@ public class VehSettings extends RDBRecord
 	 * @return the Person for {@code CURRENT_DRIVER}, or null
 	 * @throws IllegalArgumentException if {@code v} is null
 	 * @throws IllegalStateException if the db is null or isn't open
+	 * @see #findCurrentDriver(RDBAdapter, Vehicle)
 	 */
 	public static Person getCurrentDriver(RDBAdapter db, final Vehicle v, final boolean clearIfBad)
 		throws IllegalArgumentException, IllegalStateException
@@ -1477,6 +1478,56 @@ public class VehSettings extends RDBRecord
 		}
 
 		return hasCurrentTrip;
+	}
+
+	/**
+	 * Try to find this vehicle's current or most recent driver.
+	 * Use {@link #CURRENT_DRIVER} setting if possible; otherwise use "backwards-compatible"
+	 * data like {@link #changeCurrentVehicle(RDBAdapter, Vehicle, Vehicle)} does:
+	 * {@link #CURRENT_TRIP}, {@link Vehicle#getTripInProgress()}, {@link Vehicle#getLastTripID()}.
+	 *<P>
+	 * Intended for use by android {@code ChangeDriverOrVehicle}, which may want a vehicle's driver
+	 * even if that Vehicle hasn't been used since an upgrade from a pre-0.9.40 database, and so
+	 * doesn't have any {@link VehSettings}.
+	 * 
+	 * @param db  connection to use
+	 * @param v  Vehicle to find driver for
+	 * @return  Driver if found, or null
+	 * @throws IllegalArgumentException if {@code v} is null
+	 * @throws IllegalStateException if the db is null or isn't open
+	 * @since 0.9.40
+	 */
+	public static Person findCurrentDriver(final RDBAdapter db, final Vehicle v)
+	{
+		Person currD = getCurrentDriver(db, v, false);  // checks db and v, throws exceptions if needed
+		if (currD != null)
+			return currD;
+
+		Trip recentT = getCurrentTrip(db, v, false);
+
+		if (recentT == null)
+			recentT = v.getTripInProgress();
+
+		if (recentT == null)
+		{
+			final int lastTID = v.getLastTripID();
+			if (lastTID != 0)
+			{
+				try {
+					recentT = new Trip(db, lastTID);
+				} catch (Exception e) {}
+			}
+
+		}
+
+		if (recentT == null)
+			return null;
+
+		try {
+			return new Person(db, recentT.getDriverID());
+		} catch (Exception e) {
+			return null;
+		}
 	}
 
 }  // public class VehSettings

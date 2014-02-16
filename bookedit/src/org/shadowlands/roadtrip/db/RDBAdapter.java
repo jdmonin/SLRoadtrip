@@ -357,7 +357,13 @@ public interface RDBAdapter
 	 */
 	public abstract void close();
 
-	/** Do these connections share the same owner? */
+	/**
+	 * Do these db-connections share the same owner (same database)?
+	 * Used for data integrity in case multiple databases are open,
+	 * to make sure we don't compare keys or commit records into the wrong db.
+	 * @param other  Other DB connection to check against
+	 * @return  True if same owner (same database), false if not or if {@code other} is null
+	 */
 	public abstract boolean hasSameOwner(RDBAdapter other);
 		// TODO expl 'owner' in javadoc ; related to db obj lifecycle, etc
 		// On the Android side, hasSameOwner was added 20100724.1411 because android activities open/close their db often.

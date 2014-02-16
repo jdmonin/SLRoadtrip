@@ -1070,8 +1070,13 @@ public class RDBJDBCAdapter implements RDBAdapter
 		conn = null;
 	}
 
-	/** Do these connections share the same owner? */
-	public boolean hasSameOwner(RDBAdapter other)
+	/**
+	 * {@inheritDoc}
+	 *<P>
+	 * On the Android side, hasSameOwner was added 20100724.1411 because android activities open/close their db often.
+	 * On the JDBC side, the connection is kept open: Just compare the db filename (full path).
+	 */
+	public final boolean hasSameOwner(RDBAdapter other)
 	{
 		if (! (other instanceof RDBJDBCAdapter))
 			return false;
@@ -1081,9 +1086,6 @@ public class RDBJDBCAdapter implements RDBAdapter
 		else
 			return dbFilename.equals( ((RDBJDBCAdapter) other).dbFilename );
 	}
-		// TODO expl 'owner' in javadoc ; related to db obj lifecycle, etc
-		// On the Android side, hasSameOwner was added 20100724.1411 because android activities open/close their db often.
-		// On the JDBC side, the conn is kept open.
 
 	/**
 	 * Retrieve a SQL create script or upgrade script.

@@ -618,26 +618,6 @@ public class VehSettings extends RDBRecord
 	}
 
 	/**
-	 * For use with {@code setCurrent*}, validate that db == rec.dbConn.
-	 * If all is OK, do nothing, otherwise throw the exception.
-	 * @param db  conn to use. If {@code rec} is new, can be null, otherwise must not be null
-	 * @param rec  record to validate dbConn; must not be null
-	 * @throws IllegalArgumentException if <tt>rec.{@link RDBRecord#dbConn dbConn}</tt>
-	 *         isn't {@code db}; if rec's dbconn is null, this will be in the exception detail text.
-	 */
-	private static void matchDBOrThrow(RDBAdapter db, RDBRecord rec)
-		throws IllegalArgumentException
-	{
-		if (db == rec.dbConn)
-			return;
-
-		if (rec.dbConn == null)
-			throw new IllegalArgumentException("null dbConn in RDBRecord");
-		else
-			throw new IllegalArgumentException("Wrong dbConn in RDBRecord");
-	}
-
-	/**
 	 * Get the setting for {@link #CURRENT_AREA} if set.
 	 *<P>
 	 * The record is cached after the first call, so if it changes,

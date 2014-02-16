@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010,2012 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010,2012,2014 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -171,6 +171,35 @@ public abstract class RDBRecord
 	protected void deleteCleanup()
 	{
 		
+	}
+
+	/**
+	 * For data integrity, validate that db.{@link RDBAdapter#hasSameOwner(RDBAdapter) hasSameOwner}(rec.dbConn).
+	 * If all is OK, do nothing, otherwise throw the exception.  See {@code hasSameOwner} javadoc for details.
+	 *<P>
+	 * Before v0.9.40, this method was in {@link Settings}.
+	 *
+	 * @param db  conn to use. Can be null only if {@code rec} is new
+	 * @param rec  record to validate dbConn; must not be null
+	 * @throws IllegalArgumentException if {@code db} is null when {@code rec} isn't new,
+	 *         or if <tt>rec.{@link RDBRecord#dbConn dbConn}</tt> has a different owner than {@code db};
+	 *         if {@code rec}'s dbconn is null, this will be in the exception detail text.
+	 * @since 0.9.40
+	 */
+	protected static void matchDBOrThrow(RDBAdapter db, RDBRecord rec)
+		throws IllegalArgumentException
+	{
+		if (rec.dbConn == null)
+		{
+			if (db == null)
+				return;
+
+			throw new IllegalArgumentException("null dbConn in RDBRecord");
+		}
+		if (db == null)
+			throw new IllegalArgumentException("null RDBAdapter");
+		if (! db.hasSameOwner(rec.dbConn))
+			throw new IllegalArgumentException("Wrong dbConn in RDBRecord");
 	}
 
 }  // public abstract class RDBRecord

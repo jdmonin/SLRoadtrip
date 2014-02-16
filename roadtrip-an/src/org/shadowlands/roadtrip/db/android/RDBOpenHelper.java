@@ -75,7 +75,15 @@ public class RDBOpenHelper
 	private final String dbPath;
 	/** Calling {@link #getWritableDatabase()} or {@link #getReadableDatabase()} will set this field. */
 	private SQLiteDatabase db;
-	private Object owner;
+
+	/**
+	 * Helper 'owner' info, to distinguish the app's default database from another non-default-path db.
+	 * See constructors and {@link #hasSameOwner(RDBAdapter)}.
+	 *<P>
+	 * Before v0.9.40, owner was the {@code Activity}: In 0.9.40 it's ApplicationInfo.packageName
+	 * plus (for a non-default db) the full path to the db file.
+	 */
+	private final String owner;
 
 	/**
 	 * Open the default database for this context.
@@ -87,7 +95,7 @@ public class RDBOpenHelper
 	 * @param context context to use
 	 */
 	public RDBOpenHelper(Context context) {
-		owner = context;
+		owner = context.getApplicationInfo().packageName;
 		opener = new OpenHelper(context);  // used by getWritableDatabase(), getReadableDatabase()
 		dbPath = null;
 		db = null;
@@ -103,7 +111,7 @@ public class RDBOpenHelper
 	 * @param fullPath  Full path and filename to the database
 	 */
 	public RDBOpenHelper(Context context, final String fullPath) {
-		owner = context;
+		owner = context.getApplicationInfo().packageName + '/' + fullPath;
 		opener = null;
 		dbPath = fullPath;  // used by getWritableDatabase(), getReadableDatabase()
 		db = null;		
@@ -787,11 +795,11 @@ public class RDBOpenHelper
 		db.delete(tabname, where, whereArr);
 	}
 
-	/** Do these db-connections share the same owner? */
-	public boolean hasSameOwner(RDBAdapter other)
+	/** {@inheritDoc} */
+	public final boolean hasSameOwner(RDBAdapter other)
 	{
 		return (other != null) && (other instanceof RDBOpenHelper)
-			&& (owner == ((RDBOpenHelper) other).owner);
+			&& owner.equals(((RDBOpenHelper) other).owner);
 	}
 
 	/**

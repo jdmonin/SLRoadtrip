@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  Copyright (C) 2010-2011 Jeremy D Monin <jdmonin@nand.net>
+ *  Copyright (C) 2010-2011,2014 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -144,5 +144,35 @@ public abstract class Misc
 			Log.i(tag, msgv.elementAt(i));
 		if (lastIsWarning)
 			Log.w(tag, msgv.lastElement());
+	}
+
+	/**
+	 * For debugging, print the current stack trace for LogCat with {@link Log#d(String, String)}.
+	 * The method calling this one will be the first line in the trace; {@code printCurrentStackTrace} isn't included.
+	 * This method might be slow; it calls {@link Thread#currentThread()}.{@link Thread#getStackTrace() getStackTrace()}.
+	 * @param tag  Tag to use in log
+	 * @param msg  Optional message to print above the stack trace
+	 * @since 0.9.40
+	 */
+	public static void printCurrentStackTrace(final String tag, final String msg)
+	{
+		if (msg != null)
+			Log.d(tag, msg);
+
+		final StackTraceElement[] st = Thread.currentThread().getStackTrace();
+		boolean foundThisMethod = false;  // not necessarily index 0
+		for (int i = 0; i < st.length; ++i)
+		{
+			final String mname = st[i].getMethodName();
+			if (! foundThisMethod)
+			{
+				if (mname.equals("printCurrentStackTrace"))
+					foundThisMethod = true;
+				continue;
+			}
+
+			Log.d(tag, "  at " + st[i].getClassName() + '.' + mname
+				+ '(' + st[i].getFileName() + ':' + st[i].getLineNumber() + ')');
+		}
 	}
 }

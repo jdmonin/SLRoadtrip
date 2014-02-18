@@ -572,7 +572,28 @@ public class VehSettings extends RDBRecord
 	 *     and cached per-vehicle settings
 	 */
 
-	/** cached record for {@link #getCurrentArea(RDBAdapter, Vehicle, boolean)} */
+	/**
+	 * Cached record for {@link #getCurrentArea(RDBAdapter, Vehicle, boolean)}, or {@code null}.
+	 * This setting is for the vehicle with ID {@link #currentA_vid}.
+	 *<P>
+	 * <H5>Caching and the Activity lifecycle:</H5>
+	 *
+	 * Each cached record from a database includes a {@link RDBAdapter} db reference ({@link RDBRecord#dbConn}
+	 * field). On Android this program's Activities call {@link RDBAdapter#close()} to close the db reference
+	 * when the activity is paused or destroyed.  The next Activity will create and open a new {@code RDBAdapter}.
+	 *<P>
+	 * Cached static settings records might still have a {@code dbConn} reference to a previous activity's
+	 * RDBAdapter that's been closed already.  If the record then uses this old reference for updates, or other
+	 * queries such as {@link Trip#readAllTStops()}, it would reopen the old RDBAdapter and nothing would close
+	 * it. At some point later, LogCat will show a sqlite.DatabaseObjectNotClosedException or a
+	 * "SQLiteDatabase created and never closed" IllegalStateException.
+	 *<P>
+	 * So, all of VehSettings' {@code getCurrentX} methods check whether the cached record is owned by the
+	 * same database as the caller, but uses a different RDBAdapter reference to access that db.  If so, the
+	 * method places the caller's db reference into the cached record's {@link RDBRecord#dbConn dbConn} before
+	 * returning it.  After that, any further queries or updates through the cached record would use the
+	 * caller's open RDBAdapter.
+	 */
 	private static GeoArea currentA = null;
 	/** vehicle ID for cached {@link #currentA} per-vehicle setting */
 	private static int currentA_vid;
@@ -639,10 +660,12 @@ public class VehSettings extends RDBRecord
 			throw new IllegalArgumentException("null vehicle");
 
 		final int vid = v.getID();
-		if ((currentA != null) && (currentA_vid == vid))
+		if ((currentA != null) && (currentA_vid == vid) && db.hasSameOwner(currentA.dbConn))
 		{
-			if (! currentA.dbConn.hasSameOwner(db))
+			if (db != currentA.dbConn)
+				// cached from earlier activity in Android: see currentA javadoc for more info
 				currentA.dbConn = db;
+
 			return currentA;
 		}
 
@@ -666,10 +689,10 @@ public class VehSettings extends RDBRecord
 					sCA.delete();
 			}
 		} catch (Throwable th) {
-			return null;
+			return null;  // no setting found for this vehicle; don't use or change currentA
 		}
 
-		return currentA;  // will be null if sCA not found
+		return currentA;
 	}
 
 	/**
@@ -718,10 +741,12 @@ public class VehSettings extends RDBRecord
 			throw new IllegalArgumentException("null vehicle");
 
 		final int vid = v.getID();
-		if ((currentD != null) && (currentD_vid == vid))
+		if ((currentD != null) && (currentD_vid == vid) && db.hasSameOwner(currentD.dbConn))
 		{
-			if (! currentD.dbConn.hasSameOwner(db))
+			if (db != currentD.dbConn)
+				// cached from earlier activity in Android: see currentA javadoc for more info
 				currentD.dbConn = db;
+
 			return currentD;
 		}
 
@@ -745,10 +770,10 @@ public class VehSettings extends RDBRecord
 					sCD.delete();
 			}
 		} catch (Throwable th) {
-			return null;
+			return null;  // no setting found for this vehicle; don't use or change currentD
 		}
 
-		return currentD;  // will be null if sCD not found
+		return currentD;
 	}
 
 	/**
@@ -796,10 +821,12 @@ public class VehSettings extends RDBRecord
 			throw new IllegalArgumentException("null vehicle");
 
 		final int vid = v.getID();
-		if ((currentT != null) && (currentT_vid == vid))
+		if ((currentT != null) && (currentT_vid == vid) && db.hasSameOwner(currentT.dbConn))
 		{
-			if (! currentT.dbConn.hasSameOwner(db))
+			if (db != currentT.dbConn)
+				// cached from earlier activity in Android: see currentA javadoc for more info
 				currentT.dbConn = db;
+
 			return currentT;
 		}
 
@@ -823,10 +850,10 @@ public class VehSettings extends RDBRecord
 					sCT.delete();
 			}
 		} catch (Throwable th) {
-			return null;
+			return null;  // no setting found for this vehicle; don't use or change currentT
 		}
 
-		return currentT;  // will be null if sCD not found
+		return currentT;
 	}
 
 	/**
@@ -876,10 +903,12 @@ public class VehSettings extends RDBRecord
 			throw new IllegalArgumentException("null vehicle");
 
 		final int vid = v.getID();
-		if ((currentFT != null) && (currentFT_vid == vid))
+		if ((currentFT != null) && (currentFT_vid == vid) && db.hasSameOwner(currentFT.dbConn))
 		{
-			if (! currentFT.dbConn.hasSameOwner(db))
+			if (db != currentFT.dbConn)
+				// cached from earlier activity in Android: see currentA javadoc for more info
 				currentFT.dbConn = db;
+
 			return currentFT;
 		}
 
@@ -903,7 +932,7 @@ public class VehSettings extends RDBRecord
 					sCT.delete();
 			}
 		} catch (Throwable th) {
-			return null;
+			return null;  // no setting found for this vehicle; don't use or change currentFT
 		}
 
 		return currentFT;
@@ -1000,7 +1029,7 @@ public class VehSettings extends RDBRecord
 	 * both the current freqtrip and the tstop list from the database,
 	 * or call {@link #reduceCurrentFreqTripTStops(RDBAdapter, Vehicle, FreqTripTStop)}.
 	 *
-	 * @param db  connection to use; must be open, must not be null, or null will be returned
+	 * @param db  connection to use; must be open, must not be null
 	 * @param v  Vehicle to get stop list for
 	 * @param clearIfBad  If true, clear the setting to null if no record by its ID is found
 	 * @return the FreqTripTStops for {@code CURRENT_FREQTRIP_TSTOPLIST}, or null;
@@ -1014,19 +1043,26 @@ public class VehSettings extends RDBRecord
 		(RDBAdapter db, final Vehicle v, final boolean clearIfBad)
 		throws IllegalArgumentException, IllegalStateException
 	{
+		if (db == null)
+			throw new IllegalStateException("null db");
 		if (v == null)
 			throw new IllegalArgumentException("null vehicle");
 
 		final int vid = v.getID();
-		if ((currentFTS != null) && (currentFTS_vid == vid))
+		if ((currentFTS != null) && (currentFTS_vid == vid) && (currentFTS.size() > 0))
 		{
-			if ((currentFTS.size() > 0) && ! currentFTS.get(0).dbConn.hasSameOwner(db))
+			RDBAdapter firstConn = currentFTS.get(0).dbConn;
+			if (db.hasSameOwner(firstConn))
 			{
-				for (int i = currentFTS.size() - 1; i >= 0; --i)
-					currentFTS.get(i).dbConn = db;
-			}
+				if (db != firstConn)
+				{
+					// cached from earlier activity in Android: see currentA javadoc for more info
+					for (int i = currentFTS.size() - 1; i >= 0; --i)
+						currentFTS.get(i).dbConn = db;
+				}
 
-			return currentFTS;
+				return currentFTS;
+			}
 		}
 
 		try
@@ -1046,6 +1082,7 @@ public class VehSettings extends RDBRecord
 				ArrayList<FreqTripTStop> allStops = new ArrayList<FreqTripTStop>(ids.length);
 				for (int i = 0; i < ids.length; ++i)
 					allStops.add(new FreqTripTStop(db, Integer.parseInt(ids[i])));
+
 				currentFTS = allStops;
 				currentFTS_vid = vid;
 			} catch (Throwable th) {
@@ -1054,7 +1091,7 @@ public class VehSettings extends RDBRecord
 					sFSL.delete();
 			}
 		} catch (Throwable th) {
-			return null;
+			return null;  // no setting found for this vehicle; don't use or change currentFTS
 		}
 
 		return currentFTS;
@@ -1119,10 +1156,12 @@ public class VehSettings extends RDBRecord
 			throw new IllegalArgumentException("null vehicle");
 
 		final int vid = v.getID();
-		if ((currentTS != null) && (currentTS_vid == vid))
+		if ((currentTS != null) && (currentTS_vid == vid) && db.hasSameOwner(currentTS.dbConn))
 		{
-			if (! currentTS.dbConn.hasSameOwner(db))
+			if (db != currentTS.dbConn)
+				// cached from earlier activity in Android: see currentA javadoc for more info
 				currentTS.dbConn = db;
+
 			return currentTS;
 		}
 
@@ -1146,10 +1185,10 @@ public class VehSettings extends RDBRecord
 					sCTS.delete();
 			}
 		} catch (Throwable th) {
-			return null;
+			return null;  // no setting found for this vehicle; don't use or change currentTS
 		}
 
-		return currentTS;  // will be null if sCT not found
+		return currentTS;
 	}
 
 	/**
@@ -1197,10 +1236,12 @@ public class VehSettings extends RDBRecord
 			throw new IllegalArgumentException("null vehicle");
 
 		final int vid = v.getID();
-		if ((prevL != null) && (prevL_vid == vid))
+		if ((prevL != null) && (prevL_vid == vid) && db.hasSameOwner(prevL.dbConn))
 		{
-			if (! prevL.dbConn.hasSameOwner(db))
+			if (db != prevL.dbConn)
+				// cached from earlier activity in Android: see currentA javadoc for more info
 				prevL.dbConn = db;
+
 			return prevL;
 		}
 
@@ -1224,10 +1265,10 @@ public class VehSettings extends RDBRecord
 					sPL.delete();
 			}
 		} catch (Throwable th) {
-			return null;
+			return null;  // no setting found for this vehicle; don't use or change prevL
 		}
 
-		return prevL;  // will be null if sPL not found
+		return prevL;
 	}
 
 	/**

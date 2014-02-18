@@ -516,10 +516,13 @@ public class Settings extends RDBRecord
 		if (db == null)
 			throw new IllegalStateException("null db");
 
-		if (currentV != null)
+		if ((currentV != null) && db.hasSameOwner(currentV.dbConn))
 		{
-			if (! currentV.dbConn.hasSameOwner(db))
+			if (db != currentV.dbConn)
+				// currentV cached from earlier activity in Android:
+				// see VehSettings.currentA javadoc for more info
 				currentV.dbConn = db;
+
 			return currentV;
 		}
 
@@ -540,9 +543,10 @@ public class Settings extends RDBRecord
 					sCV.delete();
 			}
 		} catch (Throwable th) {
-			return null;
+			return null;  // no setting found for this vehicle; don't use or change currentV
 		}
-		return currentV;  // will be null if sCV not found
+
+		return currentV;
 	}
 
 	/**

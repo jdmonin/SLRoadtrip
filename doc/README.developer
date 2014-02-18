@@ -14,6 +14,7 @@ Contents:
 - Before testing, reminder how to back up / export data
 - Coding style
 - Version history
+- Future plans / feature roadmap
 - Other source included (libraries), and software licenses
 
 (those sections here)
@@ -43,7 +44,7 @@ android res/raw/*.sql. The schema scripts have comments about table fields'
 meaning and expected contents and related tables.
 
 SQL Foreign Keys: To simplify Android support, for now Roadtrip manually
-enforces foreign keys. Although Android 2.2 contained sqlite 3.6.19 with
+enforces foreign keys. Although Android 2.2 contained sqlite 3.6.22 with
 support for FKs, they are off by default, and can't be turned on during a
 transaction such as onUpgrade. Until Android 4.1 added onConfig, it was
 difficult to configure the open database before the call to onUpgrade, so
@@ -102,10 +103,22 @@ r315	0.9.20b	2013-01-15	Beta. Allow save without continuing from stop; at startu
 				Vehicle +plate/tag#; trip +#passengers; 1-step validation in LogbookShow; beta csv log export
 r347	0.9.20	2013-10-22	Change vehicle & some related settings during trip; add landscape layouts;
 				allow Backup/Restore with any folder; TripBegin ask before using historical mode
--	0.9.40	-		Being developed now; some current settings are now per-vehicle
+-	0.9.40	-		Being developed now; most current settings are now per-vehicle
 
 Also see doc/hist/*.sql for previous schema updates.
 
+
+
+Future plans / feature roadmap:
+
+After v1.0:
+- More logbook search options
+- Logbook viewer: Ability to correct typos (comments, location names, via routes, etc)
+- General schema for new event types at stop (vehicle service, restaurant, movie, etc)
+- "pass-through" TStop (rest area, toll, etc): Not a destination, just something on the way
+	At next tstop or end of trip, also write ViaRoutes from before this stop to the following one
+- Frequent Trips GUI to reduce per-trip data entry (to grocery store, to work, etc)
+- More reporting options (by trip category, by driver, monthly/yearly summary, etc)
 
 
 

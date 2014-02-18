@@ -37,9 +37,6 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
-import android.database.sqlite.SQLiteException;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.text.format.DateFormat;
@@ -476,13 +473,13 @@ public class BackupsRestore extends Activity
 			int rc = v.verify(RDBVerifier.LEVEL_MDATA);
 			if (rc == 0)
 			{
-				publishProgress(new Integer(30));
+				publishProgress(Integer.valueOf(30));
 				rc = v.verify(RDBVerifier.LEVEL_TDATA);
 			}
 			final boolean ok = (0 == rc);  // TODO progress bar
 			v.release();
 			bkupDB.close();
-			publishProgress(new Integer(100));
+			publishProgress(Integer.valueOf(100));
 			Log.d(TAG, "verify: rc = " + rc);
 
 			validatedOK = ok;

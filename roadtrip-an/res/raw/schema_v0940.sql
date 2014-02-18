@@ -64,8 +64,6 @@ create table appinfo ( _id integer PRIMARY KEY AUTOINCREMENT not null, aifield v
 	-- DB_BACKUP_THISFILE: written just before closing db for backup copy; if backup fails, clear it afterwards (copy it back from DB_BACKUP_PREVFILE)
 	-- DB_BACKUP_THISTIME: (unix format) time of DB_BACKUP_THISFILE
 	-- DB_CURRENT_SCHEMAVERSION '0940' if upgraded to current schema version
-	-- DB_UPGRADED_DATETIME (may not be present)
-	-- DB_UPGRADED_APPNAME (may not be present)
 
 insert into appinfo (aifield, aivalue) values ('DB_CREATE_SCHEMAVERSION', '0940');
 insert into appinfo (aifield, aivalue) values ('DB_CURRENT_SCHEMAVERSION', '0940');
@@ -84,6 +82,7 @@ create table settings ( _id integer PRIMARY KEY AUTOINCREMENT not null, sname va
 
 create table veh_settings ( _id integer PRIMARY KEY AUTOINCREMENT not null, vid int not null, sname varchar(32) not null, svalue varchar(64), ivalue int );
 	-- Per-vehicle settings, added in v0940: More flexible than adding fields to the vehicle table.
+	-- Before v0.9.40, these were in the settings table, updated when the current vehicle changed.
 	-- Each setting uses svalue or ivalue. Empty strings (svalues) are stored as null, not as a string of length 0.
 	-- vid is the vehicle (int _id within vehicle); foreign keys aren't as easily enforced before android 4.1,
 	-- so for now they aren't declared. See doc/README.developer for details.

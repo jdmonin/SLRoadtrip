@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010-2013 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2014 Jeremy D Monin <jdmonin@nand.net>
  *
  *  Portions of this file Copyright (C) 2010 Miklos Keresztes (miklos.keresztes@gmail.com)
  *  via the AndiCar project (GPLv3) - see
@@ -167,21 +167,26 @@ public class FileUtils
     public static boolean copyFile(File source, File dest)
     	throws IOException
     {
+        FileInputStream fis = null;
+        FileOutputStream fos = null;
         FileChannel in = null;
         FileChannel out = null;
         try {
-            in = new FileInputStream(source).getChannel();
-            out = new FileOutputStream(dest).getChannel();
+            fis = new FileInputStream(source);
+            fos = new FileOutputStream(dest);
+            in = fis.getChannel();
+            out = fos.getChannel();
 
             long size = in.size();
             MappedByteBuffer buf = in.map(FileChannel.MapMode.READ_ONLY, 0, size);
 
             out.write(buf);
-            
-            if (in != null)
-                in.close();
-            if (out != null)
-                out.close();
+
+            in.close();
+            out.close();
+            fis.close();
+            fos.close();
+
             return true;
         } 
         catch(IOException e){
@@ -193,6 +198,15 @@ public class FileUtils
 	            if (out != null)
 	                out.close();
         	} catch (IOException e2) {}
+        	try {
+        	    if (fis != null)
+        	        fis.close();
+        	} catch (IOException e2) {}
+        	try {
+        	    if (fos != null)
+        	        fos.close();
+        	} catch (IOException e2) {}
+
         	throw e;
         }
     }

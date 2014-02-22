@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2012 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2012,2014 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -38,7 +38,7 @@ import au.com.bytecode.opencsv.CSVWriter;
 public class DBExport {
 
 	/**
-	 * db export dir within {@link FileUtils#APP_SD_DIR} directory.
+	 * db export dir within {@link AnFileUtils#APP_SD_DIR} directory.
 	 * Used by {@link #getDBExportPath(Context)}.
 	 *<P>
 	 * Value format is "/export".
@@ -48,7 +48,7 @@ public class DBExport {
 	/**
 	 * Given our app context, determine the export location, if sdcard and is mounted and writable.
 	 * Does not guarantee this directory exists on the SD Card.
-	 * Uses {@link FileUtils#APP_SD_DIR} and {@link #EXP_SUBDIR}.
+	 * Uses {@link AnFileUtils#APP_SD_DIR} and {@link #EXP_SUBDIR}.
 	 *
 	 * @param c app context, from {@link Context#getApplicationContext()}
 	 * @return path to an export dir, such as <tt>"/sdcard/SLRoadtrip/export"</tt>,
@@ -56,7 +56,7 @@ public class DBExport {
 	 */
 	public static String getDBExportPath(Context appc)
 	{
-		return FileUtils.getAppSDPath(appc, EXP_SUBDIR);
+		return AnFileUtils.getAppSDPath(appc, EXP_SUBDIR);
 	}
 
 	/** Export file suffix ".csv" */

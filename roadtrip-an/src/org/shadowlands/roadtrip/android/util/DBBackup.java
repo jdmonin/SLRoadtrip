@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010-2013 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2014 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -40,7 +40,7 @@ import android.text.format.DateFormat;
 public class DBBackup {
 
 	/**
-	 * db backup dir within {@link FileUtils#APP_SD_DIR} directory.
+	 * db backup dir within {@link AnFileUtils#APP_SD_DIR} directory.
 	 * Used by {@link #getDBBackupPath(Context)}.
 	 *<P>
 	 * Value format is "/backup".
@@ -50,7 +50,7 @@ public class DBBackup {
 	/**
 	 * Given our app context, determine the backup location, if sdcard and is mounted and writable.
 	 * Does not guarantee this directory exists on the SD Card.
-	 * Uses {@link FileUtils#APP_SD_DIR} and {@link #DB_SUBDIR}.
+	 * Uses {@link AnFileUtils#APP_SD_DIR} and {@link #DB_SUBDIR}.
 	 *
 	 * @param c app context, from {@link Context#getApplicationContext()}
 	 * @return path to a backup dir, such as <tt>"/sdcard/SLRoadtrip/db"</tt>,
@@ -60,7 +60,7 @@ public class DBBackup {
 	 */
 	public static String getDBBackupPath(Context appc)
 	{
-		return FileUtils.getAppSDPath(appc, DB_SUBDIR);
+		return AnFileUtils.getAppSDPath(appc, DB_SUBDIR);
 	}
 
 	/** prefix "db-" */;
@@ -227,7 +227,7 @@ public class DBBackup {
 		try
 		{
 			final String toFilePathStr = toFilePath.toString(); 
-			FileUtils.copyFile(fromFilePath, toFilePathStr, false);
+			AnFileUtils.copyFile(fromFilePath, toFilePathStr, false);
 
 			// notify MediaScanner we created a new file that the user may want to copy off the device
 			Intent iBkupFile = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
@@ -308,7 +308,7 @@ public class DBBackup {
 		/**
 		 * Do the actual restore.
 		 */
-		FileUtils.copyFile(fromBackupFilePath, defaultDbFilePath, true);
+		AnFileUtils.copyFile(fromBackupFilePath, defaultDbFilePath, true);
 		
 		// May throw IOException
 	}
@@ -330,7 +330,7 @@ public class DBBackup {
 			if (dirname == null)
 				return null;
 		}
-		return FileUtils.getFileNames(dirname, null, (useDBBackupPath) ? -1 : 1);
+		return AnFileUtils.getFileNames(dirname, null, (useDBBackupPath) ? -1 : 1);
     }
 
 }

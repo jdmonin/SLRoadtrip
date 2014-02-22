@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010-2011,2013 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2011,2013-2014 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -26,7 +26,7 @@ import java.util.Calendar;
 
 import org.shadowlands.roadtrip.R;
 import org.shadowlands.roadtrip.android.util.DBBackup;
-import org.shadowlands.roadtrip.android.util.FileUtils;
+import org.shadowlands.roadtrip.android.util.AnFileUtils;
 import org.shadowlands.roadtrip.android.util.Misc;
 import org.shadowlands.roadtrip.db.AppInfo;
 import org.shadowlands.roadtrip.db.RDBAdapter;
@@ -66,7 +66,7 @@ import android.widget.Toast;
 public class BackupsMain extends Activity
 	implements OnItemClickListener
 {
-	// db is not kept open, so we can backup/restore, so no RDBAdapter field.
+	// no RDBAdapter field: db is not kept open, so that we can backup/restore it.
 
 	/** Free-space additional margin (64 kB) for {@link #checkFreeSpaceForBackup()}. */
 	final private static int FREE_SPACE_MARGIN = 64 * 1024;
@@ -200,7 +200,7 @@ public class BackupsMain extends Activity
 
 	/**
 	 * Read most recent current trip, update {@link #lastTripDataChange}.
-	 * @return true if the DB contains data (current vehicle setting exists); added in v0.9.20.
+	 * @return true if the DB contains data (current vehicle setting exists); return added in v0.9.20.
 	 */
 	private boolean readDBLastTripTime(RDBAdapter db) {
 		try
@@ -282,7 +282,7 @@ public class BackupsMain extends Activity
 		db.close();
 
 		final long dbSize = new File(dbFilePath).length() + FREE_SPACE_MARGIN;
-		final long sdFree = FileUtils.getFreeSpace(dbBackupsPath);
+		final long sdFree = AnFileUtils.getFreeSpace(dbBackupsPath);
 
 		if (dbSize <= sdFree)
 			return true;
@@ -545,6 +545,7 @@ public class BackupsMain extends Activity
 		Cursor c = null;
 
 		try {
+			// Use generic open, not RDBOpenHelper, to avoid auto-upgrading the backup file itself
 			bkupDB = SQLiteDatabase.openDatabase
 				(bkPath, null, SQLiteDatabase.OPEN_READONLY);
 

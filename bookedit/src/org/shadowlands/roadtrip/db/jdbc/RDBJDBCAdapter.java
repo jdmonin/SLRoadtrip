@@ -33,25 +33,38 @@ import org.shadowlands.roadtrip.db.RDBVerifier;
 
 /**
  * SQLite connection via JDBC.
+ *<P>
+ * Not safe for use by multiple threads; protect with synchronization if needed.
  * @author jdmonin
- *
  */
 public class RDBJDBCAdapter implements RDBAdapter
 {
+	/** Was JDBC driver class initialization done already? Checked in constructor. */
 	private static boolean didDriverInit = false;
 
 	/** sql-scripts location within JAR; includes trailing slash. */
 	private static final String SQL_SCRIPTS_DIR = "/org/shadowlands/roadtrip/db/script/";
 
+	/** Connection to the db, opened in constructor; null if {@link #close()} was called. */
 	private Connection conn;
+
+	/**
+	 * Reusable statement, for {@link Statement#executeUpdate(String) stat.executeQuery(String)}
+	 * or {@link Statement#executeUpdate(String) stat.executeUpdate(String)}.  Some methods
+	 * create and use other {@link PreparedStatement}s instead.
+	 */
 	private Statement stat;
+
+	/** DB file path and filename passed into constructor */
 	private final String dbFilename;
 
 	/**
-	 * 
-	 * @param sqliteDBFilename  Filename to driver
+	 * Open a connection to this SQLite database file.
+	 * If this is the first time called, loads and initializes the {@code org.sqlite.JDBC} driver class.
+	 *
+	 * @param sqliteDBFilename  Filename or full path of database
 	 * @throws ClassNotFoundException if org.sqlite.JDBC not found
-	 * @throws SQLException if cannot open
+	 * @throws SQLException if cannot open the database
 	 */
 	public RDBJDBCAdapter (final String sqliteDBFilename)
 	    throws ClassNotFoundException, SQLException
@@ -63,7 +76,7 @@ public class RDBJDBCAdapter implements RDBAdapter
 			didDriverInit = true;
 		}
 		dbFilename = sqliteDBFilename;
-	    conn = DriverManager.getConnection("jdbc:sqlite:" + sqliteDBFilename);
+		conn = DriverManager.getConnection("jdbc:sqlite:" + sqliteDBFilename);
 		stat = conn.createStatement();
 	}
 
@@ -882,7 +895,7 @@ public class RDBJDBCAdapter implements RDBAdapter
 		    	if (v != null)
 		    		prep.setString(i+1, v);
 		    	else
-		    		prep.setNull(i+1, java.sql.Types.VARCHAR);  // TODO is this ok if it's int, with SQLite?
+		    		prep.setNull(i+1, java.sql.Types.VARCHAR);  // OK even if int, SQLite is lax with column types 
 		    }
 		    prep.setInt(fn.length+1, id);
 		    prep.executeUpdate();
@@ -930,7 +943,7 @@ public class RDBJDBCAdapter implements RDBAdapter
 		    	if (v != null)
 		    		prep.setString(i+1, v);
 		    	else
-		    		prep.setNull(i+1, java.sql.Types.VARCHAR);  // TODO is this ok if it's int, with SQLite?
+		    		prep.setNull(i+1, java.sql.Types.VARCHAR);  // OK even if int, SQLite is lax with column types
 		    }
 		    prep.setString(fn.length+1, kv);
 		    prep.executeUpdate();

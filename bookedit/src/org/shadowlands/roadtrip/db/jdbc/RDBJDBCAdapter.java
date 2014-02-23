@@ -1068,9 +1068,7 @@ public class RDBJDBCAdapter implements RDBAdapter
 		return dbFilename;
 	}
 
-	/**
-	 * Close the connection.
-	 */
+	// implicit {@inheritDoc}
 	public void close()
 	{
 		if (conn == null)

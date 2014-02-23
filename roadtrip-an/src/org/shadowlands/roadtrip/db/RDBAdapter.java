@@ -353,7 +353,9 @@ public interface RDBAdapter
 	public String getFilenameFullPath() throws IllegalStateException;
 
 	/**
-	 * Close the connection.
+	 * Close the connection.  Remember to close any open recordsets or cursors beforehand.
+	 * If already closed, does nothing.  If an exception occurs while closing, the exception is
+	 * caught within {@code close()} and not thrown to the caller.
 	 */
 	public abstract void close();
 

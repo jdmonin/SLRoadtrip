@@ -832,18 +832,24 @@ public class RDBOpenHelper
 	}
 
 	/**
-	 * Close the connection.
-	 * If our SQLiteHelper is open, {@link SQLiteOpenHelper#close() close()} it too.
-	 * If our underlying db is open, {@link SQLiteDatabase#close() close()} it too.
+	 * {@inheritDoc}
+	 *<P>
+	 * If our SQLiteHelper is open, {@link SQLiteOpenHelper#close() close()}s it too.
+	 * If our underlying db is open, {@link SQLiteDatabase#close() close()}s it too.
 	 */
 	public void close()
 	{
 		if (opener != null)
 			opener.close();
+
 		if (db != null)
 		{
 			if (db.isOpen())
-				db.close();  // TODO API: any exceptions?
+			{
+				try { db.close(); }
+				catch (Exception e) {}
+			}
+
 			db = null;
 		}
 	}
@@ -853,7 +859,11 @@ public class RDBOpenHelper
 		if (db != null)
 		{
 			if (db.isOpen())
-				db.close();  // TODO API: any exceptions?
+			{
+				try { db.close(); }
+				catch (Exception e) {}
+			}
+
 			db = null;
 		}
 	}

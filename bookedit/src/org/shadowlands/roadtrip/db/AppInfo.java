@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010,2013 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010,2013-2014 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -36,6 +36,13 @@ public class AppInfo extends RDBRecord
 	private static final String VALFIELD =  "aivalue";
 	private static final String[] FIELDS = { KEYFIELD, VALFIELD };  // _id req'd but not used
 	private static final String[] VALFIELD_AND_ID = { VALFIELD, "_id" };
+
+	/**
+	 * DB schema version ({@link RDBSchema#DATABASE_VERSION}) stored as a string.
+	 * Versions below 1.0.00 have a leading zero (0.9.40 is stored as '0940').
+	 * @since 0.9.40
+	 */
+	public static final String KEY_DB_CURRENT_SCHEMAVERSION = "DB_CURRENT_SCHEMAVERSION";
 
 	/** filename of previous backup, if any. Filename only, not full path.
 	 *  Time of backup is stored in {@link #KEY_DB_BACKUP_PREVTIME}.

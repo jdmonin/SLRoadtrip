@@ -20,11 +20,15 @@
 package org.shadowlands.roadtrip.db;
 
 import java.io.DataInputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.SQLException;
 import java.util.Locale;
 import java.util.Vector;
+import java.util.zip.DataFormatException;
+
+import org.shadowlands.roadtrip.util.FileUtils;
 
 /**
  * Schema-related utility methods, common to SQLite and Android implementations.
@@ -56,7 +60,11 @@ public abstract class RDBSchema
 {
 	/**
 	 * Database version: 1204 would represent version 1.2.04; below 1000 represents pre-1.0 (0.8.09, etc).
-	 *<P> See the class javadoc for what to change in the code when you update the schema version.
+	 * Stored in the database {@link AppInfo} table where {@code aifield =}
+	 * '{@link AppInfo#KEY_DB_CURRENT_SCHEMAVERSION DB_CURRENT_SCHEMAVERSION}'
+	 * and also stored on android as the database schema version.
+	 *<P>
+	 * See the class javadoc for what to change in the code when you update the schema version.
 	 */
 	public static final int DATABASE_VERSION = 940;
 
@@ -132,14 +140,59 @@ public abstract class RDBSchema
 	}
 
 	/**
+	 * Make a copy of this database file, then upgrade the copy to the current schema version
+	 * by calling {@link #upgradeToCurrent(RDBAdapter, int, boolean)}.
+	 * @param sourceDB  DB file to copy for upgrade: should not have any open {@link RDBAdapter}.
+	 * @param destTempFile  File path to copy to, for example from
+	 *    {@link File#createTempFile(String, String, File) File.createTempFile("tmpdb-", ".upg", tempFileDir)}:
+	 *    This file should not exist yet, and will be created in this method.
+	 * @param sourceSchemaVers  Source schema version, from {@link AppInfo} table
+	 *    where {@code aifield =} '{@link AppInfo#KEY_DB_CURRENT_SCHEMAVERSION DB_CURRENT_SCHEMAVERSION}'
+	 * @param caller Calling class, which must supply us with an {@link RDBAdapter} to the copied upgraded file
+	 * @throws ClassNotFoundException if implementation needs a JDBC driver and driver isn't found
+	 * @throws DataFormatException if copy validation at {@link RDBVerifier#LEVEL_PHYS} level fails.
+	 *           This exception is "borrowed" from java.util.zip to distinguish from other exceptions
+	 *           thrown here, although the method has nothing to do with zip files.
+	 * @throws IllegalStateException  if DB file's schema version is earlier than 901, too old to upgrade.
+	 *      Schema v0.9.01 was released on 2010-11-16.
+	 * @throws IOException  if a problem occurs copying the file, or locating or opening an upgrade script.
+	 *           Consider calling this again with a different temporary location.
+	 * @throws SQLException  if a syntax or database error occurs during the upgrade
+	 * @since 0.9.40
+	 */
+	public static void upgradeCopyToCurrent
+		(final File sourceDB, final File destTempFile, final int sourceSchemaVers, UpgradeCopyCaller caller)
+		throws ClassNotFoundException, DataFormatException, IllegalStateException, IOException, SQLException
+	{
+		FileUtils.copyFile(sourceDB, destTempFile);  // May throw IOException (disk space, etc)
+
+		// Open db copy & validate(LEVEL_PHYS)
+		final String destTempAbsPath = destTempFile.getAbsolutePath();
+		RDBAdapter bkupDB = caller.openRDB(destTempAbsPath);  // may throw various exceptions
+		RDBVerifier v = new RDBVerifier(bkupDB);
+		boolean ok = (0 == v.verify(RDBVerifier.LEVEL_PHYS));
+		v.release();
+		if (! ok)
+			throw new DataFormatException("Cannot validate(LEVEL_PHYS) sqlite db: " + destTempAbsPath);
+
+		// upgradeToCurrent
+		try {
+			upgradeToCurrent(bkupDB, sourceSchemaVers, false);  // may throw various exceptions
+		} finally {
+			bkupDB.close();
+		}
+	}
+
+	/**
 	 * Perform all needed SQL scripts to upgrade the db schema from an
 	 * old version to the current version.
 	 * @param  db  an open database
 	 * @param  oldVersion  The old schema version
 	 * @param  skipSetVersion  Are we running on android under SQLiteOpenHelper?  If so, skip the setVersion pragma.
-	 * @see RDBAdapter#getSQLScript(int) 
-	 * @throws IllegalStateException  if <tt>oldVersion</tt> is earlier than 901, thus too old to upgrade.
-	 *      v901 is from 2010-11-16.
+	 * @see RDBAdapter#getSQLScript(int)
+	 * @see #upgradeCopyToCurrent(File, File)
+	 * @throws IllegalStateException  if <tt>oldVersion</tt> is earlier than 901, too old to upgrade.
+	 *      Schema v0.9.01 was released on 2010-11-16.
 	 * @throws IOException  if a problem occurs locating or opening an upgrade script
 	 * @throws SQLException  if a syntax or database error occurs
 	 */
@@ -628,6 +681,28 @@ public abstract class RDBSchema
 			rv.messages = msgv;
 
 		return rv;
+	}
+
+	/**
+	 * Callback interface for callers of
+	 * {@link RDBSchema#upgradeCopyToCurrent(File, File, int, UpgradeCopyCaller) upgradeCopyToCurrent},
+	 * for that method to open the copied db file with the platform-specific {@code RDBAdapter} implementation.
+	 *<P>
+	 * On Android, be sure that the RDBAdapter won't automatically call {@code upgradeToCurrent}
+	 * when this db is opened.
+	 * @author jdmonin
+	 * @since 0.9.40
+	 */
+	public interface UpgradeCopyCaller
+	{
+		/**
+		 * Given the full path to a database file, open it with an implementation of RDBAdapter.
+		 * @param fullPath  Full path of db file to open
+		 * @throws ClassNotFoundException if implementation needs a JDBC driver and driver isn't found
+		 * @throws SQLException if cannot open the file
+		 */
+		public RDBAdapter openRDB(final String fullPath)
+			throws ClassNotFoundException, SQLException;
 	}
 
 }

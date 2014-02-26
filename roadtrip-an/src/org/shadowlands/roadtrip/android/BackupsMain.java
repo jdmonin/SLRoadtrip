@@ -40,8 +40,6 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
 import android.os.Bundle;
 import android.os.Environment;
@@ -525,7 +523,6 @@ public class BackupsMain extends Activity
 		if (basePath.equals("/"))
 			basePath = "";  // the next line will re-add '/'
 		final String bkPath = basePath + File.separator + ((TextView) view).getText();
-		boolean looksOK = false;
 
 		File bkFile = new File(bkPath);
 		if (bkFile.isDirectory())
@@ -540,40 +537,19 @@ public class BackupsMain extends Activity
 			return;  // <--- Early return: Tapped a subdirectory ---
 		}
 
-		SQLiteDatabase bkupDB = null;
 		int bkupSchemaVersion = 0;
-		Cursor c = null;
-
 		try {
 			// Use generic open, not RDBOpenHelper, to avoid auto-upgrading the backup file itself
-			bkupDB = SQLiteDatabase.openDatabase
-				(bkPath, null, SQLiteDatabase.OPEN_READONLY);
-
-			// TODO encapsulate this into AppInfo if possible:
-			final String[] cols = { "aivalue" };
-			c = bkupDB.query("appinfo", cols, "aifield = 'DB_CURRENT_SCHEMAVERSION'",
-					null, null, null, "aifield");
-			if (c.moveToFirst())
-			{
-				try {
-					bkupSchemaVersion = Integer.parseInt(c.getString(0));
-					Toast.makeText(this, "Schema version: " + bkupSchemaVersion, Toast.LENGTH_SHORT).show();
-					looksOK = true;
-				} catch (NumberFormatException e) {
-					Toast.makeText(this, "Cannot read appinfo(DB_CURRENT_SCHEMAVERSION)", Toast.LENGTH_SHORT).show();
-				}
-			} else {
-				Toast.makeText(this, "Opened but cannot read appinfo(DB_CURRENT_SCHEMAVERSION)", Toast.LENGTH_SHORT).show();
-			}
+			bkupSchemaVersion = RDBOpenHelper.readSchemaVersion(bkPath);
+		} catch (NumberFormatException e) {
+			Toast.makeText(this, "Cannot read appinfo(DB_CURRENT_SCHEMAVERSION)", Toast.LENGTH_SHORT).show();
+		} catch (ArrayIndexOutOfBoundsException e) {
+			Toast.makeText(this, "Opened but cannot read appinfo(DB_CURRENT_SCHEMAVERSION)", Toast.LENGTH_SHORT).show();
 		} catch (SQLiteException e) {
 			Toast.makeText(this, "Cannot open: " + e, Toast.LENGTH_SHORT).show();
 		}
-		if (c != null)
-			c.close();
-		if (bkupDB != null)
-			bkupDB.close();
 
-		if (looksOK)
+		if (bkupSchemaVersion != 0)
 		{
 			Intent i = new Intent(this, BackupsRestore.class);
 			i.putExtra(BackupsRestore.KEY_FULL_PATH, bkPath);

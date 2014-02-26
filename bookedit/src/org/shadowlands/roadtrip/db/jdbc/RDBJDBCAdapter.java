@@ -59,6 +59,58 @@ public class RDBJDBCAdapter implements RDBAdapter
 	private final String dbFilename;
 
 	/**
+	 * Read the schema version from a closed db file (not the current db).
+	 *
+	 * @see #getSchemaVersion()
+	 * @param dbFilename  Filename or full path to a roadtrip db file
+	 * @return Schema version, from table and field
+	 *     {@link org.shadowlands.roadtrip.db.AppInfo#KEY_DB_CURRENT_SCHEMAVERSION AppInfo.KEY_DB_CURRENT_SCHEMAVERSION}
+	 * @throws ArrayIndexOutOfBoundsException if entry not found in {@code AppInfo} table
+	 * @throws ClassNotFoundException if org.sqlite.JDBC not found
+	 * @throws NumberFormatException if field contents are malformed
+	 * @throws SQLException if cannot open or read the db file
+	 * @since 0.9.40
+	 */
+	public static int readSchemaVersion(final String dbFilename)
+		throws ArrayIndexOutOfBoundsException, ClassNotFoundException, NumberFormatException, SQLException
+	{
+		int schemaVersion = 0;
+		Connection db = null;
+		ResultSet rs = null;
+
+		try {
+			if (! didDriverInit)
+			{
+				// do class initialization:
+				Class.forName("org.sqlite.JDBC");
+				didDriverInit = true;
+			}
+
+			db = DriverManager.getConnection("jdbc:sqlite:" + dbFilename);
+			Statement st = db.createStatement();
+			rs = st.executeQuery("SELECT aivalue FROM appinfo WHERE aifield = 'DB_CURRENT_SCHEMAVERSION';");
+			if (rs.next())
+				schemaVersion = Integer.parseInt(rs.getString(1));  // throws NumberFormatException, SQLException
+			else
+				throw new ArrayIndexOutOfBoundsException
+					("Opened but cannot read appinfo(DB_CURRENT_SCHEMAVERSION)");
+		} finally {
+			if (rs != null)
+			{
+				try { rs.close(); }
+				catch (Exception e) {}
+			}
+			if (db != null)
+			{
+				try { db.close(); }
+				catch (Exception e) {}
+			}
+		}
+		
+		return schemaVersion;
+	}
+
+	/**
 	 * Open a connection to this SQLite database file.
 	 * If this is the first time called, loads and initializes the {@code org.sqlite.JDBC} driver class.
 	 *
@@ -1209,6 +1261,7 @@ public class RDBJDBCAdapter implements RDBAdapter
 	 * Get the schema version (sqlite USER_VERSION).
 	 * @return the version, or 0 if a SQL error occurs.
 	 * @throws IllegalStateException if db has been closed
+	 * @see #readSchemaVersion(String)
 	 */
 	public int getSchemaVersion()
 	    throws IllegalStateException 

@@ -28,6 +28,10 @@ import java.util.Vector;
  * SQLite connection, abstracts the db API differences.
  * There are subclasses for use by the standalone quick-editor,
  * and the on-device version (RDBJDBCAdapter, RDBOpenHelper).
+ *<P>
+ * Static Method: Although interfaces can't contain static methods,
+ * implementations of this interface will contain a {@code readSchemaVersion}
+ * method to read the schema version from any db file.
  *
  * @author jdmonin
  */

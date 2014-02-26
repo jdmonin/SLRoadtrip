@@ -37,6 +37,7 @@ import android.database.Cursor;
 import android.database.DatabaseUtils;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteDoneException;
+import android.database.sqlite.SQLiteException;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteStatement;
 import android.util.Log;
@@ -51,6 +52,11 @@ import android.util.Log;
  * If you update the schema, please update {@link #getSQLScript(int)}
  * and {@link RDBSchema#DATABASE_VERSION}; see the {@code DATABASE_VERSION} javadoc
  * for other things you will need to update.
+ *<P>
+ * The {@link SQLiteOpenHelper} is used with the app's default database that's used for
+ * everything but backup/restore; see {@link #RDBOpenHelper(Context)}.  For backup/restore
+ * with any other sqlite db file, {@link #onUpgrade(SQLiteDatabase, int, int)} won't be
+ * automatically called; see {@link #RDBOpenHelper(Context, String)}.
  */
 public class RDBOpenHelper
 	implements RDBAdapter
@@ -86,6 +92,53 @@ public class RDBOpenHelper
 	private final String owner;
 
 	/**
+	 * Read the schema version from a closed db file (not the current db).
+	 * Uses generic SQLite open, not the RDBOpenHelper class, to avoid auto-upgrading the file being read.
+	 *
+	 * @param dbFilename  Filename or full path to a roadtrip db file
+	 * @return Schema version, from table and field
+	 *     {@link org.shadowlands.roadtrip.db.AppInfo#KEY_DB_CURRENT_SCHEMAVERSION AppInfo.KEY_DB_CURRENT_SCHEMAVERSION}
+	 * @throws ArrayIndexOutOfBoundsException if entry not found in {@code AppInfo} table
+	 * @throws NumberFormatException if field contents are malformed
+	 * @throws SQLiteException if cannot open or read the db file
+	 * @since 0.9.40
+	 */
+	public static int readSchemaVersion(final String dbFilename)
+		throws ArrayIndexOutOfBoundsException, NumberFormatException, SQLiteException
+	{
+		int schemaVersion = 0;
+		SQLiteDatabase db = null;
+		Cursor c = null;
+
+		try {
+			db = SQLiteDatabase.openDatabase
+				(dbFilename, null, SQLiteDatabase.OPEN_READONLY);
+
+			final String[] cols = { "aivalue" };
+			c = db.query("appinfo", cols, "aifield = 'DB_CURRENT_SCHEMAVERSION'",
+					null, null, null, null);
+			if (c.moveToFirst())
+				schemaVersion = Integer.parseInt(c.getString(0));  // throws NumberFormatException
+			else
+				throw new ArrayIndexOutOfBoundsException
+					("Opened but cannot read appinfo(DB_CURRENT_SCHEMAVERSION)");
+		} finally {
+			if (c != null)
+			{
+				try { c.close(); }
+				catch (Exception e) {}
+			}
+			if (db != null)
+			{
+				try { db.close(); }
+				catch (Exception e) {}
+			}
+		}
+		
+		return schemaVersion;
+	}
+
+	/**
 	 * Open the default database for this context.
 	 *<P>
 	 * Creates a SQLiteOpenHelper, so:
@@ -105,7 +158,8 @@ public class RDBOpenHelper
 	 * Open a non-default database, which must exist and be the current version already.
 	 * The SQLiteOpenHelper can't be used for non-default paths;
 	 * {@link #onCreate(SQLiteDatabase)} or {@link #onUpgrade(SQLiteDatabase, int, int)}
-	 * won't be called.
+	 * won't be called.  Use {@link RDBSchema#upgradeToCurrent(RDBAdapter, int, boolean)}
+	 * if needed.
 	 *
 	 * @param context context to use
 	 * @param fullPath  Full path and filename to the database

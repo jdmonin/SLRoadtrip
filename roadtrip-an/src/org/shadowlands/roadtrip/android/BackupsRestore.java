@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2011,2013 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2011,2013-2014 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -21,14 +21,17 @@ package org.shadowlands.roadtrip.android;
 
 import java.io.File;
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.Calendar;
+import java.util.zip.DataFormatException;
 
 import org.shadowlands.roadtrip.R;
 import org.shadowlands.roadtrip.android.util.DBBackup;
-import org.shadowlands.roadtrip.android.util.FileUtils;
 import org.shadowlands.roadtrip.android.util.Misc;
+import org.shadowlands.roadtrip.db.AppInfo;
 import org.shadowlands.roadtrip.db.RDBAdapter;
 import org.shadowlands.roadtrip.db.RDBSchema;
+import org.shadowlands.roadtrip.db.RDBSchema.UpgradeCopyCaller;
 import org.shadowlands.roadtrip.db.RDBVerifier;
 import org.shadowlands.roadtrip.db.Settings;
 import org.shadowlands.roadtrip.db.android.RDBOpenHelper;
@@ -63,7 +66,8 @@ import android.widget.Toast;
  *
  * @author jdmonin
  */
-public class BackupsRestore extends Activity
+public class BackupsRestore
+	extends Activity implements UpgradeCopyCaller
 {
 	// db is not kept open, so we can restore, so there is no RDBAdapter field in this activity.
 
@@ -187,65 +191,47 @@ public class BackupsRestore extends Activity
 	 * and update {@link #bkupFullPath} and {@link #bkupIsTempCopy}.
 	 *<P>
 	 * Called from {@link #onCreate(Bundle)}.
+	 *<P>
+	 * Similar logic, with different APIs, is in {@code org.shadowlands.roadtrip.bookedit.LogbookEditPane.setupFromMain()}.
 	 */
 	private void copyAndUpgradeTempFile()
 	{
 		boolean ok = false;
 
 		final File cacheDir = this.getCacheDir();
-    	// TODO Check disk space vs size before copy, sdcard fallback?
+		// TODO Check disk space vs size before copy, sdcard fallback if full?
 
 		final File srcBkupFile = new File(bkupFullPath);
 		File destTempFile = null;
-    	try
-    	{
-        	destTempFile = File.createTempFile("tmpdb-", ".upg", cacheDir);
-    		FileUtils.copyFile(srcBkupFile, destTempFile);
-    		bkupIsTempCopy = true;
-    		bkupFullPath = destTempFile.getAbsolutePath();
+		try
+		{
+			bkupIsTempCopy = true;
+			destTempFile = File.createTempFile("tmpdb-", ".upg", cacheDir);
+			final String destTempFullPath = destTempFile.getAbsolutePath();
+			Log.i(TAG, "Calling upgradeCopyToCurrent(\""+ destTempFullPath + "\", " + bkupSchemaVers + ")");
 
-    		// Open db & validate(LEVEL_PHYS)
-			RDBAdapter bkupDB = new RDBOpenHelper(this, bkupFullPath);
-			RDBVerifier v = new RDBVerifier(bkupDB);
-			ok = (0 == v.verify(RDBVerifier.LEVEL_PHYS));
-			if (! ok)
-			{
-				// Maybe it's disk space?
-				// TODO fallback to sdcard and retry.
-				Toast.makeText(this, R.string.backups_restore_validation_error, Toast.LENGTH_SHORT).show();
-			}
-			v.release();
+			RDBSchema.upgradeCopyToCurrent(srcBkupFile, destTempFile, bkupSchemaVers, this);
 
-    		// upgradeToCurrent
-			if (ok)
-			{
-				try {
-					Log.i(TAG, "Calling upgradeToCurrent(\"" + bkupFullPath + "\", " + bkupSchemaVers + ", true)");
-					if (RDBOpenHelper.dbSQLRsrcs == null)
-				    	RDBOpenHelper.dbSQLRsrcs = getApplicationContext().getResources();
-					RDBSchema.upgradeToCurrent(bkupDB, bkupSchemaVers, false);
-					Log.i(TAG, "Completed upgradeToCurrent");
-				} catch (IllegalStateException e) {
-					Toast.makeText(this, R.string.backups_restore_too_old_beta, Toast.LENGTH_LONG).show();
-					bkupSchemaVers = -1;
-					ok = false;
-					Log.e(TAG, "Failed upgradeToCurrent", e);
-				} catch (Throwable e) {
-					// TODO Toast or something
-					ok = false;
-					Log.e(TAG, "Failed upgradeToCurrent", e);
-				}
-			}
-
-			bkupDB.close();
-    		// next, if ok, continue with validating it in onResume
-
-    	} catch (IOException e)
-    	{
-    		// TODO ? Fallback to sdcard and retry?
-			Log.e(TAG, "copyAndUpgradeTempFile ioexception: Failed during copy & validation", e);
+			Log.i(TAG, "Completed upgradeCopyToCurrent");
+			ok = true;
+			bkupFullPath = destTempFullPath;
+		} catch (DataFormatException e) {
 			Toast.makeText(this, R.string.backups_restore_validation_error, Toast.LENGTH_SHORT).show();
-    	}
+		} catch (IllegalStateException e) {
+			Toast.makeText(this, R.string.backups_restore_too_old_beta, Toast.LENGTH_LONG).show();
+			bkupSchemaVers = -1;
+			Log.e(TAG, "Failed upgradeToCurrent", e);
+	    	} catch (IOException e) {
+	    		// TODO ? Fallback to sdcard and retry?
+	    		Log.e(TAG, "copyAndUpgradeTempFile ioexception: Failed during copy & validation", e);
+	    		Toast.makeText(this, R.string.backups_restore_validation_error, Toast.LENGTH_SHORT).show();
+		} catch (Throwable e) {
+			// SQLException
+			// TODO Toast or something
+			Log.e(TAG, "Failed upgradeToCurrent", e);
+		}
+
+		// next, if ok, continue with validating it in onResume
 
     	if (! ok)
     	{
@@ -257,7 +243,7 @@ public class BackupsRestore extends Activity
     			{
     				if (destTempFile.exists())
     					destTempFile.delete();
-    			} catch (Throwable e) {}
+    			} catch (Exception e) {}  // at least copy is in cache dir: eventual cleanup
     		}
 
     		TextView vfield = (TextView) findViewById(R.id.backups_restore_validating);
@@ -453,6 +439,16 @@ public class BackupsRestore extends Activity
 	    return super.onKeyUp(keyCode, event);
 	}
 
+	/** Callback for copyAndUpgradeTempFile; implement {@link RDBSchema.UpgradeCopyCaller}. */
+	public RDBAdapter openRDB(final String fullPath)
+		throws ClassNotFoundException, SQLException
+	{
+		if (RDBOpenHelper.dbSQLRsrcs == null)
+		    	RDBOpenHelper.dbSQLRsrcs = getApplicationContext().getResources();
+
+		return new RDBOpenHelper(this, fullPath);
+	}
+
 	/** Run db validation on a separate thread. */
 	private class ValidateDBTask extends AsyncTask<String, Integer, Boolean>
 	{
@@ -460,8 +456,8 @@ public class BackupsRestore extends Activity
 		{
 			RDBAdapter bkupDB = new RDBOpenHelper(BackupsRestore.this, bkupFullPath[0]);
 
-			// TODO encapsulate this into AppInfo:
-			final int bktime = bkupDB.getRowIntField("appinfo", "aifield", "DB_BACKUP_THISTIME", "aivalue", -1);
+			final int bktime = bkupDB.getRowIntField
+				("appinfo", "aifield", AppInfo.KEY_DB_BACKUP_THISTIME, "aivalue", -1);
 			if (bktime != -1)
 			{
 				bkupAtTime = bktime;
@@ -505,4 +501,5 @@ public class BackupsRestore extends Activity
 			btnRestore.setEnabled(validatedOK);
 	    }
 	}
+
 }

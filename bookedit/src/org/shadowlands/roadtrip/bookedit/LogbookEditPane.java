@@ -30,6 +30,9 @@ import java.awt.event.ItemListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
+import java.io.File;
+import java.sql.SQLException;
+import java.util.zip.DataFormatException;
 
 import javax.swing.DefaultCellEditor;
 import javax.swing.JButton;
@@ -75,6 +78,19 @@ public class LogbookEditPane extends JPanel implements ActionListener, WindowLis
 	 * or 0 to load all (This may run out of memory).
 	 */
 	public static final int WEEK_INCREMENT = 2;
+
+	/**
+	 * Callback for use by {@link #upgradeDBCopy(File, int, JFrame)} if needed.
+	 * @since 0.9.40
+	 */
+	private static final RDBSchema.UpgradeCopyCaller rdbUpgSingleton = new RDBSchema.UpgradeCopyCaller()
+	{
+		public RDBAdapter openRDB(final String fullPath)
+			throws ClassNotFoundException, SQLException
+		{
+			return new RDBJDBCAdapter(fullPath);
+		}
+	};
 
 	private RDBAdapter conn;
 	private final boolean isReadOnly;
@@ -278,7 +294,6 @@ public class LogbookEditPane extends JPanel implements ActionListener, WindowLis
 	/** Verify the DB consistency with {@link RDBVerifier#verify(int)}, and show a passed/failed message box. */
 	public void actionVerifyDB()
 	{
-
 		RDBVerifier verif = new RDBVerifier(conn);
 		final int vResult = verif.verify(RDBVerifier.LEVEL_TDATA);
 		verif.release();
@@ -327,7 +342,7 @@ public class LogbookEditPane extends JPanel implements ActionListener, WindowLis
 
 	/**
 	 * This is for development and debugging only, please use <tt>Main.main</tt> instead.
-	 * Looks for and opens <tt>test.sqlite</tt> in the current directory.
+	 * Looks for and opens {@code test.sqlite}, or filename on command line, in the current directory.
 	 */
 	public static void main(String[] args)
 	{
@@ -342,13 +357,29 @@ public class LogbookEditPane extends JPanel implements ActionListener, WindowLis
 		f.pack();
 		f.setVisible(true);
 
-		setupFromMain(fname, fname, f, false);  // TODO extract fnshort
+		setupFromMain(fname, fname, f, false, false);  // TODO extract fnshort
 	}
 
-	// TODO javadoc: meant to be called from Main, will prompt user, etc
-	public static void setupFromMain(final String fname, final String fnshort, final JFrame parentf, boolean isReadOnly)
+	/**
+	 * Check the structure and schema of the db file selected by the {@link Main} panel's "Open" or "View Backup"
+	 * button, ask to upgrade if needed, then create and show a new {@link LogbookEditPane} with that db.
+	 *<P>
+	 * Does it need an upgrade to current version?  If so, upgrade a temp copy if backup,
+	 * or ask first if not a backup.  Similar logic, with different APIs, is in
+	 * {@code org.shadowlands.roadtrip.android.BackupsMain.onItemClick(...)}
+	 * and {@code android.BackupsRestore.copyAndUpgradeTempFile()}.
+	 *
+	 * @param fname  Full path of DB file to open; should not currently be open
+	 * @param fnshort  Filename (not full path) to display in window
+	 * @param parentf  Parent frame, for error dialogs if needed
+	 * @param isBackup  Is this a backup file (treat as read-only, and copy before upgrade if needed)?
+	 * @param isReadOnly  Is this db read-only (no edits allowed)?
+	 */
+	public static void setupFromMain
+		(String fname, final String fnshort, final JFrame parentf, boolean isBackup, boolean isReadOnly)
 	{
 		RDBAdapter conn = null;
+
 		try
 		{
 			conn = new RDBJDBCAdapter(fname);
@@ -397,7 +428,7 @@ public class LogbookEditPane extends JPanel implements ActionListener, WindowLis
 
 		try
 		{
-			AppInfo aivers = new AppInfo(conn, "DB_CURRENT_SCHEMAVERSION");
+			AppInfo aivers = new AppInfo(conn, AppInfo.KEY_DB_CURRENT_SCHEMAVERSION);
 			System.out.println("AppInfo: Current schemaversion: " + aivers.getValue());
 		} catch (RDBKeyNotFoundException e)
 		{
@@ -415,37 +446,61 @@ public class LogbookEditPane extends JPanel implements ActionListener, WindowLis
 		System.out.println("user_version is " + user_version + " (current: " + RDBSchema.DATABASE_VERSION + ")");
 		if (user_version < RDBSchema.DATABASE_VERSION)
 		{
-			final String[] upg_exit = { "Upgrade", "Exit" };
-			final int choice = JOptionPane.showOptionDialog(parentf,
-				"To use this database, it must be upgraded from older version "
-					+ user_version + " to the current version "
-					+ RDBSchema.DATABASE_VERSION + ".",
-				"DB Upgrade Required",
-				JOptionPane.DEFAULT_OPTION,
-				JOptionPane.QUESTION_MESSAGE,
-				null, upg_exit, upg_exit[0]);
-			if (choice == 1)
+			if (isBackup)
 			{
 				conn.close();
-				System.exit(0);
-			}
-			System.err.println("-> Chose upgrade");
-			try
-			{
-				RDBSchema.upgradeToCurrent(conn, user_version, false);
-			} catch (Throwable e) {
-				// TODO capture it somewhere accessible?
-				e.printStackTrace();
-				try {
-					conn.close();
-				} catch (Throwable th) {}
+				File upgCopy = upgradeDBCopy(new File(fname), user_version, parentf);
+				if (upgCopy == null)
+				{
+					return;  // <--- Early return: Error copying or upgrading ---
+				}
+				fname = upgCopy.getAbsolutePath();
 
-				JOptionPane.showMessageDialog(parentf,
-				    "An error occurred during the upgrade. Please run again from the command line to see the stack trace.\n"
-					  + e.toString() + " " + e.getMessage(),
-				    "Error during upgrade",
-				    JOptionPane.ERROR_MESSAGE);
-				System.exit(8);
+				try {
+					conn = new RDBJDBCAdapter(fname);
+				} catch (Exception e) {
+					JOptionPane.showMessageDialog(parentf,
+						"Could not copy and open this database.\nError was: "
+							+ e.getClass() + " " + e.getMessage(),
+						"Could not open SQLite db",
+						JOptionPane.ERROR_MESSAGE);
+
+					return;  // <--- Early return: Error opening copy ---
+				}
+			} else {
+				// TODO ask whether to upgrade temp copy (changes won't be saved) or in place
+				final String[] upg_exit = { "Upgrade", "Exit" };
+				final int choice = JOptionPane.showOptionDialog(parentf,
+					"To use this database, it must be upgraded from older version "
+						+ user_version + " to the current version "
+						+ RDBSchema.DATABASE_VERSION + ".",
+					"DB Upgrade Required",
+					JOptionPane.DEFAULT_OPTION,
+					JOptionPane.QUESTION_MESSAGE,
+					null, upg_exit, upg_exit[0]);
+				if (choice == 1)
+				{
+					conn.close();
+					System.exit(0);
+				}
+				System.err.println("-> Chose upgrade");
+				try
+				{
+					RDBSchema.upgradeToCurrent(conn, user_version, false);
+				} catch (Throwable e) {
+					// TODO capture it somewhere accessible?
+					e.printStackTrace();
+					try {
+						conn.close();
+					} catch (Throwable th) {}
+	
+					JOptionPane.showMessageDialog(parentf,
+					    "An error occurred during the upgrade. Please run again from the command line to see the stack trace.\n"
+						  + e.toString() + " " + e.getMessage(),
+					    "Error during upgrade",
+					    JOptionPane.ERROR_MESSAGE);
+					System.exit(8);
+				}
 			}
 		}
 
@@ -561,10 +616,55 @@ public class LogbookEditPane extends JPanel implements ActionListener, WindowLis
 		if (newDriver)
 			VehSettings.setCurrentDriver(conn, cveh, currD);
 
-		new LogbookEditPane(fnshort, cveh, conn, isReadOnly);
+		new LogbookEditPane(fnshort, cveh, conn, isBackup || isReadOnly);
 
 		// When pane closes, that will call conn.close() .
 
+	}
+
+	/**
+	 * Make a temporary copy of a db file, then upgrade the copy's schema.
+	 * @param sourceBkupFile  DB file to copy and upgrade; should not currently be open
+	 * @param sourceSchemaVers  Source schema version, from {@link AppInfo} table
+	 *    where {@code aifield =} '{@link AppInfo#KEY_DB_CURRENT_SCHEMAVERSION DB_CURRENT_SCHEMAVERSION}'
+	 * @param parentf  Parent frame, for error dialogs if needed
+	 * @return Closed File for temporary copy, or null if an error occurred and a message dialog was shown
+	 * @since 0.9.40
+	 */
+	private static File upgradeDBCopy(File sourceBkupFile, final int sourceSchemaVers, final JFrame parentf)
+	{
+		File destTempFile = null;
+		String errMsg = null;
+		try
+		{
+			destTempFile = File.createTempFile("tmpdb-", ".upg");
+			try { destTempFile.deleteOnExit(); }
+			catch (Exception e) {}
+
+			System.err.println
+				("Calling upgradeCopyToCurrent(\"" + destTempFile.getAbsolutePath() + "\", " + sourceSchemaVers + ")");
+
+			RDBSchema.upgradeCopyToCurrent(sourceBkupFile, destTempFile, sourceSchemaVers, rdbUpgSingleton);
+
+			System.err.println("Completed upgrade");
+			return destTempFile;
+
+		} catch (DataFormatException e) {
+			errMsg = "Error in file validation.";
+		} catch (IllegalStateException e) {
+			errMsg = "This backup file is an early beta version too old to restore.";
+		} catch (Exception e) {
+			// SQLException, IOException
+	    		System.err.println("Failed during copy & validation: " + e);
+			errMsg = "Error in file copy and validation: " + e;
+		}
+
+		JOptionPane.showMessageDialog(parentf,
+		    "Cannot open the backup: " + errMsg,
+		    "Error upgrading copy of database",
+		    JOptionPane.ERROR_MESSAGE);
+
+		return null;
 	}
 
 	//

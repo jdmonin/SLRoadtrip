@@ -57,7 +57,6 @@ public class Main
 	private String dbFilename = null;
 	private StartupChoiceFrame scf;
 	private RDBAdapter conn = null;
-	private boolean isBackup = false;  // TODO upgrade temp copy when opened
 	private boolean isReadOnly = false;
 
 	/**
@@ -80,13 +79,17 @@ public class Main
 		scf.setVisible(true);
 	}
 
-	/** Open this file in a {@link LogbookEditPane}. */
+	/**
+	 * Open this file in a {@link LogbookEditPane}.
+	 * @param chooseFile  File chosen by the "New", "Open", or "View Backup" button, or any other File
+	 * @param isNew  Should this db be created empty?
+	 * @param isBak  Is this a backup file (treat as read-only)?
+	 */
 	public void openLogbook(File chooseFile, final boolean isNew, final boolean isBak)
 	{
 		if (chooseFile == null)
 			return;
 
-		isBackup = isBak;
 		if (isBak)
 		{
 			isReadOnly = true;
@@ -99,12 +102,9 @@ public class Main
 		}
 
 		// TODO handle isNew (create schema, etc)
-		// STATE here: Does it need upgrade?
-		//  If not, set dbFilename and go.
-		//  Otherwise, ask and/or copy first.
-		final String fpath = chooseFile.getAbsolutePath();
-		dbFilename = fpath;
-		LogbookEditPane.setupFromMain(fpath, chooseFile.getName(), scf, isReadOnly);
+		dbFilename = chooseFile.getAbsolutePath();
+
+		LogbookEditPane.setupFromMain(dbFilename, chooseFile.getName(), scf, isBak, isReadOnly);
 	}
 
 	/** Gives buttons with choice of new, open, open backup, exit */

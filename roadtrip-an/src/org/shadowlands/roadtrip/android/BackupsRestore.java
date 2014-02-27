@@ -63,6 +63,8 @@ import android.widget.Toast;
  *<LI> The current data's most recent trip time - <tt>intent.putExtra({@link #KEY_LAST_TRIPTIME}, int)</tt>,
  *   from current data which would be overwritten, NOT from the backup data.
  *</UL>
+ * Will call {@link #setResult(int) setResult}<tt>({@link BackupsMain#RESULT_BACKUP_RESTORED})</tt>
+ * if backup is validated and restored.
  *
  * @author jdmonin
  */
@@ -351,6 +353,7 @@ public class BackupsRestore
 		{
 			DBBackup.restoreCurrentDB(this, bkupFullPath);
 			Settings.clearSettingsCache();  // clear currV, etc.
+			setResult(BackupsMain.RESULT_BACKUP_RESTORED);
 			Log.i(TAG, "Restored db from " + bkupFullPath);
 			titleID = R.string.success;
 			msg = getResources().getString(R.string.backups_restore_db_successfully_restored);

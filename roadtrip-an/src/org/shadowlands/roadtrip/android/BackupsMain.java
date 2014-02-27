@@ -58,6 +58,7 @@ import android.widget.Toast;
  * Backup and Restore activity.
  * Information and button to back up now, list of previous backups.
  * There is a button to change to a different folder and restore from there, which defaults to the user's Download folder.
+ * Tapping a backup in the list goes to {@link BackupsRestore} to show more details, validate the backup, and confirm.
  *
  * @author jdmonin
  */
@@ -65,6 +66,12 @@ public class BackupsMain extends Activity
 	implements OnItemClickListener
 {
 	// no RDBAdapter field: db is not kept open, so that we can backup/restore it.
+
+	/**
+	 * Activity result to indicate a backup was restored; used from {@link BackupsRestore}.
+	 * @since 0.9.40
+	 */
+	public static final int RESULT_BACKUP_RESTORED = Activity.RESULT_FIRST_USER;
 
 	/** Free-space additional margin (64 kB) for {@link #checkFreeSpaceForBackup()}. */
 	final private static int FREE_SPACE_MARGIN = 64 * 1024;
@@ -555,8 +562,27 @@ public class BackupsMain extends Activity
 			i.putExtra(BackupsRestore.KEY_FULL_PATH, bkPath);
 			i.putExtra(BackupsRestore.KEY_SCHEMA_VERS, bkupSchemaVersion);
 			i.putExtra(BackupsRestore.KEY_LAST_TRIPTIME, lastTripDataChange);
-			startActivity(i);
+
+			startActivityForResult(i, R.id.backups_main_list);
 		}
+	}
+
+	/**
+	 * Result from {@link BackupsRestore}.
+	 * If a backup was restored (result code {@link #RESULT_BACKUP_RESTORED}),
+	 * finish this activity which will take us back to {@link Main}.
+	 *
+	 * @param requestCode  {@link R.id#backups_main_list} when calling {@link BackupsRestore}
+	 * @param resultCode  {@link #RESULT_BACKUP_RESTORED} or {@link Activity#RESULT_CANCELED}
+	 * @param idata  intent containing any result extras; ignored here
+	 */
+	@Override
+	public void onActivityResult(final int requestCode, final int resultCode, Intent idata)
+	{
+		if ((resultCode != RESULT_BACKUP_RESTORED) || (requestCode != R.id.backups_main_list))
+			return;
+
+		finish();
 	}
 
 }

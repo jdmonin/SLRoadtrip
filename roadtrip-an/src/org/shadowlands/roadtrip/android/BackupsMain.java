@@ -76,6 +76,12 @@ public class BackupsMain extends Activity
 	/** Free-space additional margin (64 kB) for {@link #checkFreeSpaceForBackup()}. */
 	final private static int FREE_SPACE_MARGIN = 64 * 1024;
 
+	/**
+	 * Does the current DB contain any data (false for new install)? Set in {@link #onResume()}.
+	 * @since 0.9.40
+	 */
+	private boolean dbContainsData = false;
+
 	/** Can we write?  Set in {@link #onResume()}. */
 	private boolean isSDCardWritable = false;
 
@@ -155,8 +161,8 @@ public class BackupsMain extends Activity
 			Environment.MEDIA_MOUNTED_READ_ONLY.equals
 			(Environment.getExternalStorageState());
 
+		dbContainsData = readDBLastTripTime(db);
 		readDBLastBackupTime(db, -1);
-		final boolean dbContainsData = readDBLastTripTime(db);
 		btnBackupNow.setEnabled(isSDCardWritable && dbContainsData);
 
 		if (! isSDCardReadable)
@@ -192,7 +198,8 @@ public class BackupsMain extends Activity
 
 		if (lasttime == -1)
 		{
-			tvTimeOfLastBkup.setText(R.string.backups_main_no_previous);
+			if (dbContainsData)
+				tvTimeOfLastBkup.setText(R.string.backups_main_no_previous);
 		} else {
 			if (fmt_dow_shortdate == null)
 				fmt_dow_shortdate = Misc.buildDateFormatDOWShort(this, false);

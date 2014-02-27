@@ -103,7 +103,8 @@ r315	0.9.20b	2013-01-15	Beta. Allow save without continuing from stop; at startu
 				Vehicle +plate/tag#; trip +#passengers; 1-step validation in LogbookShow; beta csv log export
 r347	0.9.20	2013-10-22	Change vehicle & some related settings during trip; add landscape layouts;
 				allow Backup/Restore with any folder; TripBegin ask before using historical mode
--	0.9.40	-		Being developed now; most current settings are now per-vehicle
+-	0.9.40	-		Being developed now; most current settings are now per-vehicle; refactor db restore code;
+				bookedit can view backups having old schemas
 
 Also see doc/hist/*.sql for previous schema updates.
 

@@ -104,7 +104,8 @@ r315	0.9.20b	2013-01-15	Beta. Allow save without continuing from stop; at startu
 r347	0.9.20	2013-10-22	Change vehicle & some related settings during trip; add landscape layouts;
 				allow Backup/Restore with any folder; TripBegin ask before using historical mode
 -	0.9.40	-		Being developed now; most current settings are now per-vehicle; refactor db restore code;
-				bookedit can view backups having old schemas
+				bookedit can view backups having old schemas; Set build target and targetSdkVersion to 11 (v3.0)
+				for ActionBar and Holo Light theme if available, but keep minSdkVersion at 8 (v2.2)
 
 Also see doc/hist/*.sql for previous schema updates.
 

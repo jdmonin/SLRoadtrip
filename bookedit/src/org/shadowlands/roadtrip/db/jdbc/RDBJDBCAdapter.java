@@ -29,7 +29,6 @@ import java.util.Vector;
 import org.shadowlands.roadtrip.bookedit.LogbookEditPane;
 import org.shadowlands.roadtrip.db.RDBAdapter;
 import org.shadowlands.roadtrip.db.RDBSchema;
-import org.shadowlands.roadtrip.db.RDBVerifier;
 
 /**
  * SQLite connection via JDBC.
@@ -106,7 +105,7 @@ public class RDBJDBCAdapter implements RDBAdapter
 				catch (Exception e) {}
 			}
 		}
-		
+
 		return schemaVersion;
 	}
 
@@ -137,8 +136,8 @@ public class RDBJDBCAdapter implements RDBAdapter
 	 * @throws IllegalStateException if conn has been closed
 	 */
 	private int getLastInsertID()
-        throws IllegalStateException
-    {
+	    throws IllegalStateException
+	{
 		if (conn == null)
 			throw new IllegalStateException("conn not open");
 
@@ -170,18 +169,13 @@ public class RDBJDBCAdapter implements RDBAdapter
 		} catch (SQLException ee) { }
 
 		return retval;
-    }
+	}
 
-	/**
-	 * Get one row by ID.  Returns null if the row isn't found.
-	 * @param tabname Table to query
-	 * @param id      ID field value, for primary key field "_id"
-	 * @param fields  Field names to return
-	 * @return  Corresponding field values to field names, or null if errors or if table not found.
-	 *       Field values are returned in the order specified in <tt>fields[]</tt>.
-	 *       If any field is null or not in the table, that element is null.
-	 * @throws IllegalStateException if conn has been closed
-	 */
+	//
+	// Implement org.shadowlands.roadtrip.db.RDBAdapter:
+	// javadocs inherited from interface
+	//
+
 	public String[] getRow(final String tabname, final int id, final String[] fields)
 	    throws IllegalStateException
 	{
@@ -205,25 +199,12 @@ public class RDBJDBCAdapter implements RDBAdapter
 		return get_extractRowFieldsAndCloseRS(fields, rs);
 	}
 
-	/**
-	 * Get one row, given a string-type key field name, or all rows except matching.
-	 * Returns null if the row isn't found.
-	 * @param tabname Table to query
-	 * @param kf  Key fieldname; to get all rows except <tt>kf</tt> &lt;&gt; <tt>kv</tt>,
-	 *              the <tt>kf</tt> string should contain &lt;&gt; after the fieldname.
-	 * @param kv  Key value
-	 * @param fields  Field names to return
-	 * @return  Corresponding field values to field names, or null if errors or if table not found.
-	 *       Field values are returned in the order specified in <tt>fields[]</tt>.
-	 *       If any field is null or not in the table, that element is null.
-	 * @throws IllegalStateException if conn has been closed
-	 */
 	public String[] getRow(final String tabname, final String kf, final String kv, final String[] fields)
 	    throws IllegalStateException
 	{
 		if (conn == null)
 			throw new IllegalStateException("conn not open");
-	
+
 		ResultSet rs = null;
 		try
 		{
@@ -233,8 +214,8 @@ public class RDBJDBCAdapter implements RDBAdapter
 			else
 				sql = "select * from " + tabname + " where " + kf + " = ? ;";
 			PreparedStatement prep = conn.prepareStatement(sql);
-		    prep.setString(1, kv);
-		    rs = prep.executeQuery();
+			prep.setString(1, kv);
+			rs = prep.executeQuery();
 		} catch (SQLException e)
 		{
 			try
@@ -244,41 +225,20 @@ public class RDBJDBCAdapter implements RDBAdapter
 			} catch (SQLException ee) { }
 			return null;
 		}
-	
+
 		return get_extractRowFieldsAndCloseRS(fields, rs);
 	}
 
-	/**
-	 * Get one or more rows matching a key field-value pair, or all rows except matching.
-	 * Returns null if no rows are found.
-	 *<P>
-	 * <tt>kf</tt> must not be null; if you want all rows in the table, use
-	 * {@link #getRows(String, String, String[], String[], String, int)} instead.
-	 *
-	 * @param tabname Table to query
-	 * @param kf  Key fieldname; must not be null.
-	 *              To get all rows except <tt>kv</tt> (<tt>kf</tt> &lt;&gt; <tt>kv</tt>),
-	 *              the <tt>kf</tt> string should contain &lt;&gt; after the fieldname.
-	 * @param kv  Key value; can be null for "is NULL". For "is not NULL", place &lt;&gt; into kf.
-	 * @param fieldnames  Field names to return
-	 * @param orderby  Order-by field(s), or null; may contain "desc" for sorting
-	 * @param limit  Maximum number of rows to return, or 0 for no limit
-	 * @return  Corresponding field values to field names, or null if errors or if table not found.
-	 *       Field values are returned in the order specified in <tt>fields[]</tt>.
-	 *       If any field is null or not in the table, that element is null.
-	 * @throws IllegalArgumentException if <tt>kf</tt> is null
-	 * @throws IllegalStateException if conn has been closed
-	 * @see #getRows(String, String, String[], String[], String, int)
-	 */
 	public Vector<String[]> getRows
-        (final String tabname, final String kf, final String kv, final String[] fieldnames, final String orderby, final int limit)
-        throws IllegalArgumentException, IllegalStateException
+	    (final String tabname, final String kf, final String kv, final String[] fieldnames,
+	     final String orderby, final int limit)
+	    throws IllegalArgumentException, IllegalStateException
 	{
 		if (kf == null)
 			throw new IllegalArgumentException("null kf");
 		if (conn == null)
 			throw new IllegalStateException("conn not open");
-	
+
 		ResultSet rs = null;
 		try
 		{
@@ -317,7 +277,7 @@ public class RDBJDBCAdapter implements RDBAdapter
 				(sb.toString());
 			if (kv != null)
 				prep.setString(1, kv);
-		    rs = prep.executeQuery();
+			rs = prep.executeQuery();
 		} catch (SQLException e)
 		{
 			try
@@ -327,35 +287,18 @@ public class RDBJDBCAdapter implements RDBAdapter
 			} catch (SQLException ee) { }
 			return null;
 		}
-	
+
 		return get_extractRowsFieldsAndCloseRS(fieldnames, rs);
 	}
 
-	/**
-	 * Get one or more rows matching a SQL Where clause, or all rows in a table.
-	 * Returns null if no rows are found.
-	 *
-	 * @param tabname Table to query
-	 * @param where  Where-clause, or null for all rows; may contain <tt>?</tt> which will be
-	 *       filled from <tt>whereArgs</tt> contents, as with PreparedStatements.
-	 * @param whereArgs  Strings to bind against each <tt>?</tt> in <tt>where</tt>, or null if <tt>where</tt> has none of those
-	 * @param fieldnames  Field names to return
-	 * @param orderby  Order-by field(s) sql clause, or null; may contain "desc" for sorting
-	 * @param limit  Maximum number of rows to return, or 0 for no limit
-	 * @return  Corresponding field values to field names, or null if errors or if table not found.
-	 *       Field values are returned in the order specified in <tt>fields[]</tt>.
-	 *       If any field is null or not in the table, that element is null.
-	 * @throws IllegalArgumentException if <tt>whereArgs</tt> != null, but <tt>where</tt> == null
-	 * @throws IllegalStateException if conn has been closed
-	 * @see #getRows(String, String, String, String[], String, int)
-	 */
 	public Vector<String[]> getRows
-	    (final String tabname, final String where, final String[] whereArgs, final String[] fieldnames, final String orderby, final int limit)
+	    (final String tabname, final String where, final String[] whereArgs, final String[] fieldnames,
+	     final String orderby, final int limit)
 	    throws IllegalArgumentException, IllegalStateException
 	{
 		if (conn == null)
 			throw new IllegalStateException("conn not open");
-	
+
 		ResultSet rs = null;
 		try
 		{
@@ -388,7 +331,7 @@ public class RDBJDBCAdapter implements RDBAdapter
 				for (int i = 0; i < whereArgs.length; ++i)
 					prep.setString(i+1, whereArgs[i]);
 			}
-		    rs = prep.executeQuery();
+			rs = prep.executeQuery();
 		} catch (SQLException e)
 		{
 			try
@@ -398,7 +341,7 @@ public class RDBJDBCAdapter implements RDBAdapter
 			} catch (SQLException ee) { }
 			return null;
 		}
-	
+
 		return get_extractRowsFieldsAndCloseRS(fieldnames, rs);
 	}
 
@@ -416,9 +359,9 @@ public class RDBJDBCAdapter implements RDBAdapter
 	{
 		Vector<String[]> rv = new Vector<String[]>();
 
-	    try
-	    {
-	    	int L = fieldnames.length;
+		try
+		{
+			int L = fieldnames.length;
 			while (rs.next())
 			{
 				String[] res = new String[L];
@@ -454,8 +397,8 @@ public class RDBJDBCAdapter implements RDBAdapter
 	{
 		String[] res;
 
-	    try
-	    {
+		try
+		{
 			if (rs.next())
 			{
 				res = new String[fieldnames.length];
@@ -489,7 +432,7 @@ public class RDBJDBCAdapter implements RDBAdapter
 	 */
 	private final ResultSet getRowField_rset(final String tabname, final String kf, final String kv, final String fn)
 	    throws IllegalStateException
-    {
+	{
 		if (conn == null)
 			throw new IllegalStateException("conn not open");
 
@@ -498,8 +441,8 @@ public class RDBJDBCAdapter implements RDBAdapter
 		{
 			PreparedStatement prep = conn.prepareStatement
 			    ("select " + fn + " from " + tabname + " where " + kf + " = ? ;");
-		    prep.setString(1, kv);
-		    rs = prep.executeQuery();
+			prep.setString(1, kv);
+			rs = prep.executeQuery();
 		} catch (SQLException e) {
 			try
 			{
@@ -509,7 +452,7 @@ public class RDBJDBCAdapter implements RDBAdapter
 			return null;
 		}
 		return rs;
-    }
+	}
 
 	/**
 	 * Common query code for all {@link #getRowField(String, String, String, String[])}-type methods.
@@ -530,7 +473,7 @@ public class RDBJDBCAdapter implements RDBAdapter
 	{
 		if (conn == null)
 			throw new IllegalStateException("conn not open");
-	
+
 		ResultSet rs = null;
 		try
 		{
@@ -555,7 +498,7 @@ public class RDBJDBCAdapter implements RDBAdapter
 				for (int i = 0; i < whereArgs.length; ++i)
 					prep.setString(i+1, whereArgs[i]);
 			}
-		    rs = prep.executeQuery();
+			rs = prep.executeQuery();
 		} catch (SQLException e)
 		{
 			try
@@ -569,22 +512,9 @@ public class RDBJDBCAdapter implements RDBAdapter
 		return rs;
 	}
 
-	/**
-	 * Get one field in one row, given a string-type key field name.
-	 * Returns null if key value not found.
-	 *
-	 * @param tabname  Table to query
-	 * @param kf  Key fieldname
-	 * @param kv  Key value
-	 * @param fn  Field name to get
-	 * @return field value, or null if not found
-	 * @throws IllegalStateException if conn has been closed, table not found, etc.
-	 * @see #getRowIntField(String, String, String, String, int)
-	 * @see #getRowLongField(String, String, String, String, int)
-	 */
 	public String getRowField(final String tabname, final String kf, final String kv, final String fn)
 	    throws IllegalStateException
-    {
+	{
 		ResultSet rs = getRowField_rset(tabname, kf, kv, fn);
 		if (rs == null)
 			return null;
@@ -599,27 +529,8 @@ public class RDBJDBCAdapter implements RDBAdapter
 		} catch (SQLException ee) { }
 
 		return retval;
-    }
+	}
 
-	/**
-	 * Get one field in one row, given a where-clause.
-	 * The where-clause should match at most one row, or <tt>fn</tt> should
-	 * contain an aggregate function which evaluates the multiple rows.
-	 * Returns null if not found.
-	 *
-	 * @param tabname  Table to query
-	 * @param fn  Field name to get, or aggregate function such as <tt>max(v)</tt>
-	 * @param where  Where-clause, or null for all rows; may contain <tt>?</tt> which will be
-	 *       filled from <tt>whereArgs</tt> contents, as with PreparedStatements.
-	 *       Do not include the "where" keyword.
-	 * @param whereArgs  Strings to bind against each <tt>?</tt> in <tt>where</tt>, or null if <tt>where</tt> has none of those
-	 * @return field value, or null if not found; the value may be null.
-	 * @throws IllegalStateException if conn has been closed, table not found, etc.
-	 * @throws IllegalArgumentException  if where is null, but whereArgs is not
-	 * @since 0.9.06
-	 * @see #getRowIntField(String, String, String, String[], int)
-	 * @see #getRowLongField(String, String, String, String[], int)
-	 */
 	public String getRowField(final String tabname, final String fn, final String where, final String[] whereArgs)
 	    throws IllegalStateException, IllegalArgumentException
 	{
@@ -642,25 +553,6 @@ public class RDBJDBCAdapter implements RDBAdapter
 		return retval;
 	}
 
-	/**
-	 * Get one integer field in one row, given a where-clause.
-	 * The where-clause should match at most one row, or <tt>fn</tt> should
-	 * contain an aggregate function which evaluates the multiple rows.
-	 * Returns <tt>def</tt> if not found.
-	 *
-	 * @param tabname  Table to query
-	 * @param fn  Field name to get, or aggregate function such as <tt>max(v)</tt>
-	 * @param where  Where-clause, or null for all rows; may contain <tt>?</tt> which will be
-	 *       filled from <tt>whereArgs</tt> contents, as with PreparedStatements.
-	 *       Do not include the "where" keyword.
-	 * @param whereArgs  Strings to bind against each <tt>?</tt> in <tt>where</tt>, or null if <tt>where</tt> has none of those
-	 * @param def  Value to return if key value not found
-	 * @return field value, or <tt>def</tt> if not found.
-	 * @throws IllegalStateException if conn has been closed, table not found, etc.
-	 * @throws IllegalArgumentException  if where is null, but whereArgs is not
-	 * @see #getRowField(String, String, String, String[])
-	 * @since 0.9.07
-	 */
 	public int getRowIntField(final String tabname, final String fn, final String where, final String[] whereArgs, final int def)
 	    throws IllegalStateException, IllegalArgumentException
 	{
@@ -688,47 +580,15 @@ public class RDBJDBCAdapter implements RDBAdapter
 		return retval;
 	}
 
-	/**
-	 * Get one integer field in one row, given a string-type key field name.
-	 * Returns <tt>def</tt> if key value not found.
-	 *
-	 * @param tabname  Table to query
-	 * @param kf  Key fieldname
-	 * @param kv  Key value
-	 * @param fn  Field name to get
-	 * @param def  Value to return if key value not found
-	 * @return field value, or <tt>def</tt> if not found
-	 * @throws IllegalStateException if conn has been closed, table not found, etc.
-	 * @see #getRowField(String, String, String, String)
-	 * @since 0.9.07
-	 */
 	public int getRowIntField(final String tabname, final String kf, final String kv, final String fn, final int def)
 	    throws IllegalStateException
-    {
+	{
 		final String[] whereArgs = { kv } ;
 		return getRowIntField(tabname, fn, kf + " = ?", whereArgs, def);
-    }
+	}
 
-	/**
-	 * Get one long-integer field in one row, given a where-clause.
-	 * The where-clause should match at most one row, or <tt>fn</tt> should
-	 * contain an aggregate function which evaluates the multiple rows.
-	 * Returns <tt>def</tt> if not found.
-	 *
-	 * @param tabname  Table to query
-	 * @param fn  Field name to get, or aggregate function such as <tt>max(v)</tt>
-	 * @param where  Where-clause, or null for all rows; may contain <tt>?</tt> which will be
-	 *       filled from <tt>whereArgs</tt> contents, as with PreparedStatements.
-	 *       Do not include the "where" keyword.
-	 * @param whereArgs  Strings to bind against each <tt>?</tt> in <tt>where</tt>, or null if <tt>where</tt> has none of those
-	 * @param def  Value to return if key value not found
-	 * @return field value, or <tt>def</tt> if not found.
-	 * @throws IllegalStateException if conn has been closed, table not found, etc.
-	 * @throws IllegalArgumentException  if where is null, but whereArgs is not
-	 * @see #getRowField(String, String, String, String[])
-	 * @since 0.9.07
-	 */
-	public long getRowLongField(final String tabname, final String fn, final String where, final String[] whereArgs, final long def)
+	public long getRowLongField
+	    (final String tabname, final String fn, final String where, final String[] whereArgs, final long def)
 	    throws IllegalStateException, IllegalArgumentException
 	{
 		ResultSet rs = getRowField_rset(tabname, fn, where, whereArgs);
@@ -755,51 +615,19 @@ public class RDBJDBCAdapter implements RDBAdapter
 		return retval;
 	}
 
-	/**
-	 * Get one long-integer field in one row, given a string-type key field name.
-	 * Returns <tt>def</tt> if key value not found.
-	 *
-	 * @param tabname  Table to query
-	 * @param kf  Key fieldname
-	 * @param kv  Key value
-	 * @param fn  Field name to get
-	 * @param def  Value to return if key value not found
-	 * @return field value, or <tt>def</tt> if not found
-	 * @throws IllegalStateException if conn has been closed, table not found, etc.
-	 * @see #getRowField(String, String, String, String)
-	 * @since 0.9.07
-	 */
 	public long getRowLongField(final String tabname, final String kf, final String kv, final String fn, final long def)
 	    throws IllegalStateException
-    {
+	{
 		final String[] whereArgs = { kv } ;
 		return getRowLongField(tabname, fn, kf + " = ?", whereArgs, def);
-    }
+	}
 
-	/**
-	 * Count the rows in this table, optionally matching a key value.
-	 * @param tabname  Table to select COUNT(*)
-	 * @param kf  Key fieldname, or null to count all rows
-	 * @param kv  Key string-value, or null; if <tt>kf</tt> != null, will count rows with null <tt>kf</tt>.
-	 * @return row count, or 0
-	 * @throws IllegalStateException if conn has been closed, table not found, etc.
-	 * @since 0.9.00
-	 */
 	public int getCount(final String tabname, final String kf, final String kv)
 		throws IllegalStateException
 	{
 		return getCount(tabname, kf, true, kv, 0);
 	}
 
-	/**
-	 * Count the rows in this table, optionally matching a key value.
-	 * @param tabname  Table to select COUNT(*)
-	 * @param kf  Key fieldname, or null to count all rows
-	 * @param kv  Key int-value if <tt>kf</tt> != null
-	 * @return row count, or 0
-	 * @throws IllegalStateException if conn has been closed, table not found, etc.
-	 * @since 0.9.00
-	 */
 	public int getCount(final String tabname, final String kf, final int kv)
 		throws IllegalStateException
 	{
@@ -837,7 +665,7 @@ public class RDBJDBCAdapter implements RDBAdapter
 			} else {
 				sql.setLong(1, iv);
 			}
-		    rs = sql.executeQuery();
+			rs = sql.executeQuery();
 			if (rs.next())
 				retval = rs.getInt(1);
 			rs.close();
@@ -852,26 +680,8 @@ public class RDBJDBCAdapter implements RDBAdapter
 		return retval;
 	}
 
-	/**
-	 * Insert a new row into a table.
-	 *<BR><b>Reminder:</b> The _id field should be supplied as null here.
-	 * @param tabname table name
-	 * @param fn  Field names; recommend you include all fields except _id,
-	 *          in the same field order as the CREATE TABLE statement.
-	 * @param fv   field values, in the same field order as <tt>fn[]</tt>.
-	 *          May contain nulls. If <tt>fn[]</tt> contains _id, its <tt>fv</tt> should be null.
-	 * @param skipID  If true, <tt>fv[]</tt> does not contain the first (_id) field.
-	 *          That is, fv[0] is a value field, not the key field.
-	 *          This means that insert and update arrays are the same length.
-	 *          So, you can use the same code to build the <tt>fv[]</tt>
-	 *          arrays used in {@link #insert(String, String[], boolean)}
-	 *          and {@link #update(String, int, String[], String[])}.
-	 * @return The new record's row ID (sqlite <tt>last_insert_rowid()</tt>), or -1 on error
-	 * @throws IllegalStateException if conn has been closed, table not found, etc.
-	 * @throws IllegalArgumentException if fn.length != fv.length
-	 */
 	public int insert(final String tabname, final String[] fn, final String[] fv, final boolean skipID)
-        throws IllegalStateException, IllegalArgumentException
+	    throws IllegalStateException, IllegalArgumentException
 	{
 		if (fn.length != fv.length)
 			throw new IllegalArgumentException("length mismatch");
@@ -896,34 +706,24 @@ public class RDBJDBCAdapter implements RDBAdapter
 		try
 		{
 			PreparedStatement prep = conn.prepareStatement(sb.toString());
-		    for (int i = 0; i < fv.length; ++i)
-		    {
-		    	String v = fv[i];
-		    	if (v != null)
-		    		prep.setString(i+1, v);
-		    	else
-		    		prep.setNull(i+1, java.sql.Types.VARCHAR);  // TODO is this ok if it's int, with SQLite?
-		    }
-		    prep.executeUpdate();
-		    return getLastInsertID();
+			for (int i = 0; i < fv.length; ++i)
+			{
+				String v = fv[i];
+				if (v != null)
+					prep.setString(i+1, v);
+				else
+					prep.setNull(i+1, java.sql.Types.VARCHAR);  // TODO is this ok if it's int, with SQLite?
+			}
+			prep.executeUpdate();
+			return getLastInsertID();
 		} catch (SQLException e) {
 			throw new IllegalStateException("error: " + e.getClass() + ":" + e.getMessage());
 		}
 	}
 
-	/**
-	 * Update fields of an existing row in a table, by id.
-	 * @param tabname  Table to update
-	 * @param id  Primary key "_id" value
-	 * @param fn  Field names
-	 * @param fv  Field values, in the same field order as <tt>fn[]</tt>.
-	 *          May contain nulls.
-	 * @throws IllegalStateException if conn has been closed, table not found, etc.
-	 * @throws IllegalArgumentException if fn.length != fv.length
-	 */
 	public void update(final String tabname, final int id, final String[] fn, final String[] fv)
-        throws IllegalStateException, IllegalArgumentException
-    {
+	    throws IllegalStateException, IllegalArgumentException
+	{
 		if (fn.length != fv.length)
 			throw new IllegalArgumentException("length mismatch");
 
@@ -941,35 +741,24 @@ public class RDBJDBCAdapter implements RDBAdapter
 		try
 		{
 			PreparedStatement prep = conn.prepareStatement(sb.toString());
-		    for (int i = 0; i < fv.length; ++i)
-		    {
-		    	String v = fv[i];
-		    	if (v != null)
-		    		prep.setString(i+1, v);
-		    	else
-		    		prep.setNull(i+1, java.sql.Types.VARCHAR);  // OK even if int, SQLite is lax with column types 
-		    }
-		    prep.setInt(fn.length+1, id);
-		    prep.executeUpdate();
+			for (int i = 0; i < fv.length; ++i)
+			{
+				String v = fv[i];
+				if (v != null)
+					prep.setString(i+1, v);
+				else
+					prep.setNull(i+1, java.sql.Types.VARCHAR);  // OK even if int, SQLite is lax with column types 
+			}
+			prep.setInt(fn.length+1, id);
+			prep.executeUpdate();
 		} catch (SQLException e) {
 			throw new IllegalStateException("error: " + e.getClass() + ":" + e.getMessage());
 		}
-    }
+	}
 
-	/**
-	 * Update fields of an existing row in a table, by string key field.
-	 * @param tabname  Table to update
-	 * @param kf  Key fieldname
-	 * @param kv  Key value
-	 * @param fn  Field names to update
-	 * @param fv  Field values, in the same field order as <tt>fn[]</tt>.
-	 *          May contain nulls.
-	 * @throws IllegalStateException if conn has been closed, table not found, etc.
-	 * @throws IllegalArgumentException if fn.length != fv.length
-	 */
 	public void update(final String tabname, final String kf, final String kv, final String[] fn, final String[] fv)
-        throws IllegalStateException, IllegalArgumentException
-    {
+	    throws IllegalStateException, IllegalArgumentException
+	{
 		if (fn.length != fv.length)
 			throw new IllegalArgumentException("length mismatch");
 
@@ -989,33 +778,24 @@ public class RDBJDBCAdapter implements RDBAdapter
 		try
 		{
 			PreparedStatement prep = conn.prepareStatement(sb.toString());
-		    for (int i = 0; i < fv.length; ++i)
-		    {
-		    	String v = fv[i];
-		    	if (v != null)
-		    		prep.setString(i+1, v);
-		    	else
-		    		prep.setNull(i+1, java.sql.Types.VARCHAR);  // OK even if int, SQLite is lax with column types
-		    }
-		    prep.setString(fn.length+1, kv);
-		    prep.executeUpdate();
+			for (int i = 0; i < fv.length; ++i)
+			{
+				String v = fv[i];
+				if (v != null)
+					prep.setString(i+1, v);
+				else
+					prep.setNull(i+1, java.sql.Types.VARCHAR);  // OK even if int: SQLite is lax with column types
+			}
+			prep.setString(fn.length+1, kv);
+			prep.executeUpdate();
 		} catch (SQLException e) {
 			throw new IllegalStateException("error: " + e.getClass() + ":" + e.getMessage());
 		}
-    }
+	}
 
-	/**
-	 * Update a field in an existing row in a table, given a string-type key field name.
-	 * @param tabname  Table to update
-	 * @param kf  Key fieldname
-	 * @param kv  Key value
-	 * @param fn  Field name to update
-	 * @param fv  New field value, or null
-	 * @throws IllegalStateException if conn has been closed, table not found, etc.
-	 */
 	public void updateField(final String tabname, final String kf, final String kv, final String fn, final String fv)
-        throws IllegalStateException
-    {
+	    throws IllegalStateException
+	{
 		try
 		{
 			PreparedStatement prep = conn.prepareStatement
@@ -1025,36 +805,19 @@ public class RDBJDBCAdapter implements RDBAdapter
 			else
 				prep.setNull(1, java.sql.Types.VARCHAR);
 			prep.setString(2, kv);
-		    prep.executeUpdate();
+			prep.executeUpdate();
 		} catch (SQLException e) {
 			throw new IllegalStateException("error: " + e.getClass() + ":" + e.getMessage());
 		}
 
-    }
+	}
 
-	/**
-	 * Delete a current record, given its id.
-	 * @param tabname  Table to delete from
-	 * @param id      ID field value, for primary key field "_id"
-	 * @throws IllegalStateException if conn has been closed, table not found, etc.
-	 */
 	public void delete(final String tabname, final int id)
 	    throws IllegalStateException
-    {
+	{
 		delete(tabname, "_id = ?", id);
-    }
+	}
 
-	/**
-	 * Delete one or more rows matching a simple WHERE clause with an int parameter (such as a foreign key).
-	 * @param tabname  Table to delete from
-	 * @param where  Where-clause, not null; may contain a {@code ?} which will be
-	 *       filled from {@code whereArg} contents, as with PreparedStatements.
-	 *       Do not include the "where" keyword.
-	 * @param whereArg  Value to bind against the {@code ?} in {@code where}, or 0 if {@code where} has no argument
-	 * @throws IllegalStateException if conn has been closed, table not found, etc.
-	 * @throws IllegalArgumentException  if {@code where} is null
-	 * @since 0.9.40
-	 */
 	public void delete(final String tabname, final String where, final int whereArg)
 		throws IllegalStateException, IllegalArgumentException
 	{
@@ -1075,17 +838,6 @@ public class RDBJDBCAdapter implements RDBAdapter
 		}
 	}
 
-	/**
-	 * Delete one or more rows matching a simple WHERE clause with a string parameter.
-	 * @param tabname  Table to delete from
-	 * @param where  Where-clause, not null; may contain a {@code ?} which will be
-	 *       filled from {@code whereArg} contents, as with PreparedStatements.
-	 *       Do not include the "where" keyword.
-	 * @param whereArg  Value to bind against the {@code ?} in {@code where}, or null if {@code where} has no argument
-	 * @throws IllegalStateException if conn has been closed, table not found, etc.
-	 * @throws IllegalArgumentException  if {@code where} is null
-	 * @since 0.9.40
-	 */
 	public void delete(final String tabname, final String where, final String whereArg)
 		throws IllegalStateException, IllegalArgumentException
 	{
@@ -1107,11 +859,9 @@ public class RDBJDBCAdapter implements RDBAdapter
 	}
 
 	/**
-	 * Get the full path of this open database's filename.
+	 * {@inheritDoc}
 	 * (For SQLite, this will be the same filename or full path
 	 *  that was passed into the constructor.)
-	 * @return the filename, including full path
-	 * @throws IllegalStateException if db has been closed 
 	 */
 	public String getFilenameFullPath() throws IllegalStateException
 	{
@@ -1120,7 +870,6 @@ public class RDBJDBCAdapter implements RDBAdapter
 		return dbFilename;
 	}
 
-	// implicit {@inheritDoc}
 	public void close()
 	{
 		if (conn == null)
@@ -1151,16 +900,8 @@ public class RDBJDBCAdapter implements RDBAdapter
 	}
 
 	/**
-	 * Retrieve a SQL create script or upgrade script.
-	 * Please close the returned stream as soon as possible.
-	 * For use by {@link RDBSchema}.
-	 *
-	 * @param upgScriptToVersion  0 for the create script,
-	 *    otherwise a db version number, to get the script to upgrade
-	 *    from the previous version.
-	 * @return the sql as a stream
+	 * {@inheritDoc}
 	 * @throws FileNotFoundException if the upgrade script doesn't exist
-	 * @throws IOException if a problem occurs locating or opening the script
 	 */
 	public InputStream getSQLScript(final int upgScriptToVersion)
 		throws FileNotFoundException, IOException
@@ -1185,17 +926,6 @@ public class RDBJDBCAdapter implements RDBAdapter
 			throw new FileNotFoundException("Not found: " + spath.toString());
 	}
 
-	/**
-	 * Execute this SQL update/DDL statement.
-	 * For use by the db package, <b>not</b> the application,
-	 * for example to update the database structure.
-	 *
-	 * @param sql  SQL text to execute; it should not be a query and should not produce a ResultSet.
-	 *     Only one statement can be sent; do not use ';' to separate multiple within <tt>sql</tt>.
-	 * @throws IllegalStateException if db has been closed 
-	 * @throws SQLException  If a syntax or database error occurs,
-	 *     or (jdbc) if the SQL would produce a ResultSet
-	 */
 	public void execStrucUpdate(final String sql)
 		throws IllegalStateException, SQLException
 	{
@@ -1205,18 +935,6 @@ public class RDBJDBCAdapter implements RDBAdapter
 		stat.executeUpdate(sql);  // may throw SQLException
 	}
 
-	/**
-	 * Execute <tt>PRAGMA integrity_check;</tt>
-	 * for use by the db package, <b>not</b> the application.
-	 * Details at <A href="http://www.sqlite.org/pragma.html#pragma_integrity_check">
-	 *    http://www.sqlite.org/pragma.html#pragma_integrity_check</A>.
-	 * @throws IllegalStateException if db has been closed, or a database access error occurs;
-	 *    {@link Throwable#getCause()} might contain more detail, or might be null.
-	 * @return <tt>null</tt>, or the first row of problem text.
-	 *    At the SQLite level, a successful check returns one row containing <tt>"ok"</tt>;
-	 *    this is returned as <tt>null</tt> instead of a single-element array.
-	 * @see RDBVerifier#verify(int)
-	 */
 	public String execPragmaIntegCheck()
 		throws IllegalStateException
 	{
@@ -1282,7 +1000,7 @@ public class RDBJDBCAdapter implements RDBAdapter
 				catch (SQLException ec) {}
 			}
 		}
-		return vers;		
+		return vers;
 	}
 
 }  // public class RDBJDBCAdapter

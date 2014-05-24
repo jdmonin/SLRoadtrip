@@ -51,10 +51,12 @@ public interface RDBAdapter
 	    throws IllegalStateException;
 
 	/**
-	 * Get one row, given a string-type key field name.
+	 * Get one row, given a string-type key field name, or all rows except matching.
 	 * Returns null if the row isn't found.
 	 * @param tabname Table to query
-	 * @param kf  Key fieldname
+	 * @param kf  Key fieldname; to search case-insensitively, use "fieldname COLLATE NOCASE".
+	 *              To get all rows except {@code kv} ({@code kf} &lt;&gt; {@code kv}),
+	 *              the {@code kf} string should end with &lt;&gt;
 	 * @param kv  Key value
 	 * @param fields  Field names to return
 	 * @return  Corresponding field values to field names, or null if errors or if table not found.
@@ -74,11 +76,12 @@ public interface RDBAdapter
 	 *
 	 * @param tabname Table to query
 	 * @param kf  Key fieldname; must not be null.
+	 *              To search case-insensitively, use "fieldname COLLATE NOCASE".
 	 *              To get all rows except <tt>kv</tt> (<tt>kf</tt> &lt;&gt; <tt>kv</tt>),
-	 *              the <tt>kf</tt> string should contain &lt;&gt; after the fieldname.
-	 * @param kv  Key value; can be null for "is NULL". For "is not NULL", place &lt;&gt; into kf.
+	 *              the <tt>kf</tt> string should end with &lt;&gt;
+	 * @param kv  Key value; can be null for "is NULL". For "is not NULL", end {@code kf} with &lt;&gt;
 	 * @param fieldnames  Field names to return
-	 * @param orderby  Order-by field(s), or null; may contain "desc" for sorting
+	 * @param orderby  Order-by field(s), or null; may contain "desc" and/or "COLLATE NOCASE" for sorting
 	 * @param limit  Maximum number of rows to return, or 0 for no limit
 	 * @return  Corresponding field values to field names, or null if errors or if table not found.
 	 *       Field values are returned in the order specified in <tt>fields[]</tt>.
@@ -88,7 +91,8 @@ public interface RDBAdapter
 	 * @see #getRows(String, String, String[], String[], String, int)
 	 */
 	public Vector<String[]> getRows
-	    (final String tabname, final String kf, final String kv, final String[] fieldnames, final String orderby, final int limit)
+	    (final String tabname, final String kf, final String kv, final String[] fieldnames,
+	     final String orderby, final int limit)
 	    throws IllegalArgumentException, IllegalStateException;
 
 	/**
@@ -101,7 +105,7 @@ public interface RDBAdapter
 	 *       Do not include the "where" keyword.
 	 * @param whereArgs  Strings to bind against each <tt>?</tt> in <tt>where</tt>, or null if <tt>where</tt> has none of those
 	 * @param fieldnames  Field names to return
-	 * @param orderby  Order-by field(s) sql clause, or null; may contain "desc" for sorting
+	 * @param orderby  Order-by field(s) sql clause, or null; may contain "desc" and/or "COLLATE NOCASE" for sorting
 	 * @param limit  Maximum number of rows to return, or 0 for no limit
 	 * @return  Corresponding field values to field names, or null if errors or if table not found.
 	 *       Field values are returned in the order specified in <tt>fields[]</tt>.
@@ -111,7 +115,8 @@ public interface RDBAdapter
 	 * @see #getRows(String, String, String, String[], String, int)
 	 */
 	public Vector<String[]> getRows
-	    (final String tabname, final String where, final String[] whereArgs, final String[] fieldnames, final String orderby, final int limit)
+	    (final String tabname, final String where, final String[] whereArgs, final String[] fieldnames,
+	     final String orderby, final int limit)
 	    throws IllegalArgumentException, IllegalStateException;
 
 	/**
@@ -119,7 +124,7 @@ public interface RDBAdapter
 	 * Returns null if key value not found.
 	 *
 	 * @param tabname  Table to query
-	 * @param kf  Key fieldname
+	 * @param kf  Key fieldname; to search case-insensitively, use "fieldname COLLATE NOCASE"
 	 * @param kv  Key value
 	 * @param fn  Field name to get
 	 * @return field value, or null if not found
@@ -227,7 +232,8 @@ public interface RDBAdapter
 	 * @see #getRowField(String, String, String, String[])
 	 * @since 0.9.07
 	 */
-	public long getRowLongField(final String tabname, final String fn, final String where, final String[] whereArgs, final long def)
+	public long getRowLongField
+	    (final String tabname, final String fn, final String where, final String[] whereArgs, final long def)
 	    throws IllegalStateException, IllegalArgumentException;
 
 	/**
@@ -256,12 +262,14 @@ public interface RDBAdapter
 
 	/**
 	 * Insert a new row into a table.
+	 *<BR><b>Reminder:</b> The _id field should be supplied as null here.
 	 * @param tabname  Table to insert into
 	 * @param fn  Field names; recommend you include all fields except _id,
 	 *          in the same field order as the CREATE TABLE statement.
-	 * @param fv   Field values, in the same field order as <tt>fn[]</tt>.
-	 *          May contain nulls.
+	 * @param fv   Field values, in the same field order as {@code fn[]}.
+	 *          May contain nulls. If {@code fn[]} contains _id, its {@code fv} should be null.
 	 * @param skipID  If true, <tt>fv[]</tt> does not contain the first (_id) field.
+	 *          That is, fv[0] is a value field, not the key field.
 	 *          This means that insert and update arrays are the same length.
 	 *          So, you can use the same code to build the <tt>fv[]</tt>
 	 *          arrays used in {@link #insert(String, String[], boolean)}
@@ -271,7 +279,7 @@ public interface RDBAdapter
 	 * @throws IllegalArgumentException if fn.length != fv.length
 	 */
 	public int insert(final String tabname, final String[] fn, final String[] fv, final boolean skipID)
-        throws IllegalStateException, IllegalArgumentException;
+	    throws IllegalStateException, IllegalArgumentException;
 
 	/**
 	 * Update fields of an existing row in a table, by id.
@@ -284,7 +292,7 @@ public interface RDBAdapter
 	 * @throws IllegalArgumentException if fn.length != fv.length
 	 */
 	public void update(final String tabname, final int id, final String[] fn, final String[] fv)
-        throws IllegalStateException, IllegalArgumentException;
+	    throws IllegalStateException, IllegalArgumentException;
 
 	/**
 	 * Update fields of an existing row in a table, by string key field.
@@ -298,7 +306,7 @@ public interface RDBAdapter
 	 * @throws IllegalArgumentException if fn.length != fv.length
 	 */
 	public void update(final String tabname, final String kf, final String kv, final String[] fn, final String[] fv)
-        throws IllegalStateException, IllegalArgumentException;
+	    throws IllegalStateException, IllegalArgumentException;
 
 	/**
 	 * Update a field in an existing row in a table, given a string-type key field name.
@@ -310,7 +318,7 @@ public interface RDBAdapter
 	 * @throws IllegalStateException if conn has been closed, table not found, etc.
 	 */
 	public void updateField(final String tabname, final String kf, final String kv, final String fn, final String fv)
-        throws IllegalStateException;
+	    throws IllegalStateException;
 
 	/**
 	 * Delete a current record, given its id.

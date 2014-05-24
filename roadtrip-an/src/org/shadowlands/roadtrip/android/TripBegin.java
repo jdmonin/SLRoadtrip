@@ -721,6 +721,10 @@ public class TripBegin extends Activity
 		if (startingPrevTStop == null)
 		{
 			if (locObj == null)
+				// search the table, avoid creating 2 locations with same name
+				locObj = Location.getByDescr(db, startloc);
+
+			if (locObj == null)
 			{
 				locObj = new Location(currA.getID(), null, null, startloc);
 				locObj.insert(db);

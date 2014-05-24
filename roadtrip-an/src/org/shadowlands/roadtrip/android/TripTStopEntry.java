@@ -1433,6 +1433,15 @@ public class TripTStopEntry extends Activity
 				if (locObj != null)
 					locID = locObj.getID();
 			}
+
+			if (locObj == null)
+			{
+				// search the table, avoid creating 2 locations with same name
+				locObj = Location.getByDescr(db, locat);
+				if (locObj != null)
+					locID = locObj.getID();
+			}
+
 			if (locObj == null)
 			{
 				if (locObjCreatedHere == null)

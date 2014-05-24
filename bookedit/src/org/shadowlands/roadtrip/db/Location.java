@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010-2011,2013 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2011,2013-2014 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -85,12 +85,37 @@ public class Location extends RDBRecord
     }
 
     /**
+     * Search the table for a Location with this description.
+     * @param db  db connection
+     * @param descr  Description of location; case-insensitive, not null
+     * @return  Location with this description, or null if none found.
+     *    If somehow the database has multiple matching rows, the one with lowest {@code _id} is returned.
+     * @throws IllegalStateException if db not open
+     * @since 0.9.40
+     */
+    public static Location getByDescr(RDBAdapter db, final String descr)
+	throws IllegalStateException
+    {
+	try {
+		Vector<String[]> locs = db.getRows(TABNAME, "loc_descr COLLATE NOCASE", descr, FIELDS_AND_ID, "_id", 0);
+		if (locs != null)
+			return new Location(db, locs.firstElement());
+	}
+	catch (IllegalArgumentException e) { }
+	catch (RDBKeyNotFoundException e) { }
+	// don't catch IllegalStateException, in case db is closed
+
+	return null;
+    }
+
+    /**
      * Retrieve an existing location, by id, from the database.
      *
      * @param db  db connection
      * @param id  id field
      * @throws IllegalStateException if db not open
      * @throws RDBKeyNotFoundException if cannot retrieve this ID
+     * @see #getByDescr(RDBAdapter, String)
      */
     public Location(RDBAdapter db, final int id)
         throws IllegalStateException, RDBKeyNotFoundException

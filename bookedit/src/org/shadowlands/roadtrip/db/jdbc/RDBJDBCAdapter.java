@@ -296,6 +296,8 @@ public class RDBJDBCAdapter implements RDBAdapter
 	     final String orderby, final int limit)
 	    throws IllegalArgumentException, IllegalStateException
 	{
+		if ((whereArgs != null) && (where == null))
+			throw new IllegalArgumentException("null where, non-null whereArgs");
 		if (conn == null)
 			throw new IllegalStateException("conn not open");
 
@@ -308,10 +310,6 @@ public class RDBJDBCAdapter implements RDBAdapter
 			{
 				sb.append(" where ");
 				sb.append(where);
-			}
-			else if (whereArgs != null)
-			{
-				throw new IllegalArgumentException("null where, non-null whereArgs");
 			}
 			if (orderby != null)
 			{
@@ -553,7 +551,8 @@ public class RDBJDBCAdapter implements RDBAdapter
 		return retval;
 	}
 
-	public int getRowIntField(final String tabname, final String fn, final String where, final String[] whereArgs, final int def)
+	public int getRowIntField
+	    (final String tabname, final String fn, final String where, final String[] whereArgs, final int def)
 	    throws IllegalStateException, IllegalArgumentException
 	{
 		ResultSet rs = getRowField_rset(tabname, fn, where, whereArgs);
@@ -665,7 +664,7 @@ public class RDBJDBCAdapter implements RDBAdapter
 			} else {
 				sql.setLong(1, iv);
 			}
-			rs = sql.executeQuery();
+			rs = sql.executeQuery();  // SELECT COUNT(*) FROM ...
 			if (rs.next())
 				retval = rs.getInt(1);
 			rs.close();

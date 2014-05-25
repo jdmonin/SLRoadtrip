@@ -256,10 +256,9 @@ public class RDBOpenHelper
 	// javadocs inherited from interface
 	//
 
-	public String[] getRow(String tabname, int id, String[] fields)
+	public String[] getRow(final String tabname, final int id, final String[] fields)
 	    throws IllegalStateException
 	{
-
 		if (db == null)
 			db = getWritableDatabase();  // TODO chk exceptions
 
@@ -286,7 +285,11 @@ public class RDBOpenHelper
 		if (db == null)
 			db = getWritableDatabase();  // TODO chk exceptions
 
-		final String tWhere = kf + "=?";
+		final String tWhere;
+		if (kf.endsWith("<>"))
+			tWhere = kf.substring(0, kf.length() - 2) + "<>?";
+		else
+			tWhere = kf + "=?";
 		final String[] tWhereArg = new String[]{ kv };
 
 		Cursor dbqc = db.query(tabname, fields, tWhere, tWhereArg, null, null, null /* ORDERBY */ );
@@ -734,6 +737,12 @@ public class RDBOpenHelper
 		return dbSQLRsrcs.openRawResource(res);
 	}
 
+	/**
+	 * {@inheritDoc}
+	 *<P>
+	 * On Android, currently ignores transaction commands because SQL updates are typically within a method such as
+	 * {@code onUpgrade()} which already has a transaction begun by Android.
+	 */
 	public void execStrucUpdate(final String sql)
 		throws IllegalStateException, java.sql.SQLException
 	{
@@ -768,7 +777,7 @@ public class RDBOpenHelper
 		try
 		{
 			dbqc = db.rawQuery("pragma integrity_check", null);
-		} catch (Throwable e)  // SQLException has been thrown in the wild, but isn't documented
+		} catch (Exception e)  // SQLException has been thrown on devices, but isn't documented in API
 		{
 			try
 			{

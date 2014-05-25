@@ -240,7 +240,7 @@ public interface RDBAdapter
 	 * Count the rows in this table, optionally matching a key value.
 	 * @param tabname  Table to select COUNT(*)
 	 * @param kf  Key fieldname, or null to count all rows
-	 * @param kv  Key string-value, or null; if <tt>kf</tt> != null, will count rows with null <tt>kf</tt>.
+	 * @param kv  Key string-value, or null; if null and <tt>kf</tt> != null, will count rows with null <tt>kf</tt>.
 	 * @return row count, or 0
 	 * @throws IllegalStateException if conn has been closed, table not found, etc.
 	 * @since 0.9.00

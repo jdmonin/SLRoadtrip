@@ -210,7 +210,7 @@ public class RDBJDBCAdapter implements RDBAdapter
 		{
 			String sql;
 			if (kf.endsWith("<>"))
-				sql = "select * from " + tabname + " where " + kf.substring(0, kf.length() - 2) + " <> ? ;";
+				sql = "select * from " + tabname + " where " + kf + " ? ;";  // sql ends with "<> ? ;"
 			else
 				sql = "select * from " + tabname + " where " + kf + " = ? ;";
 			PreparedStatement prep = conn.prepareStatement(sql);
@@ -249,11 +249,14 @@ public class RDBJDBCAdapter implements RDBAdapter
 				sb.append(" where ");
 				if (kf.endsWith("<>"))
 				{
-					sb.append(kf.substring(0, kf.length() - 2));
 					if (kv != null)
-						sb.append(" <> ? ");
-					else
+					{
+						sb.append(kf);
+						sb.append(" ? ");  // fieldname + "<> ? "
+					} else {
+						sb.append(kf.substring(0, kf.length() - 2));
 						sb.append(" is not null ");
+					}
 				} else {
 					sb.append(kf);
 					if (kv != null)

@@ -57,7 +57,7 @@ public interface RDBAdapter
 	 * @param kf  Key fieldname; to search case-insensitively, use "fieldname COLLATE NOCASE".
 	 *              To get all rows except {@code kv} ({@code kf} &lt;&gt; {@code kv}),
 	 *              the {@code kf} string should end with &lt;&gt;
-	 * @param kv  Key value
+	 * @param kv  Key value; must not be null
 	 * @param fields  Field names to return
 	 * @return  Corresponding field values to field names, or null if errors or if table not found.
 	 *       Field values are returned in the order specified in <tt>fields[]</tt>.

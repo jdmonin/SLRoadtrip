@@ -287,7 +287,7 @@ public class RDBOpenHelper
 
 		final String tWhere;
 		if (kf.endsWith("<>"))
-			tWhere = kf.substring(0, kf.length() - 2) + "<>?";
+			tWhere = kf + "?";  // fieldname + "<>?"
 		else
 			tWhere = kf + "=?";
 		final String[] tWhereArg = new String[]{ kv };
@@ -320,7 +320,7 @@ public class RDBOpenHelper
 		if (kv != null)
 		{
 			if (kf.endsWith("<>"))
-				where = kf.substring(0, kf.length() - 2) + "<>?";
+				where = kf + "?";  // fieldname + "<>?"
 			else 
 				where = kf + "=?";
 			whereArgs = new String[]{ kv };

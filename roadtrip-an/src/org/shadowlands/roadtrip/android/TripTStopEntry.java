@@ -1152,6 +1152,16 @@ public class TripTStopEntry extends Activity
 			return;
 		}
 
+		if ((via.getAdapter() == null) && (locObj == null) && (via.getText().length() == 0))
+		{
+			// Probably stopping at a new location. Just in case location name is
+			// already in db, though, check that and if found update the vias.
+
+			locObj = Location.getByDescr(db, loc.getText().toString().trim());
+			if (locObj != null)
+				updateViaRouteAutocomplete(null, false);
+		}
+
 		if (via.getAdapter() == null)
 		{
 			Toast.makeText(this, R.string.trip_tstop_entry_no_vias_entered, Toast.LENGTH_SHORT).show();
@@ -2054,7 +2064,10 @@ public class TripTStopEntry extends Activity
 		}
 	}
 
-	/** Callback for {@link OnItemClickListener} for location autocomplete; read {@link #loc}, set {@link #locObj}. */
+	/**
+	 * Callback for {@link OnItemClickListener} for location autocomplete; read {@link #loc}, set {@link #locObj},
+	 * and update the via-route list.
+	 */
 	public void onItemClick(AdapterView<?> parent, View clickedOn, int position, long rowID)
 	{
 		ListAdapter la = loc.getAdapter();

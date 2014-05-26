@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  Copyright (C) 2010-2011 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2011,2014 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -98,12 +98,43 @@ public class ViaRoute extends RDBRecord
     }
 
     /**
+     * Search the table for a ViaRoute between these locations with this description.
+     * @param db  db connection
+     * @param locID_from  Location to start from
+     * @param locID_to  Location to go to
+     * @param descr  Description to search for; case-insensitive, not null
+     * @return  ViaRoute between these locations with this description, or null if none found.
+     *    If somehow the database has multiple matching rows, the one with lowest {@code _id} is returned.
+     * @throws IllegalStateException if db not open
+     * @since 0.9.40
+     */
+    public static ViaRoute getByLocsAndDescr(RDBAdapter db, final int locID_from, final int locID_to, final String descr)
+	throws IllegalStateException
+    {
+	try {
+		final String[] locIDsAndDescr = new String[]
+			{ Integer.toString(locID_from), Integer.toString(locID_to), descr };
+		Vector<String[]> vias = db.getRows
+			(TABNAME, "locid_from=? and locid_to=? and via_descr COLLATE NOCASE = ?", locIDsAndDescr,
+			 FIELDS_AND_ID, "_id", 0);
+		if (vias != null)
+			return new ViaRoute(db, vias.firstElement());
+	}
+	catch (IllegalArgumentException e) { }
+	catch (RDBKeyNotFoundException e) { }
+	// don't catch IllegalStateException, in case db is closed
+
+	return null;
+    }
+
+    /**
      * Retrieve an existing ViaRoute, by id, from the database.
      *
      * @param db  db connection
      * @param id  id field
      * @throws IllegalStateException if db not open
      * @throws RDBKeyNotFoundException if cannot retrieve this ID
+     * @see #getByLocsAndDescr(RDBAdapter, int, int, String)
      */
     public ViaRoute(RDBAdapter db, final int id)
         throws IllegalStateException, RDBKeyNotFoundException

@@ -1544,9 +1544,16 @@ public class TripTStopEntry extends Activity
 			}
 			if (viaRouteObjCreatedHere == null)
 			{
-				viaRouteObj = new ViaRoute(prevLocObj.getID(), locID, odo_dist, via_route);
-				viaID = viaRouteObj.insert(db);
-				createdVia = true;
+				// search the table first, avoid creating 2 vias with same locations and name
+				viaRouteObj = ViaRoute.getByLocsAndDescr(db, prevLocObj.getID(), locID, via_route);
+				if (viaRouteObj != null)
+				{
+					viaID = viaRouteObj.getID();
+				} else {
+					viaRouteObj = new ViaRoute(prevLocObj.getID(), locID, odo_dist, via_route);
+					viaID = viaRouteObj.insert(db);
+					createdVia = true;
+				}
 			} else {
 				// re-use it
 				viaRouteObj = viaRouteObjCreatedHere;

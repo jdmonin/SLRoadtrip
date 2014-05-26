@@ -27,7 +27,6 @@ import java.util.Vector;
 import org.shadowlands.roadtrip.db.GasBrandGrade;
 import org.shadowlands.roadtrip.db.Location;
 import org.shadowlands.roadtrip.db.RDBAdapter;
-import org.shadowlands.roadtrip.db.Settings;
 import org.shadowlands.roadtrip.db.TStop;
 import org.shadowlands.roadtrip.db.TStopGas;
 import org.shadowlands.roadtrip.db.Trip;
@@ -1117,9 +1116,14 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	 * Read this TStop's location description from text or from its associated Location.
 	 * Attempts to read or fill {@link #locCache}.
 	 * A copy of this method is in org.shadowlands.roadtrip.android.LogbookRecentGas.
+	 *<P>
+	 * Since this method is for display only, not further processing, it tries to give
+	 * a human-readable message if the location data is missing (db inconsistency).
+	 *
 	 * @param conn  db connection to use
 	 * @param ts  TStop to look at
-	 * @return Location text, or null
+	 * @return Location text, or if not found in db,
+	 *     "(locID " + {@link TStop#getLocationID() ts.getLocationID()} + " not found)"
 	 */
 	private final String getTStopLocDescr(TStop ts, RDBAdapter conn)
 	{
@@ -1141,6 +1145,11 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 				if (lo != null)
 					locDescr = lo.getLocation();
 			}
+
+			if (locDescr == null)
+				// unlikely except while unit-testing new development;
+				// inconsistent DB. Avoid NullPointerException if it happens
+				locDescr = "(locID " + locID + " not found)";
 		}
 		return locDescr;
 	}

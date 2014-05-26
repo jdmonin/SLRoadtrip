@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2011,2013 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2011,2013-2014 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -41,8 +41,6 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.Intent;
-import android.database.sqlite.SQLiteException;
 import android.os.Bundle;
 import android.text.format.DateFormat;
 import android.view.Menu;
@@ -230,9 +228,13 @@ _id|quant|price_per|price_total|fillup|station|vid|gas_brandgrade_id|odo_total|t
 	 * Read this TStop's location description from text or from its associated Location.
 	 * Attempts to read or fill {@link #locCache}.
 	 * This is a copy of LogbookTableModel.getTStopLocDescr.
+	 *<P>
+	 * Since this method is for display only, not further processing, it tries to give
+	 * a human-readable message if the location data is missing (db inconsistency).
 	 * @param conn  db connection to use
 	 * @param ts  TStop to look at
-	 * @return Location text, or null
+	 * @return Location text, or if not found in db,
+	 *     "(locID " + {@link TStop#getLocationID() ts.getLocationID()} + " not found)"
 	 */
 	private final String getTStopLocDescr(TStop ts, RDBAdapter conn)
 	{
@@ -254,6 +256,11 @@ _id|quant|price_per|price_total|fillup|station|vid|gas_brandgrade_id|odo_total|t
 				if (lo != null)
 					locDescr = lo.getLocation();
 			}
+
+			if (locDescr == null)
+				// unlikely except while unit-testing new development;
+				// inconsistent DB. Avoid NullPointerException if it happens
+				locDescr = "(locID " + locID + " not found)";
 		}
 		return locDescr;
 	}

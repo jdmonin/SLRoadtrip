@@ -1494,6 +1494,13 @@ public class TripTStopEntry extends Activity
 		// Get or create the ViaRoute db record,
 		// if we don't already have it
 		final int viaID;
+
+		if ((viaRouteObj == null) && ! ((locID == 0) || (via_route == null) || (prevLocObj == null)))
+			// via description may have been typed instead of picked from dropdown.
+			// search the table: avoid creating 2 vias with same locations and desc.
+			viaRouteObj = ViaRoute.getByLocsAndDescr(db, prevLocObj.getID(), locID, via_route);
+			    // if none found, will still be null
+
 		if ((locID == 0) || (via_route == null) || (prevLocObj == null))
 		{
 			viaID = 0;
@@ -1544,16 +1551,9 @@ public class TripTStopEntry extends Activity
 			}
 			if (viaRouteObjCreatedHere == null)
 			{
-				// search the table first, avoid creating 2 vias with same locations and name
-				viaRouteObj = ViaRoute.getByLocsAndDescr(db, prevLocObj.getID(), locID, via_route);
-				if (viaRouteObj != null)
-				{
-					viaID = viaRouteObj.getID();
-				} else {
-					viaRouteObj = new ViaRoute(prevLocObj.getID(), locID, odo_dist, via_route);
-					viaID = viaRouteObj.insert(db);
-					createdVia = true;
-				}
+				viaRouteObj = new ViaRoute(prevLocObj.getID(), locID, odo_dist, via_route);
+				viaID = viaRouteObj.insert(db);
+				createdVia = true;
 			} else {
 				// re-use it
 				viaRouteObj = viaRouteObjCreatedHere;
@@ -1599,6 +1599,7 @@ public class TripTStopEntry extends Activity
 					GasBrandGrade bg = new GasBrandGrade(gbName);
 					bgid = bg.insert(db);
 					bundleGas.putInt(TripTStopGas.EXTRAS_FIELD_BRANDGRADE_ID, bgid);
+					gbgCreatedHere = true;
 					if (stopGas != null)
 					{
 						stopGas.gas_brandgrade_id = bgid;
@@ -1608,6 +1609,7 @@ public class TripTStopEntry extends Activity
 					createdGasBrandGrade = false;  // null or 0-length name
 					if (gbgCreatedHere)
 					{
+						gbgCreatedHere = false;
 						// TODO delete the gbg created, since we aren't using it
 					}
 				}
@@ -1700,6 +1702,32 @@ public class TripTStopEntry extends Activity
 					if (areaID != 0)
 						currTS.setAreaID(areaID);
 				}
+			} else {
+				// Currently stopped, not continuing yet, so this stop may be edited again:
+
+				// If any related records were newly created, make sure their flags are set in currTS.
+
+				// If any related records were previously created for this stop, but the current changes
+				// chose other preexisting ones instead of the ones created, clear those flags in currTS
+				// so that future edits won't think the preexisting ones were created for this stop, and
+				// then mistakenly delete them if their activity field is cleared.
+
+				if ((locObjCreatedHere == null) && currTS.isSingleFlagSet(TStop.TEMPFLAG_CREATED_LOCATION))
+					currTS.clearFlagSingle(TStop.TEMPFLAG_CREATED_LOCATION);
+				else if (createdLoc)
+					currTS.setFlagSingle(TStop.TEMPFLAG_CREATED_LOCATION);
+
+				if (((currTS.getVia_id() == 0) || (viaRouteObjCreatedHere == null))
+				    && currTS.isSingleFlagSet(TStop.TEMPFLAG_CREATED_VIAROUTE))
+					currTS.clearFlagSingle(TStop.TEMPFLAG_CREATED_VIAROUTE);
+				else if (createdVia)
+					currTS.setFlagSingle(TStop.TEMPFLAG_CREATED_VIAROUTE);
+
+				if ((! (gbgCreatedHere && currTS.isSingleFlagSet(TStop.FLAG_GAS)))
+				    && currTS.isSingleFlagSet(TStop.TEMPFLAG_CREATED_GASBRANDGRADE))
+					currTS.clearFlagSingle(TStop.TEMPFLAG_CREATED_GASBRANDGRADE);
+				else if (createdGasBrandGrade)
+					currTS.setFlagSingle(TStop.TEMPFLAG_CREATED_GASBRANDGRADE);
 			}
 
 			currTS.commit();

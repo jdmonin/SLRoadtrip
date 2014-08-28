@@ -246,7 +246,8 @@ public class LogbookShow extends Activity
 				ListAdapter la = loc.getAdapter();
 				if (la == null)
 					return;
-				askLocationAndShow_locObj = (Location) la.getItem(position);
+
+				askLocationAndShow_locObj = (position != -1) ? (Location) la.getItem(position) : null;
 			}
 			});
 
@@ -294,23 +295,30 @@ public class LogbookShow extends Activity
 		alert.setPositiveButton(android.R.string.search_go, new DialogInterface.OnClickListener() {
 			public void onClick(DialogInterface dialog, int whichButton)
 			{
-				final Vehicle showV = null;
+				final String locText = loc.getText().toString().trim();
 				CheckBox cb = (CheckBox) askItems.findViewById(R.id.logbook_show_popup_locs_allv);
 				if (cb != null)
 					askLocationAndShow_allV = cb.isChecked();
+
+				if ((askLocationAndShow_locObj == null) && (locText.length() > 0))
+				{
+					// Typed location description, instead of picked from autocomplete
+					try
+					{
+						askLocationAndShow_locObj = Location.getByDescr(db, locText);
+					} catch (IllegalStateException e) {}
+				}
 
 				if (askLocationAndShow_locObj != null)
 				{
 					showTripsForLocation
 						(askLocationAndShow_locObj.getID(), askLocationAndShow_allV, vID, fromActivity);
 				} else {
-					final int text;
-					if (loc.getText().length() == 0)
-						text = R.string.please_enter_the_location;
-					else
-						text = R.string.please_choose_existing_location;
+					final int msg = (locText.length() == 0)
+						? R.string.please_enter_the_location
+						: R.string.please_choose_existing_location;
 
-					Toast.makeText(fromActivity, text, Toast.LENGTH_SHORT).show();
+					Toast.makeText(fromActivity, msg, Toast.LENGTH_SHORT).show();
 				}
 			}
 		});

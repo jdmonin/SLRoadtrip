@@ -23,7 +23,7 @@
  The "About..." text is found here; the version number is found in AndroidManifest.xml.
  -->
 <resources>
-<string name="app_about">Shadowlands RoadTrip, a handy app to keep track of your vehicles\' mileage, trips, gas, and service.\n\nSource: https://code.google.com/p/shadowlands-roadtrip/\n\nCopyright 2010-2014 Jeremy D Monin\nLicense: GPLv3 (http://www.gnu.org/licenses/gpl-3.0.html)\n</string>
+<string name="app_about">Shadowlands RoadTrip, a handy app to keep track of your vehicles\' mileage, trips, gas, and service.\n\nSource: https://code.google.com/p/shadowlands-roadtrip/\n\nCopyright 2010-2015 Jeremy D Monin\nLicense: GPLv3 (http://www.gnu.org/licenses/gpl-3.0.html)\n</string>
 <string name="app_name">Shadowlands RoadTrip</string>
 <string name="about">About</string>
 <string name="active">Active</string>

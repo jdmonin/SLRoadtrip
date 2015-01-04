@@ -658,7 +658,7 @@ public class LogbookEditPane extends JPanel implements ActionListener, WindowLis
 		} catch (DataFormatException e) {
 			errMsg = "Error in file validation.";
 		} catch (IllegalStateException e) {
-			errMsg = "This backup file is an early beta version too old to restore.";
+			errMsg = "This backup file is an early beta version " + sourceSchemaVers + " too old to restore.";
 		} catch (Exception e) {
 			// SQLException, IOException
 	    		System.err.println("Failed during copy & validation: " + e);

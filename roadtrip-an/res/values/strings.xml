@@ -2,7 +2,7 @@
 <!--
  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
 
- This file Copyright (C) 2010-2014 Jeremy D Monin (jdmonin@nand.net)
+ This file Copyright (C) 2010-2015 Jeremy D Monin (jdmonin@nand.net)
 
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
@@ -41,9 +41,10 @@
 <string name="change">Change</string>
 <string name="change_driver">Change Driver</string>
 <string name="change_driver_vehicle">Change Driver / Vehicle</string>
+<string name="choose_an_active_vehicle">Choose an active vehicle.</string>
 <string name="choose_a_frequent_trip">Choose a frequent trip</string>
+<string name="choose_an_inactive_vehicle">Choose an inactive vehicle.</string>
 <string name="choose_a_stop">Choose a stop:</string>
-<string name="choose_a_vehicle">Choose a vehicle:</string>
 <string name="confirm">Confirm</string>
 <string name="continue_from_colon">Continue from:</string>
 <string name="create">Create</string>

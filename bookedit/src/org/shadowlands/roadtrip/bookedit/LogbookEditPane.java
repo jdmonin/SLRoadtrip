@@ -226,7 +226,7 @@ public class LogbookEditPane extends JPanel implements ActionListener, WindowLis
 		else if (src == bAddCancel)
 			actionAddTripFinish(false);
 		else if (src == bChgVehicle)
-			actionChangeVehicle();
+			actionChangeVehicle(veh.isActive());
 		else if (src == bTmpVerifyDB)
 			actionVerifyDB();
 	}
@@ -273,9 +273,15 @@ public class LogbookEditPane extends JPanel implements ActionListener, WindowLis
 		bChgVehicle.setVisible(true);
 	}
 
-	private void actionChangeVehicle()
+	/**
+	 * Read all active/inactive vehicles from database and show the dialog to choose one. 
+	 * @param isActive  True to show active vehicles, false to show inactive
+	 */
+	private void actionChangeVehicle(final boolean isActive)
 	{
-		Vehicle[] allV = Vehicle.getAll(conn, 0);
+		Vehicle[] allV = Vehicle.getAll
+			(conn, Vehicle.FLAG_WITH_OTHER |
+			    ((isActive) ? Vehicle.FLAG_ONLY_ACTIVE : Vehicle.FLAG_ONLY_INACTIVE));
 		if (allV.length < 2)
 		{
 			// TODO allow add new veh
@@ -288,7 +294,7 @@ public class LogbookEditPane extends JPanel implements ActionListener, WindowLis
 		}
 
 		// show the chooser for vehicles
-		new VehicleChooserDialog(allV, veh.getID());
+		new VehicleChooserDialog(allV, isActive, veh.getID());
 	}
 
 	/** Verify the DB consistency with {@link RDBVerifier#verify(int)}, and show a passed/failed message box. */
@@ -768,24 +774,44 @@ public class LogbookEditPane extends JPanel implements ActionListener, WindowLis
 	private class VehicleChooserDialog extends JDialog
 		implements ItemListener, ActionListener
 	{
-		private final int currV;
+		/**
+		 * Are the vehicles in the dialog all active or inactive?
+		 * @since 0.9.41
+		 */
+		private final boolean isActive;
+		private final int currVID;
 		private JComboBox dropdown;
 
-		public VehicleChooserDialog(Vehicle[] vlist, final int currV)
+		/**
+		 * Create and show the VehicleChooserDialog.
+		 * @param vlist  List of active or inactive vehicles, from {@link Vehicle#getAll(RDBAdapter, int)}.
+		 *     Should include {@link Vehicle#OTHER_VEHICLE} to change dropdown contents to the other
+		 *     (inactive or active) vehicles.
+		 * @param isActive  Whether {@code vlist} entries are all active or inactive
+		 * @param currV  Currently displayed vehicle, which may or may not be in this list
+		 */
+		public VehicleChooserDialog(Vehicle[] vlist, final boolean isActive, final int currV)
 		{
-			this.currV = currV;
+			this.isActive = isActive;
+			this.currVID = currV;
 			setLayout(new FlowLayout());
-			add(new JLabel("Choose a vehicle to display."));
+			add(new JLabel((isActive)
+				? "Choose an active vehicle to display."
+				: "Choose an inactive vehicle to display."));
 			dropdown = new JComboBox(vlist);
 			dropdown.setEditable(false);
+			boolean selAny = false;
 			for (int i = vlist.length - 1; i>=0; --i)
 			{
 				if (currV == vlist[i].getID())
 				{
 					dropdown.setSelectedItem(vlist[i]);
+					selAny = true;
 					break;
 				}
 			}
+			if ((! selAny) && (vlist[vlist.length - 1] == Vehicle.OTHER_VEHICLE))
+				dropdown.setSelectedItem(vlist[vlist.length - 1]);
 			dropdown.addItemListener(this);  // not until after setSelectedItem
 			add(dropdown);
 			JButton bCancel = new JButton("Cancel");
@@ -805,11 +831,17 @@ public class LogbookEditPane extends JPanel implements ActionListener, WindowLis
 			if (! (o instanceof Vehicle))
 				return;
 			Vehicle v = (Vehicle) o;
-			final int id = v.getID();
-			if (currV == id)
-				return;
-			setVisible(false);
-			showVehicleTrips(id);  // callback to LogbookEditPane
+			if (v != Vehicle.OTHER_VEHICLE)
+			{
+				final int id = v.getID();
+				if (currVID == id)
+					return;
+				setVisible(false);
+				showVehicleTrips(id);  // callback to LogbookEditPane
+			} else {
+				setVisible(false);
+				actionChangeVehicle(! isActive);
+			}
 			dispose();
 		}
 

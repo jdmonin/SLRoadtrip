@@ -106,7 +106,9 @@ r347	0.9.20	2013-10-22	Change vehicle & some related settings during trip; add l
 r409	0.9.40	2014-08-27	Most current settings are now per-vehicle; refactor db restore code;
 				bookedit can view backups having old schemas; Set build target and targetSdkVersion to 11 (v3.0)
 				for ActionBar and Holo Light theme if available, but keep minSdkVersion at 8 (v2.2)
--	0.9.41	-		Being developed now; minor changes from 0.9.40
+-	0.9.41	-		Being developed now; minor improvements and bugfixes since 0.9.40.
+				Less clutter in vehicle dropdowns: Show only Active or Inactive vehicles, with "Other..." entry
+				to switch, in Bookedit and in android Logbook and Recent Gas.
 
 Also see doc/hist/*.sql for previous schema updates.
 

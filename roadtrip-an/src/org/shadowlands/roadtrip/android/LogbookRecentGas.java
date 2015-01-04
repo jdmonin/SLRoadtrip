@@ -75,10 +75,26 @@ public class LogbookRecentGas extends Activity
 	private TextView tvTopText;
 	private ListView lvGasStopsList;
 
-	/** For {@link #askVehicleChange()}'s list */
+	/**
+	 * Vehicles from database for {@link #askVehicleChange(boolean)}'s list.
+	 * These vehicles' status are all {@link #isAllVActive}.
+	 */
 	private Vehicle[] allV;
+
+	/**
+	 * Are the {@link #allV} vehicles all active or inactive?
+	 * @since 0.9.41
+	 */
+	private boolean isAllVActive;
+
 	/** Currently showing vehicle ID, or -1 */
 	private int v_id;
+
+	/**
+	 * Is the current vehicle ({@link #v_id}) active or inactive?
+	 * @since 0.9.41
+	 */
+	private boolean isCurrVActive;
 
 	/**
 	 * {@link Location} cache. Each item is its own key.
@@ -131,6 +147,7 @@ public class LogbookRecentGas extends Activity
 	    if (showV == null)
 		showV = Settings.getCurrentVehicle(db, false);
 
+	    isAllVActive = showV.isActive();
 	    populateRecentGasList(db, showV, 40);  // LIMIT 40
 	}
 
@@ -145,6 +162,9 @@ public class LogbookRecentGas extends Activity
 			setTitle(getTitle() + ": " + ve.toString());  // first call
 
 		v_id = ve.getID();
+		isCurrVActive = ve.isActive();
+		if (isAllVActive != isCurrVActive)
+			allV = null;
 
 		String[] gaslist;
 		/**
@@ -298,7 +318,7 @@ _id|quant|price_per|price_total|fillup|station|vid|gas_brandgrade_id|odo_total|t
 	public boolean onOptionsItemSelected(MenuItem item) {
 	    switch (item.getItemId()) {
 	    case R.id.menu_logbook_gas_otherv:
-	    	askVehicleChange();
+	    	askVehicleChange(isCurrVActive);
 	        return true;
 
 	    default:
@@ -309,11 +329,17 @@ _id|quant|price_per|price_total|fillup|station|vid|gas_brandgrade_id|odo_total|t
 	/**
 	 * Pop up an AlertDialog to select the vehicle to display.
 	 * If one is chosen, call {@link #populateRecentGasList(RDBAdapter, Vehicle, int)} on it.
+	 * @param isActive  Should the dialog show all active vehicles, or all inactive ones?
 	 */
-	public final void askVehicleChange()
+	public final void askVehicleChange(final boolean isActive)
 	{
-		if (allV == null)
-    		allV = Vehicle.getAll(db, 0);
+		if ((allV == null) || (isAllVActive != isActive))
+		{
+			allV = Vehicle.getAll
+				(db, Vehicle.FLAG_WITH_OTHER |
+				    ((isActive) ? Vehicle.FLAG_ONLY_ACTIVE : Vehicle.FLAG_ONLY_INACTIVE));
+			isAllVActive = isActive;
+		}
 
 		// Grab currently-showing vehicle, vehicle names
 		int idx = -1;
@@ -326,13 +352,15 @@ _id|quant|price_per|price_total|fillup|station|vid|gas_brandgrade_id|odo_total|t
 		}
 
     	AlertDialog.Builder alert = new AlertDialog.Builder(this);
-    	alert.setTitle(R.string.choose_a_vehicle);
+    	alert.setTitle((isActive) ? R.string.choose_an_active_vehicle : R.string.choose_an_inactive_vehicle);
     	alert.setSingleChoiceItems(vNames, idx, new DialogInterface.OnClickListener() {
     	    public void onClick(DialogInterface dialog, int item) {
     	        if ((item < 0) || (item >= allV.length))
     	        	return;
     	        Vehicle ve = allV[item];
-    	        if (v_id != ve.getID())
+    	        if (ve == Vehicle.OTHER_VEHICLE)
+    	        	askVehicleChange(! isActive);
+    	        else if (v_id != ve.getID())
 	    	        populateRecentGasList(db, ve, 40);  // LIMIT 40
     	        dialog.dismiss();
     	    }

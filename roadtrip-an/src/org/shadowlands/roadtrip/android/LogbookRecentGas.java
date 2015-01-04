@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2011,2013-2014 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2011,2013-2015 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -41,6 +41,7 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.Bundle;
 import android.text.format.DateFormat;
 import android.view.Menu;
@@ -55,13 +56,20 @@ import android.widget.Toast;
 
 /**
  * Activity listing recent gas stops for the current vehicle (up to 40).
- * Another vehicle's gas stops can be displayed by calling {@link #populateRecentGasList(RDBAdapter, Vehicle, int)}.
+ * Another vehicle's gas stops can be displayed by adding {@link #EXTRAS_VEHICLE_ID}
+ * to the intent, or calling {@link #populateRecentGasList(RDBAdapter, Vehicle, int)}.
  *
  * @author jdmonin
  */
 public class LogbookRecentGas extends Activity
 	implements OnItemClickListener
 {
+	/**
+	 * If added to intent extras, show recent gas of this vehicle instead of the current vehicle.
+	 * @since 0.9.41
+	 */
+	public static final String EXTRAS_VEHICLE_ID = "LogbookGas.vid";
+
 	private RDBAdapter db = null;
 
 	private TextView tvTopText;
@@ -106,9 +114,24 @@ public class LogbookRecentGas extends Activity
 	    lvGasStopsList = (ListView) findViewById(R.id.logbook_recent_gas_list);
 	    lvGasStopsList.setOnItemClickListener(this);
 
-		db = new RDBOpenHelper(this);
-		Vehicle currV = Settings.getCurrentVehicle(db, false);
-		populateRecentGasList(db, currV, 40);  // LIMIT 40
+	    Vehicle showV = null;
+	    Intent i = getIntent();
+	    if (i != null)
+	    {
+		final int vid = i.getIntExtra(EXTRAS_VEHICLE_ID, 0);
+		if (vid != 0)
+		{
+			try
+			{
+				showV = new Vehicle(db, vid);
+			}
+			catch (Throwable e) { }
+		}
+	    }
+	    if (showV == null)
+		showV = Settings.getCurrentVehicle(db, false);
+
+	    populateRecentGasList(db, showV, 40);  // LIMIT 40
 	}
 
 	/**

@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010-2014 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2015 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -730,7 +730,12 @@ public class LogbookShow extends Activity
 	public boolean onOptionsItemSelected(MenuItem item) {
 	    switch (item.getItemId()) {
 	    case R.id.menu_logbook_recent_gas:
-	    	startActivity(new Intent(this, LogbookRecentGas.class));
+	    	{
+	    		Intent i = new Intent(this, LogbookRecentGas.class);
+	    		if (showV != null)
+				i.putExtra(LogbookRecentGas.EXTRAS_VEHICLE_ID, showV.getID());
+	    		startActivity(i);
+	    	}
 	        return true;
 
 		case R.id.menu_logbook_filter_location:

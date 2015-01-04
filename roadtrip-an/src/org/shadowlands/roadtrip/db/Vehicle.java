@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010-2014 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2015 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -59,6 +59,39 @@ public class Vehicle extends RDBRecord
     private static final String[] FIELDS_ODO_LASTTRIP =
     	{ "odo_curr", "last_tripid" }; 
 
+    /**
+     * Placeholder for "Other" entry in {@link #getAll(RDBAdapter, int)},
+     * to move from showing Active to Inactive ones.
+     *<P>
+     * <B>I18N:</B> The "Other..." text is kept in the Model field.  Call {@link #setModel(String)} to localize. 
+     *
+     * @since 0.9.41
+     */
+    public static final Vehicle OTHER_VEHICLE = new Vehicle
+	(null, new Person("", true, null, null), -1, "Other...", 0, 0, 0, null, null, 0, 0, null);
+
+    /**
+     * Flag to retrieve only active vehicles in {@link #getAll(RDBAdapter, int)}
+     * @since 0.9.41
+     * @see #FLAG_ONLY_INACTIVE
+     * @see #FLAG_WITH_OTHER
+     */
+    public static final int FLAG_ONLY_ACTIVE = 0x1;
+
+    /**
+     * Flag to retrieve only inactive vehicles in {@link #getAll(RDBAdapter, int)}.
+     * @since 0.9.41
+     * @see #FLAG_ONLY_ACTIVE
+     */
+    public static final int FLAG_ONLY_INACTIVE = 0x2;
+
+    /**
+     * Flag to add "Other..." ({@link #OTHER_VEHICLE} placeholder) to {@link #getAll(RDBAdapter, boolean)} results.
+     * @since 0.9.41
+     * @see #FLAG_ONLY_ACTIVE
+     */
+    public static final int FLAG_WITH_OTHER = 0x4;
+
     /** optional nickname or color */
     private String nickname;
 
@@ -68,7 +101,7 @@ public class Vehicle extends RDBRecord
     private int makeid;
     private String model;
 
-    /** model year */
+    /** model year, or 0 if unknown */
     private int year;
 
     /** see sql schema for date fmt.  0 is assumed empty/unused. */
@@ -119,21 +152,54 @@ public class Vehicle extends RDBRecord
     /**
      * Get the Vehicles currently in the database.
      * @param db  database connection
-	 * @param activeOnly  If true, don't include inactive vehicles
-     * @return an array of Vehicle objects from the database, ordered by name, or null if none
+     * @param activeSubsetFlags  0 for all vehicles, or flags to include only active or inactive and optionally
+     *     include the {@link #OTHER_VEHICLE} placeholder at the end of the results.
+     *     The active/inactive flags are {@link #FLAG_ONLY_ACTIVE} and {@link #FLAG_ONLY_INACTIVE},
+     *     caller can set {@link #FLAG_WITH_OTHER} with either one.
+     * @return an array of Vehicle objects from the database, ordered by name, or null if none.
+     *     If {@link #FLAG_WITH_OTHER} is set and the database contains vehicles with the other status
+     *     (inactive/active), the {@link #OTHER_VEHICLE} placeholder will be at the end of the array.
+     * @throws IllegalArgumentException if conflicting flags {@link #FLAG_ONLY_ACTIVE} and {@link #FLAG_ONLY_INACTIVE}
+     *     are both set in {@code activeSubsetFlags}
+     * @throws IllegalStateException if db connection has been closed
      * @see #getMostRecent(RDBAdapter)
      */
-    public static Vehicle[] getAll(final RDBAdapter db, final boolean activeOnly)
+    public static Vehicle[] getAll(final RDBAdapter db, final int activeSubsetFlags)
+	throws IllegalArgumentException, IllegalStateException
     {
-		Vector<String[]> ves = db.getRows
-			(TABNAME, activeOnly ? "is_active = 1" : null, (String[]) null, FIELDS_AND_ID, "nickname COLLATE NOCASE", 0);
+	if ((FLAG_ONLY_ACTIVE | FLAG_ONLY_INACTIVE) == (activeSubsetFlags & (FLAG_ONLY_ACTIVE | FLAG_ONLY_INACTIVE)))
+		throw new IllegalArgumentException();
+
+	final String activesSQL;
+	if (0 != (activeSubsetFlags & FLAG_ONLY_ACTIVE))
+		activesSQL = "is_active = 1";
+	else if (0 != (activeSubsetFlags & FLAG_ONLY_INACTIVE))
+		activesSQL = "is_active = 0";
+	else
+		activesSQL = null;
+
+	Vector<String[]> ves = db.getRows
+		(TABNAME, activesSQL, (String[]) null, FIELDS_AND_ID, "nickname COLLATE NOCASE", 0);
     	if (ves == null)
     		return null;
 
-    	Vehicle[] rv = new Vehicle[ves.size()];
+    	// If requested, see if any others exist (inactive/active)
+    	final boolean hasOthers;
+    	if ((activesSQL != null) && (0 != (activeSubsetFlags & FLAG_WITH_OTHER)))
+    	{
+    		final int otherValue = (0 != (activeSubsetFlags & FLAG_ONLY_ACTIVE)) ? 0 : 1;
+    		final int count = db.getCount(TABNAME, "is_active", otherValue);
+    		hasOthers = (count > 0);
+    	} else {
+    		hasOthers = false;
+    	}
+
+    	Vehicle[] rv = new Vehicle[ves.size() + ((hasOthers) ? 1 : 0)];
 		try {
-	    	for (int i = rv.length - 1; i >= 0; --i)
+	    	for (int i = ves.size() - 1; i >= 0; --i)
 				rv[i] = new Vehicle(db, ves.elementAt(i));
+	    	if (hasOthers)
+	    		rv[rv.length - 1] = OTHER_VEHICLE;
 
 	    	return rv;
 		} catch (RDBKeyNotFoundException e) {
@@ -146,7 +212,7 @@ public class Vehicle extends RDBRecord
 	 * @param db  db connection
 	 * @return the newest active vehicle by {@code _id}, or null if none in the database
 	 * @throws IllegalStateException if db not open
-	 * @see #getAll(RDBAdapter, boolean)
+	 * @see #getAll(RDBAdapter, int)
 	 * @since 0.9.40
 	 */
 	public static Vehicle getMostRecent(RDBAdapter db)
@@ -248,19 +314,20 @@ public class Vehicle extends RDBRecord
      * hasn't been on any trips yet.
      * <tt>is_active</tt> will be true.
      *
-     * @param nickname
-     * @param driver
-     * @param makeid
-     * @param model
-     * @param year
-     * @param datefrom
-     * @param dateto
-     * @param vin
+     * @param nickname  Nickname or color, or null; used in {@link #toString()}
+     * @param driver    Vehicle's usual driver or owner
+     * @param makeid    Vehicle make, an ID from {@link VehicleMake} table (unchecked foreign key)
+     * @param model     Model name; used in {@link #toString()}
+     * @param year      Model year, or 0 if unknown
+     * @param datefrom  Used starting at this date, or 0 if field is unused.
+     *     Date format is Unix-time integer, like {@link System#currentTimeMillis()} / 1000.
+     * @param dateto    Used until this date, or 0 if field is unused
+     * @param vin       VIN or null
      * @param plate     License plate or tag, or null
      * @param odo_orig  Original odometer, including tenths
      * @param odo_curr  Current odometer, including tenths
-     * @param comment
-     * @throws IllegalArgumentException  if ! driver.isDriver()
+     * @param comment   Comment or null
+     * @throws IllegalArgumentException  if ! {@link Person#isDriver() driver.isDriver()}
      */
     public Vehicle
         (String nickname, Person driver, int makeid, String model, int year,
@@ -625,7 +692,7 @@ public class Vehicle extends RDBRecord
 		else
 			nick_dash = "";
 
-		return nick_dash + Integer.toString(year) + " " + model;
+		return nick_dash + ((year != 0) ? Integer.toString(year) + " " : "") + model;
 	}
 
 	/**

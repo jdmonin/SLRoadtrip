@@ -2,7 +2,7 @@
  *  Vehicles Editor list.
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2012-2014 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2012-2015 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -124,7 +124,7 @@ public class VehiclesEdit extends Activity
 	 */
 	private boolean populateVehiclesList(RDBAdapter db)
 	{
-		Vehicle[] allV = Vehicle.getAll(db, false);
+		Vehicle[] allV = Vehicle.getAll(db, 0);
 		veh = allV;
 		if (allV == null)
 			return false;

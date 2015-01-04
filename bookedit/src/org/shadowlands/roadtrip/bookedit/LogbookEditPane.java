@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010-2011,2014 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2011,2014-2015 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -275,7 +275,7 @@ public class LogbookEditPane extends JPanel implements ActionListener, WindowLis
 
 	private void actionChangeVehicle()
 	{
-		Vehicle[] allV = Vehicle.getAll(conn, false);
+		Vehicle[] allV = Vehicle.getAll(conn, 0);
 		if (allV.length < 2)
 		{
 			// TODO allow add new veh

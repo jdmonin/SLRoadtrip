@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010-2014 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2015 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -97,7 +97,7 @@ public class ChangeDriverOrVehicle
 		if (null != currT)
 			updateAtTripStatus(true);  // set hasCurrentTrip, enable/disable items, update button text
 
-		SpinnerDataFactory.setupVehiclesSpinner(db, true, this, veh, currVID);
+		SpinnerDataFactory.setupVehiclesSpinner(db, Vehicle.FLAG_ONLY_ACTIVE, this, veh, currVID);
 		veh.setOnItemSelectedListener(this);  // onItemSelected: when v changes, ask about driver
 	}
 
@@ -269,7 +269,7 @@ public class ChangeDriverOrVehicle
 			{
 				if (db == null)
 					db = new RDBOpenHelper(this);
-				SpinnerDataFactory.setupVehiclesSpinner(db, true, this, veh, currVID);
+				SpinnerDataFactory.setupVehiclesSpinner(db, Vehicle.FLAG_ONLY_ACTIVE, this, veh, currVID);
 			} else {
 				changed = false;
 			}
@@ -355,7 +355,7 @@ public class ChangeDriverOrVehicle
 			} else {
 				currV = Settings.getCurrentVehicle(db, false);
 				currVID = currV.getID();
-				SpinnerDataFactory.setupVehiclesSpinner(db, true, this, veh, currVID);
+				SpinnerDataFactory.setupVehiclesSpinner(db, Vehicle.FLAG_ONLY_ACTIVE, this, veh, currVID);
 			}
 		} catch (Throwable th) {
 			return;

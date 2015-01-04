@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2011,2013 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2011,2013,2015 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -363,7 +363,7 @@ public class RDBVerifier
 	 */
 	private boolean verify_mdata_vehicle()
 	{
-		final Vehicle[] all = Vehicle.getAll(db, false);
+		final Vehicle[] all = Vehicle.getAll(db, 0);
 		if (all == null)
 			return false;  // there must be vehicles
 		for (int i = 0; i < all.length; ++i)

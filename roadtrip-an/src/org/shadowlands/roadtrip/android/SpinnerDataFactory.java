@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010-2014 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2015 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -41,6 +41,7 @@ public class SpinnerDataFactory
 {
 	public static Person NEW_DRIVER;  // TODO keep?
 	public static Person NEW_VEHICLE; // TODO keep?
+
 	/** Placeholder in spinners for an empty {@link TripCategory}. */
 	public static TripCategory EMPTY_TRIPCAT;
 	/** Placeholder in spinners for an empty {@link GeoArea}. */
@@ -137,16 +138,17 @@ public class SpinnerDataFactory
 	/**
 	 * Populate a spinner from the Vehicles in the database.
 	 * @param db  connection to use
-	 * @param activeOnly  If true, don't include inactive vehicles
+	 * @param activeSubsetFlags  0 for all vehicles, or same active/inactive flags
+	 *     as {@link Vehicle#getAll(RDBAdapter, int)}
 	 * @param ctx  the calling Activity or Context
 	 * @param sp  spinner to fill with the vehicles
-	 * @param currentID  If not -1, the driver _id to select in the Spinner. 
+	 * @param currentID  If not -1, the vehicle _id to select in the Spinner. 
 	 * @return true on success, false if could not populate from database
 	 */
 	public static boolean setupVehiclesSpinner
-		(final RDBAdapter db, final boolean activeOnly, final Context ctx, final Spinner sp, final int currentID)
+		(final RDBAdapter db, final int activeSubsetFlags, final Context ctx, final Spinner sp, final int currentID)
 	{
-		Vehicle[] veh = populateVehiclesList(db, activeOnly);
+	    Vehicle[] veh = populateVehiclesList(db, activeSubsetFlags);
 	    if (veh == null)
 	    	return false;
 
@@ -237,16 +239,17 @@ public class SpinnerDataFactory
 	 * gather the list of vehicles from the database.
 	 *
 	 * @param db  connection to use
-	 * @param activeOnly  If true, don't include inactive vehicles
+	 * @param activeSubsetFlags  0 for all vehicles, or same active/inactive flags
+	 *     as {@link Vehicle#getAll(RDBAdapter, int)}
 	 * @return array of vehicles, or null
 	 */
-	private static Vehicle[] populateVehiclesList(RDBAdapter db, final boolean activeOnly)
+	private static Vehicle[] populateVehiclesList(RDBAdapter db, final int activeSubsetFlags)
 	{
 		Vehicle[] veh = null; 
 
     	try
     	{
-    		veh = Vehicle.getAll(db, activeOnly);
+    		veh = Vehicle.getAll(db, activeSubsetFlags);
     	}
     	catch (SQLiteException e)
     	{}

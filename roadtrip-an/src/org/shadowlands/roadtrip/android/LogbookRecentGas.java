@@ -313,7 +313,7 @@ _id|quant|price_per|price_total|fillup|station|vid|gas_brandgrade_id|odo_total|t
 	public final void askVehicleChange()
 	{
 		if (allV == null)
-    		allV = Vehicle.getAll(db, false);
+    		allV = Vehicle.getAll(db, 0);
 
 		// Grab currently-showing vehicle, vehicle names
 		int idx = -1;

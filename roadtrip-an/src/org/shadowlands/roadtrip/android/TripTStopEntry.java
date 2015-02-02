@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010-2014 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2015 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -351,6 +351,9 @@ public class TripTStopEntry extends Activity
 
 	/** If true, the next button press clears {@link #calcValue} */
 	private boolean calcNextPressClears;
+
+	/** If true, the previous button pressed was 'Clear'. */
+	private boolean calcPrevBtnWasClear;
 
 	/** Calculator's previous value */
 	private float calcPrevOperand;
@@ -2370,6 +2373,7 @@ public class TripTStopEntry extends Activity
 		calcOperation = CALC_OP_NONE;
 		calcPrevOperand = 0;
 		calcNextPressClears = false;
+		calcPrevBtnWasClear = false;
 
 		calcValue = (EditText) calcItems.findViewById(R.id.trip_tstop_popup_odo_calc_value);
 		calc0 = calcItems.findViewById(R.id.trip_tstop_popup_odo_calc_0);
@@ -2405,7 +2409,7 @@ public class TripTStopEntry extends Activity
 				{
 					return;
 				}
-				odo.setCurrent10dAndRelated((int) (ov * 10));
+				odo.setCurrent10dAndRelated(Math.round(ov * 10));
 			}
 		});
 		alert.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
@@ -2481,12 +2485,22 @@ public class TripTStopEntry extends Activity
 			calcValue.append("8");
 		else if (v == calc9)
 			calcValue.append("9");
+
+		calcPrevBtnWasClear = false;
 	}
 
-	/** The calculator Clear button loads {@link #calcValue} from the odometer's current value */
+	/**
+	 * The calculator Clear button loads {@link #calcValue} from the odometer's current value
+	 * if clicked once, clears current value entirely if clicked again.
+	 */
 	public void onClick_CalcBtnClear(View v)
 	{
-		calcLoadValueFromOdo();
+		if (calcPrevBtnWasClear)
+			calcValue.setText("");
+		else
+			calcLoadValueFromOdo();
+
+		calcPrevBtnWasClear = ! calcPrevBtnWasClear;
 	}
 
 	public void onClick_CalcBtnBackspace(View v)
@@ -2498,6 +2512,7 @@ public class TripTStopEntry extends Activity
 			calcValue.setText(tx.subSequence(0, L - 1));
 			calcValue.setSelection(L-1);  // move cursor to end
 		}
+		calcPrevBtnWasClear = false;
 	}
 
 	/**
@@ -2521,6 +2536,7 @@ public class TripTStopEntry extends Activity
 		calcPrevOperand = cv;
 		calcOperation = calcOp;
 		calcNextPressClears = true;
+		calcPrevBtnWasClear = false;
 		// TODO visually indicate the op somewhere
 	}
 
@@ -2546,6 +2562,8 @@ public class TripTStopEntry extends Activity
 
 	public void onClick_CalcBtnEquals(View v)
 	{
+		calcPrevBtnWasClear = false;
+
 		float cv;  // current value
 		try
 		{
@@ -2609,6 +2627,8 @@ public class TripTStopEntry extends Activity
 			calcMemory += cv;
 		else
 			calcMemory -= cv;
+
+		calcPrevBtnWasClear = false;
 	}
 
 	public void onClick_CalcBtnMemPlus(View v)
@@ -2625,12 +2645,16 @@ public class TripTStopEntry extends Activity
 	{
 		calcMemory = 0.0f;
 		// TODO is there a visual indicator?
+
+		calcPrevBtnWasClear = false;
 	}
 
 	public void onClick_CalcBtnMemRecall(View v)
 	{
 		if (calcMemory != 0.0f)
 			calcValue.setText(Float.toString(calcMemory));
+
+		calcPrevBtnWasClear = false;
 	}
 
 	/////////////////////////////

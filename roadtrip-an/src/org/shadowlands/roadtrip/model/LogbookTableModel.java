@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010-2014 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2015 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -700,6 +700,9 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	{
 		Date prevTripStart = null;  // time of trip start
 
+		// track and format month and day, show date only when day changes
+		RTRDateTimeFormatter.DateAndTime prevShownDT = new RTRDateTimeFormatter.DateAndTime();
+
 		final int L = td.size();
 
 		// Does next trip continue from the same tstop and odometer?
@@ -720,13 +723,16 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 
 			// first row of trip: date, if different from prev date
 			final Date tstart = new Date(t.getTime_start() * 1000L);
-			if ((prevTripStart == null)
-			    || (prevTripStart.getDate() != tstart.getDate())
-			    || (prevTripStart.getMonth() != tstart.getMonth()))
+			final int tstartMonth = tstart.getMonth(),
+			          tstartMDay = tstart.getDate();
+			if ((prevShownDT.mday != tstartMDay) || (prevShownDT.month != tstartMonth))
 			{
 				tr = new String[COL_HEADINGS.length];
 				tr[0] = dtf.formatDate(tstart);
 				tText.addElement(tr);
+
+				prevShownDT.month = tstartMonth;
+				prevShownDT.mday = tstartMDay;
 			}
 			prevTripStart = tstart;
 
@@ -816,8 +822,10 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 					if (ttstop != 0)
 					{
 						tr = new String[COL_HEADINGS.length];
-		    			tr[1] = dtf.formatTime(ttstop * 1000L);
-		    			tText.addElement(tr);
+						dtf.formatDateTimeInSeq(ttstop * 1000L, prevShownDT);
+						tr[0] = prevShownDT.fmtDate;  // may be null
+						tr[1] = prevShownDT.fmtTime;
+						tText.addElement(tr);
 					}
 
 					// stop info
@@ -968,8 +976,10 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 					if (ttcont != 0)
 					{
 						tr = new String[COL_HEADINGS.length];
-		    			tr[1] = dtf.formatTime(ttcont * 1000L);
-		    			tText.addElement(tr);
+						dtf.formatDateTimeInSeq(ttcont * 1000L, prevShownDT);
+						tr[0] = prevShownDT.fmtDate;  // may be null
+						tr[1] = prevShownDT.fmtTime;
+						tText.addElement(tr);
 					}
 				}
 			}  // each TStop

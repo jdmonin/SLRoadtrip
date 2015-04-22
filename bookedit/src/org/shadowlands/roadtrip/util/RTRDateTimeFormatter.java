@@ -85,7 +85,7 @@ public class RTRDateTimeFormatter
 	 *          or 0 to set them and fmtDate from on the month and day in {@code millis}.
 	 * @return true if the month or day changed, and {@link DateAndTime#fmtDate dt.fmtDate}
 	 *          was formatted; false otherwise
-	 * @since 0.9.40
+	 * @since 0.9.41
 	 */
 	public boolean formatDateTimeInSeq(final long millis, DateAndTime dt)
 	{
@@ -108,7 +108,7 @@ public class RTRDateTimeFormatter
 	/**
 	 * Structure to track and format the month and day of events in a sequence.
 	 * Used with {@link RTRDateTimeFormatter#formatDateTimeInSeq(long, DateAndTime)}.
-	 * @since 0.9.40
+	 * @since 0.9.41
 	 */
 	public static class DateAndTime
 	{

@@ -962,11 +962,12 @@ public class LogbookShow extends Activity
 		{
 			if (dia.isShowing())
 				dia.dismiss();
-			Toast.makeText(getApplicationContext(),
-				( ok
+
+			new AlertDialog.Builder(LogbookShow.this)
+				.setMessage( (ok)
 					? R.string.logbook_show__validation_successful_3
 					: R.string.logbook_show__validation_failed )
-				, Toast.LENGTH_SHORT)
+				.setNeutralButton(android.R.string.ok, null)
 				.show();
 		}
 	}

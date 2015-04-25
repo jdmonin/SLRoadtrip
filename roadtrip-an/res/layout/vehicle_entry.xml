@@ -127,28 +127,36 @@
 			android:layout_width="wrap_content"
 			android:layout_height="wrap_content" />
     </TableRow>
-    <!-- GeoArea, visible only for new vehicle -->
-    <TableRow
-	android:id="@+id/vehicle_entry_geoarea_row">
+    <!-- GeoArea: Read-only textview for existing vehicle, or editable text/dropdown for new one -->
+    <TableRow>
 		<TextView
-		    android:text="@string/vehicle_entry_starting_area"
+		    android:text="@string/vehicle_entry_current_geo_area"
 		    android:layout_width="wrap_content"
-		    android:layout_height="fill_parent"
+		    android:layout_height="wrap_content"
 		    />
 		<LinearLayout
 		    android:orientation="horizontal"
 		    android:layout_width="fill_parent"
 		    android:layout_height="wrap_content"
+		    android:gravity="center_vertical"
 		    >
+			<TextView
+			    android:id="@+id/vehicle_entry_geoarea_text"
+			    android:layout_width="wrap_content"
+			    android:layout_height="fill_parent"
+			    android:layout_gravity="center_vertical"
+			    android:textSize="18sp"
+			    />
 			<AutoCompleteTextView
 			    android:id="@+id/vehicle_entry_geoarea"
 			    android:completionThreshold="1"
 			    android:layout_weight="1"
 			    android:layout_width="fill_parent"
-			    android:layout_height="wrap_content"
+			    android:layout_height="fill_parent"
 			    android:singleLine="true"
 			    />
 			<ImageButton
+			    android:id="@+id/vehicle_entry_geoarea_arrow"
 			    android:src="@android:drawable/arrow_down_float"
 			    android:layout_width="wrap_content"
 			    android:layout_height="wrap_content"

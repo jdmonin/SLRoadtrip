@@ -248,6 +248,7 @@
 <string name="trip_tstop_gas_perunit">/ unit</string>
 <string name="trip_tstop_gas_prompt">Enter the gas stop details.</string>
 <string name="trip_tstop_gas__title">Trip Stop: Gas</string>
+<string name="vehicle_entry_current_geo_area">Current\ngeo area</string>
 <string name="vehicle_entry_geoarea_prompt">Please enter the vehicle\'s starting geographic area.</string>
 <string name="vehicle_entry_hint_nickname">Optional nickname or color</string>
 <string name="vehicle_entry_hint_year">Model year</string>
@@ -257,7 +258,6 @@
 <string name="vehicle_entry_plate_tag_hint">License plate (optional)</string>
 <string name="vehicle_entry_prompt">Enter information about this vehicle.</string>
 <string name="vehicle_entry_set_date__optional">Set date\n(optional)</string>
-<string name="vehicle_entry_starting_area">Starting\ngeo area</string>
 <string name="vehicle_entry_year">Please enter the year.</string>
 <string name="vehicle_make">Make (Brand)</string>
 </resources>

@@ -51,6 +51,7 @@ import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.ListAdapter;
 import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.AdapterView.OnItemClickListener;
 
@@ -240,6 +241,10 @@ public class VehicleEntry
 	    	if (dr != null)
 	    		currentDriverID = dr.getID();
 
+		View vv = findViewById(R.id.vehicle_entry_geoarea_text);  // not editing: hide GeoArea display field
+		if (vv != null)
+			vv.setVisibility(View.GONE);
+
 		etGeoArea = (AutoCompleteTextView) findViewById(R.id.vehicle_entry_geoarea);
 		GeoArea[] areas = GeoArea.getAll(db, -1);
 		if (areas != null)
@@ -259,12 +264,25 @@ public class VehicleEntry
 	    } else {
 		// editing an existing vehicle
 
-		View v = findViewById(R.id.vehicle_entry_geoarea_row);
+		View v = findViewById(R.id.vehicle_entry_geoarea);  // not new: hide GeoArea text field
+		if (v != null)
+			v.setVisibility(View.GONE);
+		v = findViewById(R.id.vehicle_entry_geoarea_arrow);
 		if (v != null)
 			v.setVisibility(View.GONE);
 
 		if (cameFromEdit_veh != null)
+		{
 			currentDriverID = cameFromEdit_veh.getDriverID();
+
+			TextView tvG = (TextView) findViewById(R.id.vehicle_entry_geoarea_text);
+			if (tvG != null)
+			{
+				GeoArea geoa = VehSettings.getCurrentArea(db, cameFromEdit_veh, false);
+				if (geoa != null)
+					tvG.setText(geoa.getName());
+			}
+		}
 	    }
 
 	    SpinnerDataFactory.setupDriversSpinner

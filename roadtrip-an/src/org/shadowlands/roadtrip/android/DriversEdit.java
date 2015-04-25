@@ -2,7 +2,7 @@
  *  Drivers (people) Editor list.
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2012,2014 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2012,2014-2015 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -46,7 +46,8 @@ import android.widget.Toast;
  * Read-only if current trip.
  *<P>
  * If any changes were made to people, will call <tt>{@link #setResult(int) setResult(}
- * {@link ChangeDriverOrVehicle#RESULT_CHANGES_MADE})</tt> before returning.
+ * {@link ChangeDriverOrVehicle#RESULT_CHANGES_MADE})</tt>
+ * or <tt>({@link ChangeDriverOrVehicle#RESULT_ADDED_NEW})</tt> before returning.
  * Otherwise, will call setResult({@link Activity#RESULT_OK}).
  *<P>
  * If somehow no people are found in the database, will call setResult({@link Activity#RESULT_CANCELED}),
@@ -131,7 +132,7 @@ public class DriversEdit extends Activity
 		return true;
 	}
 
-	/** 'New' button was clicked: activity for that */
+	/** 'New' button was clicked: call {@link DriverEntry} activity for that. */
 	public void onClick_BtnNewPerson(View v)
 	{
     	Intent i = new Intent(this, DriverEntry.class);
@@ -139,7 +140,7 @@ public class DriversEdit extends Activity
 		startActivityForResult(i, R.id.drivers_edit_new);		
 	}
 
-	/** When an item is selected in the list, edit its ID. */
+	/** When an item is selected in the list, edit its ID using the {@link DriverEntry} activity. */
 	public void onItemClick(AdapterView<?> parent, View view, int position, long id)
 	{
 		if ((people == null) || (position >= people.length))
@@ -158,12 +159,13 @@ public class DriversEdit extends Activity
     	finish();
 	}
 
-    /**
-	 * Callback from {@link DriverEntry}.
-	 * If a vehicle was added or edited:
-	 * Set our result to {@link ChangeDriverOrVehicle#RESULT_CHANGES_MADE}.
-	 * Repopulate vehicles list.
-	 * 
+	/**
+	 * Callback from {@link DriverEntry} via {@link Activity#startActivityForResult(Intent, int)}.
+	 * If a driver (a person) was added or edited:
+	 * Set our result to {@link ChangeDriverOrVehicle#RESULT_CHANGES_MADE}
+	 * or {@link ChangeDriverOrVehicle#RESULT_ADDED_NEW}.
+	 * Repopulate people list.
+	 *
 	 * @param idata  intent containing extra int "_id" with the
 	 *     ID of the added or edited vehicle
 	 */
@@ -172,12 +174,19 @@ public class DriversEdit extends Activity
 	{
 		if (resultCode == RESULT_CANCELED)
 			return;
-		if ((requestCode != R.id.drivers_edit_new) && (requestCode != R.id.list))
+		final boolean added = (requestCode == R.id.drivers_edit_new);
+		if ((requestCode != R.id.list) && ! added)
 			return;
 		if ((idata == null) || (0 == idata.getIntExtra("_id", 0)))
 			return;
 
-		setResult(ChangeDriverOrVehicle.RESULT_CHANGES_MADE);
+		if (added) {
+			Intent i = getIntent();
+			i.putExtra("_id", idata.getIntExtra("_id", 0));
+			setResult(ChangeDriverOrVehicle.RESULT_ADDED_NEW, i);
+		} else {
+			setResult(ChangeDriverOrVehicle.RESULT_CHANGES_MADE);
+		}
 		if (db == null)
 			db = new RDBOpenHelper(this);
 		populatePeopleList(db);		

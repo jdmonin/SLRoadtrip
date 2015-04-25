@@ -68,7 +68,7 @@ import android.widget.AdapterView.OnItemClickListener;
  * <b>When {@link #EXTRAS_FLAG_ASKED_NEW} is set:</b><BR>
  * Wait for the new vehicle to be entered.
  * Finish this activity and return to what the user was previously doing.
- * The Result code will be set to RESULT_OK, and the Intent will get
+ * The Result code will be set to {@link ChangeDriverOrVehicle#RESULT_ADDED_NEW}, and the Intent will get
  * an int extra called "_id" with the ID of the newly added vehicle.
  *<P>
  * <b>When {@link #EXTRAS_INT_EDIT_ID} is set:</b><BR>
@@ -455,7 +455,10 @@ public class VehicleEntry
 		updateDateButton();
 	}
 
-	/** Validate fields, if good then update the database and finish this activity. */
+	/**
+	 * Validate fields, if good then update the database and finish this activity.
+	 * See {@link VehicleEntry} class javadoc for details.
+	 */
 	public void onClick_BtnOK(View v)
 	{
 		// TODO validate non-blank veh fields
@@ -558,7 +561,6 @@ public class VehicleEntry
     		Settings.setCurrentVehicle(db, nv);
     		VehSettings.setPreviousLocation(db, nv, null);
     	}
-		// TODO also popup to ask user whether to change currV setting to the new one, if no curr_trip
 
     	if (! VehSettings.exists(db, VehSettings.CURRENT_DRIVER, nv))
     	{
@@ -571,13 +573,14 @@ public class VehicleEntry
 		} else {
     		Intent i = getIntent();
 	    	i.putExtra("_id", nv.getID());
-	    	setResult(RESULT_OK, i);
+	    	setResult(((cameFromAskNew) ? ChangeDriverOrVehicle.RESULT_ADDED_NEW : RESULT_OK), i);
 		}
+
     	finish();
 	}
 
 	/**
-	 * Find the CURRENT_AREA to use for a new vehicle.
+	 * Find the {@code CURRENT_AREA} to use for a new vehicle.
 	 * Check the current vehicle's GeoArea, or if none use the first geoarea in the db.
 	 * @return A GeoArea if possible, or null
 	 * @since 0.9.41

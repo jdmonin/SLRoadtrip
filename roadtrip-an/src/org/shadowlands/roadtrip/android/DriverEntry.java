@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010,2012,2014 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010,2012,2014-2015 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -49,7 +49,7 @@ import android.widget.Toast;
  * <b>When {@link #EXTRAS_FLAG_ASKED_NEW} is set:</b><BR>
  * Wait for the new driver to be entered.
  * Finish this activity and return to what the user was previously doing.
- * The Result code will be set to RESULT_OK, and the Intent will get
+ * The Result code will be set to {@link ChangeDriverOrVehicle#RESULT_ADDED_NEW}, and the Intent will get
  * an int extra called "_id" with the ID of the newly added driver.
  *<P>
  * <b>When {@link #EXTRAS_INT_EDIT_ID} is set:</b><BR>
@@ -57,6 +57,8 @@ import android.widget.Toast;
  * Finish this activity and return to what the user was previously doing.
  * The Result code will be set to RESULT_OK, and the Intent will get
  * an int extra called "_id" with the ID of the edited person.
+ *<P>
+ * The "OK" button to finish this Activity is handled in {@link #onClick_BtnOK(View)}.
  */
 public class DriverEntry extends Activity
 {
@@ -164,6 +166,7 @@ public class DriverEntry extends Activity
     /**
      * Validate values and either go to the next intent, or
      * set result if {@link #EXTRAS_FLAG_ASKED_NEW} was set.
+     * See {@link DriverEntry} class javadoc for details.
      */
     public void onClick_BtnOK(View v)
     {
@@ -260,8 +263,9 @@ public class DriverEntry extends Activity
     	} else {
     		Intent i = getIntent();
 	    	i.putExtra("_id", p.getID());
-	    	setResult(RESULT_OK, i);
+	    	setResult(((cameFromAskNew) ? ChangeDriverOrVehicle.RESULT_ADDED_NEW : RESULT_OK), i);
     	}
+
     	finish();
     }
 

@@ -64,9 +64,19 @@ public class ChangeDriverOrVehicle
 	extends Activity implements OnItemSelectedListener
 {
 	/**
-	 * Activity result to indicate changes were made; used in callback from {@link VehiclesEdit} to here.
+	 * Activity result to indicate changes were made; used in callback to here
+	 * from {@link DriversEdit} or {@link VehiclesEdit}.
+	 * @see #RESULT_ADDED_NEW
 	 */
 	public static final int RESULT_CHANGES_MADE = Activity.RESULT_FIRST_USER;
+
+	/**
+	 * Activity result used to indicate a new vehicle or driver was added; used in callback to here
+	 * from {@link DriversEdit}, {@link VehiclesEdit}, {@link DriverEntry}, or {@link VehicleEntry}.
+	 * @see #RESULT_CHANGES_MADE
+	 * @since 0.9.41
+	 */
+	public static final int RESULT_ADDED_NEW = 1 + RESULT_CHANGES_MADE;
 
 	/** Was the Current Vehicle or Current Driver setting changed? */
 	boolean anyChange = false;
@@ -232,6 +242,8 @@ public class ChangeDriverOrVehicle
 
     /**
 	 * Callback from {@link DriverEntry}, {@link VehicleEntry}, {@link DriversEdit} or {@link VehiclesEdit}.
+	 * If coming from "New Driver" or "New Vehicle" button and changes were made,
+	 * asks whether to change the current driver or current vehicle.
 	 *<P>
 	 * If changes were made, also changes our "Cancel" button to "Done" to reduce confusion.
 	 *
@@ -257,8 +269,9 @@ public class ChangeDriverOrVehicle
 			spinnerAddNewItem_Ask(false, veh, idata);    break;
 
 		case R.id.change_cvd_drivers_edit:
-			if (resultCode == RESULT_CHANGES_MADE)
-			{
+			if (resultCode == RESULT_ADDED_NEW) {
+				spinnerAddNewItem_Ask(true, driver, idata);
+			} else if (resultCode == RESULT_CHANGES_MADE) {
 				if (db == null)
 					db = new RDBOpenHelper(this);
 				SpinnerDataFactory.setupDriversSpinner(db, this, driver, currDID);
@@ -268,8 +281,9 @@ public class ChangeDriverOrVehicle
 			break;
 
 		case R.id.change_cvd_vehicles_edit:
-			if (resultCode == RESULT_CHANGES_MADE)
-			{
+			if (resultCode == RESULT_ADDED_NEW) {
+				spinnerAddNewItem_Ask(false, veh, idata);
+			} else if (resultCode == RESULT_CHANGES_MADE) {
 				if (db == null)
 					db = new RDBOpenHelper(this);
 				SpinnerDataFactory.setupVehiclesSpinner(db, Vehicle.FLAG_ONLY_ACTIVE, this, veh, currVID);
@@ -288,7 +302,7 @@ public class ChangeDriverOrVehicle
 
 	/**
 	 * Ask whether to change the current driver/vehicle after adding a new one.
-	 * Ask only if no current trip.
+	 * (If isDriver, ask only if no current trip.)
 	 * When dialog is answered, will call {@link #spinnerAddNewItem(boolean, Spinner, boolean, int)} 
 	 * to update the Driver or Vehicle spinner contents, including the current value.
 	 * @param isDriver  True for driver, false for vehicle
@@ -299,8 +313,13 @@ public class ChangeDriverOrVehicle
     	final int newID = idata.getIntExtra("_id", 0);
     	if (newID == 0)
     		return;
-    	if (null != VehSettings.getCurrentTrip(db, currV, false))
+    	if (isDriver && (null != VehSettings.getCurrentTrip(db, currV, false)))
+    	{
+    		// Can't change current driver during a trip yet;
+    		// just add the new driver and return.
+    		spinnerAddNewItem(isDriver, sp, false, newID);
     		return;
+    	}
 
     	final int toastMsg =
     		isDriver ? R.string.change_vehicle_driver_ask_chg_new_d

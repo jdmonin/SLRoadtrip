@@ -109,6 +109,8 @@ r409	0.9.40	2014-08-27	Most current settings are now per-vehicle; refactor db re
 -	0.9.41	-		Being developed now; minor improvements and bugfixes since 0.9.40.
 				Less clutter in vehicle dropdowns: Show only Active or Inactive vehicles, with "Other..." entry
 				to switch, in Bookedit and in android Logbook and Recent Gas.
+				New Vehicle activity asks for GeoArea, instead of using the current vehicle's current area.
+				When a new vehicle is added, ChangeDriverOrVehicle always asks whether to current vehicle.
 
 Also see doc/hist/*.sql for previous schema updates.
 

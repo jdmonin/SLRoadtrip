@@ -2,7 +2,7 @@
 <!--
  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
 
- This file Copyright (C) 2010-2013 Jeremy D Monin (jdmonin@nand.net)
+ This file Copyright (C) 2010-2013,2015 Jeremy D Monin (jdmonin@nand.net)
 
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
@@ -126,6 +126,35 @@
 		    android:onClick="onClick_BtnDateFrom"
 			android:layout_width="wrap_content"
 			android:layout_height="wrap_content" />
+    </TableRow>
+    <!-- GeoArea, visible only for new vehicle -->
+    <TableRow
+	android:id="@+id/vehicle_entry_geoarea_row">
+		<TextView
+		    android:text="@string/vehicle_entry_starting_area"
+		    android:layout_width="wrap_content"
+		    android:layout_height="fill_parent"
+		    />
+		<LinearLayout
+		    android:orientation="horizontal"
+		    android:layout_width="fill_parent"
+		    android:layout_height="wrap_content"
+		    >
+			<AutoCompleteTextView
+			    android:id="@+id/vehicle_entry_geoarea"
+			    android:completionThreshold="1"
+			    android:layout_weight="1"
+			    android:layout_width="fill_parent"
+			    android:layout_height="wrap_content"
+			    android:singleLine="true"
+			    />
+			<ImageButton
+			    android:src="@android:drawable/arrow_down_float"
+			    android:layout_width="wrap_content"
+			    android:layout_height="wrap_content"
+			    android:onClick="onClick_BtnGeoAreaDropdown"
+			    />
+		</LinearLayout>
     </TableRow>
     <TableRow>
 		<TextView  

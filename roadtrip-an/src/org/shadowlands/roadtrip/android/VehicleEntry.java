@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010-2014 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2015 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -42,13 +42,17 @@ import android.database.sqlite.SQLiteException;
 import android.os.Bundle;
 import android.text.format.DateFormat;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.DatePicker;
 import android.widget.EditText;
+import android.widget.ListAdapter;
 import android.widget.Spinner;
 import android.widget.Toast;
+import android.widget.AdapterView.OnItemClickListener;
 
 /**
  * Enter a new vehicle, or edit a vehicle.
@@ -71,6 +75,8 @@ import android.widget.Toast;
  * Finish this activity and return to what the user was previously doing.
  * The Result code will be set to RESULT_OK, and the Intent will get
  * an int extra called "_id" with the ID of the edited vehicle.
+ *<P>
+ * The "OK" button to finish this Activity is handled in {@link #onClick_BtnOK(View)}.
  */
 public class VehicleEntry
 	extends Activity implements OnDateSetListener
@@ -107,6 +113,16 @@ public class VehicleEntry
 	private Vehicle cameFromEdit_veh;
 
 	/**
+	 * New vehicle's starting geoarea chosen in {@link #etGeoArea}.
+	 * Initially set using {@link #findCurrentGeoArea()}.
+	 * @since 0.9.41
+	 */
+	private GeoArea geoAreaObj;
+
+	/** For new vehicle, initial value of {@link #geoAreaObj} at start of activity */
+	private GeoArea geoAreaObj_orig;
+
+	/**
 	 * Is this vehicle {@link Settings#getCurrentVehicle(RDBAdapter, boolean)}?
 	 * @since 0.9.20
 	 */
@@ -117,6 +133,8 @@ public class VehicleEntry
 	private EditText nickname, vmodel, vin, plate, comment, year;
 	private Spinner driver, vmake;
 	private OdometerNumberPicker odo_orig, odo_curr;
+	/** New vehicle's starting geoarea, or null. Clicking here sets {@link #geoAreaObj}. */
+	private AutoCompleteTextView etGeoArea;
 	private CheckBox cbActive;
 
 	/** Button to set or change {@link #dateFrom} */
@@ -221,11 +239,34 @@ public class VehicleEntry
 	    	Person dr = (v != null) ? VehSettings.getCurrentDriver(db, v, false) : null;
 	    	if (dr != null)
 	    		currentDriverID = dr.getID();
+
+		etGeoArea = (AutoCompleteTextView) findViewById(R.id.vehicle_entry_geoarea);
+		GeoArea[] areas = GeoArea.getAll(db, -1);
+		if (areas != null)
+		{
+			ArrayAdapter<GeoArea> adapter = new ArrayAdapter<GeoArea>(this, R.layout.list_item, areas);
+			etGeoArea.setAdapter(adapter);
+			geoAreaObj = findCurrentGeoArea();
+			if (geoAreaObj != null)
+			{
+				geoAreaObj_orig = geoAreaObj;
+				etGeoArea.setText(geoAreaObj.toString());
+			}
+			etGeoArea.setOnItemClickListener(new GeoAreaOnItemClickListener());
+		} else {
+			etGeoArea.setAdapter((ArrayAdapter<GeoArea>) null);
+		}
+	    } else {
+		// editing an existing vehicle
+
+		View v = findViewById(R.id.vehicle_entry_geoarea_row);
+		if (v != null)
+			v.setVisibility(View.GONE);
+
+		if (cameFromEdit_veh != null)
+			currentDriverID = cameFromEdit_veh.getDriverID();
 	    }
-	    else if (cameFromEdit_veh != null)
-	    {
-	    	currentDriverID = cameFromEdit_veh.getDriverID();
-	    }
+
 	    SpinnerDataFactory.setupDriversSpinner
 	    	(db, this, driver, currentDriverID);
 	    if (hasCurrentTrip)
@@ -324,6 +365,34 @@ public class VehicleEntry
 			db.close();
 	}
 
+	/** Show or hide the {@link #etGeoArea} geographic-area dropdown */
+	public void onClick_BtnGeoAreaDropdown(View v)
+	{
+		if (etGeoArea == null)
+			return;
+
+		if (etGeoArea.isPopupShowing())
+		{
+			etGeoArea.dismissDropDown();
+
+			// if text field is empty, fill in from initial value 
+			if ((geoAreaObj_orig != null) && (etGeoArea.getText().toString().trim().length() == 0))
+			{
+				geoAreaObj = geoAreaObj_orig;
+				etGeoArea.setText(geoAreaObj_orig.toString());
+			}
+
+		} else {
+			// we'll need to clear the text first, to show all values in the dropdown
+			etGeoArea.setText("");
+			etGeoArea.post(new Runnable() {
+				public void run() {
+					etGeoArea.showDropDown();
+				}
+			});
+		}
+	}
+
 	/**
 	 * Show the {@link DatePickerDialog} when the in-use-since-date button is clicked.
 	 * @see #onCreateDialog(int)
@@ -368,6 +437,7 @@ public class VehicleEntry
 		updateDateButton();
 	}
 
+	/** Validate fields, if good then update the database and finish this activity. */
 	public void onClick_BtnOK(View v)
 	{
 		// TODO validate non-blank veh fields
@@ -404,6 +474,25 @@ public class VehicleEntry
 		if (plateText.length() == 0)
 			plateText = null;
 
+		if (cameFromAskNew && (etGeoArea != null))
+		{
+			String geoarea = etGeoArea.getText().toString().trim();
+			if ((geoAreaObj == null) || ! geoAreaObj.toString().equalsIgnoreCase(geoarea))
+			{
+				if (geoarea.length() == 0)
+				{
+					etGeoArea.requestFocus();
+					Toast.makeText(getApplicationContext(),
+					    getResources().getString(R.string.vehicle_entry_geoarea_prompt),
+					    Toast.LENGTH_SHORT).show();
+					return;  // <--- Early return: getGeoArea empty ---
+				}
+
+				geoAreaObj = new GeoArea(geoarea);
+				geoAreaObj.insert(db);
+			}
+		}
+
 		final Person nvDriv = (Person) driver.getSelectedItem();
 		Vehicle nv;
 		if (cameFromEdit_veh == null)
@@ -435,20 +524,12 @@ public class VehicleEntry
 			nv.commit();
 		}
 
-		// Before setting CURRENT_VEHICLE, copy its CURRENT_AREA to new vehicle, or use first geoarea
-	    	if (! VehSettings.exists(db, VehSettings.CURRENT_AREA, nv))
+		// Set new vehicle's CURRENT_AREA from geoarea dropdown or current vehicle's.
+		if ((geoAreaObj != null) || ! VehSettings.exists(db, VehSettings.CURRENT_AREA, nv))
 	    	{
-	    		GeoArea currA = null;
-			Vehicle cv = Settings.getCurrentVehicle(db, false);
-			if (cv != null)
-				currA = VehSettings.getCurrentArea(db, cv, false);
-
-			if (currA == null) {
-				// No GeoArea setting, or no current vehicle: Probably initial setup
-				GeoArea[] areas = GeoArea.getAll(db, -1);
-				if (areas != null)
-					currA = areas[0];
-			}
+			GeoArea currA = geoAreaObj;
+			if (currA == null)
+				currA = findCurrentGeoArea();
 
 			if (currA != null)
 				VehSettings.setCurrentArea(db, nv, currA);
@@ -477,6 +558,30 @@ public class VehicleEntry
     	finish();
 	}
 
+	/**
+	 * Find the CURRENT_AREA to use for a new vehicle.
+	 * Check the current vehicle's GeoArea, or if none use the first geoarea in the db.
+	 * @return A GeoArea if possible, or null
+	 * @since 0.9.41
+	 */
+	private GeoArea findCurrentGeoArea()
+	{
+		GeoArea currA = null;
+
+		Vehicle cv = Settings.getCurrentVehicle(db, false);
+		if (cv != null)
+			currA = VehSettings.getCurrentArea(db, cv, false);
+
+		if (currA == null) {
+			// No GeoArea setting, or no current vehicle: Probably initial setup
+			GeoArea[] areas = GeoArea.getAll(db, -1);
+			if (areas != null)
+				currA = areas[0];
+		}
+
+		return currA;
+	}
+
 	private void populateVehMakesList()
 	{
 		if (VEHICLEMAKES != null)
@@ -495,6 +600,23 @@ public class VehicleEntry
     	}
     	catch (SQLiteException e)
     	{}
+	}
+
+	/**
+	 * For GeoArea autocomplete, the callback for {@link OnItemClickListener}
+	 * to set {@link VehicleEntry#geoAreaObj}.
+	 * @since 0.9.41
+	 */
+	private class GeoAreaOnItemClickListener implements OnItemClickListener
+	{
+		/** For GeoArea autocomplete, the callback for {@link OnItemClickListener} */
+		public void onItemClick(AdapterView<?> parent, View clickedOn, int position, long rowID)
+		{
+			ListAdapter la = etGeoArea.getAdapter();
+			if (la == null)
+				return;
+			geoAreaObj = (GeoArea) la.getItem(position);
+		}
 	}
 
 }

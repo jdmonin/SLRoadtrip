@@ -50,6 +50,9 @@ import android.widget.Spinner;
  * Changing the current vehicle will switch to a different current trip.
  * The driver can't be changed during a Trip yet.
  *<P>
+ * The "Change" button that changes current settings and finishes the Activity
+ * is handled by {@link #onClick_BtnChange(View)}.
+ *<P>
  * If the current vehicle is changed in the dropdown, and then "Edit Vehicles"
  * is pressed, the dropdown's new current vehicle setting is saved immediately.
  * This lets the user change the current vehicle so that the previous one can be

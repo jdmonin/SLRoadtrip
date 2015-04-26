@@ -481,38 +481,70 @@ public class LogbookEditPane extends JPanel implements ActionListener, WindowLis
 					return;  // <--- Early return: Error opening copy ---
 				}
 			} else {
-				// TODO ask whether to upgrade temp copy (changes won't be saved) or in place
-				final String[] upg_exit = { "Upgrade", "Exit" };
+				// ask whether to upgrade temp copy (changes won't be saved) or in place, or cancel
+
+				final String[] upg_exit = { "Upgrade", "Read-only", "Cancel" };
 				final int choice = JOptionPane.showOptionDialog(parentf,
-					"To use this database, it must be upgraded from older version "
+					"To use this database, it must be upgraded from older schema version "
 						+ user_version + " to the current version "
-						+ RDBSchema.DATABASE_VERSION + ".",
+						+ RDBSchema.DATABASE_VERSION + ".\n"
+						+ " Instead of upgrading, would you prefer a read-only view?\n"
+						+ " (A temporary copy will be upgraded.)",
 					"DB Upgrade Required",
 					JOptionPane.DEFAULT_OPTION,
 					JOptionPane.QUESTION_MESSAGE,
-					null, upg_exit, upg_exit[0]);
-				if (choice == 1)
+					null, upg_exit, upg_exit[1]);
+
+				switch (choice)
 				{
+				case 0:  // upgrade in place
+					try
+					{
+						RDBSchema.upgradeToCurrent(conn, user_version, false);
+					} catch (Exception e) {
+						// TODO capture it somewhere gui-accessible?
+						e.printStackTrace();
+						try {
+							conn.close();
+						} catch (Throwable th) {}
+
+						JOptionPane.showMessageDialog(parentf,
+						    "An error occurred during the upgrade:\n"
+							+ e.toString() + "\n" + e.getMessage()
+							+ "\nTo see the detailed stack trace, please run Bookedit from a command line and try again.",
+						    "Error during upgrade",
+						    JOptionPane.ERROR_MESSAGE);
+
+						return;  // <--- Early return: Error upgrading ---
+					}
+					break;
+
+				case 1:  // make and open read-only copy to upgrade
 					conn.close();
-					System.exit(0);
-				}
-				System.err.println("-> Chose upgrade");
-				try
-				{
-					RDBSchema.upgradeToCurrent(conn, user_version, false);
-				} catch (Throwable e) {
-					// TODO capture it somewhere accessible?
-					e.printStackTrace();
+					isBackup = true;
+					// if an error occurs, upgradeDBCopy will show a message dialog
+					File upgCopy = upgradeDBCopy(new File(fname), user_version, parentf);
+					if (upgCopy == null)
+					{
+						return;  // <--- Early return: Error copying or upgrading ---
+					}
+					fname = upgCopy.getAbsolutePath();
 					try {
-						conn.close();
-					} catch (Throwable th) {}
-	
-					JOptionPane.showMessageDialog(parentf,
-					    "An error occurred during the upgrade. Please run again from the command line to see the stack trace.\n"
-						  + e.toString() + " " + e.getMessage(),
-					    "Error during upgrade",
-					    JOptionPane.ERROR_MESSAGE);
-					System.exit(8);
+						conn = new RDBJDBCAdapter(fname);
+					} catch (Exception e) {
+						JOptionPane.showMessageDialog(parentf,
+							"Could not copy and open this database.\nError was: "
+								+ e.getClass() + " " + e.getMessage(),
+							"Could not open SQLite db",
+							JOptionPane.ERROR_MESSAGE);
+
+						return;  // <--- Early return: Error opening copy ---
+					}
+					break;
+
+				case 2:  // cancel
+					conn.close();
+					return;  // <--- Early return: User canceled ---
 				}
 			}
 		}

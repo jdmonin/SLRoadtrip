@@ -342,6 +342,7 @@ public class LogbookEditPane extends JPanel implements ActionListener, WindowLis
 			// but loses the column model.
 			tb.setModel(mdata);
 			setupTbColumnModel();
+			bLoadPrevious.setEnabled(true);  // in case disabled because prev vehicle had no earlier trips
 			bChgVehicle.setText(TEXT_VEHICLE + veh.toString());
 		} catch (IllegalStateException e) {
 			// TODO Auto-generated catch block

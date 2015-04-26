@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2011,2013-2014 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2011,2013-2015 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -127,63 +127,63 @@ public class BackupsRestore
 	 */
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
-	    super.onCreate(savedInstanceState);
-	    setContentView(R.layout.backups_restore);
+		super.onCreate(savedInstanceState);
+		setContentView(R.layout.backups_restore);
 
-	    final Intent in = getIntent(); 
-	    bkupFullPath = in.getStringExtra(KEY_FULL_PATH);
-	    bkupSchemaVers = in.getIntExtra(KEY_SCHEMA_VERS, 0);
-	    if ((bkupFullPath == null) || (bkupSchemaVers == 0)
-	    	|| (0 == in.getIntExtra(KEY_LAST_TRIPTIME, 0)))
-	    {
-	    	Toast.makeText(this, R.string.internal__missing_required_bundle, Toast.LENGTH_SHORT).show();
-	    	finish();  // <--- End this activity ---
-	    	return;
-	    }
-	    
-	    btnRestore = (Button) findViewById(R.id.backups_restore_btn_restore);
+		final Intent in = getIntent();
+		bkupFullPath = in.getStringExtra(KEY_FULL_PATH);
+		bkupSchemaVers = in.getIntExtra(KEY_SCHEMA_VERS, 0);
+		if ((bkupFullPath == null) || (bkupSchemaVers == 0)
+		    || (0 == in.getIntExtra(KEY_LAST_TRIPTIME, 0)))
+		{
+			Toast.makeText(this, R.string.internal__missing_required_bundle, Toast.LENGTH_SHORT).show();
+			finish();  // <--- End this activity ---
+			return;
+		}
 
-	    TextView tvPath = (TextView) findViewById(R.id.backups_restore_filepath);
-	    tvPath.setText(bkupFullPath);
+		btnRestore = (Button) findViewById(R.id.backups_restore_btn_restore);
 
-	    // Do we need to upgrade this backup?
-	    String versMsg = null;
-	    if (bkupSchemaVers < RDBSchema.DATABASE_VERSION)
-	    {
-	    	// If less than current, copy from bkupFullPath to getCacheDir(),
-	    	//   adjust bkupFullPath, and upgrade it after verif(LEVEL_PHYS).
-		if (bkupSchemaVers >= RDBSchema.DB_VERSION_MIN_UPGRADE)
-		    copyAndUpgradeTempFile();
-		else
-		    versMsg = getResources().getString(R.string.backups_restore_too_old_beta);
-	    }
-	    else if (bkupSchemaVers > RDBSchema.DATABASE_VERSION)
-	    {
-		// "This backup file's schema version %1$d is too new too restore, this app uses version %2$d.
-		//  Please use a newer version of Shadowlands Roadtrip."
-		versMsg = String.format
-		    (getResources().getString(R.string.backups_restore_too_new_version),
-		     Integer.valueOf(bkupSchemaVers), Integer.valueOf(RDBSchema.DATABASE_VERSION));
-	    }
-	    if (versMsg != null)
-	    {
-		bkupIsTooOldOrNew = true;
+		TextView tvPath = (TextView) findViewById(R.id.backups_restore_filepath);
+		tvPath.setText(bkupFullPath);
 
-		TextView vfield;
-		vfield = (TextView) findViewById(R.id.backups_restore_bkuptime);
-		if (vfield != null)
-			vfield.setText(versMsg);
-		else
-			tvPath.setText(versMsg);  // fallback
+		// Do we need to upgrade this backup?
+		String versMsg = null;
+		if (bkupSchemaVers < RDBSchema.DATABASE_VERSION)
+		{
+			// If less than current, copy from bkupFullPath to getCacheDir(),
+			//   adjust bkupFullPath, and upgrade it after verif(LEVEL_PHYS).
+			if (bkupSchemaVers >= RDBSchema.DB_VERSION_MIN_UPGRADE)
+				copyAndUpgradeTempFile();
+			else
+				versMsg = getResources().getString(R.string.backups_restore_too_old_beta);
+		}
+		else if (bkupSchemaVers > RDBSchema.DATABASE_VERSION)
+		{
+			// "This backup file's schema version %1$d is too new too restore, this app uses version %2$d.
+			//  Please use a newer version of Shadowlands Roadtrip."
+			versMsg = String.format
+				(getResources().getString(R.string.backups_restore_too_new_version),
+				 Integer.valueOf(bkupSchemaVers), Integer.valueOf(RDBSchema.DATABASE_VERSION));
+		}
+		if (versMsg != null)
+		{
+			bkupIsTooOldOrNew = true;
 
-		// hide or disable other items
-		btnRestore.setVisibility(View.GONE);
-		vfield = (TextView) findViewById(R.id.backups_restore_validating);
-		if (vfield != null)
-			vfield.setVisibility(View.GONE);
-	    }
+			TextView vfield;
+			vfield = (TextView) findViewById(R.id.backups_restore_bkuptime);
+			if (vfield != null)
+				vfield.setText(versMsg);
+			else
+				tvPath.setText(versMsg);  // fallback
 
-	    // see onResume for rest of initialization.
+			// hide or disable other items
+			btnRestore.setVisibility(View.GONE);
+			vfield = (TextView) findViewById(R.id.backups_restore_validating);
+			if (vfield != null)
+				vfield.setVisibility(View.GONE);
+		}
+
+		// see onResume for rest of initialization.
 	}
 
 	/**
@@ -223,7 +223,7 @@ public class BackupsRestore
 					vfield.setText(R.string.backups_restore_validation_error);
 				else
 					vfield.setText(R.string.backups_restore_too_old_beta);
-			}	
+			}
 			btnRestore.setEnabled(validatedOK);
 		}
 	}
@@ -266,10 +266,10 @@ public class BackupsRestore
 			Toast.makeText(this, R.string.backups_restore_too_old_beta, Toast.LENGTH_LONG).show();
 			bkupSchemaVers = -1;
 			Log.e(TAG, "Failed upgradeToCurrent", e);
-	    	} catch (IOException e) {
-	    		// TODO ? Fallback to sdcard and retry?
-	    		Log.e(TAG, "copyAndUpgradeTempFile ioexception: Failed during copy & validation", e);
-	    		Toast.makeText(this, R.string.backups_restore_validation_error, Toast.LENGTH_SHORT).show();
+		} catch (IOException e) {
+			// TODO ? Fallback to sdcard and retry?
+			Log.e(TAG, "copyAndUpgradeTempFile ioexception: Failed during copy & validation", e);
+			Toast.makeText(this, R.string.backups_restore_validation_error, Toast.LENGTH_SHORT).show();
 		} catch (Throwable e) {
 			// SQLException
 			// TODO Toast or something
@@ -278,24 +278,24 @@ public class BackupsRestore
 
 		// next, if ok, continue with validating it in onResume
 
-    	if (! ok)
-    	{
-    		alreadyValidated = true;
-    		validatedOK = false;
-    		if (bkupIsTempCopy && (destTempFile != null))
-    		{
-    			try
-    			{
-    				if (destTempFile.exists())
-    					destTempFile.delete();
-    			} catch (Exception e) {}  // at least copy is in cache dir: eventual cleanup
-    		}
+		if (! ok)
+		{
+			alreadyValidated = true;
+			validatedOK = false;
+			if (bkupIsTempCopy && (destTempFile != null))
+			{
+				try
+				{
+					if (destTempFile.exists())
+						destTempFile.delete();
+				} catch (Exception e) {}  // at least copy is in cache dir: eventual cleanup
+			}
 
-    		TextView vfield = (TextView) findViewById(R.id.backups_restore_validating);
-    		if (vfield == null)
-    			return;
-    		vfield.setText(R.string.backups_restore_validation_error);
-    	}
+			TextView vfield = (TextView) findViewById(R.id.backups_restore_validating);
+			if (vfield == null)
+				return;
+			vfield.setText(R.string.backups_restore_validation_error);
+		}
 	}
 
 	/**
@@ -367,19 +367,18 @@ public class BackupsRestore
 			return;  // <--- Early return: Go ahead and restore now ---
 		}
 
-    	AlertDialog.Builder alert = new AlertDialog.Builder(this);
-
-    	alert.setTitle(R.string.confirm);
-    	alert.setMessage(R.string.backups_restore_more_recent_are_you_sure);
-    	alert.setPositiveButton(R.string.restore, new DialogInterface.OnClickListener() {
-			  public void onClick(DialogInterface dialog, int whichButton) {
-				  restoreFromBackupFile();
-			  }
-	    	});
-    	alert.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
-	    	  public void onClick(DialogInterface dialog, int whichButton) { }
-	    	});
-    	alert.show();
+		AlertDialog.Builder alert = new AlertDialog.Builder(this);
+		alert.setTitle(R.string.confirm);
+		alert.setMessage(R.string.backups_restore_more_recent_are_you_sure);
+		alert.setPositiveButton(R.string.restore, new DialogInterface.OnClickListener() {
+			public void onClick(DialogInterface dialog, int whichButton) {
+				restoreFromBackupFile();
+			}
+		});
+		alert.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+			public void onClick(DialogInterface dialog, int whichButton) { }
+		});
+		alert.show();
 	}
 
 	/**
@@ -410,13 +409,12 @@ public class BackupsRestore
 		alert.setTitle(titleID);
 		alert.setMessage(msg);
 		alert.setNeutralButton(android.R.string.ok,  new DialogInterface.OnClickListener() {
-			  public void onClick(DialogInterface dialog, int whichButton) {
+			public void onClick(DialogInterface dialog, int whichButton) {
 				BackupsRestore.this.finish();
-			  }
-	    	});
+			}
+		});
 		alert.show();
 	}
-
 
 	@Override
 	public void onDestroy()
@@ -435,54 +433,53 @@ public class BackupsRestore
 
 	public void onClick_BtnRestore(View v)
 	{
-    	AlertDialog.Builder alert = new AlertDialog.Builder(this);
-
-    	alert.setTitle(R.string.confirm);
-    	alert.setMessage(R.string.backups_restore_are_you_sure);
-    	alert.setPositiveButton(R.string.restore, new DialogInterface.OnClickListener() {
-			  public void onClick(DialogInterface dialog, int whichButton) {
-				  checkActivityAndRestoreFromBackupFile();
-			  }
-	    	});
-    	alert.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
-	    	  public void onClick(DialogInterface dialog, int whichButton) { }
-	    	});
-    	alert.show();
+		AlertDialog.Builder alert = new AlertDialog.Builder(this);
+		alert.setTitle(R.string.confirm);
+		alert.setMessage(R.string.backups_restore_are_you_sure);
+		alert.setPositiveButton(R.string.restore, new DialogInterface.OnClickListener() {
+			public void onClick(DialogInterface dialog, int whichButton) {
+				checkActivityAndRestoreFromBackupFile();
+			}
+		});
+		alert.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+			public void onClick(DialogInterface dialog, int whichButton) { }
+		});
+		alert.show();
 	}
 
 	/** If Cancel is clicked, cancel the validatingTask and finish the activity. */
-    public void onClick_BtnCancel(View v)
-    {
-    	setResult(RESULT_CANCELED);
-    	if ((validatingTask != null) && ! validatingTask.isCancelled())
-    		validatingTask.cancel(true);
-    	finish();
-    }
+	public void onClick_BtnCancel(View v)
+	{
+		setResult(RESULT_CANCELED);
+		if ((validatingTask != null) && ! validatingTask.isCancelled())
+			validatingTask.cancel(true);
+		finish();
+	}
 
-    /** Check with user for {@link KeyEvent#KEYCODE_BACK}, handle it with {@link #onClick_BtnCancel(View)} */
+	/** Check with user for {@link KeyEvent#KEYCODE_BACK}, handle it with {@link #onClick_BtnCancel(View)} */
 	@Override
 	public boolean onKeyDown(final int keyCode, KeyEvent event)
 	{
-	    if ((keyCode == KeyEvent.KEYCODE_BACK)
-	    	&& (event.getRepeatCount() == 0))
-	    {
-	    	onClick_BtnCancel(null);
-	        return true;  // Don't pass to next receiver
-	    }
+		if ((keyCode == KeyEvent.KEYCODE_BACK) && (event.getRepeatCount() == 0))
+		{
+			onClick_BtnCancel(null);
+			return true;  // Don't pass to next receiver
+		}
 
-	    return super.onKeyDown(keyCode, event);
+		return super.onKeyDown(keyCode, event);
 	}
 
 	/** Check with user for {@link KeyEvent#KEYCODE_BACK} */
 	@Override
 	public boolean onKeyUp(final int keyCode, KeyEvent event)
 	{
-	    if (keyCode == KeyEvent.KEYCODE_BACK)
-	    {
-	    	// Deal with this key during onKeyDown, not onKeyUp.
-	        return true;  // Don't pass to next receiver
-	    }
-	    return super.onKeyUp(keyCode, event);
+		if (keyCode == KeyEvent.KEYCODE_BACK)
+		{
+			// Deal with this key during onKeyDown, not onKeyUp.
+			return true;  // Don't pass to next receiver
+		}
+
+		return super.onKeyUp(keyCode, event);
 	}
 
 	/** Callback for copyAndUpgradeTempFile; implement {@link RDBSchema.UpgradeCopyCaller}. */
@@ -490,12 +487,12 @@ public class BackupsRestore
 		throws ClassNotFoundException, SQLException
 	{
 		if (RDBOpenHelper.dbSQLRsrcs == null)
-		    	RDBOpenHelper.dbSQLRsrcs = getApplicationContext().getResources();
+			RDBOpenHelper.dbSQLRsrcs = getApplicationContext().getResources();
 
 		return new RDBOpenHelper(this, fullPath);
 	}
 
-	/** Run db validation on a separate thread. */
+	/** Run db validation in a separate thread. */
 	private class ValidateDBTask extends AsyncTask<String, Integer, Boolean>
 	{
 		protected Boolean doInBackground(final String... bkupFullPath)
@@ -531,7 +528,7 @@ public class BackupsRestore
 
 		protected void onProgressUpdate(Integer... progress) {
 			updateValidateProgress(progress[0]);
-	    }
+		}
 
 		protected void onPostExecute(Boolean v)
 		{
@@ -545,7 +542,7 @@ public class BackupsRestore
 			}
 
 			btnRestore.setEnabled(validatedOK);
-	    }
+		}
 	}
 
 }

@@ -46,6 +46,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
+import javax.swing.ListSelectionModel;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellRenderer;
 
@@ -144,6 +145,11 @@ public class LogbookEditPane extends JPanel implements ActionListener, WindowLis
 			}			
 		};
 		setLayout(new BorderLayout());  // stretch JTable on resize
+		tb.setAutoResizeMode(JTable.AUTO_RESIZE_NEXT_COLUMN);  // don't stretch all cols on manual col-width chg
+		// allow select cells, not just entire rows
+		tb.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
+		tb.setCellSelectionEnabled(true);
+
 		setupTbColumnModel();
 		sp = new JScrollPane(tb);
 		add(sp, BorderLayout.CENTER);

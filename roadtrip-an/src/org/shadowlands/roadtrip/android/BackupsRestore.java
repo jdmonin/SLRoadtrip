@@ -90,6 +90,14 @@ public class BackupsRestore
 	/** if true, delete the temp-copy at finish */
 	private boolean bkupIsTempCopy = false;
 
+	/**
+	 * if true, the backup is older than {@link RDBSchema#DB_VERSION_MIN_UPGRADE}
+	 * or newer than our version {@link RDBSchema#DATABASE_VERSION} and can't be
+	 * upgraded, validated, or restored
+	 * @since 0.9.41
+	 */
+	private boolean bkupIsTooOldOrNew = false;
+
 	/** Schema version of backup, from {@link RDBSchema}. If -1, too old (very early beta) to restore. */
 	private int bkupSchemaVers = 0;
 
@@ -138,11 +146,41 @@ public class BackupsRestore
 	    TextView tvPath = (TextView) findViewById(R.id.backups_restore_filepath);
 	    tvPath.setText(bkupFullPath);
 
+	    // Do we need to upgrade this backup?
+	    String versMsg = null;
 	    if (bkupSchemaVers < RDBSchema.DATABASE_VERSION)
 	    {
 	    	// If less than current, copy from bkupFullPath to getCacheDir(),
 	    	//   adjust bkupFullPath, and upgrade it after verif(LEVEL_PHYS).
-	    	copyAndUpgradeTempFile();
+		if (bkupSchemaVers >= RDBSchema.DB_VERSION_MIN_UPGRADE)
+		    copyAndUpgradeTempFile();
+		else
+		    versMsg = getResources().getString(R.string.backups_restore_too_old_beta);
+	    }
+	    else if (bkupSchemaVers > RDBSchema.DATABASE_VERSION)
+	    {
+		// "This backup file's schema version %1$d is too new too restore, this app uses version %2$d.
+		//  Please use a newer version of Shadowlands Roadtrip."
+		versMsg = String.format
+		    (getResources().getString(R.string.backups_restore_too_new_version),
+		     Integer.valueOf(bkupSchemaVers), Integer.valueOf(RDBSchema.DATABASE_VERSION));
+	    }
+	    if (versMsg != null)
+	    {
+		bkupIsTooOldOrNew = true;
+
+		TextView vfield;
+		vfield = (TextView) findViewById(R.id.backups_restore_bkuptime);
+		if (vfield != null)
+			vfield.setText(versMsg);
+		else
+			tvPath.setText(versMsg);  // fallback
+
+		// hide or disable other items
+		btnRestore.setVisibility(View.GONE);
+		vfield = (TextView) findViewById(R.id.backups_restore_validating);
+		if (vfield != null)
+			vfield.setVisibility(View.GONE);
 	    }
 
 	    // see onResume for rest of initialization.
@@ -161,6 +199,11 @@ public class BackupsRestore
 //		readDBLastBackupTime(db, -1);
 
 //		db.close();
+
+		if (bkupIsTooOldOrNew)
+		{
+			return;  // <--- Early return: Can't restore this backup ---
+		}
 
 		if (! alreadyValidated)
 		{

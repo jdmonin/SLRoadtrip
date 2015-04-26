@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010,2012-2014 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010,2012-2015 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -65,11 +65,20 @@ public abstract class RDBSchema
 	 * and also stored on android as the database schema version.
 	 *<P>
 	 * See the class javadoc for what to change in the code when you update the schema version.
+	 * @see #DB_VERSION_MIN_UPGRADE
 	 */
 	public static final int DATABASE_VERSION = 940;
 
 	/** Filename of schema create sql script for the current {@link #DATABASE_VERSION}. */
 	public static final String DB_SCHEMA_CREATE_FILENAME = "schema_v0940.sql";
+
+	/**
+	 * The minimum {@link #DATABASE_VERSION} (901) that can be upgraded by
+	 * {@link #upgradeToCurrent(RDBAdapter, int, boolean)}. DB schema v901
+	 * is from 2010-11-16, previous versions are very early betas.
+	 * @since 0.9.41
+	 */
+	public static final int DB_VERSION_MIN_UPGRADE = 901;
 
 	/**
 	 * Filename prefix of schema upgrade sql script.
@@ -186,13 +195,18 @@ public abstract class RDBSchema
 	/**
 	 * Perform all needed SQL scripts to upgrade the db schema from an
 	 * old version to the current version.
+	 *<P>
+	 * To check whether the db's {@code oldVersion} is too old,
+	 * you can compare it to {@link #DB_VERSION_MIN_UPGRADE}.
+	 *
 	 * @param  db  an open database
 	 * @param  oldVersion  The old schema version
 	 * @param  skipSetVersion  Are we running on android under SQLiteOpenHelper?  If so, skip the setVersion pragma.
 	 * @see RDBAdapter#getSQLScript(int)
 	 * @see #upgradeCopyToCurrent(File, File)
-	 * @throws IllegalStateException  if <tt>oldVersion</tt> is earlier than 901, too old to upgrade.
-	 *      Schema v0.9.01 was released on 2010-11-16.
+	 * @throws IllegalStateException  if {@code oldVersion} is earlier than 901, too old to upgrade.
+	 *      Schema v0.9.01 was released on 2010-11-16, previous versions are very early betas.
+	 *      This will also be thrown if {@code oldVersion} is newer than the current schema version.
 	 * @throws IOException  if a problem occurs locating or opening an upgrade script
 	 * @throws SQLException  if a syntax or database error occurs
 	 */
@@ -231,6 +245,11 @@ public abstract class RDBSchema
 			// Nothing to do, current version already. Don't fall through, don't set anythingDone.
 			break;
 
+			/*
+			 * older versions that aren't obsolete:
+			 * (if minimum changes, please update method javadocs and DB_VERSION_MIN_UPGRADE)
+			 */
+
 		case 901:  // 901 -> 905   2010-11-30
 			upgradeStep(db, 905);
 		case 905:  // 905 -> 906   2010-12-16
@@ -248,6 +267,7 @@ public abstract class RDBSchema
 
 		default:
 			// Too old; only very early betas affected. v901 is from 2010-11-16.
+			// Too new would also be caught here.
 			final String tooOldMsg =
 				"-- Error, old-version minimum is 901, this version too old to upgrade: " + oldVersion;
 			throw new IllegalStateException(tooOldMsg);  // <--- Throw: too old ---

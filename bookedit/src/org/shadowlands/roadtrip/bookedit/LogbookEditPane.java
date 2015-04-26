@@ -447,16 +447,39 @@ public class LogbookEditPane extends JPanel implements ActionListener, WindowLis
 		{
 			System.err.println("Not found: " + e.keyString);
 			JOptionPane.showMessageDialog(parentf,
-			    "An important record is missing in the database.",
+			    "An important system record is missing in the database.",
 			    "Missing required version record",
 			    JOptionPane.ERROR_MESSAGE);
 			conn.close();
-			System.exit(8);  // <--- End program: Version unknown, can't use this db ---
+			return;  // <--- Early return: Version unknown, can't use this db ---
 		}
 
 		// Does it need an upgrade?
 		final int user_version = ((RDBJDBCAdapter) conn).getSchemaVersion();
 		System.out.println("user_version is " + user_version + " (current: " + RDBSchema.DATABASE_VERSION + ")");
+
+		// Quick check for too old or too new
+		if (user_version != RDBSchema.DATABASE_VERSION)
+		{
+			String versMsg = null;
+			if (user_version < RDBSchema.DB_VERSION_MIN_UPGRADE)
+				versMsg = "It's an early beta version " + user_version + " too old to open.";
+			else if (user_version > RDBSchema.DATABASE_VERSION)
+				versMsg = "Its schema version " + user_version
+					+ " is too new, this program uses version " + RDBSchema.DATABASE_VERSION
+					+ ".\nPlease use a newer version of Shadowlands Roadtrip BookEdit.";
+
+			if (versMsg != null)
+			{
+				conn.close();
+				JOptionPane.showMessageDialog(parentf,
+					"Cannot use this database:\n" + versMsg,
+					"Database version can't be opened",
+					JOptionPane.ERROR_MESSAGE);
+				return;  // <--- Early return: Too old or too new ---
+			}
+		}
+
 		if (user_version < RDBSchema.DATABASE_VERSION)
 		{
 			if (isBackup)
@@ -511,7 +534,7 @@ public class LogbookEditPane extends JPanel implements ActionListener, WindowLis
 						JOptionPane.showMessageDialog(parentf,
 						    "An error occurred during the upgrade:\n"
 							+ e.toString() + "\n" + e.getMessage()
-							+ "\nTo see the detailed stack trace, please run Bookedit from a command line and try again.",
+							+ "\nTo see the detailed stack trace, please run BookEdit from a command line and try again.",
 						    "Error during upgrade",
 						    JOptionPane.ERROR_MESSAGE);
 

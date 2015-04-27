@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  Copyright (C) 2010-2012 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2012,2015 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -31,6 +31,7 @@ public class GeoArea extends RDBRecord
 {
 	private static final String TABNAME = "geoarea";
 	private static final String VALFIELD = "aname";
+	private static final String VALFIELD_SORT = "aname COLLATE NOCASE";  // syntax may be sqlite-specific
 	private static final String[] FIELDS = { VALFIELD };
 	private static final String[] FIELDS_AND_ID = { VALFIELD, "_id" };
 
@@ -51,9 +52,9 @@ public class GeoArea extends RDBRecord
     		String kf, kv;
     		kf = "_id<>";
     		kv = Integer.toString(exceptID);
-    		gas = db.getRows(TABNAME, kf, kv, FIELDS_AND_ID, VALFIELD, 0);
+    		gas = db.getRows(TABNAME, kf, kv, FIELDS_AND_ID, VALFIELD_SORT, 0);
     	} else {
-    		gas = db.getRows(TABNAME, null, (String[]) null, FIELDS_AND_ID, VALFIELD, 0);
+    		gas = db.getRows(TABNAME, null, (String[]) null, FIELDS_AND_ID, VALFIELD_SORT, 0);
     	}
     	if (gas == null)
     		return null;

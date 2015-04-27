@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010-2011,2014 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2011,2014-2015 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,15 +28,17 @@ import java.util.Vector;
 public class ViaRoute extends RDBRecord
 {
     private static final String TABNAME = "via_route";
+    private static final String DESCFIELD = "via_descr";
+    private static final String DESCFIELD_SORT = "via_descr COLLATE NOCASE";  // syntax may be sqlite-specific
 
     /** db table fields.
      * @see #buildInsertUpdate()
      * @see #initFields(String[])
      */
     private static final String[] FIELDS =
-        { "locid_from", "locid_to", "odo_dist", "via_descr" };
+	{ "locid_from", "locid_to", "odo_dist", DESCFIELD };
     private static final String[] FIELDS_AND_ID =
-	    { "locid_from", "locid_to", "odo_dist", "via_descr", "_id" };
+	{ "locid_from", "locid_to", "odo_dist", DESCFIELD, "_id" };
 
     /** From,To location IDs. Never empty/unused. */
     private int locid_from, locid_to;  // FK
@@ -80,10 +82,10 @@ public class ViaRoute extends RDBRecord
     	{
     	    final String[] locIDsFromTo = new String[] { Integer.toString(locID_from), Integer.toString(locID_to) };
     	    sv = db.getRows
-    	    (TABNAME, "locid_from=? and locid_to=?", locIDsFromTo, FIELDS_AND_ID, "via_descr", 0);
+    	    (TABNAME, "locid_from=? and locid_to=?", locIDsFromTo, FIELDS_AND_ID, DESCFIELD_SORT, 0);
     	} else {
     	    sv = db.getRows
-    	    (TABNAME, (String) null, (String[]) null, FIELDS_AND_ID, "via_descr", 0);    		
+    	    (TABNAME, (String) null, (String[]) null, FIELDS_AND_ID, DESCFIELD_SORT, 0);
     	}
     	if (sv == null)
     		return null;

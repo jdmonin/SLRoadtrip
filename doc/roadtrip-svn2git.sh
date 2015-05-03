@@ -25,6 +25,10 @@
 # After running this script successfully:
 # - Use gitk or GitX to review the conversion
 # - Check out a fresh copy of master from .git, and diff -ur against the svn working directory
+# - You can tag past releases, if not already tagged by svn2git, using their commit hash:
+#	$ GIT_COMMITTER_DATE="2015-04-27 08:07" git tag -a -f release-0.9.41 -m 'Version 0.9.41 is r428 - tested Apr 27 til May 2' 06a4508
+#	In GIT_COMMITTER_DATE the time is HH:MM in your computer's local timezone.
+#	Github will show these tags under Releases including the date, time, and comment.
 # - When you are satisified that everything validates, create a new repo on github
 # - Finally, add a remote and push to github:
 #	$ git remote add origin git@github.com:jdmonin/SLRoadtrip.git

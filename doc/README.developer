@@ -19,13 +19,15 @@ Contents:
 
 (those sections here)
 
+The project development site is https://github.com/jdmonin/SLRoadtrip
+
 
 How to build:
 
 In Eclipse, ...
 (more details here)
 
-Android: If you want the svn revision to show in the About box, then before
+Android: If you want the commit hash to show in the About box, then before
 building, you must first manually edit res/raw/svnversion.txt to contain the
 revision number, and refresh that file in Eclipse.
 
@@ -83,8 +85,9 @@ In SQLite you can specify this with orderBy = "fieldname COLLATE NOCASE".
 
 
 Version history:
+	Older revisions are svn, more recent ones are git commits.
 
-svn	version	date
+rev	version	date
 -	0.8.05	2010-10-06	first install on any device hardware
 -	0.8.07	2010-10-15
 -	0.9.01	2010-11-20
@@ -113,6 +116,7 @@ r428	0.9.41	2015-04-27	Minor improvements and bugfixes since 0.9.40:
 				When a new vehicle is added, ChangeDriverOrVehicle always asks whether to change the current vehicle.
 				Bookedit: When opening an older-schema file for edit, asks whether to upgrade in place
 				  or make a read-only copy like it does for viewing older backups.
+r431	-	2015-05-03	3393a0f  Migration from svn to git, google code to github
 -	0.9.42			Being developed now; minor improvements and bugfixes since 0.9.41.
 
 Also see doc/hist/*.sql for previous schema updates.

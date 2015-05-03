@@ -6,8 +6,9 @@ Contains:
 - bookedit, the java viewer for backups from Android
 - doc, the documentation
 
+The project development site is https://github.com/jdmonin/SLRoadtrip
 Further documentation will be provided soon, along with screenshots on
-the project wiki at https://code.google.com/p/shadowlands-roadtrip/ .
+the project wiki.
 
 For now, please see the 'doc' directory for details, such as README.developer.
 
@@ -18,4 +19,4 @@ Known limitations:
 - Two copies of the db library source (one each for bookedit and roadtrip-an)
 
 Jeremy D Monin <jdmonin@nand.net>
-March 2012
+May 2015

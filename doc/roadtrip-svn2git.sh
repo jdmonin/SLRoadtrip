@@ -1,15 +1,16 @@
 #!/bin/sh
 
-# svn2git conversion script for SLRoadtrip: J Monin 2015-05-03
+# svn2git conversion script for SLRoadtrip: J. Monin 2015-05-03
 #   Downloads the remote svn repo, converts it to a new local git repo
 #   in the current directory.  Run it from an empty directory only.
-#   Appends svn commit numbers to the git comments: [svn r398]
+#   Appends svn commit numbers to the git comments, such as [svn r398]
 #   Uses ruby gem svn2git from https://github.com/nirvdrum/svn2git
 #
 # This file Copyright (C) 2015 Jeremy D Monin <jdmonin@nand.net>
 
 # Process and prereqs:
 # - ruby and the svn2git gem are installed
+# - svn status shows no uncommitted local changes
 # - the repo contents' svn properties have been checked for svn:ignore and others:
 #	$ svn proplist -Rv
 #	$ svn pg -R svn:ignore
@@ -18,9 +19,17 @@
 #	for SLRoadtrip, the file is:
 #	jdmonin@nand.net = Jeremy D Monin <jdmonin@nand.net>
 #	(no author) = Jeremy D Monin <jdmonin@nand.net>
-# - Run this script from an empty directory (`pwd` contains no files)
 # - For the commit message rewrites, a temp directory on a fast disk has been created
-# - gitk or GitX will be used afterwards to review the conversion
+# - Run this script from an empty directory (`pwd` contains no files)
+
+# After running this script successfully:
+# - Use gitk or GitX to review the conversion
+# - Check out a fresh copy of master from .git, and diff -ur against the svn working directory
+# - When you are satisified that everything validates, create a new repo on github
+# - Finally, add a remote and push to github:
+#	$ git remote add origin git@github.com:jdmonin/SLRoadtrip.git
+#	$ git push --force origin
+#	$ git push --force --tags origin
 
 # Observations:
 # - OSX 10.9's built-in ruby 2.0.0 and its gems are adequate to run the conversion

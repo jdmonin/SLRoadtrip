@@ -14,11 +14,16 @@
 # - the repo contents' svn properties have been checked for svn:ignore and others:
 #	$ svn proplist -Rv
 #	$ svn pg -R svn:ignore
-# - authors have been scanned, and an authors.txt file prepared:
+# - Repo's list of authors has been scanned, and an authors.txt file prepared:
 #	$ svn log -q
 #	for SLRoadtrip, the file is:
 #	jdmonin@nand.net = Jeremy D Monin <jdmonin@nand.net>
 #	(no author) = Jeremy D Monin <jdmonin@nand.net>
+#	If you have many authors, you can get a list of them with:
+#	$ svn log -q | grep -e '^r' | awk 'BEGIN { FS = "|" } ; { print $2 }' | sort | uniq
+#	(adapted from https://jaibeermalik.wordpress.com/2013/10/23/svn2git-migrating-repository-from-subversion-to-git/)
+# - This script assumes the repo isn't using branches or tags: if yours is, then in
+#	the svn2git command in this script, remove --notags and/or --nobranches
 # - For the commit message rewrites, a temp directory on a fast disk has been created
 # - Run this script from an empty directory (`pwd` contains no files)
 
@@ -76,6 +81,9 @@ date
 echo "Beginning conversion into new git repo in current directory."
 echo ""
 
+# Note: The simple SLRoadtrip svn repo didn't use tags or branches;
+# if you're using this for another project and it does use those, then
+# remove --notags and/or --nobranches as appropriate.
 svn2git $SVN_REPO_URL --metadata --notags --nobranches --verbose  --authors $AUTHOR_FILE
 
 SVN2GIT_RC=$?

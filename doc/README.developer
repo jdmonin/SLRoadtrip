@@ -24,12 +24,88 @@ The project development site is https://github.com/jdmonin/SLRoadtrip
 
 How to build:
 
-In Eclipse, ...
-(more details here)
+These instructions are for Eclipse; instructions for Android Studio are TBD.
 
-Android: If you want the commit hash to show in the About box, then before
-building, you must first manually edit res/raw/svnversion.txt to contain the
-revision number, and refresh that file in Eclipse.
+You can use the standard Java Eclipse, although after installing that it can be
+useful to go to go to Add Software and download the Data Tools Platform from
+Java EE (J2EE) to use the data browser. To develop for Android, get the ADT
+plugin and use it to download the Android SDK and at least one android version's
+platform.  Currently SLRoadtrip's android project targets 3.0 (API level 11).
+
+Once your Eclipse is set up for Android, there are 2 projects to add to your
+workspace: bookedit is the Java program for viewing SLRoadtrip backup files
+on your computer, and roadtrip-an is the Android app.
+
+Make a local clone or fork of the SLRoadtrip git repo.  If you're starting from
+a previous released version (not the latest commit), you can start a new branch
+from the version's tag with:
+	git checkout -b branch_0941 release-0.9.41
+Otherwise just use:
+	git checkout master
+
+In Eclipse we'll first add the bookedit project, which is simpler than roadtrip-an:
+- In the Eclipse menu, File -> New Java Project [not from existing ant buildfile]
+- Project name: bookedit [or another name if you prefer]
+- Un-check the "use default location" checkbox
+- Location: Within the checked-out copy from git, browse to the bookedit folder
+- Click Next, not Finish
+- Review the Java Settings that appear now:
+	Source tab: Should show bookedit/src containing source folders for
+	  gnu.trove, org.shadowlands.roadtrip.bookedit, and other packages.
+	  Be sure that "Allow output folders for source folders" is un-checked.
+	  Take the default output folder bookedit/bin .
+	Projects tab: An empty list: there aren't any required projects
+	Libraries tab: JRE system library
+	Order and Export tab: contains bookedit/src and JRE system library
+- Click Finish
+
+This should add bookedit to the workspace list of projects (Package Explorer).
+On OS X, please check Project Properties -> Resource -> Text file encoding,
+which needs to be UTF-8 and not MacRoman or any other value.
+
+Hilight bookedit in Package Explorer, then go to the Project menu -> Build Project.
+After the build, check for any errors in the Problems pane and red X icons in the
+Package Explorer.  Typically there will be no errors.
+
+Once the build succeds, in the Package Explorer find bookedit/src/
+org.shadowlands.roadtrip.bookedit/Main.java. Right-click it and choose
+Run As -> Java Application.  You should see the BookEdit main window appear,
+showing some buttons and the version and db schema version.  Choose Exit.
+This also adds "Main" to your eclipse Run button dropdown; you can rename it
+using the Run Configurations dialog.
+
+Now add the android project to your workspace:
+- In the Eclipse menu, File -> New -> Project...
+	Android -> Android project from existing code
+- Project Root Directory: Within the checked-out copy from git, browse to the
+  roadtrip-an folder which contains the AndroidManifest.xml and .project files
+- In the list of Projects to Import, roadtrip-an should appear with a checkmark
+- Don't check the "copy projects into workspace" checkbox
+- Click Finish
+
+This should add roadtrip-an to the workspace list of projects (Package Explorer).
+Right-click it there and go to its Properties.  Under Android, be sure to choose
+a Build Target from the platform versions you've downloaded, 3.0 (API level 11)
+or higher.  On OS X, please also check Project Properties -> Resource -> Text
+file encoding, which needs to be UTF-8 and not MacRoman or any other value.
+
+Go to the Project menu -> Build Project.  After the build, check for any errors
+in the Problems pane and red X icons in the Package Explorer. Typically there
+will be no errors.  Some errors can be resolved by right-clicking the project
+and choosing Android Tools -> Fix Project Properties.
+
+Before running roadtrip-an for the first time, create an android emulated device
+(AVD) if you don't already have one with version 3.0 (API level 11) or higher.
+
+To run roadtrip-an, start the emulator, then in Package Explorer right-click
+roadtrip-an and choose Run As -> Android Application.  This also adds
+"roadtrip-an" to your eclipse Run button dropdown.  In a moment you should
+see the Shadowlands Roadtrip welcome screen.  Exit that, or start to enter some
+test data or restore a backup you've sent into the emulator's Downloads folder.
+Once a driver and vehicle are created or restored, the app will start at its
+main menu.
+
+At this point you're ready to work on developing BookEdit or roadtrip-an.
 
 
 Overview of source dir:
@@ -37,6 +113,10 @@ Overview of source dir:
 Some common files, mostly db-related, are duplicated between the android and
 bookedit source directories: src/org/shadowlands/roadtrip/db and model, and
 SQL scripts to create and upgrade the schema.
+
+Android: If you want the commit hash to show in the About box, then before
+building, you must first manually edit res/raw/svnversion.txt to contain the
+revision number, and refresh that file in Eclipse.
 
 In the bookedit source, the android directories are empty or missing.
 In the android source, the bookedit and jdbc directories are empty or missing.
@@ -59,11 +139,13 @@ bookedit's version is kept in org/shadowlands/roadtrip/bookedit/Main.java.
 More info about the SQLite versions and features available in Android is found
 by comparing the version numbers in http://www.sqlite.org/changes.html against
 those in http://stackoverflow.com/questions/2421189/version-of-sqlite-used-in-android
-As of January 2014, that table is summarized as:
+As of May 2015, that table is summarized as:
 	1.6 Cupcake, 2.1 Eclair:       3.5.9   2008-05-14
 	2.2 Froyo, 2.3 Gingerbread:    3.6.22  2010-01-06
 	3.0 Honeycomb, 4.0 ICS:        3.7.4   2010-12-08
 	4.1-4.3 Jellybean, 4.4 KitKat: 3.7.11  2012-03-20
+	5.0 Lollipop:                  3.8.4.3 2014-04-03
+	5.1 Lollipop:                  3.8.6   2014-08-15
 
 
 (more sections here)

@@ -114,9 +114,12 @@ Some common files, mostly db-related, are duplicated between the android and
 bookedit source directories: src/org/shadowlands/roadtrip/db and model, and
 SQL scripts to create and upgrade the schema.
 
-Android: If you want the commit hash to show in the About box, then before
-building, you must first manually edit res/raw/svnversion.txt to contain the
-revision number, and refresh that file in Eclipse.
+Android: If you want the commit hash to show in the About box: Before building,
+manually edit res/raw/gitversion.txt to contain the commit hash, then refresh
+that file in Eclipse. This is always done before releasing a version, so that
+the About box for the app in the APK will display the final build info.
+Never check in the updated gitversion.txt contents: the contents of
+gitversion.txt (or svnversion.txt) in the repo should always be "?".
 
 In the bookedit source, the android directories are empty or missing.
 In the android source, the bookedit and jdbc directories are empty or missing.
@@ -167,7 +170,9 @@ In SQLite you can specify this with orderBy = "fieldname COLLATE NOCASE".
 
 
 Version history:
-	Older revisions are svn, more recent ones are git commits.
+	Older revisions were svn, more recent ones are git commits.
+	The entire svn repo and revision history were migrated to git 2015-05-03,
+	for details see roadtrip-svn2git.sh comments.
 
 rev	version	date
 -	0.8.05	2010-10-06	first install on any device hardware

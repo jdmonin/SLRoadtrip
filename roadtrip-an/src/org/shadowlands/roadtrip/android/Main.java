@@ -262,19 +262,19 @@ public class Main extends Activity
 				InputStream s = null;
 				try {
 					s = getApplicationContext().getResources().openRawResource(R.raw.gitversion);
-					DataInputStream dsql = new DataInputStream(s);
-					String svnversion = dsql.readLine();
-					dsql.close();
+					DataInputStream dtxt = new DataInputStream(s);
+					String gitversion = dtxt.readLine();
+					dtxt.close();
 					s.close();
-					if ((svnversion != null)
-						&& (svnversion.length() > 0)
-						&& (! svnversion.equals("?")))
+					if ((gitversion != null)
+						&& (gitversion.length() > 0)
+						&& (! gitversion.equals("?")))
 					{
 						if (hadVersName)
 							title.append('.');
 						else
-							title.append(" build ");  // do not externalize this string
-						title.append(svnversion);
+							title.append(" build ");  // fallback, won't normally appear; don't externalize this string
+						title.append(gitversion);
 					}
 				} catch (Throwable th) {
 					if (s != null)

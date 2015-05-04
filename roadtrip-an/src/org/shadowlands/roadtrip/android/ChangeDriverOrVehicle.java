@@ -93,7 +93,7 @@ public class ChangeDriverOrVehicle
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 	    super.onCreate(savedInstanceState);
-	    setContentView(R.layout.change_vehicle_or_driver);
+	    setContentView(R.layout.change_driver_or_vehicle);
 
 	    hasCurrentTrip = false;
 
@@ -137,7 +137,7 @@ public class ChangeDriverOrVehicle
 		driver.setEnabled(! hasCurrent);
 		findViewById(R.id.change_cvd_driver_new).setEnabled(! hasCurrent);
 
-		// Remember: Keep button text sync'd with any updates to the change_vehicle_or_driver.xml layout.
+		// Remember: Keep button text sync'd with any updates to the change_driver_or_vehicle.xml layout.
 	}
 
 	/**

@@ -205,6 +205,7 @@ r428	0.9.41	2015-04-27	Minor improvements and bugfixes since 0.9.40:
 				  or make a read-only copy like it does for viewing older backups.
 r431	-	2015-05-03	3393a0f  Migration from svn to git, google code to github
 -	0.9.42			Being developed now; minor improvements and bugfixes since 0.9.41.
+				Android TripTStopEntry calculator add Reset button, Clear no longer doubles as Reset.
 
 Also see doc/hist/*.sql for previous schema updates.
 

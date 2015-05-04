@@ -352,9 +352,6 @@ public class TripTStopEntry extends Activity
 	/** If true, the next button press clears {@link #calcValue} */
 	private boolean calcNextPressClears;
 
-	/** If true, the previous button pressed was 'Clear'. */
-	private boolean calcPrevBtnWasClear;
-
 	/** Calculator's previous value */
 	private float calcPrevOperand;
 
@@ -2373,7 +2370,6 @@ public class TripTStopEntry extends Activity
 		calcOperation = CALC_OP_NONE;
 		calcPrevOperand = 0;
 		calcNextPressClears = false;
-		calcPrevBtnWasClear = false;
 
 		calcValue = (EditText) calcItems.findViewById(R.id.trip_tstop_popup_odo_calc_value);
 		calc0 = calcItems.findViewById(R.id.trip_tstop_popup_odo_calc_0);
@@ -2485,24 +2481,29 @@ public class TripTStopEntry extends Activity
 			calcValue.append("8");
 		else if (v == calc9)
 			calcValue.append("9");
-
-		calcPrevBtnWasClear = false;
 	}
 
 	/**
-	 * The calculator Clear button loads {@link #calcValue} from the odometer's current value
-	 * if clicked once, clears current value entirely if clicked again.
+	 * The calculator Reset button loads {@link #calcValue} from the odometer's
+	 * current value.
+	 * @since 0.9.42
+	 * @see #onClick_CalcBtnClear(View)
+	 */
+	public void onClick_CalcBtnReset(View v)
+	{
+		calcLoadValueFromOdo();
+	}
+
+	/**
+	 * The calculator Clear button.
+	 * @see #onClick_CalcBtnReset(View)
 	 */
 	public void onClick_CalcBtnClear(View v)
 	{
-		if (calcPrevBtnWasClear)
-			calcValue.setText("");
-		else
-			calcLoadValueFromOdo();
-
-		calcPrevBtnWasClear = ! calcPrevBtnWasClear;
+		calcValue.setText("");
 	}
 
+	/** The calculator Backspace button. */
 	public void onClick_CalcBtnBackspace(View v)
 	{
 		final Editable tx = calcValue.getText();
@@ -2512,7 +2513,6 @@ public class TripTStopEntry extends Activity
 			calcValue.setText(tx.subSequence(0, L - 1));
 			calcValue.setSelection(L-1);  // move cursor to end
 		}
-		calcPrevBtnWasClear = false;
 	}
 
 	/**
@@ -2536,7 +2536,6 @@ public class TripTStopEntry extends Activity
 		calcPrevOperand = cv;
 		calcOperation = calcOp;
 		calcNextPressClears = true;
-		calcPrevBtnWasClear = false;
 		// TODO visually indicate the op somewhere
 	}
 
@@ -2562,8 +2561,6 @@ public class TripTStopEntry extends Activity
 
 	public void onClick_CalcBtnEquals(View v)
 	{
-		calcPrevBtnWasClear = false;
-
 		float cv;  // current value
 		try
 		{
@@ -2627,8 +2624,6 @@ public class TripTStopEntry extends Activity
 			calcMemory += cv;
 		else
 			calcMemory -= cv;
-
-		calcPrevBtnWasClear = false;
 	}
 
 	public void onClick_CalcBtnMemPlus(View v)
@@ -2645,16 +2640,12 @@ public class TripTStopEntry extends Activity
 	{
 		calcMemory = 0.0f;
 		// TODO is there a visual indicator?
-
-		calcPrevBtnWasClear = false;
 	}
 
 	public void onClick_CalcBtnMemRecall(View v)
 	{
 		if (calcMemory != 0.0f)
 			calcValue.setText(Float.toString(calcMemory));
-
-		calcPrevBtnWasClear = false;
 	}
 
 	/////////////////////////////

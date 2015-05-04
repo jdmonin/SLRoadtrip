@@ -4,7 +4,7 @@
 
  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
 
- Copyright (C) 2011 Jeremy D Monin (jdmonin@nand.net)
+ This file Copyright (C) 2011,2015 Jeremy D Monin (jdmonin@nand.net)
 
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
@@ -43,7 +43,8 @@
 				android:layout_weight="0" android:layout_width="wrap_content"  />
 			<Button android:text="M-" android:onClick="onClick_CalcBtnMemMinus" android:id="@+id/trip_tstop_popup_odo_calc_mm" />
 			<Button android:text="MC" android:onClick="onClick_CalcBtnMemClear" android:id="@+id/trip_tstop_popup_odo_calc_mc" />
-			<Button android:text="MR" android:onClick="onClick_CalcBtnMemRecall" android:id="@+id/trip_tstop_popup_odo_calc_mr" />			
+			<Button android:text="MR" android:onClick="onClick_CalcBtnMemRecall" android:id="@+id/trip_tstop_popup_odo_calc_mr" />
+			<Button android:text="Rst" android:onClick="onClick_CalcBtnReset" />
 		</TableRow>
 		<TableRow>
 			<Button android:text="7" android:onClick="onClick_CalcBtnDigit" android:id="@+id/trip_tstop_popup_odo_calc_7"

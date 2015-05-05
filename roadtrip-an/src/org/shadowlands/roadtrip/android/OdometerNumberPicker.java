@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010-2014 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2015 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -126,6 +126,7 @@ public class OdometerNumberPicker extends LinearLayout implements OnChangedListe
 	        // May be null in eclipse Layout Editor.
 	        mWholeNum.setRange(0, RANGE_MAX_WHOLE);  // expand the range
 	        mWholeNum.setCurrent(0);
+	        mWholeNum.setWraparound(false);
 	        mWholeNum.setOnChangeListener(this);
         }
         try

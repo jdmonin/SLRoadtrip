@@ -53,6 +53,7 @@ import android.widget.TextView;
  * 2012-12-08 jdmonin Javadocs: setOnChangeListener <br>
  * 2013-04-29 jdmonin Add mLowest, javadocs <br>
  * 2015-05-04 jdmonin changeCurrent: Update mLowest to min(old,new) <br>
+ * 2015-05-05 jdmonin Add setWraparound, hasWraparound; javadocs setCurrent, changeCurrent <br>
  *
  * @author Google
  */
@@ -122,6 +123,12 @@ public class NumberPicker extends LinearLayout implements OnClickListener,
      * will temporarily set a very low {@link #mCurrent} value that won't be the final value.
      */
     protected int mLowest;
+
+    /**
+     * Do numbers wrap around when {@link #changeCurrent(int)} goes outside the
+     * range {@link #mStart} to {@link #mEnd}? True by default.
+     */
+    protected boolean hasWraparound = true;
 
     private OnChangedListener mListener;
     private Formatter mFormatter;
@@ -238,6 +245,23 @@ public class NumberPicker extends LinearLayout implements OnClickListener,
         updateView();
     }
 
+    /**
+     * Do numbers wrap around when increment/decrement goes outside the
+     * currently set range? True by default.
+     */
+    public boolean hasWraparound() {
+        return hasWraparound;
+    }
+
+    /** Change the {@link #hasWraparound()} flag. */
+    public void setWraparound(final boolean wrap) {
+        hasWraparound = wrap;
+    }
+
+    /**
+     * Set the current value to any value, ignoring the currently set range.
+     * @see #changeCurrent(int)
+     */
     public void setCurrent(int current) {
         mCurrent = current;
         updateView();
@@ -300,16 +324,24 @@ public class NumberPicker extends LinearLayout implements OnClickListener,
      * Update {@link #mPrevious}, {@link #mCurrent}, and {@link #mLowest}
      * from an increment/decrement button click.
      * Call {@link #notifyChange()} and {@link #updateView()}.
+     * If {@code newCurrent} is outside the range {@link #mStart} to {@link #mEnd},
+     * wrap around unless ! {@link #hasWraparound}.
      *<P>
      * Not called when text is typed into {@link #mText}.
-     * @param newCurrent
+     * @param newCurrent  Requested new value; the actual new value
+     *     may be restricted by range or wrap around
+     * @see #setCurrent(int)
      */
     protected void changeCurrent(int newCurrent) {
 
         // Wrap around the values if we go past the start or end
         if (newCurrent > mEnd) {
+            if (! hasWraparound)
+                return;  // <-- early return: wraparound not enabled --
             newCurrent = mStart;
         } else if (newCurrent < mStart) {
+            if (! hasWraparound)
+                return;  // <-- early return: wraparound not enabled --
             newCurrent = mEnd;
         }
 
@@ -433,6 +465,7 @@ public class NumberPicker extends LinearLayout implements OnClickListener,
     	b.putInt("E", mEnd);
     	b.putInt("C", mCurrent);
     	b.putInt("L", mLowest);
+    	b.putBoolean("W", hasWraparound);
     	if (mDisplayedValues != null)
     		b.putStringArray("D", mDisplayedValues);
     	// Log.i(TAG, "onSaveInstanceState put " + b.hashCode());
@@ -456,6 +489,7 @@ public class NumberPicker extends LinearLayout implements OnClickListener,
     	mEnd = b.getInt("E", DEFAULT_MAX);
     	mCurrent = b.getInt("C", DEFAULT_MIN);
     	mLowest = b.getInt("L", mEnd);
+    	hasWraparound = b.getBoolean("W", true);
     	if (b.containsKey("D"))
     		mDisplayedValues = b.getStringArray("D");
     	updateView();

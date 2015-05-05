@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2008 The Android Open Source Project
- *    Retrieved via http://www.quietlycoding.com/?p=5
- * Portions Copyright (C) 2010,2012-2013 Jeremy D Monin <jdmonin@nand.net>
+ *    Retrieved via http://www.quietlycoding.com/?p=5 on 2010-07-14
+ * Portions Copyright (C) 2010,2012-2013,2015 Jeremy D Monin <jdmonin@nand.net>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,6 +52,7 @@ import android.widget.TextView;
  * 2010-12-11 jdmonin Update mCurrent if mText is typed into <br>
  * 2012-12-08 jdmonin Javadocs: setOnChangeListener <br>
  * 2013-04-29 jdmonin Add mLowest, javadocs <br>
+ * 2015-05-04 jdmonin changeCurrent: Update mLowest to min(old,new) <br>
  *
  * @author Google
  */
@@ -311,10 +312,18 @@ public class NumberPicker extends LinearLayout implements OnClickListener,
         } else if (newCurrent < mStart) {
             newCurrent = mEnd;
         }
+
+        // Check mLowest before changing mCurrent, in case of increase,
+        // because mLowest starts at max of the range
+        if (mCurrent < mLowest)
+            mLowest = mCurrent;
+
         mPrevious = mCurrent;
         mCurrent = newCurrent;
-        if (mCurrent < mLowest)
-        	mLowest = mCurrent;
+
+        // Check mCurrent vs mLowest again, in case of decrease
+        if (newCurrent < mLowest)
+            mLowest = newCurrent;
 
         notifyChange();
         updateView();

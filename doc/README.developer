@@ -170,7 +170,7 @@ In SQLite you can specify this with orderBy = "fieldname COLLATE NOCASE".
 
 
 Version history:
-	Older revisions were svn, more recent ones are git commits.
+	Older revisions were svn, more recent ones are git tags and commits*.
 	The entire svn repo and revision history were migrated to git 2015-05-03,
 	for details see roadtrip-svn2git.sh comments.
 
@@ -209,6 +209,15 @@ r431	-	2015-05-03	3393a0f  Migration from svn to git, google code to github
 				Android TripTStopEntry calculator: Add Reset button, Clear no longer doubles as Reset.
 
 Also see doc/hist/*.sql for previous schema updates.
+
+* Because a git commit can't predict and include its own hash, a released
+  version's copy of README.developer contains its release date and its most
+  recent commit hash, the parent of the commit updating README.developer
+  with that info. The release-#.#.## tag in git points to that README update,
+  and the released APK's About box also shows its commit hash.
+
+  After release and before continuing development, README.developer should be
+  updated to list that same hash for the released version.
 
 
 

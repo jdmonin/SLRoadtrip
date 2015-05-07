@@ -15,7 +15,6 @@ For now, please see the 'doc' directory for details, such as README.developer.
 Known limitations:
 - No way yet to search by odometer for a previous trip
 - Can't yet create a Frequent Roadtrip, or a round-trip Freq Trip
-- BookEdit can't upgrade a read-only backup copy from a previous version
 - Two copies of the db library source (one each for bookedit and roadtrip-an)
 
 Jeremy D Monin <jdmonin@nand.net>

@@ -1,7 +1,8 @@
 -- org.shadowlands.roadtrip
 -- version 0.9.40 schema (2014-02-15) for SQLite 3.4 or higher
+-- with newer comments (2015-05-06).
 --
--- The db schema version may be lower than the app version.
+-- The db schema version is sometimes lower than the app version, never higher.
 --
 -- Remember: When you upgrade the schema version, be sure to
 -- make all code changes listed in RDBSchema's class javadoc, and
@@ -17,7 +18,7 @@ PRAGMA user_version = 0940;
 
 -- This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
 -- 
---  This file Copyright (C) 2010-2014 Jeremy D Monin (jdmonin@nand.net)
+--  This file Copyright (C) 2010-2015 Jeremy D Monin (jdmonin@nand.net)
 -- 
 --  This program is free software: you can redistribute it and/or modify
 --  it under the terms of the GNU General Public License as published by
@@ -47,6 +48,9 @@ PRAGMA user_version = 0940;
 --    perl -e 'print localtime(992107800) . "\n"; '
 --    Sat Jun  9 13:30:00 2001
 --    Note that month range is 0-11 in perl's timelocal and timegm functions.
+
+-- proper operation requires at least 1 geoarea, driver (person), and vehicle;
+--    when lauched, the android app prompts to create these if missing.
 
 -- android requires a PK field called _id in all tables
 
@@ -157,8 +161,8 @@ create table trip ( _id integer PRIMARY KEY AUTOINCREMENT not null, vid integer 
 	--	  and either its locid or its descr must not be null.
 	--	  Its time_continue must be null.
 	-- If the trip doesn't begin at the previous trip's ending tstop,
-	--  the trip's first tstop record must have
-	--  the same odo_total as the trip's odo_start,
+	--  the trip's first tstop record is its "starting TStop" giving the starting location,
+	--      and must have the same odo_total as the trip's odo_start,
 	--	and 0 odo_trip, and null time_stop,
 	--	and either its locid or its descr must not be null.
 

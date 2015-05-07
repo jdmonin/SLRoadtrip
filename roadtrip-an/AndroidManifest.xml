@@ -19,7 +19,7 @@
  -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
       package="org.shadowlands.roadtrip"
-      android:versionCode="942" android:versionName="0.9.42">
+      android:versionCode="943" android:versionName="0.9.43">
 
     <uses-sdk android:minSdkVersion="8" android:targetSdkVersion="11" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />

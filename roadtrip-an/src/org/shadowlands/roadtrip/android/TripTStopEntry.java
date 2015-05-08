@@ -324,6 +324,7 @@ public class TripTStopEntry extends Activity
 	 * @see #onClick_BtnAreaStart(View)
 	 * @see #onClick_BtnAreaNone(View)
 	 * @see #onClick_BtnAreaEnd(View)
+	 * @see #onClick_BtnAreaOther(View)
 	 */
 	private Button btnRoadtripArea_chosen;
 
@@ -706,6 +707,11 @@ public class TripTStopEntry extends Activity
 				// TODO not found, inconsistency
 				return;
 			}
+
+			View v = findViewById(R.id.trip_tstop_area_local_row);
+			if (v != null)
+				v.setVisibility(View.GONE);
+
 			btnRoadtripAreaStart = (Button) findViewById(R.id.trip_tstop_btn_area_start);
 			btnRoadtripAreaNone = (Button) findViewById(R.id.trip_tstop_btn_area_none);
 			btnRoadtripAreaEnd = (Button) findViewById(R.id.trip_tstop_btn_area_end);
@@ -713,13 +719,19 @@ public class TripTStopEntry extends Activity
 			btnRoadtripAreaEnd.setText(ga_e.getName());
 			hilightRoadtripAreaButton(areaLocs_areaID, null, false, 0);
 		} else {
-			View v = findViewById(R.id.trip_tstop_area_label);
+			View v = findViewById(R.id.trip_tstop_area_buttons);
 			if (v != null)
 				v.setVisibility(View.GONE);
 
-			v = findViewById(R.id.trip_tstop_area_buttons);
-			if (v != null)
-				v.setVisibility(View.GONE);
+			// Look up and show current geoarea name
+			TextView tv = (TextView) findViewById(R.id.trip_tstop_area_local_value);
+			if ((tv != null) && (areaLocs_areaID > 0))
+			{
+				try {
+					GeoArea ga = new GeoArea(db, areaLocs_areaID);
+					tv.setText(ga.getName());
+				} catch (Exception e) {}  // ignore: display only, and inconsistency should not occur
+			}
 		}		
 	}
 
@@ -1141,6 +1153,15 @@ public class TripTStopEntry extends Activity
 	{
 		hilightRoadtripAreaButton
 			(currT.getRoadtripEndAreaID(), btnRoadtripAreaEnd.getText().toString(), true, 0);
+	}
+
+	/**
+	 * Choose another geoarea for the current stop. This could transform a local trip into a roadtrip.
+	 * @since 0.9.43
+	 */
+	public void onClick_BtnAreaOther(View v)
+	{
+		Toast.makeText(this, "Not implemented yet (TODO)", Toast.LENGTH_SHORT).show();
 	}
 
 	/** Show or hide the Via dropdown if available */

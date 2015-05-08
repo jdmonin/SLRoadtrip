@@ -3,7 +3,7 @@
  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  Layout for stop during trip / resume trip / end trip; default title label is stop_during_a_trip.
 
- This file Copyright (C) 2010-2012 Jeremy D Monin (jdmonin@nand.net)
+ This file Copyright (C) 2010-2012,2015 Jeremy D Monin (jdmonin@nand.net)
 
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
@@ -74,15 +74,21 @@
 	android:layout_height="wrap_content" android:layout_width="fill_parent"
 	android:stretchColumns="2" >
     <TableRow>
-		<TextView android:id="@+id/trip_tstop_area_label"
+		<TextView
 		    android:layout_width="wrap_content" 
 		    android:layout_height="fill_parent" 
 		    android:text="@string/trip_tstop_entry_geo_area"
 		    android:textSize="12sp"
 		    />
+	<!-- geoareas: define 2 rows, show the row for roadtrip or local-trip elements -->
+	<LinearLayout
+	    android:orientation="vertical"
+	    android:layout_margin="0dp"
+	    android:layout_height="wrap_content"
+	    android:layout_width="fill_parent"
+	    android:layout_span="2" >
 	    <LinearLayout android:id="@+id/trip_tstop_area_buttons"
 	    	android:orientation="horizontal"
-		    android:layout_span="2" 
 			android:layout_width="fill_parent"
 			android:layout_height="wrap_content" >
 			<Button android:id="@+id/trip_tstop_btn_area_start"
@@ -99,6 +105,23 @@
 			    android:layout_height="fill_parent"
 			    android:onClick="onClick_BtnAreaEnd" />
 		</LinearLayout>
+		<LinearLayout android:id="@+id/trip_tstop_area_local_row"
+			android:orientation="horizontal"
+			android:layout_width="fill_parent"
+			android:layout_height="wrap_content" >
+			<TextView android:id="@+id/trip_tstop_area_local_value"
+			    android:layout_width="0dip"
+			    android:layout_height="fill_parent"
+			    android:layout_weight="1"
+			    android:textSize="18sp"
+			    android:gravity="center_vertical|left" />
+			<Button android:id="@+id/trip_tstop_btn_area_other"
+			    android:text="@string/other__dots"
+			    android:layout_width="wrap_content"
+			    android:layout_height="fill_parent"
+			    android:onClick="onClick_BtnAreaOther" />
+		</LinearLayout>
+	</LinearLayout>
     </TableRow>
     <TableRow>
 		<TextView

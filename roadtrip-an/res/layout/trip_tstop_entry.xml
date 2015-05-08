@@ -19,21 +19,22 @@
  along with this program.  If not, see http://www.gnu.org/licenses/ .
  -->
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-	android:id="@+id/trip_tstop_scrollview"
+    android:id="@+id/trip_tstop_scrollview"
     android:layout_width="fill_parent"
-    android:layout_height="fill_parent"
-    >
+    android:layout_height="fill_parent" >
+
 <LinearLayout
     android:orientation="vertical"
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
     >
-<TextView 
-	android:id="@+id/trip_tstop_prompt"
-    android:layout_width="fill_parent" 
-    android:layout_height="wrap_content" 
-    android:text="@string/trip_tstop_entry_prompt"
-    />
+
+<TextView
+    android:id="@+id/trip_tstop_prompt"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:text="@string/trip_tstop_entry_prompt" />
+
 <!-- Stop-At Time and its checkbox, laid out like:
 		chkbox   label    time
 		date-btn         picker
@@ -62,8 +63,7 @@
 		android:layout_gravity="center"
 		android:gravity="center"
 		android:onClick="onClick_BtnStopDate" />
-	<TimePicker
-		android:id="@+id/trip_tstop_time_stop"
+	<TimePicker android:id="@+id/trip_tstop_time_stop"
 		android:layout_toRightOf="@+id/trip_tstop_time_stop_label"
 		android:layout_alignParentTop="true"
 		android:layout_width="fill_parent"
@@ -74,12 +74,11 @@
 	android:layout_height="wrap_content" android:layout_width="fill_parent"
 	android:stretchColumns="2" >
     <TableRow>
-		<TextView
-		    android:layout_width="wrap_content" 
-		    android:layout_height="fill_parent" 
-		    android:text="@string/trip_tstop_entry_geo_area"
-		    android:textSize="12sp"
-		    />
+	<TextView
+	    android:layout_width="wrap_content"
+	    android:layout_height="fill_parent"
+	    android:text="@string/trip_tstop_entry_geo_area"
+	    android:textSize="12sp" />
 	<!-- geoareas: define 2 rows, show the row for roadtrip or local-trip elements -->
 	<LinearLayout
 	    android:orientation="vertical"
@@ -88,157 +87,148 @@
 	    android:layout_width="fill_parent"
 	    android:layout_span="2" >
 	    <LinearLayout android:id="@+id/trip_tstop_area_buttons"
-	    	android:orientation="horizontal"
-			android:layout_width="fill_parent"
-			android:layout_height="wrap_content" >
-			<Button android:id="@+id/trip_tstop_btn_area_start"
-			    android:layout_width="wrap_content" 
-			    android:layout_height="fill_parent"
-			    android:onClick="onClick_BtnAreaStart" />
-			<Button android:id="@+id/trip_tstop_btn_area_none"
-				android:text="@string/none"
-			    android:layout_width="wrap_content" 
-			    android:layout_height="fill_parent"
-			    android:onClick="onClick_BtnAreaNone" />
-			<Button android:id="@+id/trip_tstop_btn_area_end"
-			    android:layout_width="wrap_content" 
-			    android:layout_height="fill_parent"
-			    android:onClick="onClick_BtnAreaEnd" />
-		</LinearLayout>
-		<LinearLayout android:id="@+id/trip_tstop_area_local_row"
-			android:orientation="horizontal"
-			android:layout_width="fill_parent"
-			android:layout_height="wrap_content" >
-			<TextView android:id="@+id/trip_tstop_area_local_value"
-			    android:layout_width="0dip"
-			    android:layout_height="fill_parent"
-			    android:layout_weight="1"
-			    android:textSize="18sp"
-			    android:gravity="center_vertical|left" />
-			<Button android:id="@+id/trip_tstop_btn_area_other"
-			    android:text="@string/other__dots"
-			    android:layout_width="wrap_content"
-			    android:layout_height="fill_parent"
-			    android:onClick="onClick_BtnAreaOther" />
-		</LinearLayout>
+		android:orientation="horizontal"
+		android:layout_width="fill_parent"
+		android:layout_height="wrap_content" >
+		<Button android:id="@+id/trip_tstop_btn_area_start"
+		    android:layout_width="wrap_content"
+		    android:layout_height="fill_parent"
+		    android:onClick="onClick_BtnAreaStart" />
+		<Button android:id="@+id/trip_tstop_btn_area_none"
+		    android:text="@string/none"
+		    android:layout_width="wrap_content"
+		    android:layout_height="fill_parent"
+		    android:onClick="onClick_BtnAreaNone" />
+		<Button android:id="@+id/trip_tstop_btn_area_end"
+		    android:layout_width="wrap_content"
+		    android:layout_height="fill_parent"
+		    android:onClick="onClick_BtnAreaEnd" />
+	    </LinearLayout>
+	    <LinearLayout android:id="@+id/trip_tstop_area_local_row"
+		android:orientation="horizontal"
+		android:layout_width="fill_parent"
+		android:layout_height="wrap_content" >
+		<TextView android:id="@+id/trip_tstop_area_local_value"
+		    android:layout_width="0dip"
+		    android:layout_height="fill_parent"
+		    android:layout_weight="1"
+		    android:textSize="18sp"
+		    android:gravity="center_vertical|left" />
+		<Button android:id="@+id/trip_tstop_btn_area_other"
+		    android:text="@string/other__dots"
+		    android:layout_width="wrap_content"
+		    android:layout_height="fill_parent"
+		    android:onClick="onClick_BtnAreaOther" />
+	    </LinearLayout>
 	</LinearLayout>
     </TableRow>
     <TableRow>
-		<TextView
-			android:id="@+id/trip_tstop_loc_label"
-		    android:layout_width="wrap_content" 
-		    android:layout_height="fill_parent" 
-		    android:text="@string/location"
-		    />
-		<AutoCompleteTextView
-		    android:id="@+id/trip_tstop_loc"
-		    android:inputType="text"
-		    android:layout_span="2"
-			android:layout_width="fill_parent"
-			android:layout_height="wrap_content" />
+	<TextView android:id="@+id/trip_tstop_loc_label"
+	    android:layout_width="wrap_content"
+	    android:layout_height="fill_parent"
+	    android:text="@string/location" />
+	<AutoCompleteTextView android:id="@+id/trip_tstop_loc"
+	    android:inputType="text"
+	    android:layout_span="2"
+	    android:layout_width="fill_parent"
+	    android:layout_height="wrap_content" />
     </TableRow>
     <TableRow>
-		<LinearLayout android:id="@+id/trip_tstop_via_label"
-			android:orientation="vertical"
-			android:layout_width="wrap_content"
-			android:layout_height="wrap_content"
-			android:layout_margin="0dp"
-			android:gravity="right"
-			>
-			<TextView android:id="@+id/trip_tstop_via_text"
-				android:layout_width="fill_parent"
-				android:layout_height="fill_parent"
-				android:text="@string/via_route"
-				android:clickable="true"
-				android:onClick="onClick_BtnViaDropdown"
-				/>
-			<ImageButton
-				android:src="@android:drawable/arrow_down_float"
-				android:layout_margin="0dp"
-				android:layout_width="26dp"
-				android:layout_height="26dp"
-				android:onClick="onClick_BtnViaDropdown"
-				android:layout_gravity="right"
-				android:padding="3dp"
-				/>
-		</LinearLayout>
-		<AutoCompleteTextView  android:id="@+id/trip_tstop_via"
-		    android:completionThreshold="1"
-		    android:inputType="text"
-		    android:layout_span="2" 
+	<LinearLayout android:id="@+id/trip_tstop_via_label"
+		android:orientation="vertical"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_margin="0dp"
+		android:gravity="right"
+		>
+		<TextView android:id="@+id/trip_tstop_via_text"
 			android:layout_width="fill_parent"
-			android:layout_height="wrap_content" />
+			android:layout_height="fill_parent"
+			android:text="@string/via_route"
+			android:clickable="true"
+			android:onClick="onClick_BtnViaDropdown" />
+		<ImageButton
+			android:src="@android:drawable/arrow_down_float"
+			android:layout_margin="0dp"
+			android:layout_width="26dp"
+			android:layout_height="26dp"
+			android:onClick="onClick_BtnViaDropdown"
+			android:layout_gravity="right"
+			android:padding="3dp" />
+	</LinearLayout>
+	<AutoCompleteTextView  android:id="@+id/trip_tstop_via"
+	    android:completionThreshold="1"
+	    android:inputType="text"
+	    android:layout_span="2"
+	    android:layout_width="fill_parent"
+	    android:layout_height="wrap_content" />
     </TableRow>
 </TableLayout>
 <!-- Table with 3 columns: odometers -->
-<TableLayout android:layout_height="wrap_content" android:layout_width="fill_parent">    
+<TableLayout android:layout_height="wrap_content" android:layout_width="fill_parent">
     <TableRow>
-        <CheckBox android:id="@+id/trip_tstop_odo_trip_chk"
-            android:paddingBottom="12sp"
-	        android:paddingTop="12sp"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
-        <LinearLayout
-	        android:orientation="vertical"
-			android:layout_width="wrap_content" 
-			android:layout_height="fill_parent" 
-            android:padding="0dp">
-			<TextView  
-			    android:layout_width="wrap_content" 
-			    android:layout_height="wrap_content" 
-			    android:text="@string/trip_odometer"
-			    />
-			<ImageButton
-				android:src="@android:drawable/ic_menu_edit"
-				android:layout_margin="0dp"
-				android:layout_width="50dp"
-				android:layout_height="50dp"
-				android:onClick="onClick_BtnEditOdoTrip"
-				android:layout_gravity="right"
-				android:padding="1dp"
-				/>
-	    </LinearLayout>
-		<org.shadowlands.roadtrip.android.OdometerNumberPicker
-		    android:id="@+id/trip_tstop_odo_trip"
-			android:layout_width="fill_parent"
-			android:layout_height="wrap_content" />
+	<CheckBox android:id="@+id/trip_tstop_odo_trip_chk"
+	    android:paddingBottom="12sp"
+	    android:paddingTop="12sp"
+	    android:layout_width="wrap_content"
+	    android:layout_height="wrap_content" />
+	<LinearLayout
+	    android:orientation="vertical"
+	    android:layout_width="wrap_content"
+	    android:layout_height="fill_parent"
+	    android:padding="0dp">
+		<TextView
+		    android:layout_width="wrap_content"
+		    android:layout_height="wrap_content"
+		    android:text="@string/trip_odometer" />
+		<ImageButton
+		    android:src="@android:drawable/ic_menu_edit"
+		    android:layout_margin="0dp"
+		    android:layout_width="50dp"
+		    android:layout_height="50dp"
+		    android:onClick="onClick_BtnEditOdoTrip"
+		    android:layout_gravity="right"
+		    android:padding="1dp" />
+	</LinearLayout>
+	<org.shadowlands.roadtrip.android.OdometerNumberPicker
+	    android:id="@+id/trip_tstop_odo_trip"
+	    android:layout_width="fill_parent"
+	    android:layout_height="wrap_content" />
     </TableRow>
     <TableRow>
-        <CheckBox android:id="@+id/trip_tstop_odo_total_chk"
-            android:paddingBottom="12sp"
-	        android:paddingTop="12sp"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
-        <LinearLayout
-	        android:orientation="vertical"
-			android:layout_width="wrap_content" 
-			android:layout_height="fill_parent" 
-            android:padding="0dp">
-			<TextView  
-			    android:layout_width="wrap_content" 
-			    android:layout_height="wrap_content" 
-			    android:text="@string/current_total_odometer"
-			    />
-			<ImageButton
-				android:src="@android:drawable/ic_menu_edit"
-				android:layout_margin="0dp"
-				android:layout_width="50dp"
-				android:layout_height="50dp"
-				android:onClick="onClick_BtnEditOdoTotal"
-				android:layout_gravity="right"
-				android:padding="1dp"
-				/>
-	    </LinearLayout>
-		<org.shadowlands.roadtrip.android.OdometerNumberPicker
-		    android:id="@+id/trip_tstop_odo_total"
-			android:layout_width="fill_parent"
-			android:layout_height="wrap_content" />
+	<CheckBox android:id="@+id/trip_tstop_odo_total_chk"
+	    android:paddingBottom="12sp"
+	    android:paddingTop="12sp"
+	    android:layout_width="wrap_content"
+	    android:layout_height="wrap_content" />
+	<LinearLayout
+	    android:orientation="vertical"
+	    android:layout_width="wrap_content"
+	    android:layout_height="fill_parent"
+	    android:padding="0dp">
+		<TextView
+		    android:layout_width="wrap_content"
+		    android:layout_height="wrap_content"
+		    android:text="@string/current_total_odometer" />
+		<ImageButton
+		    android:src="@android:drawable/ic_menu_edit"
+		    android:layout_margin="0dp"
+		    android:layout_width="50dp"
+		    android:layout_height="50dp"
+		    android:onClick="onClick_BtnEditOdoTotal"
+		    android:layout_gravity="right"
+		    android:padding="1dp" />
+	</LinearLayout>
+	<org.shadowlands.roadtrip.android.OdometerNumberPicker
+	    android:id="@+id/trip_tstop_odo_total"
+	    android:layout_width="fill_parent"
+	    android:layout_height="wrap_content" />
     </TableRow>
 </TableLayout>
 <!-- Continue-At Time and its checkbox, laid out like:
-		chkbox   label    time
-		date-btn         picker
-	-->
+	chkbox   label    time
+	date-btn         picker
+-->
 <RelativeLayout
 	android:layout_width="fill_parent"
 	android:layout_height="wrap_content"
@@ -263,8 +253,7 @@
 		android:layout_gravity="center"
 		android:gravity="center"
 		android:onClick="onClick_BtnContDate" />
-	<TimePicker
-		android:id="@+id/trip_tstop_time_cont"
+	<TimePicker android:id="@+id/trip_tstop_time_cont"
 		android:layout_toRightOf="@+id/trip_tstop_time_cont_label"
 		android:layout_alignParentTop="true"
 		android:layout_width="fill_parent"
@@ -274,20 +263,19 @@
 <TableLayout
 	android:layout_height="wrap_content" android:layout_width="fill_parent"
 	android:stretchColumns="2"
-	>    
-    <TableRow>
-		<TextView  
+	>
+	<TableRow>
+		<TextView
 			android:text="@string/comment"
-			android:layout_width="wrap_content" 
+			android:layout_width="wrap_content"
 			android:layout_height="fill_parent" />
-		<EditText
-			android:id="@+id/trip_tstop_comment"
+		<EditText android:id="@+id/trip_tstop_comment"
 			android:layout_width="fill_parent"
 			android:layout_height="wrap_content"
 			android:layout_weight="1"
 			android:maxLength="255"
 			android:minLines="2" />
-    </TableRow>
+	</TableRow>
 </TableLayout>
 <!-- TStop detail buttons row (gas, etc) -->
 <LinearLayout
@@ -314,20 +302,17 @@
 	>
 	<TextView
 		android:text="@string/passengers"
-		android:layout_width="wrap_content" 
+		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
 		android:gravity="top"
+		android:layout_gravity="center" />
+	<EditText android:id="@+id/trip_tstop_end_pax"
+		android:inputType="number"
+		android:layout_width="fill_parent"
+		android:layout_height="wrap_content"
 		android:layout_gravity="center"
-		/>
-	<EditText
-	    android:id="@+id/trip_tstop_end_pax"
-	    android:inputType="number"
-	    android:layout_width="fill_parent"
-	    android:layout_height="wrap_content"
-	    android:layout_gravity="center"
-	    android:gravity="top"
-	    android:hint="@string/passengers_hint"
-	    />
+		android:gravity="top"
+		android:hint="@string/passengers_hint" />
 </LinearLayout>
 <!-- Rows for Trip Category, Make Frequent are visible only at End Trip -->
 <LinearLayout android:id="@+id/trip_tstop_row_end_tcat"
@@ -337,37 +322,33 @@
 	>
 	<TextView
 		android:text="@string/trip__category"
-		android:layout_width="wrap_content" 
+		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
 		android:gravity="top"
-		android:layout_gravity="center"
-		/>
-	<Spinner
-		android:id="@+id/trip_tstop_end_category"
+		android:layout_gravity="center" />
+	<Spinner android:id="@+id/trip_tstop_end_category"
 		android:layout_weight="1"
 		android:layout_gravity="top"
 		android:layout_width="fill_parent"
 		android:layout_height="wrap_content"
 		android:paddingTop="2dp"
-		android:paddingBottom="2dp"
-		/>
+		android:paddingBottom="2dp" />
 </LinearLayout>
 <LinearLayout android:id="@+id/trip_tstop_row_end_mk_freq"
-    android:orientation="horizontal"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    >
+	android:orientation="horizontal"
+	android:layout_width="wrap_content"
+	android:layout_height="wrap_content"
+	>
 	<CheckBox android:id="@+id/trip_tstop_end_mk_freq"
-		android:paddingBottom="12sp"
-		android:paddingTop="12sp"
-		android:layout_width="wrap_content"
-		android:layout_height="wrap_content" />
+	    android:paddingBottom="12sp"
+	    android:paddingTop="12sp"
+	    android:layout_width="wrap_content"
+	    android:layout_height="wrap_content" />
 	<TextView android:id="@+id/trip_tstop_end_mk_freq_text"
-	    android:layout_width="wrap_content" 
-	    android:layout_height="fill_parent" 
-        android:gravity="center"
-	    android:text="@string/make_this_a_frequent_trip"
-	    />
+	    android:layout_width="wrap_content"
+	    android:layout_height="fill_parent"
+	    android:gravity="center"
+	    android:text="@string/make_this_a_frequent_trip" />
 </LinearLayout>
 <LinearLayout
 	android:layout_height="wrap_content"
@@ -375,15 +356,15 @@
 	android:orientation="horizontal" >
 	<Button android:id="@+id/trip_tstop_btn_save"
 	    android:text="@string/save_changes"
-	    android:layout_width="wrap_content" 
+	    android:layout_width="wrap_content"
 	    android:layout_height="wrap_content"
-        android:layout_weight="0.5"
+	    android:layout_weight="0.5"
 	    android:onClick="onClick_BtnSaveChanges" />
 	<Button android:id="@+id/trip_tstop_btn_enter"
 	    android:text="@string/enter_stop"
-	    android:layout_width="wrap_content" 
+	    android:layout_width="wrap_content"
 	    android:layout_height="wrap_content"
-        android:layout_weight="0.5"
+	    android:layout_weight="0.5"
 	    android:onClick="onClick_BtnEnterTStop" />
 </LinearLayout>
 </LinearLayout>

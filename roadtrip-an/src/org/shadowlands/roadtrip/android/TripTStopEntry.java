@@ -341,7 +341,7 @@ public class TripTStopEntry extends Activity
 	 */
 	private View popupCalcItems = null;
 
-	/** If displayed, is the calculator for {@link #odo_trip} and not {@link #odo_total}? */ 
+	/** If displayed, is the calculator for {@link #odo_trip} and not {@link #odo_total}? */
 	private boolean calcOdoIsTrip;
 
 	/** Calculator's current value, for {@link #onClickEditOdo(OdometerNumberPicker, boolean)} callbacks */
@@ -364,7 +364,7 @@ public class TripTStopEntry extends Activity
 
 	/** Digit buttons 0-9 and '.' for {@link #onClickEditOdo(OdometerNumberPicker, boolean)} callbacks */
 	private View calc0, calc1, calc2, calc3, calc4, calc5,
-	 calc6, calc7, calc8, calc9, calcDeci;
+		calc6, calc7, calc8, calc9, calcDeci;
 
 	///////////////////////////////
 	// End of calculator fields
@@ -377,15 +377,15 @@ public class TripTStopEntry extends Activity
 	 * Also calls {@link #onRestoreInstanceState(Bundle)} if
 	 * our state was saved.
 	 * Sets {@link #areaLocs_areaID} and fills {@link #areaLocs} based
-	 * on current TStop, prev location, or trip/roadtrip fields. 
+	 * on current TStop, prev location, or trip/roadtrip fields.
 	 */
 	@Override
 	public void onCreate(Bundle savedInstanceState)
 	{
-	    super.onCreate(savedInstanceState);
-	    db = new RDBOpenHelper(this);
-	    setContentView(R.layout.trip_tstop_entry);
-	    neverPaused = true;
+		super.onCreate(savedInstanceState);
+		db = new RDBOpenHelper(this);
+		setContentView(R.layout.trip_tstop_entry);
+		neverPaused = true;
 
 		odo_total_chk = (CheckBox) findViewById(R.id.trip_tstop_odo_total_chk);
 		odo_total = (OdometerNumberPicker) findViewById(R.id.trip_tstop_odo_total);
@@ -419,12 +419,13 @@ public class TripTStopEntry extends Activity
 		if (! checkCurrentDriverVehicleTripSettings())
 		{
 			// Internal error: Current area/driver/vehicle/trip not found in db
-        	Toast.makeText(getApplicationContext(),
-                R.string.internal__current_notfound_area_driver_veh_trip,
-                Toast.LENGTH_SHORT).show();
-	    	startActivity(new Intent(TripTStopEntry.this, AndroidStartup.class));
-	    	finish();
-	    	return;
+			Toast.makeText
+				(getApplicationContext(),
+				 R.string.internal__current_notfound_area_driver_veh_trip,
+				 Toast.LENGTH_SHORT).show();
+			startActivity(new Intent(TripTStopEntry.this, AndroidStartup.class));
+			finish();
+			return;
 		}
 		isCurrentlyStopped = (currTS != null);
 
@@ -449,6 +450,7 @@ public class TripTStopEntry extends Activity
 				if (eb != null)
 					eb.setText(R.string.end_trip);
 				setTitle(R.string.end_trip);
+
 				TextView tv = (TextView) findViewById(R.id.trip_tstop_loc_label);
 				if (tv != null)
 				{
@@ -519,7 +521,7 @@ public class TripTStopEntry extends Activity
 		if (stopEndsTrip)
 		{
 			setTitle(getResources().getString(R.string.end_trip));
-		} else if (isCurrentlyStopped) {			
+		} else if (isCurrentlyStopped) {
 			setTitle(getResources().getString(R.string.continu_from_stop));
 		}
 
@@ -596,9 +598,10 @@ public class TripTStopEntry extends Activity
 			if ((latestVehTime != 0L)
 			    && (Math.abs(latestVehTime - timeNow) >= TIMEDIFF_HISTORICAL_MILLIS))
 			{
-				Toast.makeText(this,
-					R.string.using_old_date_due_to_previous,
-					Toast.LENGTH_SHORT).show();
+				Toast.makeText
+					(this,
+					 R.string.using_old_date_due_to_previous,
+					 Toast.LENGTH_SHORT).show();
 				setTimeStopCheckbox = false;
 			} else {
 				latestVehTime = timeNow;
@@ -732,7 +735,7 @@ public class TripTStopEntry extends Activity
 					tv.setText(ga.getName());
 				} catch (Exception e) {}  // ignore: display only, and inconsistency should not occur
 			}
-		}		
+		}
 	}
 
 	/** set a timepicker's hour and minute, based on a calendar's current time */
@@ -815,7 +818,10 @@ public class TripTStopEntry extends Activity
 					if (! contTimeRunningAlreadyToasted)
 					{
 						contTimeRunningAlreadyToasted = true;
-						Toast.makeText(TripTStopEntry.this, R.string.trip_tstop_entry_time_cont_update, Toast.LENGTH_LONG).show();
+						Toast.makeText
+							(TripTStopEntry.this,
+							 R.string.trip_tstop_entry_time_cont_update,
+							 Toast.LENGTH_LONG).show();
 					}
 				}
 			};
@@ -928,51 +934,54 @@ public class TripTStopEntry extends Activity
 	private void showRoadtripAreaButtonConfirmDialog
 		(final int areaID, final String locText, final String newAreaText, final String viaText)
 	{
-    	AlertDialog.Builder alert = new AlertDialog.Builder(this);
-    	alert.setTitle(R.string.confirm);
-    	// Build popup message, including texts passed in
-    	{
+		AlertDialog.Builder alert = new AlertDialog.Builder(this);
+		alert.setTitle(R.string.confirm);
+
+		// Build popup message, including texts passed in
+		{
 			String txt = getResources().getString(R.string.trip_tstop_entry_prompt_geoarea_confirm);
-        	StringBuffer sb = new StringBuffer(txt);
-        	if ((locText != null) && (locText.length() > 0))
-        	{
-        		sb.append("\n");
-        		sb.append(getResources().getString(R.string.location));
-        		sb.append(": ");
-        		sb.append(locText);
-        	}
-    		sb.append("\n");
-    		sb.append(getResources().getString(R.string.new_area));
-    		sb.append(": ");
-    		sb.append(newAreaText);        		
-        	if ((viaText != null) && (viaText.length() > 0))
-        	{
-        		sb.append("\n");
-        		sb.append(getResources().getString(R.string.via_route));
-        		sb.append(": ");
-        		sb.append(viaText);
-        	}
-        	alert.setMessage(sb);
-    	}
-    	alert.setPositiveButton(R.string.trip_tstop_entry_keep_location, new DialogInterface.OnClickListener() {
-	    	  public void onClick(DialogInterface dialog, int whichButton)
-	    	  {
-	    		  hilightRoadtripAreaButton(areaID, newAreaText, true, 1);  // keep location, change area
-	    	  }
-	    	});
-    	alert.setNegativeButton(R.string.trip_tstop_entry_clear_location, new DialogInterface.OnClickListener() {
-	    	  public void onClick(DialogInterface dialog, int whichButton)
-	    	  {
-	    		  hilightRoadtripAreaButton(areaID, newAreaText, true, 2);  // clear location, change area
-	    	  }
-	    	});
-    	alert.setNeutralButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
-	    	  public void onClick(DialogInterface dialog, int whichButton)
-	    	  {
-	    		  // don't change the area, do nothing
-	    	  }
-	    	});
-    	alert.show();
+			StringBuffer sb = new StringBuffer(txt);
+			if ((locText != null) && (locText.length() > 0))
+			{
+				sb.append("\n");
+				sb.append(getResources().getString(R.string.location));
+				sb.append(": ");
+				sb.append(locText);
+			}
+			sb.append("\n");
+			sb.append(getResources().getString(R.string.new_area));
+			sb.append(": ");
+			sb.append(newAreaText);
+			if ((viaText != null) && (viaText.length() > 0))
+			{
+				sb.append("\n");
+				sb.append(getResources().getString(R.string.via_route));
+				sb.append(": ");
+				sb.append(viaText);
+			}
+			alert.setMessage(sb);
+		}
+
+		alert.setPositiveButton(R.string.trip_tstop_entry_keep_location, new DialogInterface.OnClickListener() {
+		  public void onClick(DialogInterface dialog, int whichButton)
+		  {
+			hilightRoadtripAreaButton(areaID, newAreaText, true, 1);  // keep location, change area
+		  }
+		});
+		alert.setNegativeButton(R.string.trip_tstop_entry_clear_location, new DialogInterface.OnClickListener() {
+		  public void onClick(DialogInterface dialog, int whichButton)
+		  {
+			hilightRoadtripAreaButton(areaID, newAreaText, true, 2);  // clear location, change area
+		  }
+		});
+		alert.setNeutralButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+		  public void onClick(DialogInterface dialog, int whichButton)
+		  {
+			// don't change the area, do nothing
+		  }
+		});
+
+		alert.show();
 	}
 
 	/**
@@ -995,10 +1004,10 @@ public class TripTStopEntry extends Activity
 		currA = VehSettings.getCurrentArea(db, currV, false);
 		if (currA == null)
 		{
-    		final String homearea = getResources().getString(R.string.home_area);
-    		currA = new GeoArea(homearea);
-    		currA.insert(db);
-    		VehSettings.setCurrentArea(db, currV, currA);
+			final String homearea = getResources().getString(R.string.home_area);
+			currA = new GeoArea(homearea);
+			currA.insert(db);
+			VehSettings.setCurrentArea(db, currV, currA);
 		}
 		currD = VehSettings.getCurrentDriver(db, currV, false);
 		currT = VehSettings.getCurrentTrip(db, currV, true);
@@ -1089,7 +1098,8 @@ public class TripTStopEntry extends Activity
 			  ((stopGas != null) ? android.R.drawable.presence_online
 				: android.R.drawable.presence_invisible,
 				0, 0, 0);
-			if ((stopGas.gas_brandgrade_id != 0) && currTS.isSingleFlagSet(TStop.TEMPFLAG_CREATED_GASBRANDGRADE))
+			if ((stopGas.gas_brandgrade_id != 0)
+			    && currTS.isSingleFlagSet(TStop.TEMPFLAG_CREATED_GASBRANDGRADE))
 				gbgCreatedHere = true;
 
 		} catch (RDBKeyNotFoundException e) {
@@ -1273,10 +1283,11 @@ public class TripTStopEntry extends Activity
 		if (locat == null)
 		{
 			loc.requestFocus();
-        	Toast.makeText(this,
-    			R.string.please_enter_the_location,
-                Toast.LENGTH_SHORT).show();
-        	return;  // <--- Early return: missing field ---
+			Toast.makeText
+				(this,
+				 R.string.please_enter_the_location,
+				 Toast.LENGTH_SHORT).show();
+			return;  // <--- Early return: missing field ---
 		}
 		via_route = textIfEntered(R.id.trip_tstop_via);
 		comment = textIfEntered(R.id.trip_tstop_comment);
@@ -1290,10 +1301,11 @@ public class TripTStopEntry extends Activity
 			(stopEndsTrip || (bundleGas != null)))
 		{
 			odo_total.requestFocus();
-        	Toast.makeText(this,
-    			R.string.please_check_the_total_odometer,
-                Toast.LENGTH_SHORT).show();
-        	return;  // <--- Early return: missing required field ---
+			Toast.makeText
+				(this,
+				 R.string.please_check_the_total_odometer,
+				 Toast.LENGTH_SHORT).show();
+			return;  // <--- Early return: missing required field ---
 		}
 
 		final boolean mkFreqTrip;
@@ -1308,10 +1320,11 @@ public class TripTStopEntry extends Activity
 		if (mkFreqTrip && (odoTrip == 0))
 		{
 			odo_trip.requestFocus();
-        	Toast.makeText(this,
-    			R.string.please_check_the_trip_odometer,
-                Toast.LENGTH_SHORT).show();
-        	return;  // <--- Early return: missing required field ---
+			Toast.makeText
+				(this,
+				 R.string.please_check_the_trip_odometer,
+				 Toast.LENGTH_SHORT).show();
+			return;  // <--- Early return: missing required field ---
 		}
 
 		// If about to continue the trip, and neither odo_trip nor odo_total
@@ -1359,15 +1372,17 @@ public class TripTStopEntry extends Activity
 				} else {
 					// visually different
 					focusStopHere = odo_total;
-					toastText = getResources().getString(R.string.trip_tstop_entry_totalodo_low, wholeOdo0);  // %1$d
+					toastText = getResources().getString
+						(R.string.trip_tstop_entry_totalodo_low, wholeOdo0);  // %1$d
 				}
 			}
 			else if ((odoTrip > 0) && (odoTrip < odos[1]))
 			{
 				focusStopHere = odo_trip;
-				toastText = getResources().getString(R.string.trip_tstop_entry_tripodo_low, odos[1] / 10.0);  // %1$.1f
+				toastText = getResources().getString
+					(R.string.trip_tstop_entry_tripodo_low, odos[1] / 10.0);  // %1$.1f
 			}
-			
+
 			if (focusStopHere != null)
 			{
 				focusStopHere.requestFocus();
@@ -1390,12 +1405,13 @@ public class TripTStopEntry extends Activity
 			int stopSec = stopTimeSec;
 			if (stopSec == 0)
 				stopSec = currT.getTime_start();
-			if ((stopSec != 0) && (contTimeSec < stopSec)) 
+			if ((stopSec != 0) && (contTimeSec < stopSec))
 			{
 				tp_time_cont.requestFocus();
-	        	Toast.makeText(this,
-        			R.string.this_time_must_be_no_earlier_than,
-                    Toast.LENGTH_LONG).show();
+				Toast.makeText
+					(this,
+					 R.string.this_time_must_be_no_earlier_than,
+					 Toast.LENGTH_LONG).show();
 				return;  // <--- inconsistent time ---
 			}
 		}
@@ -1454,11 +1470,12 @@ public class TripTStopEntry extends Activity
 		if ((locObj == null)
 			|| (! locObj.getLocation().equalsIgnoreCase(locat))
 			|| ((areaLocs_areaID != locObj.getAreaID())
-				&& ((locObjCreatedHere == null) || (locObj.getID() != locObjCreatedHere.getID()))))
+			    && ((locObjCreatedHere == null) || (locObj.getID() != locObjCreatedHere.getID()))))
 		{
 			final int locatIdx = loc.getListSelection();
 			ListAdapter la = loc.getAdapter();
-			if ((locatIdx != ListView.INVALID_POSITION) && (locatIdx != ListAdapter.NO_SELECTION) && (la != null))
+			if ((locatIdx != ListView.INVALID_POSITION)
+			    && (locatIdx != ListAdapter.NO_SELECTION) && (la != null))
 			{
 				locObj = (Location) la.getItem(locatIdx);
 				if (locObj != null)
@@ -1494,7 +1511,7 @@ public class TripTStopEntry extends Activity
 			locID = locObj.getID();
 
 			if ((locObjCreatedHere != null) && (locID == locObjCreatedHere.getID())
-				&& (areaLocs_areaID != locObjCreatedHere.getAreaID()))
+			    && (areaLocs_areaID != locObjCreatedHere.getAreaID()))
 			{
 				locObjCreatedHere.setAreaID(areaLocs_areaID);
 				locObjCreatedHere.commit();
@@ -1503,7 +1520,7 @@ public class TripTStopEntry extends Activity
 				// we're resuming from this stop, and won't be at
 				// locObj next time this activity is called.
 			}
-					
+
 		}
 		if ((locObjCreatedHere != null) && (locID != locObjCreatedHere.getID()))
 		{
@@ -1516,7 +1533,8 @@ public class TripTStopEntry extends Activity
 		// if we don't already have it
 		final int viaID;
 
-		if ((viaRouteObj == null) && ! ((locID == 0) || (via_route == null) || (prevLocObj == null)))
+		if ((viaRouteObj == null)
+		    && ! ((locID == 0) || (via_route == null) || (prevLocObj == null)))
 			// via description may have been typed instead of picked from dropdown.
 			// search the table: avoid creating 2 vias with same locations and desc.
 			viaRouteObj = ViaRoute.getByLocsAndDescr(db, prevLocObj.getID(), locID, via_route);
@@ -1541,7 +1559,8 @@ public class TripTStopEntry extends Activity
 						|| ((viaRouteObjCreatedHere != null)
 							&& (viaID == viaRouteObjCreatedHere.getID())))
 					{
-						final int prev_tripOdo = TStop.tripReadPrevTStopOdo(currT, prevLocObj, currTS);
+						final int prev_tripOdo = TStop.tripReadPrevTStopOdo
+							(currT, prevLocObj, currTS);
 						if (prev_tripOdo != -1)
 						{
 							int odo_dist = odo_trip.getCurrent10d() - prev_tripOdo;
@@ -1645,7 +1664,7 @@ public class TripTStopEntry extends Activity
 					{
 						stopGas.gas_brandgrade = new GasBrandGrade(db, bgid);
 					}
-					catch (Throwable th) {}					
+					catch (Throwable th) {}
 				}
 
 				if ((stopGas.gas_brandgrade != null)
@@ -1679,7 +1698,8 @@ public class TripTStopEntry extends Activity
 				if (createdGasBrandGrade)
 					flags |= TStop.TEMPFLAG_CREATED_GASBRANDGRADE;
 			}
-			TStop newStop = new TStop(currT, odoTotal, odoTrip, stopTimeSec, 0, locID, areaID, null, null, flags, viaID, comment);
+			TStop newStop = new TStop
+			  (currT, odoTotal, odoTrip, stopTimeSec, 0, locID, areaID, null, null, flags, viaID, comment);
 			tsid = newStop.insert(db);
 			currT.addCommittedTStop(newStop);  // add it to the Trip's list
 			if (! stopEndsTrip)
@@ -1733,7 +1753,8 @@ public class TripTStopEntry extends Activity
 				// so that future edits won't think the preexisting ones were created for this stop, and
 				// then mistakenly delete them if their activity field is cleared.
 
-				if ((locObjCreatedHere == null) && currTS.isSingleFlagSet(TStop.TEMPFLAG_CREATED_LOCATION))
+				if ((locObjCreatedHere == null)
+				    && currTS.isSingleFlagSet(TStop.TEMPFLAG_CREATED_LOCATION))
 					currTS.clearFlagSingle(TStop.TEMPFLAG_CREATED_LOCATION);
 				else if (createdLoc)
 					currTS.setFlagSingle(TStop.TEMPFLAG_CREATED_LOCATION);
@@ -1899,45 +1920,46 @@ public class TripTStopEntry extends Activity
 
 	public void onClick_BtnGas(View v)
 	{
-    	Intent i = new Intent(this, TripTStopGas.class);
-    	if ((bundleGas == null) && (stopGas != null))
-    	{
-    		bundleGas = new Bundle();
-        	if (stopGas != null)
-        	{
-        		final int bgid = stopGas.gas_brandgrade_id;
-        		if ((bgid != 0) && (stopGas.gas_brandgrade == null))
-        		{
-        			try
-        			{
-        				stopGas.gas_brandgrade = new GasBrandGrade(db, bgid);
-        			}
-        			catch (Throwable th) {}
-        		}
-	    		TripTStopGas.saveBundleFromDBObj(stopGas, bundleGas, gbgCreatedHere);
-        	}
-    	}
-    	if (bundleGas != null)
-    		i.putExtras(bundleGas);
-    	else if (locObj != null)
-    	{
-    		// If location has a previous GasBrandGrade ID,
-    		// use that as the default.
-    		final int bgid = locObj.getLatestGasBrandGradeID();
-    		if (bgid != 0)
-    		{
-    			try
-    			{
-    				GasBrandGrade gbg = new GasBrandGrade(db, bgid);
-    				Bundle bu = new Bundle();
-    				bu.putInt(TripTStopGas.EXTRAS_FIELD_BRANDGRADE_ID, bgid);
-    				bu.putCharSequence(TripTStopGas.EXTRAS_FIELD_BRANDGRADE, gbg.getName());
-    				i.putExtras(bu);
-    			}
-    			catch (Throwable th) {}
-    			
-    		}
-    	}	
+		Intent i = new Intent(this, TripTStopGas.class);
+		if ((bundleGas == null) && (stopGas != null))
+		{
+			bundleGas = new Bundle();
+			if (stopGas != null)
+			{
+				final int bgid = stopGas.gas_brandgrade_id;
+				if ((bgid != 0) && (stopGas.gas_brandgrade == null))
+				{
+					try
+					{
+						stopGas.gas_brandgrade = new GasBrandGrade(db, bgid);
+					}
+					catch (Throwable th) {}
+				}
+				TripTStopGas.saveBundleFromDBObj(stopGas, bundleGas, gbgCreatedHere);
+			}
+		}
+
+		if (bundleGas != null)
+			i.putExtras(bundleGas);
+		else if (locObj != null)
+		{
+			// If location has a previous GasBrandGrade ID,
+			// use that as the default.
+			final int bgid = locObj.getLatestGasBrandGradeID();
+			if (bgid != 0)
+			{
+				try
+				{
+					GasBrandGrade gbg = new GasBrandGrade(db, bgid);
+					Bundle bu = new Bundle();
+					bu.putInt(TripTStopGas.EXTRAS_FIELD_BRANDGRADE_ID, bgid);
+					bu.putCharSequence(TripTStopGas.EXTRAS_FIELD_BRANDGRADE, gbg.getName());
+					i.putExtras(bu);
+				}
+				catch (Throwable th) {}
+
+			}
+		}
 		startActivityForResult(i, R.id.trip_tstop_btn_gas);
 	}
 
@@ -1957,8 +1979,8 @@ public class TripTStopEntry extends Activity
 			bundleGas = idata.getExtras();
 			btnGas.setCompoundDrawablesWithIntrinsicBounds
 			  ((bundleGas != null) ? android.R.drawable.presence_online
-				: android.R.drawable.presence_invisible,
-				0, 0, 0);
+			   : android.R.drawable.presence_invisible,
+			  0, 0, 0);
 			break;
 
 		case R.id.main_btn_freq_local:  // TripTStopChooseFreq
@@ -1986,11 +2008,12 @@ public class TripTStopEntry extends Activity
 			// == trip_tstop_btn_stop_date
 			currentDateToPick = stopTime;
 		}
-        return new DatePickerDialog
-        	(this, this,
-			currentDateToPick.get(Calendar.YEAR),
-			currentDateToPick.get(Calendar.MONTH),
-			currentDateToPick.get(Calendar.DAY_OF_MONTH));
+
+		return new DatePickerDialog
+			(this, this,
+			 currentDateToPick.get(Calendar.YEAR),
+			 currentDateToPick.get(Calendar.MONTH),
+			 currentDateToPick.get(Calendar.DAY_OF_MONTH));
 	}
 
 	/**
@@ -2059,7 +2082,8 @@ public class TripTStopEntry extends Activity
 	 * @param stopTimeSec  Trip ending time (from final tstop), or 0 if not set there
 	 * @param mkFreqTrip  If true, want to create a {@link FreqTrip} based on this trip's data.
 	 */
-	private void endCurrentTrip(final int tsid, final int odo_total, final int stopTimeSec, final boolean mkFreqTrip)
+	private void endCurrentTrip
+		(final int tsid, final int odo_total, final int stopTimeSec, final boolean mkFreqTrip)
 	{
 		// check for tripcategory
 		{
@@ -2178,14 +2202,14 @@ public class TripTStopEntry extends Activity
 	 * If new location text is typed into {@link #loc}, and {@link #locObj}
 	 * no longer matches that text, clear <tt>locObj</tt>
 	 * and call {@link #updateViaRouteAutocomplete(ViaRoute, boolean)}.
-	 * (for addTextChangedListener / {@link TextWatcher}) 
+	 * (for addTextChangedListener / {@link TextWatcher})
 	 */
 	public void afterTextChanged(Editable arg0)
 	{
 		if (locObj == null)
 			return;
 		final String newText = arg0.toString().trim();
-		final int newLen = newText.length(); 
+		final int newLen = newText.length();
 		if ((newLen == 0) || ! locObj.toString().equalsIgnoreCase(newText))
 		{
 			// Mismatch: object no longer matches typed location
@@ -2308,7 +2332,8 @@ public class TripTStopEntry extends Activity
 						if (currTSVia == vias[i].getID())
 						{
 							viaRouteObj = vias[i];
-							if (isFromOnCreate && currTS.isSingleFlagSet(TStop.TEMPFLAG_CREATED_VIAROUTE))
+							if (isFromOnCreate
+							    && currTS.isSingleFlagSet(TStop.TEMPFLAG_CREATED_VIAROUTE))
 							{
 								viaRouteObjCreatedHere = viaRouteObj;
 							}
@@ -2363,7 +2388,7 @@ public class TripTStopEntry extends Activity
 		// changed by the user.
 		if ((minute == 0) && (contTimeMinute == 0)
 			&& ( ((hour + 1) == contTimeHour))
-			     || ((hour == 23) && (contTimeHour == 0))) 
+			     || ((hour == 23) && (contTimeHour == 0)))
 		{
 			return;  // Hour wrapped, assuming not user
 		}
@@ -2383,7 +2408,7 @@ public class TripTStopEntry extends Activity
 	{
 		// TODO managed dialog lifecycle: onCreateDialog etc
 		// fields: bool for isTotal, bool for if any key pressed, int for prev value, op for + - * /
-		// TODO activity int field for memory, 
+		// TODO activity int field for memory,
 		//   TODO and load/save them with rest of fields
 		final View calcItems = getLayoutInflater().inflate(R.layout.trip_tstop_popup_odo_calc, null);
 		popupCalcItems = calcItems;
@@ -2528,7 +2553,7 @@ public class TripTStopEntry extends Activity
 	public void onClick_CalcBtnBackspace(View v)
 	{
 		final Editable tx = calcValue.getText();
-		final int L = tx.length(); 
+		final int L = tx.length();
 		if (L > 0)
 		{
 			calcValue.setText(tx.subSequence(0, L - 1));
@@ -2720,7 +2745,7 @@ public class TripTStopEntry extends Activity
 		odo_total.onRestoreInstanceState(inState, "OTO");
 		odo_trip.onRestoreInstanceState(inState, "OTR");
 		odo_total_chk.setChecked(inState.getBoolean("OTOC"));
-		odo_trip_chk.setChecked(inState.getBoolean("OTRC")); 
+		odo_trip_chk.setChecked(inState.getBoolean("OTRC"));
 		tp_time_stop_chk.setChecked(inState.getBoolean("TSC"));
 		tp_time_cont_chk.setChecked(inState.getBoolean("TCC"));
 		int hhmm = inState.getInt("TSV");
@@ -2772,7 +2797,10 @@ public class TripTStopEntry extends Activity
 	 */
 	private class ViaRouteListenerWatcher implements OnItemClickListener, TextWatcher
 	{
-		/** For ViaRoute autocomplete, the callback for {@link OnItemClickListener}; sets {@link TripTStopEntry#viaRouteObj}. */
+		/**
+		 * For ViaRoute autocomplete, the callback for {@link OnItemClickListener};
+		 * sets {@link TripTStopEntry#viaRouteObj}.
+		 */
 		public void onItemClick(AdapterView<?> parent, View clickedOn, int position, long rowID)
 		{
 			ListAdapter la = via.getAdapter();
@@ -2790,19 +2818,19 @@ public class TripTStopEntry extends Activity
 				if (! odo_total_chk.isChecked())
 					odo_total.setCurrent10d(odoTotalOrig + odo_dist, false);
 			}
-		}		
+		}
 
 		/**
 		 * If new via-route text is typed into {@link #via}, and {@link TripTStopEntry#viaRouteObj}
 		 * no longer matches that text, clear <tt>viaRouteObj</tt>.
-		 * (for addTextChangedListener / {@link TextWatcher}) 
+		 * (for addTextChangedListener / {@link TextWatcher})
 		 */
 		public void afterTextChanged(Editable arg0)
 		{
 			if (viaRouteObj == null)
 				return;
 			final String newText = arg0.toString().trim();
-			final int newLen = newText.length(); 
+			final int newLen = newText.length();
 			if ((newLen == 0) || ! viaRouteObj.toString().equalsIgnoreCase(newText))
 			{
 				viaRouteObj = null;  // Mismatch: object no longer matches typed ViaRoute description

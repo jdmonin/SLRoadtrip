@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  Copyright (C) 2010-2011,2014 Jeremy D Monin <jdmonin@nand.net>
+ *  Copyright (C) 2010-2011,2014-2015 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -22,6 +22,9 @@ package org.shadowlands.roadtrip.android.util;
 import java.util.Calendar;
 import java.util.Vector;
 
+import org.shadowlands.roadtrip.R;
+
+import android.app.AlertDialog;
 import android.content.Context;
 import android.text.format.DateFormat;
 import android.util.Log;
@@ -144,6 +147,32 @@ public abstract class Misc
 			Log.i(tag, msgv.elementAt(i));
 		if (lastIsWarning)
 			Log.w(tag, msgv.lastElement());
+	}
+
+	/**
+	 * Show an AlertDialog about an exception, including its {@link Throwable#getMessage()} if any.
+	 * @param c  Context to use, for {@link Context#getResources()} and {@link AlertDialog}
+	 * @param th  Exception to show
+	 * @since 0.9.43
+	 */
+	public static void showExceptionAlertDialog(final Context c, final Throwable th)
+	{
+		StringBuilder sb = new StringBuilder();
+		sb.append(th.toString());
+		final String m = th.getMessage();
+		if ((m != null) && (m.length() > 0))
+		{
+			sb.append("\n\n");
+			sb.append(m);
+		}
+		// TODO any other details, stack trace, etc?  Write anything to log?
+
+		final String msg = c.getResources().getString(R.string.internal__error_occurred, sb);
+
+		new AlertDialog.Builder(c)
+		.setMessage(msg)
+		.setNeutralButton(android.R.string.cancel, null)
+		.show();
 	}
 
 	/**

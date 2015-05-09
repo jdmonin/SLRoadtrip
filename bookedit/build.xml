@@ -1,0 +1,66 @@
+<?xml version="1.0"?>
+
+<project name="slroadtrip-bookedit" basedir="." default="build" >
+
+<!--
+ This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
+
+ This file Copyright (C) 2015 Jeremy D Monin (jdmonin@nand.net)
+
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with this program.  If not, see http://www.gnu.org/licenses/ .
+ -->
+
+  <!-- directories are relative to basedir -->
+  <property name="dir.src"     value="src" />
+  <property name="dir.build"   value="bin" />
+  <property name="dir.build.java"   value="${dir.build}/classes" />
+
+  <property name="main-class"  value="org.shadowlands.roadtrip.bookedit.Main" />
+  <property name="jar.file"  value="${dir.build}/slroadtrip-bookedit.jar" />
+
+  <target name="clean">
+	<delete dir="${dir.build.java}" />
+	<delete file="${jar.file}" />
+  </target>
+
+  <target name="compile" >
+	<mkdir dir="${dir.build.java}" />
+	<javac srcdir="${dir.src}"
+		destdir="${dir.build.java}"
+		includeantruntime="false" />
+		<!-- includeantruntime="false" prevents ant 1.8+ warning message -->
+  </target>
+
+  <target name="build" depends="compile" >
+	<jar destfile="${jar.file}" basedir="${dir.build.java}" >
+		<manifest>
+			<attribute name="Main-Class" value="${main-class}" />
+			<attribute name="Class-Path" value="sqlite-jdbc.jar" />
+			<!-- hardcoding the jar filename is the simplest way to access   -->
+			<!-- sqlite here; later we can be more clever if needed. For now -->
+			<!-- the readme just asks to rename the jar to that exact name.  -->
+		</manifest>
+	</jar>
+  </target>
+
+  <target name="run" depends="build" >
+	<java fork="true" classname="${main-class}" >
+		<classpath>
+			<!-- add path refid="classpath" here if necessary -->
+			<path location="${jar.file}" />
+		</classpath>
+	</java>
+  </target>
+
+</project>

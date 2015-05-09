@@ -886,37 +886,46 @@ public class VehSettings extends RDBRecord
 	}
 
 	/**
-	 * Finish the current trip in the database. (Completed trips have a time_end, odo_end).
+	 * Finish this vehicle's current trip in the database.
+	 * Set the trip's {@code time_end} and {@code odo_end}.
 	 * Set its {@link TripCategory} and passenger count if specified.
 	 * Clear CURRENT_TRIP.
 	 * Update the Trip and Vehicle odometers.
 	 * If ending a roadtrip, also update CURRENT_AREA.
-	 * Assumes TStop already created or updated.
 	 *<P>
-	 * Before v0.9.43, this method was in {@code android.TripTStopEntry}.
+	 * Assumes {@link TStop} {@code tsid} is already created or updated.
+	 *<P>
+	 * <b>Caller must validate</b> that data will be consistent: Odometer and time won't run backwards,
+	 * roadtrip ends at {@link Trip#getRoadtripEndAreaID()}, etc.
+	 *<P>
+	 * Before v0.9.43, this method was in the {@code android.TripTStopEntry} Activity.
 	 *
 	 * @param db  connection to use
 	 * @param v  Vehicle ending the trip
-	 * @param currT  Trip being ended, from
-	 *     {@link #getCurrentTrip(RDBAdapter, Vehicle, boolean) getCurrentTrip(db, v, false)}
-	 * @param tsid  Trip's ending trip stop ID, not 0
+	 * @param tsid  Trip's ending {@link TStop} ID, not 0
 	 * @param odo_total  Total odometer at end of trip, not 0
 	 * @param stopTimeSec  Trip ending time (from final tstop), or 0 if not set there
 	 * @param tCat  Trip category if any, or null. To help with the GUI, this can also be a TripCategory with
 	 *     getID() == -1 to indicate no category; tripcat id 0 will be written to the db in that case.
-	 * @param pax  Trip passenger count (optional), 0 if only the driver is in the vehicle, or -1 to clear;
+	 * @param pax  Trip passenger count (optional), 0 if only the driver is in the vehicle, or -1 to omit or clear;
 	 *     ignored unless boolean {@link Settings#SHOW_TRIP_PAX} is set.
 	 * @throws IllegalArgumentException if {@code v} is null, {@code tsid} is 0, or {@code odo_total} is 0
-	 * @throws NullPointerException if {@code db} or {@code currT} is null
+	 * @throws IllegalStateException  if no current trip
+	 *     ({@link #getCurrentTrip(RDBAdapter, Vehicle, boolean) getCurrentTrip(db, v, false)} is null)
+	 * @throws NullPointerException if {@code db} is null
 	 */
 	public static void endCurrentTrip
-		(final RDBAdapter db, final Vehicle v, final Trip currT,
-		 final int tsid, final int odo_total, final int stopTimeSec,
+		(final RDBAdapter db, final Vehicle v, final int tsid, final int odo_total, final int stopTimeSec,
 		 final TripCategory tCat, final int pax)
-		throws IllegalArgumentException, NullPointerException
+		throws IllegalArgumentException, IllegalStateException, NullPointerException
 	{
 		if ((v == null) || (tsid == 0) || (odo_total == 0))
 			throw new IllegalArgumentException();
+
+		final Trip currT = VehSettings.getCurrentTrip(db, v, false);
+		if (currT == null)
+			throw new IllegalStateException
+				("No current trip for vehicle " + v.getID() + " " + v.toString());
 
 		// check for tripcategory
 		{

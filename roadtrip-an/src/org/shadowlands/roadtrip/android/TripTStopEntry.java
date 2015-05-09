@@ -1263,6 +1263,7 @@ public class TripTStopEntry extends Activity
 	{
 		String locat = null, via_route = null, comment = null;
 		boolean createdLoc = false, createdVia = false;
+		boolean allOK = true;  // set to false if exception thrown, etc; if false, won't finish() the activity
 
 		/**
 		 * Before any db changes, check entered data for consistency.
@@ -1823,9 +1824,16 @@ public class TripTStopEntry extends Activity
 				}
 			}
 
-			VehSettings.endCurrentTrip
-				(db, currV, currT, tsid, odo_total.getCurrent10d(), stopTimeSec,
-				 (TripCategory) spTripCat.getSelectedItem(), pax);
+			try
+			{
+				VehSettings.endCurrentTrip
+					(db, currV, tsid, odo_total.getCurrent10d(), stopTimeSec,
+					 (TripCategory) spTripCat.getSelectedItem(), pax);
+			} catch (Exception e) {
+				// All validation is done above, so no exception is expected
+				allOK = false;
+				Misc.showExceptionAlertDialog(this, e);
+			}
 		}
 
 		if (! saveOnly)
@@ -1836,7 +1844,7 @@ public class TripTStopEntry extends Activity
 				VehSettings.setPreviousLocation(db, currV, locObj); // update PREV_LOCATION
 			}
 
-			if (stopEndsTrip && mkFreqTrip)
+			if (stopEndsTrip && mkFreqTrip && allOK)
 			{
 				// make new intent, set "_id" to currT.id, call it.
 				Intent i = new Intent(TripTStopEntry.this, TripCreateFreq.class);
@@ -1845,7 +1853,8 @@ public class TripTStopEntry extends Activity
 			}
 		}
 
-		finish();
+		if (allOK)
+			finish();
 	}
 
 	/**

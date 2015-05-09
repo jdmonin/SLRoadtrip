@@ -211,6 +211,7 @@ public class VehSettings extends RDBRecord
 		} catch (RDBKeyNotFoundException e) {
 			// fall through, create it below
 		}
+
 		if (s == null)
 		{
 			s = new VehSettings(settname, v, svalue);
@@ -518,6 +519,7 @@ public class VehSettings extends RDBRecord
 			iv = null;
 		else
 			iv = Integer.toString(ivalue);
+
 		String[] fv = { sfield, Integer.toString(vid), svalue, iv };
 		id = db.insert(TABNAME, FIELDS, fv, true);
 		dirty = false;
@@ -595,6 +597,7 @@ public class VehSettings extends RDBRecord
 	 * caller's open RDBAdapter.
 	 */
 	private static GeoArea currentA = null;
+
 	/** vehicle ID for cached {@link #currentA} per-vehicle setting */
 	private static int currentA_vid;
 
@@ -610,7 +613,8 @@ public class VehSettings extends RDBRecord
 	private static FreqTrip currentFT = null;
 	private static int currentFT_vid;
 
-	/** cached record for {@link #getCurrentFreqTripTStops(RDBAdapter, Vehicle, boolean)}; length never 0, is null in that case. */
+	/** cached record for {@link #getCurrentFreqTripTStops(RDBAdapter, Vehicle, boolean)};
+	 *  length never 0, is null in that case. */
 	private static List<FreqTripTStop> currentFTS = null;
 	private static int currentFTS_vid;
 
@@ -705,7 +709,7 @@ public class VehSettings extends RDBRecord
 	 *         if {@code a}'s dbconn is null, this will be in the exception detail text.
 	 */
 	public static void setCurrentArea(RDBAdapter db, final Vehicle v, GeoArea a)
-		throws IllegalArgumentException, IllegalStateException 
+		throws IllegalArgumentException, IllegalStateException
 	{
 		if (a != null)
 			matchDBOrThrow(db, a);
@@ -786,7 +790,7 @@ public class VehSettings extends RDBRecord
 	 *         if {@code dr}'s dbconn is null, this will be in the exception detail text.
 	 */
 	public static void setCurrentDriver(RDBAdapter db, final Vehicle v, Person dr)
-		throws IllegalArgumentException, IllegalStateException 
+		throws IllegalArgumentException, IllegalStateException
 	{
 		if (dr != null)
 			matchDBOrThrow(db, dr);
@@ -834,6 +838,7 @@ public class VehSettings extends RDBRecord
 		try
 		{
 			sCT = new VehSettings(db, CURRENT_TRIP, v);
+
 			// Sub-try: cleanup in case the setting exists, but the record doesn't
 			try {
 				int id = sCT.getIntValue();
@@ -866,7 +871,7 @@ public class VehSettings extends RDBRecord
 	 *         if {@code tr}'s dbconn is null, this will be in the exception detail text.
 	 */
 	public static void setCurrentTrip(RDBAdapter db, final Vehicle v, Trip tr)
-		throws IllegalArgumentException, IllegalStateException 
+		throws IllegalArgumentException, IllegalStateException
 	{
 		if (tr != null)
 			matchDBOrThrow(db, tr);
@@ -916,6 +921,7 @@ public class VehSettings extends RDBRecord
 		try
 		{
 			sCT = new VehSettings(db, CURRENT_FREQTRIP, v);
+
 			// Sub-try: cleanup in case the setting exists, but the record doesn't
 			try {
 				int id = sCT.getIntValue();
@@ -1249,6 +1255,7 @@ public class VehSettings extends RDBRecord
 		try
 		{
 			sPL = new VehSettings(db, PREV_LOCATION, v);
+
 			// Sub-try: cleanup in case the setting exists, but the record doesn't
 			try {
 				int id = sPL.getIntValue();
@@ -1281,7 +1288,7 @@ public class VehSettings extends RDBRecord
 	 *         if {@code loc}'s dbconn is null, this will be in the exception detail text.
 	 */
 	public static void setPreviousLocation(RDBAdapter db, final Vehicle v, Location loc)
-		throws IllegalArgumentException, IllegalStateException 
+		throws IllegalArgumentException, IllegalStateException
 	{
 		if (loc != null)
 			matchDBOrThrow(db, loc);
@@ -1309,7 +1316,7 @@ public class VehSettings extends RDBRecord
 	 *<P>
 	 * If an old copy of the app was upgraded to v0.9.40 or newer, only the settings for the current vehicle at
 	 * that time were copied to VehSettings.  When any other vehicle becomes current for the first time after
-	 * the upgrade, this method will use backward-compatible mode to find that vehicle's settings. 
+	 * the upgrade, this method will use backward-compatible mode to find that vehicle's settings.
 	 *
 	 * @param db  connection to use
 	 * @param oldV  Current (old) vehicle, or null if no settings or info of the old vehicle should be updated
@@ -1385,7 +1392,7 @@ public class VehSettings extends RDBRecord
 				if (tstop_id != 0)
 				{
 					ts = new TStop(db, tstop_id);
-						// throws RDBKeyNotFoundException if tstop_id doesn't exist: 
+						// throws RDBKeyNotFoundException if tstop_id doesn't exist:
 						// inconsistency will be fixed below as if no setting was found
 
 					isStopped = true;
@@ -1411,7 +1418,7 @@ public class VehSettings extends RDBRecord
 				if (loc_id != 0)
 				{
 					lo = new Location(db, loc_id);
-						// throws RDBKeyNotFoundException if loc_id doesn't exist: 
+						// throws RDBKeyNotFoundException if loc_id doesn't exist:
 						// inconsistency will be fixed below as if no setting was found
 				}
 			} catch (RDBKeyNotFoundException e) {
@@ -1533,7 +1540,7 @@ public class VehSettings extends RDBRecord
 	 * Intended for use by android {@code ChangeDriverOrVehicle}, which may want a vehicle's driver
 	 * even if that Vehicle hasn't been used since an upgrade from a pre-0.9.40 database, and so
 	 * doesn't have any {@link VehSettings}.
-	 * 
+	 *
 	 * @param db  connection to use
 	 * @param v  Vehicle to find driver for
 	 * @return  Driver if found, or null

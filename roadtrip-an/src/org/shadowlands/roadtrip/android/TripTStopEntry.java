@@ -1810,7 +1810,31 @@ public class TripTStopEntry extends Activity
 		}
 
 		if (stopEndsTrip && ! saveOnly)
-			endCurrentTrip(tsid, odo_total.getCurrent10d(), stopTimeSec, mkFreqTrip);
+		{
+			int pax = -1;
+			final String paxTxt = textIfEntered(R.id.trip_tstop_end_pax);
+			if (paxTxt != null)
+			{
+				try
+				{
+					pax = Integer.parseInt(paxTxt);
+				} catch (NumberFormatException e) {
+					// shouldn't occur: layout declaration has inputType=number
+				}
+			}
+
+			endCurrentTrip
+				(db, currV, currT, tsid, odo_total.getCurrent10d(), stopTimeSec,
+				 (TripCategory) spTripCat.getSelectedItem(), pax);
+
+			if (mkFreqTrip)
+			{
+				// make new intent, set "_id" to currT.id, call it.
+				Intent i = new Intent(TripTStopEntry.this, TripCreateFreq.class);
+				i.putExtra("_id", currT.getID());
+				startActivity(i);
+			}
+		}
 
 		if ((currTS != null) && ! saveOnly)  // if we were stopped already, now continuing trip...
 		{
@@ -2070,26 +2094,33 @@ public class TripTStopEntry extends Activity
 
 	/**
 	 * Finish the current trip in the database. (Completed trips have a time_end, odo_end).
-	 * Set its {@link TripCategory} if specified.
+	 * Set its {@link TripCategory} and passenger count if specified.
 	 * Clear CURRENT_TRIP.
-	 * Update the Trip and Vehicle odometer.
+	 * Update the Trip and Vehicle odometers.
 	 * If ending a roadtrip, also update CURRENT_AREA.
 	 * Assumes TStop already created or updated.
-	 * Uses {@link #stopAtTime} to set trip's time_end.
 	 *
-	 * @param tsid  This trip stop ID, not 0
+	 * @param db  connection to use
+	 * @param currV  Vehicle ending this trip
+	 * @param currT  Trip being ended
+	 * @param tsid  Trip's ending trip stop ID, not 0
 	 * @param odo_total  Total odometer at end of trip, not 0
 	 * @param stopTimeSec  Trip ending time (from final tstop), or 0 if not set there
-	 * @param mkFreqTrip  If true, want to create a {@link FreqTrip} based on this trip's data.
+	 * @param tCat  Trip category if any, or null. To help with the GUI, this can also be a TripCategory with
+	 *     getID() == -1 to indicate no category; tripcat id 0 will be written to the db in that case.
+	 * @param pax  Trip passenger count (optional), 0 if only the driver is in the vehicle, or -1 to clear;
+	 *     ignored unless boolean {@link Settings#SHOW_TRIP_PAX} is set.
 	 */
-	private void endCurrentTrip
-		(final int tsid, final int odo_total, final int stopTimeSec, final boolean mkFreqTrip)
+	private static void endCurrentTrip
+		(final RDBAdapter db, final Vehicle currV, final Trip currT,
+		 final int tsid, final int odo_total, final int stopTimeSec,
+		 final TripCategory tCat, final int pax)
 	{
 		// check for tripcategory
 		{
-			final int tripCat = ((TripCategory) (spTripCat.getSelectedItem())).getID();
-			if (tripCat >= 0)
-				currT.setTripCategoryID(tripCat);
+			final int tripCatID = (tCat != null) ? tCat.getID() : -1;
+			if (tripCatID > 0)
+				currT.setTripCategoryID(tripCatID);
 			else
 				currT.setTripCategoryID(0);  // tripCat is -1
 		}
@@ -2099,20 +2130,8 @@ public class TripTStopEntry extends Activity
 			currT.setTime_end(stopTimeSec);
 		currT.setOdo_end(odo_total);
 		if (Settings.getBoolean(db, Settings.SHOW_TRIP_PAX, false))
-		{
-			int pax = -1;
-			String paxTxt = textIfEntered(R.id.trip_tstop_end_pax);
-			if (paxTxt != null)
-			{
-				try
-				{
-					pax = Integer.parseInt(paxTxt);
-				} catch (NumberFormatException e) {
-					// shouldn't occur: layout declaration has inputType=number
-				}
-			}
 			currT.setPassengerCount(pax);
-		}
+
 		currT.commit();
 
 		currV.setOdometerCurrentAndLastTrip(odo_total, currT, true);
@@ -2132,15 +2151,6 @@ public class TripTStopEntry extends Activity
 			catch (IllegalStateException e) { }
 			catch (IllegalArgumentException e) { }
 			catch (RDBKeyNotFoundException e) { }
-		}
-
-		if (mkFreqTrip)
-		{
-			// make new intent, set "_id" to currT.id, call it.
-			Intent i = new Intent(TripTStopEntry.this, TripCreateFreq.class);
-			i.putExtra("_id", currT.getID());
-			startActivity(i);
-			// TripTStopEntry code outside of endCurrentTrip will soon call finish();
 		}
 	}
 

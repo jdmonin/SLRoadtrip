@@ -1685,7 +1685,8 @@ public class TripTStopEntry extends Activity
 			if (stopEndsTrip)
 				areaID = currT.getRoadtripEndAreaID();  // will be 0 if local trip
 			else if (currT.isRoadtrip() && (areaLocs_areaID != -1))
-				areaID = areaLocs_areaID;  // db contents note: unless stopEndsTrip, tstop.a_id always 0 before March 2011
+				areaID = areaLocs_areaID;
+				// historical db note: before March 2011 (r48) unless stopEndsTrip, tstop.a_id always 0
 			else
 				areaID = 0;  // unused in local trip tstops
 

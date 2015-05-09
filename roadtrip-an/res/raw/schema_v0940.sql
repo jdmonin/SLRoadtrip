@@ -1,6 +1,6 @@
 -- org.shadowlands.roadtrip
 -- version 0.9.40 schema (2014-02-15) for SQLite 3.4 or higher
--- with newer comments (2015-05-06).
+-- with newer comments (2015-05-09).
 --
 -- The db schema version is sometimes lower than the app version, never higher.
 --
@@ -186,16 +186,21 @@ create table tstop ( _id integer PRIMARY KEY AUTOINCREMENT not null, tripid int 
 	-- a_id is the tstop's geoarea.
 	--    For local trips: a_id is null (look at trip.aid instead)
 	--    For roadtrips:
-	--       A roadtrip's ending tstop's area id should be the ending area.
 	--       A roadtrip's starting tstop's area id is ignored, because it could be the
 	--         ending tstop of a local trip.
-	--       Other stops during roadtrip: a_id is set for any roadtrip stop
-	--         which is within the starting or ending geoarea.
-	--         for stops 'in the middle' (neither start or end area), a_id is null.
-	--     0 for a_id is ok for a local tstop, but not ok for start/end location of trip.
+	--       A roadtrip's ending tstop's area id should be the ending area trip.roadtrip_end_aid.
+	--       Other stops during a roadtrip: area id is set to the location's geoarea,
+	--        such as the trip's starting or ending area.
+	--        For stops between geoareas (displayed as area "none") like highway rest areas,
+	--        area id is null in tstop and location.
+	--     0 for a_id is okay for a local tstop, but not for start/end location of the trip.
+	--     a_id is denormalized from location.a_id, and used mostly while a trip is in progress.
+	--        Later this field might be helpful for searching for tstops by area.
+	--     Historical note: before March 2011 (r48) unless stopEndsTrip, a_id is always null: assume trip.aid.
 	-- via_route, via_id are the route from the previous tstop's location;
 	--    they are ignored for the tstop which starts a trip. (via_id goes to the via_route table)
-	-- descr is null for all new rows (starting with app version 0.9.05), because the separate
+	-- locid is required since app version 0.9.05.
+	-- descr is null for all new rows (starting with v0.9.05), because the required
 	--    location record (locid) stores the description.  Older data may use descr.
 	-- flag_sides: bitmask, indicates this row has sidetables (exercise, food, gas, car-service).
 	--    also used for temporary flags.  In TStop.java see FLAG_*, TEMPFLAG_*.

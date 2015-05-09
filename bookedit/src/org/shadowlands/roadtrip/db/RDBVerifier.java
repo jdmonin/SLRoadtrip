@@ -579,7 +579,7 @@ public class RDBVerifier
 				}
 				id = ts.getAreaID();
 				if ((id != 0) && (null == getGeoArea(id)))
-					return false;
+					return false;  // TODO could recover this from ts.locid.a_id
 				id = ts.getVia_id();
 				if ((id != 0) && (null == getViaRoute(id)))
 					return false;

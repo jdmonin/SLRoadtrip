@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010-2014 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2015 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -689,15 +689,22 @@ public class TStop extends RDBRecord
 
 	/**
 	 * Get the location text field. (Stored in db as 'descr').
-	 * This is usually <tt>null</tt> for TStops created in 0.9.05 or newer.
+	 * This is usually <tt>null</tt> for TStops created in 0.9.05 or newer,
+	 * which is older than the oldest released APK.
+	 * Unless reading very old data, use {@link #readLocationText()} or
+	 * {@link #getLocation()} instead.
 	 * @return <tt>descr</tt> field contents, or null if <tt>locid</tt> is used instead.
-	 * @see #readLocationText()
+	 * @see #getLocationID()
 	 */
 	public String getLocationDescr() {
 		return locat;
 	}
 
-	/** Get the location ID, or 0 if empty/unused. */
+	/**
+	 * Get the location ID, or 0 if old data with this field empty/unused.
+	 * Location ID is required since 0.9.05, which is older than the oldest released APK.
+	 * @see #readLocation()
+	 */
 	public int getLocationID() {
 		return locid;
 	}
@@ -743,6 +750,7 @@ public class TStop extends RDBRecord
      * @return that location text, or null if both <tt>descr</tt> and <tt>locid</tt> are unused.
      * @throws IllegalStateException if the db connection is closed
      * @since 0.9.05
+     * @see #readLocation()
      */
     public String readLocationText()
     	throws IllegalStateException
@@ -779,14 +787,15 @@ public class TStop extends RDBRecord
 	 *<P>
 	 * For roadtrips:
 	 *<UL>
-	 * <LI> A roadtrip's ending tstop's area id should be the ending area,
-	 *        same as {@link Trip#getRoadtripEndAreaID()}.
 	 * <LI> A roadtrip's starting tstop's area id is ignored, because it could be the
 	 *        ending tstop of a local trip. Use {@link Trip#getAreaID()} instead.
-	 * <LI> Other stops during roadtrip: area id is set for any roadtrip stop
-	 *        which is within the starting or ending geoarea.
-	 *        For stops 'in the middle' (neither start or end area), area id is unused.
-	 * <LI> 0 for area id is ok for a local tstop, but not ok for start/end location of trip.
+	 * <LI> A roadtrip's ending tstop's area id should be the ending area,
+	 *        same as {@link Trip#getRoadtripEndAreaID()}.
+	 * <LI> Other stops during a roadtrip: area id is set to the location's geoarea,
+	 *        such as the trip's starting or ending area.
+	 *        For stops between geoareas (displayed as area "none") like highway rest areas,
+	 *        area id is empty in TStop and Location.
+	 * <LI> 0 for area id is okay for a local tstop, but not for start/end location of the trip.
 	 *</UL>
 	 */
 	public int getAreaID() {
@@ -794,7 +803,7 @@ public class TStop extends RDBRecord
 	}
 
 	/**
-	 * Set the GeoArea field.
+	 * Set the GeoArea field.  See {@link #getAreaID()} for semantics.
 	 * @param a_id  New GeoArea ID, or 0 for null
 	 * @throws IllegalArgumentException if &lt; 0
 	 */

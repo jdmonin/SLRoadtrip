@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2014 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2014-2015 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -869,6 +869,7 @@ public class VehSettings extends RDBRecord
 	 * @throws IllegalStateException if the db isn't open
 	 * @throws IllegalArgumentException if {@code v} is null, or if a non-null {@code tr}'s dbconn isn't db;
 	 *         if {@code tr}'s dbconn is null, this will be in the exception detail text.
+	 * @see #endCurrentTrip(RDBAdapter, Vehicle, Trip, int, int, int, TripCategory, int, boolean)
 	 */
 	public static void setCurrentTrip(RDBAdapter db, final Vehicle v, Trip tr)
 		throws IllegalArgumentException, IllegalStateException
@@ -882,6 +883,77 @@ public class VehSettings extends RDBRecord
 		currentT_vid = v.getID();
 		final int id = (tr != null) ? tr.id : 0;
 		insertOrUpdate(db, CURRENT_TRIP, v, id);
+	}
+
+	/**
+	 * Finish the current trip in the database. (Completed trips have a time_end, odo_end).
+	 * Set its {@link TripCategory} and passenger count if specified.
+	 * Clear CURRENT_TRIP.
+	 * Update the Trip and Vehicle odometers.
+	 * If ending a roadtrip, also update CURRENT_AREA.
+	 * Assumes TStop already created or updated.
+	 *<P>
+	 * Before v0.9.43, this method was in {@code android.TripTStopEntry}.
+	 *
+	 * @param db  connection to use
+	 * @param v  Vehicle ending the trip
+	 * @param currT  Trip being ended, from
+	 *     {@link #getCurrentTrip(RDBAdapter, Vehicle, boolean) getCurrentTrip(db, v, false)}
+	 * @param tsid  Trip's ending trip stop ID, not 0
+	 * @param odo_total  Total odometer at end of trip, not 0
+	 * @param stopTimeSec  Trip ending time (from final tstop), or 0 if not set there
+	 * @param tCat  Trip category if any, or null. To help with the GUI, this can also be a TripCategory with
+	 *     getID() == -1 to indicate no category; tripcat id 0 will be written to the db in that case.
+	 * @param pax  Trip passenger count (optional), 0 if only the driver is in the vehicle, or -1 to clear;
+	 *     ignored unless boolean {@link Settings#SHOW_TRIP_PAX} is set.
+	 * @throws IllegalArgumentException if {@code v} is null, {@code tsid} is 0, or {@code odo_total} is 0
+	 * @throws NullPointerException if {@code db} or {@code currT} is null
+	 */
+	public static void endCurrentTrip
+		(final RDBAdapter db, final Vehicle v, final Trip currT,
+		 final int tsid, final int odo_total, final int stopTimeSec,
+		 final TripCategory tCat, final int pax)
+		throws IllegalArgumentException, NullPointerException
+	{
+		if ((v == null) || (tsid == 0) || (odo_total == 0))
+			throw new IllegalArgumentException();
+
+		// check for tripcategory
+		{
+			final int tripCatID = (tCat != null) ? tCat.getID() : -1;
+			if (tripCatID > 0)
+				currT.setTripCategoryID(tripCatID);
+			else
+				currT.setTripCategoryID(0);  // tripCat is -1
+		}
+
+		// Set and commit other trip fields
+		if (stopTimeSec != 0)
+			currT.setTime_end(stopTimeSec);
+		currT.setOdo_end(odo_total);
+		if (Settings.getBoolean(db, Settings.SHOW_TRIP_PAX, false))
+			currT.setPassengerCount(pax);
+
+		currT.commit();
+
+		v.setOdometerCurrentAndLastTrip(odo_total, currT, true);
+			// also calls currV.commit() for those 2 fields only
+
+		setCurrentTrip(db, v, null);
+		if (currT.isFrequent())
+			setCurrentFreqTrip(db, v, null);
+
+		// For roadtrip, set current geoarea too
+		final int endAreaID = currT.getRoadtripEndAreaID();
+		if (endAreaID != 0)
+		{
+			try {
+				setCurrentArea(db, v, new GeoArea(db, endAreaID));
+			}
+			catch (IllegalStateException e) { }
+			catch (IllegalArgumentException e) { }
+			catch (RDBKeyNotFoundException e) { }
+		}
 	}
 
 	/**

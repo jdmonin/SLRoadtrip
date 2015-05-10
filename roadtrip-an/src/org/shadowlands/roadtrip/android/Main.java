@@ -47,7 +47,7 @@ import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.res.Resources;
 import android.os.Bundle;
-import android.text.SpannableString;
+import android.text.SpannableStringBuilder;
 import android.text.method.LinkMovementMethod;
 import android.text.util.Linkify;
 import android.view.ContextMenu;
@@ -223,8 +223,34 @@ public class Main extends Activity
 			{
 				// R.string.app_about is the multi-line text.
 				final TextView tv_about_text = new TextView(this);
-				final SpannableString about_str = 
-					new SpannableString(getText(R.string.app_about));
+				final SpannableStringBuilder about_str =
+					new SpannableStringBuilder(getText(R.string.app_about));
+
+				// Now try to append build number, from res/raw/gitversion.txt ; ignore "?"
+				InputStream s = null;
+				try {
+					final Resources res = getApplicationContext().getResources();
+					s = res.openRawResource(R.raw.gitversion);
+					DataInputStream dtxt = new DataInputStream(s);
+					String gitversion = dtxt.readLine();
+					dtxt.close();
+					if ((gitversion != null)
+						&& (gitversion.length() > 0)
+						&& (! gitversion.equals("?")))
+					{
+						about_str.append("\n");
+						about_str.append(res.getString(R.string.build__fmt, gitversion));
+							// "Build: 66a175e"
+					}
+				} catch (Exception e) {
+				} finally {
+					if (s != null)
+					{
+						try { s.close(); }
+						catch (Exception e) {}
+					}
+				}
+
 				Linkify.addLinks(about_str, Linkify.WEB_URLS);
 				tv_about_text.setText(about_str);
 				tv_about_text.setMovementMethod(LinkMovementMethod.getInstance());
@@ -257,32 +283,6 @@ public class Main extends Activity
 						}
 					}
 				} catch (NameNotFoundException e) { }
-
-				// Now try to get build number, from res/raw/gitversion.txt ; ignore "?"
-				InputStream s = null;
-				try {
-					s = getApplicationContext().getResources().openRawResource(R.raw.gitversion);
-					DataInputStream dtxt = new DataInputStream(s);
-					String gitversion = dtxt.readLine();
-					dtxt.close();
-					s.close();
-					if ((gitversion != null)
-						&& (gitversion.length() > 0)
-						&& (! gitversion.equals("?")))
-					{
-						if (hadVersName)
-							title.append('.');
-						else
-							title.append(" build ");  // fallback, won't normally appear; don't externalize this string
-						title.append(gitversion);
-					}
-				} catch (Throwable th) {
-					if (s != null)
-					{
-						try {  s.close(); }
-						catch (Throwable t2 ) {}
-					}
-				}
 
 				aboutBuilder.setTitle(title);
 				dialog = aboutBuilder.create();

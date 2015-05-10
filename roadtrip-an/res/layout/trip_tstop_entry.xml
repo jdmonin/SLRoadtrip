@@ -79,31 +79,42 @@
 	    android:layout_height="fill_parent"
 	    android:text="@string/trip_tstop_entry_geo_area"
 	    android:textSize="12sp" />
-	<!-- geoareas: define 2 rows, show the row for roadtrip or local-trip elements -->
+	<!-- geoareas: define all rows, will show either roadtrip's 2 rows or local trip's 1 row -->
 	<LinearLayout
 	    android:orientation="vertical"
 	    android:layout_margin="0dp"
 	    android:layout_height="wrap_content"
 	    android:layout_width="fill_parent"
 	    android:layout_span="2" >
-	    <LinearLayout android:id="@+id/trip_tstop_area_buttons"
+
+	    <!-- roadtrip: multiple geoareas -->
+	    <!--     These radiobuttons are in multiple columns and rows, so we skip the usual RadioGroup -->
+	    <LinearLayout android:id="@+id/trip_tstop_areas_row1"
 		android:orientation="horizontal"
 		android:layout_width="fill_parent"
 		android:layout_height="wrap_content" >
-		<Button android:id="@+id/trip_tstop_btn_area_start"
+		<RadioButton android:id="@+id/trip_tstop_btn_area_start"
 		    android:layout_width="wrap_content"
 		    android:layout_height="fill_parent"
 		    android:onClick="onClick_BtnAreaStart" />
-		<Button android:id="@+id/trip_tstop_btn_area_none"
-		    android:text="@string/none"
-		    android:layout_width="wrap_content"
-		    android:layout_height="fill_parent"
-		    android:onClick="onClick_BtnAreaNone" />
-		<Button android:id="@+id/trip_tstop_btn_area_end"
+		<RadioButton android:id="@+id/trip_tstop_btn_area_end"
 		    android:layout_width="wrap_content"
 		    android:layout_height="fill_parent"
 		    android:onClick="onClick_BtnAreaEnd" />
 	    </LinearLayout>
+	    <LinearLayout android:id="@+id/trip_tstop_areas_row2"
+		android:orientation="horizontal"
+		android:layout_width="fill_parent"
+		android:layout_height="wrap_content" >
+		<RadioButton android:id="@+id/trip_tstop_btn_area_none"
+		    android:text="@string/none"
+		    android:layout_width="wrap_content"
+		    android:layout_height="fill_parent"
+		    android:onClick="onClick_BtnAreaNone" />
+		<!--  "Other" will go here -->
+	    </LinearLayout>
+
+	    <!-- local: single geoarea with "Other..." -->
 	    <LinearLayout android:id="@+id/trip_tstop_area_local_row"
 		android:orientation="horizontal"
 		android:layout_width="fill_parent"

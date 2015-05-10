@@ -65,6 +65,7 @@ import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.ListAdapter;
 import android.widget.ListView;
+import android.widget.RadioButton;
 import android.widget.ScrollView;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -313,20 +314,20 @@ public class TripTStopEntry extends Activity
 	 * Null unless currT.isRoadtrip.
 	 * @see #btnRoadtripArea_chosen
 	 */
-	private Button btnRoadtripAreaStart, btnRoadtripAreaNone, btnRoadtripAreaEnd;
+	private RadioButton btnRoadtripAreaStart, btnRoadtripAreaNone, btnRoadtripAreaEnd;
 
 	/**
-	 * For roadtrip, the currently hilighted geoarea button.
+	 * For roadtrip, the currently selected geoarea radiobutton.
 	 * Null, or one of {@link #btnRoadtripAreaStart},
 	 * {@link #btnRoadtripAreaNone} or {@link #btnRoadtripAreaEnd}.
-	 * @see #hilightRoadtripAreaButton(int, String, boolean, int)
+	 * Starts as null, updated by {@link #hilightRoadtripAreaButton(int, String, boolean, int)}.
 	 * @see #areaLocs_areaID
 	 * @see #onClick_BtnAreaStart(View)
 	 * @see #onClick_BtnAreaNone(View)
 	 * @see #onClick_BtnAreaEnd(View)
 	 * @see #onClick_BtnAreaOther(View)
 	 */
-	private Button btnRoadtripArea_chosen;
+	private RadioButton btnRoadtripArea_chosen;
 
 	///////////////////////////////
 	// Start of calculator fields
@@ -715,14 +716,17 @@ public class TripTStopEntry extends Activity
 			if (v != null)
 				v.setVisibility(View.GONE);
 
-			btnRoadtripAreaStart = (Button) findViewById(R.id.trip_tstop_btn_area_start);
-			btnRoadtripAreaNone = (Button) findViewById(R.id.trip_tstop_btn_area_none);
-			btnRoadtripAreaEnd = (Button) findViewById(R.id.trip_tstop_btn_area_end);
+			btnRoadtripAreaStart = (RadioButton) findViewById(R.id.trip_tstop_btn_area_start);
+			btnRoadtripAreaNone = (RadioButton) findViewById(R.id.trip_tstop_btn_area_none);
+			btnRoadtripAreaEnd = (RadioButton) findViewById(R.id.trip_tstop_btn_area_end);
 			btnRoadtripAreaStart.setText(ga_s.getName());
 			btnRoadtripAreaEnd.setText(ga_e.getName());
 			hilightRoadtripAreaButton(areaLocs_areaID, null, false, 0);
 		} else {
-			View v = findViewById(R.id.trip_tstop_area_buttons);
+			View v = findViewById(R.id.trip_tstop_areas_row1);
+			if (v != null)
+				v.setVisibility(View.GONE);
+			v = findViewById(R.id.trip_tstop_areas_row2);
 			if (v != null)
 				v.setVisibility(View.GONE);
 
@@ -834,10 +838,15 @@ public class TripTStopEntry extends Activity
 	}
 
 	/**
-	 * Hilight the matching GeoArea's button with a green dot, update {@link #areaLocs_areaID},
-	 * and optionally update related data.  (Stops during a roadtrip have 3 GeoArea buttons
+	 * Select the matching GeoArea's radio button, update {@link #areaLocs_areaID},
+	 * and optionally update related data.  (Stops during a roadtrip have several GeoArea radios
 	 * to select the starting area, no area, or ending area.)
-	 * @param areaID  GeoArea ID to hilight
+	 *<P>
+	 * Before changing the currently selected button, this method confirmas with the user
+	 * if they've already picked a location there. This method is also used because the radios
+	 * are laid out 2 columns and 2 rows, so a RadioGroup won't simply work.
+	 *
+	 * @param areaID  GeoArea ID to select
 	 * @param newAreaText  New GeoArea's name, or null for "none" (no area).
 	 *   Not needed unless <tt>alsoUpdateData</tt>.
 	 * @param alsoUpdateData If true, also update currTS,
@@ -874,11 +883,10 @@ public class TripTStopEntry extends Activity
 		}
 
 		if (btnRoadtripArea_chosen != null)
-			// un-hilight previous
-			btnRoadtripArea_chosen.setCompoundDrawablesWithIntrinsicBounds
-			  (0, 0, 0, 0);
+			// un-select previous
+			btnRoadtripArea_chosen.setChecked(false);
 
-		Button toChg;
+		RadioButton toChg;
 		if (areaID == currT.getAreaID())
 			toChg = btnRoadtripAreaStart;
 		else if (areaID == currT.getRoadtripEndAreaID())
@@ -892,8 +900,7 @@ public class TripTStopEntry extends Activity
 		btnRoadtripArea_chosen = toChg;
 
 		if (toChg != null)
-			toChg.setCompoundDrawablesWithIntrinsicBounds
-			  (R.drawable.checkmark_green19, 0, 0, 0);
+			toChg.setChecked(true);
 
 		if (! alsoUpdateData)
 		{

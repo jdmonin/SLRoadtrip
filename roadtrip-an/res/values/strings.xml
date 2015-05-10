@@ -167,7 +167,7 @@
 <string name="logbook_show__trips_to_location">Trips to Location</string>
 <string name="logbook_show__validating_db">Validating DB</string>
 <string name="logbook_show__validation_failed">Validation failed</string>
-<string name="logbook_show__validation_successful_3">Transaction-data (level 3) validation successful</string>
+<string name="logbook_show__validation_no_problems">Validation complete, no problems found.</string>
 <string name="logbook_show_popup_export_filename">CSV Filename:</string>
 <string name="main_cancel_are_you_sure">Are you sure you want to cancel the current trip?</string>
 <string name="main_cancel_cannot_with_stops">Cannot cancel a trip with stops; use End Trip instead.</string>

@@ -111,7 +111,23 @@
 		    android:layout_width="wrap_content"
 		    android:layout_height="fill_parent"
 		    android:onClick="onClick_BtnAreaNone" />
-		<!--  "Other" will go here -->
+		<!-- Other Geoarea radio and dropdown  -->
+		<RadioButton android:id="@+id/trip_tstop_btn_area_other"
+		    android:layout_width="wrap_content"
+		    android:layout_height="wrap_content"
+		    android:text="" />
+		<AutoCompleteTextView
+		    android:id="@+id/trip_tstop_areas_et_other"
+		    android:completionThreshold="1"
+		    android:layout_weight="1"
+		    android:layout_width="0dp"
+		    android:layout_height="wrap_content"
+		    android:singleLine="true" />
+		<ImageButton
+		    android:src="@android:drawable/arrow_down_float"
+		    android:layout_width="wrap_content"
+		    android:layout_height="wrap_content"
+		    android:onClick="onClick_BtnAreasETOtherDropdown" />
 	    </LinearLayout>
 
 	    <!-- local: single geoarea with "Other..." -->

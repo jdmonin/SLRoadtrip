@@ -153,7 +153,7 @@ public abstract class Misc
 	 * Show an AlertDialog about an exception, including its {@link Throwable#getMessage()} if any.
 	 * @param c  Context to use, for {@link Context#getResources()} and {@link AlertDialog}
 	 * @param th  Exception to show
-	 * @since 0.9.43
+	 * @since 0.9.50
 	 */
 	public static void showExceptionAlertDialog(final Context c, final Throwable th)
 	{

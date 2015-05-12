@@ -898,7 +898,7 @@ public class VehSettings extends RDBRecord
 	 * <b>Caller must validate</b> that data will be consistent: Odometer and time won't run backwards,
 	 * roadtrip ends at {@link Trip#getRoadtripEndAreaID()}, etc.
 	 *<P>
-	 * Before v0.9.43, this method was in the {@code android.TripTStopEntry} Activity.
+	 * Before v0.9.50, this method was in the {@code android.TripTStopEntry} Activity.
 	 *
 	 * @param db  connection to use
 	 * @param v  Vehicle ending the trip

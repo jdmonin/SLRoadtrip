@@ -111,7 +111,7 @@ public class TripTStopEntry extends Activity
 	 * Also used when calling {@link #hilightRoadtripAreaButton(int, String, boolean, int)}
 	 * when the "Other" radio button should be checked, regardless of the Area ID selected in "Other".
 	 * @see #areaOtherID
-	 * @since 0.9.43
+	 * @since 0.9.50
 	 */
 	private static final int GEOAREAID_OTHER_NEW = -2;
 
@@ -345,7 +345,7 @@ public class TripTStopEntry extends Activity
 	 * Its radiobutton is {@link #rbRoadtripAreaOther}.
 	 * The selected GeoArea ID from the adapter, if any, is {@link #areaOtherID}.
 	 * Autocomplete selections call {@link #etRoadtripAreaOtherListener}.
-	 * @since 0.9.43
+	 * @since 0.9.50
 	 */
 	private AutoCompleteTextView etRoadtripAreaOther;
 
@@ -356,7 +356,7 @@ public class TripTStopEntry extends Activity
 	 * ID of roadtrip geoarea selected in {@link #etRoadtripAreaOther},
 	 * 0 if none, or {@link #GEOAREAID_OTHER_NEW} for a newly entered name.
 	 * Updated in {@link TripTStopEntry.GeoAreaOnItemClickListener}.
-	 * @since 0.9.43
+	 * @since 0.9.50
 	 */
 	private int areaOtherID;
 
@@ -1246,7 +1246,7 @@ public class TripTStopEntry extends Activity
 
 	/**
 	 * Choose another geoarea for the current stop. This could transform a local trip into a roadtrip.
-	 * @since 0.9.43
+	 * @since 0.9.50
 	 */
 	public void onClick_BtnAreaOther(View v)
 	{

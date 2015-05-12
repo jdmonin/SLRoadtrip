@@ -965,7 +965,7 @@ public class LogbookShow extends Activity
 
 			new AlertDialog.Builder(LogbookShow.this)
 				.setMessage( (ok)
-					? R.string.logbook_show__validation_successful_3
+					? R.string.logbook_show__validation_no_problems
 					: R.string.logbook_show__validation_failed )
 				.setNeutralButton(android.R.string.ok, null)
 				.show();

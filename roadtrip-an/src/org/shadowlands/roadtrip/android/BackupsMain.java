@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010-2011,2013-2014 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2011,2013-2015 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -90,6 +90,7 @@ public class BackupsMain extends Activity
 
 	/**
 	 * If browsing a different directory to restore from, the full path of that directory. Null otherwise.
+	 * @see #tryDirPath(String, boolean)
 	 * @since 0.9.20
 	 */
 	private String restoreFromDirectory = null;
@@ -179,6 +180,53 @@ public class BackupsMain extends Activity
 		}
 		db.close();
 	}
+
+	/**
+	 * Save our state before an Android pause or stop, mostly for current directory.
+	 * @see #onRestoreInstanceState(Bundle)
+	 * @since 0.9.43
+	 */
+	@Override
+	public void onSaveInstanceState(Bundle outState)
+	{
+		super.onSaveInstanceState(outState);
+		if (outState == null)
+			return;
+
+		outState.putString("RD", restoreFromDirectory);
+		outState.putBoolean("CBD", checkedDBBackupDir);
+	}
+
+	/**
+	 * Restore our state after resuming from an Android pause or stop, mostly for
+	 * current directory. Happens here (and not {@code onCreate}) to ensure
+	 * initialization is complete before this method is called.
+	 *
+	 * @see #onSaveInstanceState(Bundle)
+	 * @since 0.9.43
+	 */
+	@Override
+	public void onRestoreInstanceState(Bundle inState)
+	{
+		super.onRestoreInstanceState(inState);
+		if (inState == null)
+			return;
+
+		String restorDir = inState.getString("RD");
+		checkedDBBackupDir = inState.getBoolean("CBD", false);
+
+		if ( ((restorDir != null) != (restoreFromDirectory != null))
+		    || ((restorDir != null) && ! restorDir.equals(restoreFromDirectory)))
+		{
+			if (restorDir == null)
+				restorDir = "";
+			boolean doRescan = tryDirPath(restorDir, true);
+			if (doRescan)
+				populateBackupsList(true);  // ? isSDCardReadable  -- TODO
+
+		}
+	}
+
 
 	/**
 	 * Look in AppInfo db-table for last backup time, update {@link #tvTimeOfLastBkup}.

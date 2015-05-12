@@ -43,25 +43,30 @@ from the version's tag with:
 Otherwise just use:
 	git checkout master
 
+You'll probably also want to download a SQLite jdbc driver jar to use with bookedit.
+See https://bitbucket.org/xerial/sqlite-jdbc -> Downloads.
+
 In Eclipse we'll first add the bookedit project, which is simpler than roadtrip-an:
-- In the Eclipse menu, File -> New Java Project [not from existing ant buildfile]
-- Project name: bookedit [or another name if you prefer]
-- Un-check the "use default location" checkbox
-- Location: Within the checked-out copy from git, browse to the bookedit folder
-- Click Next, not Finish
-- Review the Java Settings that appear now:
-	Source tab: Should show bookedit/src containing source folders for
-	  gnu.trove, org.shadowlands.roadtrip.bookedit, and other packages.
-	  Be sure that "Allow output folders for source folders" is un-checked.
-	  Take the default output folder bookedit/bin .
-	Projects tab: An empty list: there aren't any required projects
-	Libraries tab: JRE system library
-	Order and Export tab: contains bookedit/src and JRE system library
+- In the Eclipse menu, File -> New -> Project... -> Java -> From Exiting Ant Buildfile
+- Ant buildfile: Within the checked-out copy from git, browse to build.xml in the bookedit folder
+- Project name: slroadtrip-bookedit [or another name if you prefer]
+- Javac declaration: Hilight the sole javac task
+- Set this checkbox: Link to the buildfile in the file system
 - Click Finish
 
-This should add bookedit to the workspace list of projects (Package Explorer).
-On OS X, please check Project Properties -> Resource -> Text file encoding,
-which needs to be UTF-8 and not MacRoman or any other value.
+This should add slroadtrip-bookedit to the workspace list of projects (Package Explorer).
+Right-click it there and choose Properties to review the project settings:
+	Source tab: Should show slroadtrip-bookedit/src containing source folders for
+	  gnu.trove, org.shadowlands.roadtrip.bookedit, and other packages.
+	  Be sure that "Allow output folders for source folders" is un-checked.
+	  Set the default output folder to slroadtrip-bookedit/bin/classes .
+	Projects tab: An empty list: there aren't any required projects
+	Libraries tab: JRE system library
+	  Add external JAR -> sqlite-jdbc-*.jar
+	Order and Export tab: contains slroadtrip-bookedit/src, JRE system library, sqlite jar
+	On OS X, on the left side of the properties window also check Resource ->
+	  Text file encoding, which needs to be UTF-8 and not MacRoman or another value.
+Click OK.
 
 Hilight bookedit in Package Explorer, then go to the Project menu -> Build Project.
 After the build, check for any errors in the Problems pane and red X icons in the
@@ -73,6 +78,12 @@ Run As -> Java Application.  You should see the BookEdit main window appear,
 showing some buttons and the version and db schema version.  Choose Exit.
 This also adds "Main" to your eclipse Run button dropdown; you can rename it
 using the Run Configurations dialog.
+
+To build and run slroadtrip-bookedit.jar (optional), right-click build.xml
+-> Run as -> Ant Build. This will compile the classes and create the JAR.
+Copy the sqlite jar into the same folder as slroadtrip-bookedit.jar and
+rename it to sqlite-jdbc.jar (without any version number). At this point
+you can run slroadtrip-bookedit.jar and view db backup files.
 
 Now add the android project to your workspace:
 - In the Eclipse menu, File -> New -> Project...
@@ -209,6 +220,7 @@ r431	-	2015-05-03	3393a0f  Migration from svn to git, google code to github
 				Disable odometer button wraparound (0 -> 9999999) seen in trip odo.
 				TripTStopEntry calculator: Add Reset button, Clear no longer doubles as Reset.
 	0.9.43			Being developed now; minor improvements and bugfixes since 0.9.42.
+				Add build.xml to create slroadtrip-bookedit.jar.
 
 Also see doc/hist/*.sql for previous schema updates.
 

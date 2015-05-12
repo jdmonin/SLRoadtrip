@@ -110,7 +110,7 @@ public class LogbookEditPane extends JPanel implements ActionListener, WindowLis
 	private JButton bLoadPrevious;  // earlier trips
 	private JPanel pbtns;  // below JTable
 	private JButton bAddSimple, bAddWithStops, bAddDone, bAddCancel, bChgVehicle;
-	private JButton bTmpVerifyDB;  // TODO quick test for db verifier; move to a menu or something
+	private JButton bTmpValidateDB;  // this is for quick test for db verifier; TODO move to a menu or something
 
 	/**
 	 * Create and show a new scrolling grid, in a new {@link JFrame}, to view or edit this logbook data.
@@ -187,10 +187,10 @@ public class LogbookEditPane extends JPanel implements ActionListener, WindowLis
 		bChgVehicle.setToolTipText("Display a different vehicle in this logbook.");
 		bChgVehicle.addActionListener(this);
 		bChgVehicle.setVisible(true);
-		bTmpVerifyDB = new JButton("Verify DB");
-		bTmpVerifyDB.setToolTipText("Validate the db data. The physical structure is already verified when the DB is opened.");
-		bTmpVerifyDB.addActionListener(this);
-		bTmpVerifyDB.setVisible(true);
+		bTmpValidateDB = new JButton("Validate DB");
+		bTmpValidateDB.setToolTipText("Validate the db data logical structure. The physical structure is already verified when the DB is opened.");
+		bTmpValidateDB.addActionListener(this);
+		bTmpValidateDB.setVisible(true);
 		if (isReadOnly)
 		{
 			bAddSimple.setEnabled(false);
@@ -201,7 +201,7 @@ public class LogbookEditPane extends JPanel implements ActionListener, WindowLis
 		pbtns.add(bAddDone);
 		pbtns.add(bAddCancel);
 		pbtns.add(bChgVehicle);
-		pbtns.add(bTmpVerifyDB);
+		pbtns.add(bTmpValidateDB);
 		lbef.add(pbtns, BorderLayout.SOUTH);
 
 		lbef.pack();
@@ -233,8 +233,8 @@ public class LogbookEditPane extends JPanel implements ActionListener, WindowLis
 			actionAddTripFinish(false);
 		else if (src == bChgVehicle)
 			actionChangeVehicle(veh.isActive());
-		else if (src == bTmpVerifyDB)
-			actionVerifyDB();
+		else if (src == bTmpValidateDB)
+			actionValidateDB();
 	}
 
 	private void actionLoadPrevious()
@@ -303,8 +303,8 @@ public class LogbookEditPane extends JPanel implements ActionListener, WindowLis
 		new VehicleChooserDialog(allV, isActive, veh.getID());
 	}
 
-	/** Verify the DB consistency with {@link RDBVerifier#verify(int)}, and show a passed/failed message box. */
-	public void actionVerifyDB()
+	/** Validate the DB consistency with {@link RDBVerifier#verify(int)}, and show a passed/failed message box. */
+	public void actionValidateDB()
 	{
 		RDBVerifier verif = new RDBVerifier(conn);
 		final int vResult = verif.verify(RDBVerifier.LEVEL_TDATA);
@@ -313,16 +313,16 @@ public class LogbookEditPane extends JPanel implements ActionListener, WindowLis
 		int optionPaneLevel;
 		if (vResult == 0)
 		{
-			optionPaneMsg = "Verification passed.";
+			optionPaneMsg = "Validation complete, no problems found.";
 			optionPaneLevel = JOptionPane.INFORMATION_MESSAGE;
 		} else {
-			optionPaneMsg = "Verification failed (return code " + vResult + ").";
+			optionPaneMsg = "Validation failed (return code " + vResult + ").";
 			optionPaneLevel = JOptionPane.ERROR_MESSAGE;
 		}
 
 		JOptionPane.showMessageDialog(lbef,
 			optionPaneMsg,
-		    "Verification results",
+		    "Validation results",
 		    optionPaneLevel);
 	}
 

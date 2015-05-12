@@ -923,9 +923,10 @@ public class TripTStopEntry extends Activity
 	private void selectRoadtripAreaButton
 		(int areaID, String newAreaText, final boolean alsoUpdateData, final int confirmChange)
 	{
-		if (areaID == GEOAREAID_OTHER_NEW)
+		final boolean btnWasOther = (areaID == GEOAREAID_OTHER_NEW);
+		if (btnWasOther)
 		{
-			if (areaOtherID >= 0)
+			if (areaOtherID > 0)
 			{
 				areaID = areaOtherID;
 				// TODO validate contents too, in case text was changed since selection
@@ -1242,17 +1243,22 @@ public class TripTStopEntry extends Activity
 			(currT.getRoadtripEndAreaID(), rbRoadtripAreaEnd.getText().toString(), true, 0);
 	}
 
-	/** For roadtrips, update GUI and data from a click on the 'ending geoarea' button. */
-	public void onClick_RBAreaOther(View v)
+	/**
+	 * For roadtrips, update GUI and data from a click on the 'ending geoarea' button.
+	 * @see #onClick_BtnAreaLocalOther(View)
+	 * @since 0.9.50
+	 */
+	public void onClick_BtnAreaOther(View v)
 	{
 		selectRoadtripAreaButton(GEOAREAID_OTHER_NEW, null, true, 0);
 	}
 
 	/**
 	 * Choose another geoarea for the current stop. This could transform a local trip into a roadtrip.
+	 * @see #onClick_BtnAreaOther(View)
 	 * @since 0.9.50
 	 */
-	public void onClick_BtnAreaOther(View v)
+	public void onClick_BtnAreaLocalOther(View v)
 	{
 		Toast.makeText(this, "Not implemented yet (TODO)", Toast.LENGTH_SHORT).show();
 	}
@@ -2928,11 +2934,11 @@ public class TripTStopEntry extends Activity
 			GeoArea area = (GeoArea) la.getItem(position);
 			final int areaID = (area == null) ? 0 : area.getID();
 
-			if (areaID == areaOtherID)
+			if ((areaID == areaOtherID) && rbRoadtripAreaOther.isChecked())
 				return;
 
 			areaOtherID = areaID;
-			onClick_RBAreaOther(null);  // update radios, ask for confirmation if loc entered, etc
+			onClick_BtnAreaOther(null);  // update radios, ask for confirmation if loc entered, etc
 		}
 	}
 

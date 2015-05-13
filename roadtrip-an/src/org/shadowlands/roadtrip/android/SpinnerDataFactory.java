@@ -19,7 +19,6 @@
 
 package org.shadowlands.roadtrip.android;
 
-import org.shadowlands.roadtrip.R;
 import org.shadowlands.roadtrip.db.GeoArea;
 import org.shadowlands.roadtrip.db.Person;
 import org.shadowlands.roadtrip.db.RDBAdapter;
@@ -44,8 +43,6 @@ public class SpinnerDataFactory
 
 	/** Placeholder in spinners for an empty {@link TripCategory}. */
 	public static TripCategory EMPTY_TRIPCAT;
-	/** Placeholder in spinners for an empty {@link GeoArea}. */
-	public static GeoArea GEOAREA_NONE;
 
 	/**
 	 * Populate a spinner from the drivers (Persons) in the database.
@@ -109,7 +106,7 @@ public class SpinnerDataFactory
 	 * @param ctx  the calling Activity or Context
 	 * @param sp  spinner to fill with the areas
 	 * @param currentID  If not -1, the area _id to select in the Spinner
-	 * @param withNone  If true, include a GeoArea "(none)" with id 0 as the first item 
+	 * @param withNone  If true, include a GeoArea "(none)" with id 0 as the first item: {@link GeoArea#GEOAREA_NONE}
 	 * @return true on success, false if could not populate from database
 	 */
 	public static boolean setupGeoAreasSpinner(RDBAdapter db, Context ctx, Spinner sp, final int currentID, final boolean withNone)
@@ -205,31 +202,10 @@ public class SpinnerDataFactory
 
     	try
     	{
-    		areas = GeoArea.getAll(db, -1);
+    		areas = GeoArea.getAll(db, withNone);
     	}
     	catch (SQLiteException e)
     	{}
-
-    	if (withNone)
-    	{
-    		if (GEOAREA_NONE == null)
-    		{
-    			final String none = ctx.getString(R.string.none__parens);
-    			GEOAREA_NONE = new GeoArea(none);  // "(none)"
-    			GEOAREA_NONE.setID0();
-    		}
-
-    		if (areas == null)
-    		{
-    			areas = new GeoArea[1];
-    		} else {
-    			final int L = areas.length;
-    			GeoArea[] areas2 = new GeoArea[L + 1];
-    			System.arraycopy(areas, 0, areas2, 1, L);
-    			areas = areas2;
-    		}
-    		areas[0] = GEOAREA_NONE;
-    	}
 
     	return areas;
 	}

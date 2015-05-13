@@ -35,7 +35,37 @@ public class GeoArea extends RDBRecord
 	private static final String[] FIELDS = { VALFIELD };
 	private static final String[] FIELDS_AND_ID = { VALFIELD, "_id" };
 
+	/**
+	 * Placeholder for "(none)" UI entry in {@link #getAll(RDBAdapter, boolean)},
+	 * to allow for locations outside of any known geoarea.
+	 *<P>
+	 * <B>I18N:</B> To localize this and any other static text,
+	 * call {@link RDBRecord#localizeStatics(String, String)}.
+	 *<P>
+	 * Before v0.9.50, this field was in {@code android.SpinnerDataFactory}.
+	 */
+	public static final GeoArea GEOAREA_NONE;
+	static {
+		GEOAREA_NONE = new GeoArea("(none)");
+		GEOAREA_NONE.id = 0;
+	}
+
 	private String aname;
+
+	/**
+	 * Get the GeoAreas currently in the database, optionally beginning with the {@link #GEOAREA_NONE} placeholder.
+	 * @param db  database connection
+	 * @param withAreaNone
+	 * @return an array of GeoArea objects from the database, ordered by name, or null if none.
+	 *     If {@code withAreaNone} is true, {@link #GEOAREA_NONE} is returned at [0].
+	 *     Even if {@code withAreaNone} is true, null is returned if there are no GeoAreas in the db.
+	 * @since 0.9.50
+	 * @see #getAll(RDBAdapter, int)
+	 */
+	public static GeoArea[] getAll(RDBAdapter db, final boolean withAreaNone)
+	{
+		return getAll(db, -1, withAreaNone);
+	}
 
     /**
      * Get the GeoAreas currently in the database.
@@ -43,8 +73,14 @@ public class GeoArea extends RDBRecord
      * @param exceptID  Exclude this area; -1 to return all areas
      * @return an array of GeoArea objects from the database, ordered by name, or null if none.
      *   <br><b>NOTE:</b> This array may end with a null value if <tt>exceptID</tt> is used.
+     * @see #getAll(RDBAdapter, boolean)
      */
     public static GeoArea[] getAll(RDBAdapter db, final int exceptID)
+    {
+	return getAll(db, exceptID, false);
+    }
+
+    private static GeoArea[] getAll(RDBAdapter db, final int exceptID, final boolean withAreaNone)
     {
     	final Vector<String[]> geos;
     	if (exceptID != -1)
@@ -59,10 +95,14 @@ public class GeoArea extends RDBRecord
     	if (geos == null)
     		return null;
 
-    	GeoArea[] rv = new GeoArea[geos.size()];
+    	final int L = geos.size();
+    	final int noneIncr = (withAreaNone) ? 1 : 0;
+    	GeoArea[] rv = new GeoArea[L + noneIncr];
 		try {
-	    	for (int i = rv.length - 1; i >= 0; --i)
-				rv[i] = new GeoArea(db, geos.elementAt(i));
+	    	for (int i = L - 1; i >= 0; --i)
+	    		rv[i + noneIncr] = new GeoArea(db, geos.elementAt(i));
+	    	if (withAreaNone)
+	    		rv[0] = GEOAREA_NONE;
 
 	    	return rv;
 		} catch (RDBKeyNotFoundException e) {
@@ -127,16 +167,6 @@ public class GeoArea extends RDBRecord
     		throw new IllegalArgumentException("null areaname");
     	aname = areaname;
     	dirty = true;
-    }
-
-    /**
-     * For use by GeoArea "(none)": if id is -1, set it to 0.
-     * @since 0.9.12
-     */
-    public void setID0()
-    {
-    	if (id == -1)
-    		id = 0;
     }
 
     /**

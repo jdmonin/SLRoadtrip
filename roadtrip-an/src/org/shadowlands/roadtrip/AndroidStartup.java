@@ -60,19 +60,27 @@ public class AndroidStartup extends Activity
 	private TextView tv;
 	boolean missingSettings = false;
 
-	/** Called when the activity is first created. */
+	/**
+	 * Called when the activity is first created.
+	 * Calls {@link RDBRecord#localizeStatics(String, String)} for i18n.
+	 * Most initialization is done in {@link #onResume()}.
+	 */
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.android_startup);
         tv = (TextView) findViewById(R.id.textview_tmpText);
 
+	final Resources rsrcs = getResources();
+	final String none = rsrcs.getString(R.string.none__parens),  // "(none)"
+		other__ = rsrcs.getString(R.string.other__dots);     // "Other..."
+	RDBRecord.localizeStatics(none, other__);
+
         // See onResume for the rest of initialization.
     }
 
     /**
      * See if the db is missing any settings.  If not, go to {@link Main} activity.
-     * Also calls {@link RDBRecord#localizeStatics(String)} for i18n.
      *<P>
      * Called when first created, or from the Back button from {@link BackupsMain}
      * (which might have restored the db from a backup).
@@ -87,13 +95,6 @@ public class AndroidStartup extends Activity
         db = new RDBOpenHelper(this);
 
 	final Resources rsrcs = getResources();
-
-	// i18n localization for UI element placeholders returned from methods
-	{
-		final String other__ = rsrcs.getString(R.string.other__dots);
-		if (other__ != null)
-			RDBRecord.localizeStatics(other__);
-	}
 
         // read from DB; this will call back to create or upgrade the schema if needed.
         // Check for current settings, to prompt for data entry if needed.

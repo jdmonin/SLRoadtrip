@@ -35,7 +35,7 @@ package org.shadowlands.roadtrip.db;
  *<P>
  * <B>I18N:</B> Some classes' objects or methods have static text for UI elements,
  * such as the "Other..." placeholder {@link Vehicle#OTHER_VEHICLE}.  To localize all
- * static text, call {@link #localizeStatics(String)} during app startup.
+ * static text, call {@link #localizeStatics(String, String)} during app startup.
  *
  * @author JM 
  */
@@ -45,12 +45,15 @@ public abstract class RDBRecord
 	/**
 	 * Localize any UI text, such as {@link Vehicle#OTHER_VEHICLE},
 	 * contained in placeholder objects or returned from methods.
-	 * @param other Localized text for "Other..."
+	 * @param none  Localized text for "(none)", or null to skip
+	 * @param other Localized text for "Other...", or null to skip
 	 * @since 0.9.50
 	 */
-	public static final void localizeStatics(final String other)
+	public static final void localizeStatics
+		(final String none, final String other)
 	{
-		Vehicle.OTHER_VEHICLE.setModel(other);
+		if (none != null)  GeoArea.GEOAREA_NONE.setName(none);
+		if (other != null) Vehicle.OTHER_VEHICLE.setModel(other);
 	}
 
 	/**

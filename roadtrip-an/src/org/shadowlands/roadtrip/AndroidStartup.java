@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010,2012,2014 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010,2012,2014-2015 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -27,6 +27,7 @@ import org.shadowlands.roadtrip.android.util.Misc;
 import org.shadowlands.roadtrip.db.GeoArea;
 import org.shadowlands.roadtrip.db.Person;
 import org.shadowlands.roadtrip.db.RDBAdapter;
+import org.shadowlands.roadtrip.db.RDBRecord;
 import org.shadowlands.roadtrip.db.RDBSchema;
 import org.shadowlands.roadtrip.db.Settings;
 import org.shadowlands.roadtrip.db.VehSettings;
@@ -35,6 +36,7 @@ import org.shadowlands.roadtrip.db.android.RDBOpenHelper;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.res.Resources;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.TextView;
@@ -70,6 +72,7 @@ public class AndroidStartup extends Activity
 
     /**
      * See if the db is missing any settings.  If not, go to {@link Main} activity.
+     * Also calls {@link RDBRecord#localizeStatics(String)} for i18n.
      *<P>
      * Called when first created, or from the Back button from {@link BackupsMain}
      * (which might have restored the db from a backup).
@@ -82,6 +85,15 @@ public class AndroidStartup extends Activity
         // pointer to retrieve schema sql text, if needed
     	RDBOpenHelper.dbSQLRsrcs = getApplicationContext().getResources();
         db = new RDBOpenHelper(this);
+
+	final Resources rsrcs = getResources();
+
+	// i18n localization for UI element placeholders returned from methods
+	{
+		final String other__ = rsrcs.getString(R.string.other__dots);
+		if (other__ != null)
+			RDBRecord.localizeStatics(other__);
+	}
 
         // read from DB; this will call back to create or upgrade the schema if needed.
         // Check for current settings, to prompt for data entry if needed.
@@ -96,7 +108,7 @@ public class AndroidStartup extends Activity
         		Vehicle currV = Settings.getCurrentVehicle(db, true);
         		if (currV != null)
         		{
-	        		final String homearea = getResources().getString(R.string.home_area);
+	        		final String homearea = rsrcs.getString(R.string.home_area);
 	        		GeoArea a = new GeoArea(homearea);
 	        		a.insert(db);
 	        		VehSettings.setCurrentArea(db, currV, a);
@@ -114,10 +126,10 @@ public class AndroidStartup extends Activity
         	if (ret == RDBSchema.SettingsCheckLevel.SETT_RECOV_GUESSED) {
         		// TODO which one(s)?
 				Toast.makeText
-				  (this, getResources().getString(R.string.androidstartup_verifyCurrV),
+				  (this, rsrcs.getString(R.string.androidstartup_verifyCurrV),
 				   Toast.LENGTH_SHORT).show();
 				Toast.makeText
-			      (this, getResources().getString(R.string.androidstartup_verifyCurrD),
+			      (this, rsrcs.getString(R.string.androidstartup_verifyCurrD),
 			       Toast.LENGTH_SHORT).show();
         	}
         }
@@ -130,7 +142,7 @@ public class AndroidStartup extends Activity
 
         if (missingSettings)
         {
-        	String txt = getResources().getString(R.string.androidstartup_pleaseCreate);
+        	String txt = rsrcs.getString(R.string.androidstartup_pleaseCreate);
         	tv.setText(txt);
 
         	// See onClick_BtnContinue for next data-entry intent when user hits Continue button

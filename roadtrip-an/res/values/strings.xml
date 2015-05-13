@@ -100,6 +100,7 @@
 <string name="not_found">Not found.</string>
 <string name="now">Now</string>
 <string name="original_odometer">Original\nodometer</string>
+<!-- "Other..." text used for UI dropdown placeholder objs such as Vehicle.OTHER_VEHICLE -->
 <string name="other__dots">Other…</string>
 <string name="other_stop">Other stop...</string>
 <string name="other_vehicle">Other vehicle...</string>

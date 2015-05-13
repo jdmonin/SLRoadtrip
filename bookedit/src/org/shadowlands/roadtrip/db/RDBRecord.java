@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010,2012,2014 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010,2012,2014-2015 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -32,11 +32,27 @@ package org.shadowlands.roadtrip.db;
  * <BR>
  *  or: <BR>
  * <tt>static Vector&lt;TStop> stopsForTrip(RDBAdapter db, Trip trip)</tt>
+ *<P>
+ * <B>I18N:</B> Some classes' objects or methods have static text for UI elements,
+ * such as the "Other..." placeholder {@link Vehicle#OTHER_VEHICLE}.  To localize all
+ * static text, call {@link #localizeStatics(String)} during app startup.
  *
  * @author JM 
  */
 public abstract class RDBRecord
 {
+
+	/**
+	 * Localize any UI text, such as {@link Vehicle#OTHER_VEHICLE},
+	 * contained in placeholder objects or returned from methods.
+	 * @param other Localized text for "Other..."
+	 * @since 0.9.50
+	 */
+	public static final void localizeStatics(final String other)
+	{
+		Vehicle.OTHER_VEHICLE.setModel(other);
+	}
+
 	/**
 	 * connection to database.
 	 * Null for new records, must never become null once read from or written to the db.

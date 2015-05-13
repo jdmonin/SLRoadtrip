@@ -63,7 +63,8 @@ public class Vehicle extends RDBRecord
      * Placeholder for "Other" entry in {@link #getAll(RDBAdapter, int)},
      * to move from showing Active to Inactive ones.
      *<P>
-     * <B>I18N:</B> The "Other..." text is kept in the Model field.  Call {@link #setModel(String)} to localize. 
+     * <B>I18N:</B> The "Other..." text is kept in the Model field. To localize
+     * this and any other static text, call {@link RDBRecord#localizeStatics(String)}.
      *
      * @since 0.9.41
      */

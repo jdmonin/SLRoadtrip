@@ -602,9 +602,12 @@ public class LogbookEditPane extends JPanel implements ActionListener, WindowLis
 				{
 					final Person[] allDrivers = Person.getAll(conn, true);
 					if (allDrivers != null)
+					{
 						currD = allDrivers[allDrivers.length - 1];
-					else
+						newDriver = false;
+					} else {
 						noDriverMsg = "Cannot open this backup, its vehicles have no drivers.";
+					}
 				} else {
 					noDriverMsg = "Please enter information about the vehicle's driver.";
 				}
@@ -614,10 +617,9 @@ public class LogbookEditPane extends JPanel implements ActionListener, WindowLis
 					(parentf, noDriverMsg, "No driver found", JOptionPane.WARNING_MESSAGE);
 			}
 
-			// Create or edit driver info. New variable to preserve currD if cancel edit existing driver
-			Person driv = MiscTablesCRUDDialogs.createEditPersonDialog(parentf, conn, currD, true);
+			// Create driver info if missing. TODO: Eventually this is part of 'new logbook' functionality
 			if (newDriver)
-				currD = driv;
+				currD = MiscTablesCRUDDialogs.createEditPersonDialog(parentf, conn, currD, true);
 
 			if (currD == null)
 			{				
@@ -670,9 +672,12 @@ public class LogbookEditPane extends JPanel implements ActionListener, WindowLis
 					{
 						final Vehicle[] allV = Vehicle.getAll(conn, 0);
 						if (allV != null)
+						{
 							cveh = allV[allV.length - 1];
-						else
+							newVehicle = false;
+						} else {
 							noVehMsg = "Cannot open this backup, it contains no vehicles.";
+						}
 					} else {
 						noVehMsg = "Please enter information about the vehicle.";
 					}
@@ -682,9 +687,9 @@ public class LogbookEditPane extends JPanel implements ActionListener, WindowLis
 						    (parentf, noVehMsg, "No vehicle found", JOptionPane.WARNING_MESSAGE);
 				}
 
-				cveh = MiscTablesCRUDDialogs.createEditVehicleDialog(parentf, conn, cveh, currD);
 				if (newVehicle)
 				{
+					cveh = MiscTablesCRUDDialogs.createEditVehicleDialog(parentf, conn, cveh, currD);
 					if (cveh == null)
 					{
 						System.err.println("Cancelled.");
@@ -695,7 +700,8 @@ public class LogbookEditPane extends JPanel implements ActionListener, WindowLis
 						return;
 					}
 
-					Settings.setCurrentVehicle(conn, cveh);
+					if (! isReadOnly)
+						Settings.setCurrentVehicle(conn, cveh);
 				}
 			} catch (Throwable t)
 			{

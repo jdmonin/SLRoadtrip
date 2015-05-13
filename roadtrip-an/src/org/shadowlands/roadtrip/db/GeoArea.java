@@ -46,26 +46,27 @@ public class GeoArea extends RDBRecord
      */
     public static GeoArea[] getAll(RDBAdapter db, final int exceptID)
     {
-    	final Vector<String[]> gas;
+    	final Vector<String[]> geos;
     	if (exceptID != -1)
     	{
     		String kf, kv;
     		kf = "_id<>";
     		kv = Integer.toString(exceptID);
-    		gas = db.getRows(TABNAME, kf, kv, FIELDS_AND_ID, VALFIELD_SORT, 0);
+    		geos = db.getRows(TABNAME, kf, kv, FIELDS_AND_ID, VALFIELD_SORT, 0);
     	} else {
-    		gas = db.getRows(TABNAME, null, (String[]) null, FIELDS_AND_ID, VALFIELD_SORT, 0);
+    		geos = db.getRows(TABNAME, null, (String[]) null, FIELDS_AND_ID, VALFIELD_SORT, 0);
     	}
-    	if (gas == null)
+    	if (geos == null)
     		return null;
 
-    	GeoArea[] rv = new GeoArea[gas.size()];
+    	GeoArea[] rv = new GeoArea[geos.size()];
 		try {
 	    	for (int i = rv.length - 1; i >= 0; --i)
-				rv[i] = new GeoArea(db, gas.elementAt(i));
+				rv[i] = new GeoArea(db, geos.elementAt(i));
+
 	    	return rv;
 		} catch (RDBKeyNotFoundException e) {
-			return null;  // catch is req'd but won't happen; record came from db.
+			return null;  // constructor won't throw it; throws decl is required by its super
 		}
     }
 
@@ -103,6 +104,7 @@ public class GeoArea extends RDBRecord
      * @param db  db connection
      * @param fieldsAndID  record fields, in same order as {@link #FIELDS_AND_ID}
      * @throws RDBKeyNotFoundException  not thrown, but required by super
+     * @throws NumberFormatException  if id field contents isn't an integer
      */
     private GeoArea(RDBAdapter db, String[] fieldsAndID)
     	throws RDBKeyNotFoundException

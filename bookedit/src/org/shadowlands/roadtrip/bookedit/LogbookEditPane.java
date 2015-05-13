@@ -405,7 +405,7 @@ public class LogbookEditPane extends JPanel implements ActionListener, WindowLis
 			    "Could not open this database.\nError was: " + t.getClass() + " " + t.getMessage(),
 			    "Could not open SQLite db",
 			    JOptionPane.ERROR_MESSAGE);
-			System.exit(8);  // <--- Exit(rc 8) ----
+			return;  // <--- Early return: Major problem trying to open it ----
 		}
 
 		// Is it physically consistent? (sqlite pragma integrity_check)
@@ -432,7 +432,7 @@ public class LogbookEditPane extends JPanel implements ActionListener, WindowLis
 				if (choice == 1)
 				{
 					conn.close();
-					System.exit(8);  // <--- End program: Don't want to use this db ---
+					return;  // <--- Early return: Major problem reading this db ---
 				} else {
 					isReadOnly = true;
 				}
@@ -595,10 +595,23 @@ public class LogbookEditPane extends JPanel implements ActionListener, WindowLis
 				System.err.println("Could not find CURRENT_DRIVER");
 				System.err.println("Continuing without current driver.");					
 
-				JOptionPane.showMessageDialog(parentf,
-				    "Please enter information about the vehicle's driver.",
-				    "No driver found",
-				    JOptionPane.WARNING_MESSAGE);
+				String noDriverMsg = null;
+
+				// for backup viewing, just pick any driver
+				if (isBackup)
+				{
+					final Person[] allDrivers = Person.getAll(conn, true);
+					if (allDrivers != null)
+						currD = allDrivers[allDrivers.length - 1];
+					else
+						noDriverMsg = "Cannot open this backup, its vehicles have no drivers.";
+				} else {
+					noDriverMsg = "Please enter information about the vehicle's driver.";
+				}
+
+				if (noDriverMsg != null)
+				    JOptionPane.showMessageDialog
+					(parentf, noDriverMsg, "No driver found", JOptionPane.WARNING_MESSAGE);
 			}
 
 			// Create or edit driver info. New variable to preserve currD if cancel edit existing driver
@@ -624,7 +637,12 @@ public class LogbookEditPane extends JPanel implements ActionListener, WindowLis
 				conn.close();
 			} catch (Throwable th) {}
 
-			// TODO error dialog
+			JOptionPane.showMessageDialog
+			    (parentf,
+			     "Could not work with vehicle driver data.\nError was: "
+				+ t.getClass() + " " + t.getMessage(),
+			     null, JOptionPane.ERROR_MESSAGE);
+
 			return;
 		}
 
@@ -645,10 +663,23 @@ public class LogbookEditPane extends JPanel implements ActionListener, WindowLis
 					System.err.println("Could not find CURRENT_VEHICLE");
 					System.err.println("Continuing without current vehicle.");
 
-					JOptionPane.showMessageDialog(parentf,
-					    "Please enter information about the vehicle.",
-					    "No vehicle found",
-					    JOptionPane.WARNING_MESSAGE);
+					String noVehMsg = null;
+
+					// for backup viewing, just pick any vehicle
+					if (isBackup)
+					{
+						final Vehicle[] allV = Vehicle.getAll(conn, 0);
+						if (allV != null)
+							cveh = allV[allV.length - 1];
+						else
+							noVehMsg = "Cannot open this backup, it contains no vehicles.";
+					} else {
+						noVehMsg = "Please enter information about the vehicle.";
+					}
+
+					if (noVehMsg != null)
+						JOptionPane.showMessageDialog
+						    (parentf, noVehMsg, "No vehicle found", JOptionPane.WARNING_MESSAGE);
 				}
 
 				cveh = MiscTablesCRUDDialogs.createEditVehicleDialog(parentf, conn, cveh, currD);
@@ -675,13 +706,18 @@ public class LogbookEditPane extends JPanel implements ActionListener, WindowLis
 					conn.close();
 				} catch (Throwable th) {}
 
-				// TODO dialog
+				JOptionPane.showMessageDialog
+				    (parentf,
+				     "Could not work with vehicle data.\nError was: "
+					+ t.getClass() + " " + t.getMessage(),
+				     null, JOptionPane.ERROR_MESSAGE);
+
 				return;
 			}
 		}  // CURRENT_VEHICLE
 
 		// Now that we have driver and vehicle, set current driver if missing
-		if (newDriver)
+		if (newDriver && ! isBackup)
 			VehSettings.setCurrentDriver(conn, cveh, currD);
 
 		new LogbookEditPane(fnshort, cveh, conn, isBackup || isReadOnly);

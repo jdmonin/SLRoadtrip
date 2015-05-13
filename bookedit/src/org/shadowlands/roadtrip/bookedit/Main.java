@@ -31,6 +31,7 @@ import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 
 import org.shadowlands.roadtrip.db.RDBAdapter;
@@ -172,11 +173,18 @@ public class Main
 			{
 				openLogbook(chooseFile(true, false), false, false);
 			}
+			else if (src == bNew)
+			{
+				JOptionPane.showMessageDialog
+					(this,
+					 "Not yet implemented.\nUse the android app to create new logbooks for now.",
+					 null, JOptionPane.INFORMATION_MESSAGE);
+				// TODO implement it
+			}
 			else if (src == bExit)
 			{
 				System.exit(0);
 			}
-			// TODO deal with other buttons
 		}
 
 		/** return the chosen file, or null if nothing was chosen */

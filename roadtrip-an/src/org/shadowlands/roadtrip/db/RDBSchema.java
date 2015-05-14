@@ -276,7 +276,7 @@ public abstract class RDBSchema
 		if (! anythingDone)
 			return;
 
-		// Need to indicate new db-appvers in the db.
+		// Update the schema version number in both places within the db
 		String dbvers = Integer.toString(DATABASE_VERSION);
 		if (! skipSetVersion)
 		{

@@ -1,6 +1,5 @@
 -- org.shadowlands.roadtrip
--- version 0.9.40 schema (2014-02-15) for SQLite 3.4 or higher
--- with newer comments (2015-05-06).
+-- version 0.9.43 schema (2015-05-14) for SQLite 3.4 or higher
 --
 -- The db schema version is sometimes lower than the app version, never higher.
 --
@@ -14,7 +13,7 @@
 -- and doing a fresh install with the new schema, then restoring a
 -- previous backup that has an older schema (which will also upgrade).
 
-PRAGMA user_version = 0940;
+PRAGMA user_version = 0943;
 
 -- This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
 -- 
@@ -67,22 +66,26 @@ create table appinfo ( _id integer PRIMARY KEY AUTOINCREMENT not null, aifield v
 	--                       	 value is '' if using the default backup location DBBackup.getDBBackupPath(Context).
 	-- DB_BACKUP_THISFILE: written just before closing db for backup copy; if backup fails, clear it afterwards (copy it back from DB_BACKUP_PREVFILE)
 	-- DB_BACKUP_THISTIME: (unix format) time of DB_BACKUP_THISFILE
-	-- DB_CURRENT_SCHEMAVERSION '0940' if upgraded to current schema version
+	-- DB_CURRENT_SCHEMAVERSION '0943' if upgraded to current schema version
 
-insert into appinfo (aifield, aivalue) values ('DB_CREATE_SCHEMAVERSION', '0940');
-insert into appinfo (aifield, aivalue) values ('DB_CURRENT_SCHEMAVERSION', '0940');
+insert into appinfo (aifield, aivalue) values ('DB_CREATE_SCHEMAVERSION', '0943');
+insert into appinfo (aifield, aivalue) values ('DB_CURRENT_SCHEMAVERSION', '0943');
 
 create table settings ( _id integer PRIMARY KEY AUTOINCREMENT not null, sname varchar(32) not null unique, svalue varchar(64), ivalue int );
 	-- General current settings. See also veh_settings.
 	-- Each setting uses svalue or ivalue. Empty strings (svalues) are stored as null, not as a string of length 0.
 	--
 	-- DISTANCE_DISPLAY: KM or MI
-	-- CURRENT_VEHICLE (int _id within vehicles) -- if this changes, update CURRENT_TRIP too; see vehicle.last_tripid comment
+	-- CURRENT_VEHICLE (int _id within vehicles) -- if this changes, update veh_settings('CURRENT_TRIP') too;
+	--   see also vehicle.last_tripid comment
 	-- REQUIRE_TRIPCAT (bool) -- is trip category required for new trips?  Added in app version 0.9.12.
 	-- LOGVIEW_ODO_TRIP_DELTA (int) -- logview trip odometers normal (0), delta (1), or both (2)  Added in 0.9.12.
-	-- HIDE_FREQTRIP (bool) -- Hide the Frequent Trip buttons?  Added in app version 0.9.12.
+	-- HIDE_FREQTRIP (bool) -- Hide the Frequent Trip buttons?  Added in app version 0.9.12, default = no.
+	--   Default yes in 0.9.43 (schema v0943) for new installs only.
 	-- HIDE_VIA (bool) -- Hide the Via entry field?  Added in app version 0.9.12.
 	-- SHOW_TRIP_PAX (bool) -- Show the optional Passenger Count field for trip?  Added in app version 0.9.13.
+
+insert into settings (sname, ivalue) values ('HIDE_FREQTRIP', 1);
 
 create table veh_settings ( _id integer PRIMARY KEY AUTOINCREMENT not null, vid int not null, sname varchar(32) not null, svalue varchar(64), ivalue int );
 	-- Per-vehicle settings, added in v0940: More flexible than adding fields to the vehicle table.

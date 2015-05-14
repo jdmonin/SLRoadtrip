@@ -67,10 +67,10 @@ public abstract class RDBSchema
 	 * See the class javadoc for what to change in the code when you update the schema version.
 	 * @see #DB_VERSION_MIN_UPGRADE
 	 */
-	public static final int DATABASE_VERSION = 940;
+	public static final int DATABASE_VERSION = 943;
 
 	/** Filename of schema create sql script for the current {@link #DATABASE_VERSION}. */
-	public static final String DB_SCHEMA_CREATE_FILENAME = "schema_v0940.sql";
+	public static final String DB_SCHEMA_CREATE_FILENAME = "schema_v0943.sql";
 
 	/**
 	 * The minimum {@link #DATABASE_VERSION} (901) that can be upgraded by
@@ -241,7 +241,7 @@ public abstract class RDBSchema
 			*
 			*/
 
-		case 940:
+		case 943:
 			// Nothing to do, current version already. Don't fall through, don't set anythingDone.
 			break;
 
@@ -260,6 +260,8 @@ public abstract class RDBSchema
 			upgradeStep(db, 909);
 		case 909:  // 909 -> 940   2014-02-15
 			upgradeStep(db, 940);
+		case 940:  // 0940 -> 0943   2015-05-14
+			upgradeStep(db, 943);
 
 		// after all cases, but NOT default case or already-current case
 			anythingDone = true;

@@ -239,8 +239,8 @@ public class Main extends Activity
 						&& (! gitversion.equals("?")))
 					{
 						about_str.append("\n");
-						about_str.append(res.getString(R.string.build__fmt, gitversion));
-							// "Build: 66a175e"
+						about_str.append(res.getString(R.string.build_number__fmt, gitversion));
+							// "Build number: 66a175e"
 					}
 				} catch (Exception e) {
 				} finally {

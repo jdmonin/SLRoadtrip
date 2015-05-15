@@ -37,7 +37,7 @@
 <string name="backup_now">Backup Now</string>
 <string name="begin__initcap">Begin</string>
 <string name="begin_trip">Begin Trip</string>
-<string name="build__fmt">Build: %1s</string>
+<string name="build_number__fmt">Build number: %1s</string>
 <string name="cancel_trip">Cancel Trip</string>
 <string name="change">Change</string>
 <string name="change_driver">Change Driver</string>

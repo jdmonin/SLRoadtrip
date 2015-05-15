@@ -191,11 +191,14 @@ public class LogbookEditPane extends JPanel implements ActionListener, WindowLis
 		bTmpValidateDB.setToolTipText("Validate the db data logical structure. The physical structure is already verified when the DB is opened.");
 		bTmpValidateDB.addActionListener(this);
 		bTmpValidateDB.setVisible(true);
-		if (isReadOnly)
+
+		// TODO temporarily disabling Add buttons until LTM.finishAdd() is tested.
+		//if (isReadOnly)
 		{
 			bAddSimple.setEnabled(false);
 			bAddWithStops.setEnabled(false);
 		}
+
 		pbtns.add(bAddSimple);
 		pbtns.add(bAddWithStops);
 		pbtns.add(bAddDone);

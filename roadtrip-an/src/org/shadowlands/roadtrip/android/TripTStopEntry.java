@@ -1002,8 +1002,11 @@ public class TripTStopEntry extends Activity
 	}
 
 	/**
-	 * Called from {@link #selectRoadtripAreaButton(int, String, boolean, int)}
-	 * when the user should confirm changing the GeoArea.
+	 * Dialog to ask, when a new GeoArea button is pressed, whether to keep the
+	 * currently entered location, clear the location text and object fields,
+	 * or cancel changing the geoarea.
+	 * Called from {@link #selectRoadtripAreaButton(int, String, boolean, int)},
+	 * which this dialog's buttons will call again to do the action chosen.
 	 * @param areaID  GeoArea ID to confirm changing to
 	 * @param locText  Location text currently entered, or null
 	 * @param newAreaText  New GeoArea's name
@@ -1018,6 +1021,7 @@ public class TripTStopEntry extends Activity
 		// Build popup message, including texts passed in
 		{
 			String txt = getResources().getString(R.string.trip_tstop_entry_prompt_geoarea_confirm);
+				// "You've already chosen a location in the previous area."
 			StringBuffer sb = new StringBuffer(txt);
 			if ((locText != null) && (locText.length() > 0))
 			{

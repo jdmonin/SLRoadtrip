@@ -21,9 +21,11 @@ package org.shadowlands.roadtrip.bookedit;
 
 import java.awt.BorderLayout;
 import java.awt.GridLayout;
+import java.awt.Toolkit;
 import java.awt.Window;  // for javadoc
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -36,6 +38,7 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.KeyStroke;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 
@@ -130,13 +133,23 @@ public abstract class ItemListDialog
 		} else {
 			btnAdd = new JButton("Add " + objName);
 			btnAdd.addActionListener(this);
+			// bind button to OSX Command-A, windows Alt-A
+			btnAdd.setMnemonic(KeyEvent.VK_A);  // I18N?
+			btnAdd.registerKeyboardAction
+				(this, KeyStroke.getKeyStroke
+					(KeyEvent.VK_A, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()),
+				 JComponent.WHEN_IN_FOCUSED_WINDOW);
 			bottomBtns.add(btnAdd);
 		}
+
 		btnClose = new JButton("Close");
 		btnClose.addActionListener(this);
+		btnClose.registerKeyboardAction
+			(this, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
 		bottomBtns.add(btnClose);
 
 		add(bottomBtns, BorderLayout.SOUTH);
+		getRootPane().setDefaultButton(btnClose);
 
 		SwingUtilities.invokeLater(new Runnable() {
 			public void run()

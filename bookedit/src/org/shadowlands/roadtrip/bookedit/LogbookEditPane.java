@@ -195,7 +195,6 @@ public class LogbookEditPane extends JPanel implements ActionListener, WindowLis
 		bVehicles = new JButton("Vehicles...");
 		bVehicles.setToolTipText("Show the list of vehicles in the logbook.");
 		bVehicles.addActionListener(this);
-		bVehicles.setEnabled(false);  // TODO add vehicle list functionality
 		bDrivers = new JButton("Drivers...");
 		bDrivers.setToolTipText("Show the list of drivers in the logbook.");
 		bDrivers.addActionListener(this);
@@ -247,6 +246,8 @@ public class LogbookEditPane extends JPanel implements ActionListener, WindowLis
 			actionAddTripFinish(false);
 		else if (src == bChgVehicle)
 			actionChangeVehicle(veh.isActive());
+		else if (src == bVehicles)
+			new VehicleListDialog(conn, isReadOnly, lbef);
 		else if (src == bDrivers)
 			new DriverListDialog(conn, isReadOnly, lbef);
 		else if (src == bTmpValidateDB)

@@ -26,10 +26,12 @@ import java.awt.Window;  // for javadoc
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.BorderFactory;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComponent;  // for javadoc
 import javax.swing.JDialog;
@@ -62,8 +64,16 @@ public abstract class ItemListDialog
 	 * Key to associate {@link #items} data with entries in {@link #jpItemList}
 	 * using {@link JComponent#putClientProperty(Object, Object)}
 	 * / {@link JComponent#getClientProperty(Object)}.
+	 * @see #ACTCOMP
 	 */
 	private static final String OBJDATA = "obj";
+
+	/**
+	 * Key to associate {@link #jpItemList} entries with their "active" indicator component.
+	 * Used only if {@link #hasActiveFlag}.
+	 * @see #OBJDATA
+	 */
+	private static final String ACTCOMP = "actc";
 
 	/**
 	 * Does this data type have an "isActive" flag that should be displayed?
@@ -87,6 +97,11 @@ public abstract class ItemListDialog
 	/**
 	 * GUI elements holding {@link #items}.  Item data is associated with these
 	 * using 'client properties', see {@link #OBJDATA} javadoc.
+	 *<P>
+	 * Each item in the list has a {@link JButton}; that's also where {@link #OBJDATA} is connected.
+	 * If {@link #hasActiveFlag}, each item also has a {@link JLabel} displaying either
+	 * {@link #imgActive} or {@link #imgInactive} to its left, linked from the JButton via
+	 * {@link #ACTCOMP}.
 	 */
 	private final JPanel jpItemList;
 
@@ -102,6 +117,9 @@ public abstract class ItemListDialog
 
 	/** Button to close the dialog */
 	private final JButton btnClose;
+
+	/** Item isActive indicators, if needed by {@link #hasActiveFlag}. */
+	private ImageIcon imgActive, imgInactive;
 
 	/**
 	 * Create and show an {@link ItemListDialog} for a specific type of data handled by the subclass.
@@ -131,6 +149,10 @@ public abstract class ItemListDialog
 		final JLabel lblTop = new JLabel(objPlural + " in this logbook, click for details:");
 		lblTop.setBorder(BorderFactory.createEmptyBorder(3,3,3,3));
 		add(lblTop, BorderLayout.NORTH);
+
+		activeItems = new ArrayList<Object>();
+		if (hasActiveFlag)
+			inactiveItems = new ArrayList<Object>();
 
 		jpItemList = new JPanel();
 		jpItemList.setLayout(new GridLayout(0, 1, 0, 3));
@@ -169,7 +191,17 @@ public abstract class ItemListDialog
 				final Object[] all;
 				try
 				{
-					all = getAll();
+					if (hasActiveFlag)
+					{
+						URL imageURL = ItemListDialog.class.getResource("img/round-gray16.png");
+						if (imageURL != null)
+							imgInactive = new ImageIcon(imageURL);
+						imageURL = ItemListDialog.class.getResource("img/round-green16.png");
+						if (imageURL != null)
+							imgActive = new ImageIcon(imageURL);
+					}
+
+					all = getAll();  // <-- db query performed here in subclass --
 				} catch (Exception ex) {
 					JOptionPane.showMessageDialog
 						(owner,
@@ -182,8 +214,6 @@ public abstract class ItemListDialog
 
 				if (all != null)
 				{
-					activeItems = new ArrayList<Object>();
-					// inactiveItems will be created by addItem if needed
 					final int L = all.length;
 					for (int i = 0; i < L; ++i)
 						addItem(all[i]);
@@ -197,11 +227,11 @@ public abstract class ItemListDialog
 	}
 
 	/**
-	 * Add a new item button to the end of the displayed list, and add the item data to {@link #items}.
+	 * Add a new item button to the end of the displayed list, and add the item data to {@link #activeItems}
+	 * or {@link #inactiveItems}.
 	 * Does not call {@link Window#pack() pack()} in case of multiple calls to add several items;
 	 * be sure to call {@link Window#pack() pack()} after calling this method.
 	 *<P>
-	 * If {@link #items} is null, this method creates it.
 	 * Like AWT and Swing, this method is not thread-safe.
 	 *
 	 * @param itm  Item to add, or null to do nothing.  The item's name in the list
@@ -214,15 +244,9 @@ public abstract class ItemListDialog
 
 		final boolean isActive = (hasActiveFlag) ? isItemActive(itm) : true;
 		if (isActive)
-		{
-			if (activeItems == null)
-				activeItems = new ArrayList<Object>();
 			activeItems.add(itm);
-		} else {
-			if (inactiveItems == null)
-				inactiveItems = new ArrayList<Object>();
+		else
 			inactiveItems.add(itm);
-		}
 
 		JButton jbItm = new JButton(itm.toString());
 		jbItm.setBorderPainted(false);  // for a cleaner look
@@ -231,7 +255,65 @@ public abstract class ItemListDialog
 		jbItm.putClientProperty(OBJDATA, itm);
 		jbItm.addActionListener(ItemListDialog.this);
 
-		jpItemList.add(jbItm);
+		final JComponent listAddComp;
+		if (! hasActiveFlag)
+		{
+			listAddComp = jbItm;
+		} else {
+			// More complex layout: Panel with active/inactive icon, then the button.
+			listAddComp = new JPanel(new BorderLayout());
+			JLabel jlIcon;
+			if (isActive)
+			{
+				jlIcon = (imgActive != null) ? new JLabel(imgActive) : new JLabel("Active");
+				jlIcon.setToolTipText("Active");
+			} else {
+				jlIcon = (imgInactive != null) ? new JLabel(imgInactive) : new JLabel("Inactive");
+				jlIcon.setToolTipText("Inactive");
+			}
+
+			jbItm.putClientProperty(ACTCOMP, jlIcon);
+			listAddComp.add(jlIcon, BorderLayout.LINE_START);
+			listAddComp.add(jbItm, BorderLayout.CENTER);  // stretch JButton to full available width
+		}
+
+		jpItemList.add(listAddComp);
+	}
+
+	/**
+	 * Update the displayed item's name and active indicator.
+	 * If {@code activeChanged} and {@link #hasActiveFlag}, checks status to update the inactive/active icon
+	 * and updates {@link #activeItems} and {@link #inactiveItems}.
+	 *<P>
+	 * Like AWT and Swing, this method is not thread-safe.
+	 *
+	 * @param itm  List item data
+	 * @param itmComp  Component showing the item name
+	 * @param activeChanged  True if {@code itm}'s isActive flag changed
+	 */
+	protected void updateItem(final Object itm, final JButton itmComp, final boolean activeChanged)
+	{
+		itmComp.setText(itm.toString());
+
+		if (! hasActiveFlag)
+			return;
+
+		final boolean isActive = isItemActive(itm);
+		if (isActive)
+		{
+			inactiveItems.remove(itm);
+			activeItems.add(itm);
+		} else {
+			activeItems.remove(itm);
+			inactiveItems.add(itm);
+		}
+
+		JLabel jlIcon = (JLabel) itmComp.getClientProperty(ACTCOMP);
+		if (jlIcon == null)
+			return;
+
+		jlIcon.setIcon(isActive ? imgActive : imgInactive);  // may be null if loading error
+		jlIcon.setToolTipText(isActive ? "Active" : "Inactive");
 	}
 
 	/** Handle button press events, including clicks on list items. */
@@ -266,21 +348,8 @@ public abstract class ItemListDialog
 				if (showEdit(obj))
 				{
 					final boolean nowActive = (hasActiveFlag) ? isItemActive(obj) : true;
-
-					((JButton) src).setText(obj.toString());  // TODO re-sort list?
-
-					if (wasActive != nowActive)
-					{
-						if (wasActive)
-						{
-							activeItems.remove(obj);
-							inactiveItems.add(obj);
-						} else {
-							inactiveItems.remove(obj);
-							activeItems.add(obj);
-						}
-						// TODO re-section list?
-					}
+					final boolean activeChanged = (wasActive != nowActive);
+					updateItem(obj, (JButton) src, activeChanged);  // TODO re-sort list?
 				}
 			}
 		} catch (Exception ex) {

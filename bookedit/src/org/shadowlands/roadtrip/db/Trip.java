@@ -1,6 +1,6 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
- *  This file Copyright (C) 2010-2014 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2015 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -22,6 +22,7 @@ import java.util.Vector;
 
 /**
  * In-memory representation, and database access for, a Trip.
+ * Trips can be local within a {@link GeoArea}, or a "roadtrip" between areas.
  * See schema file and its comments for details.
  *<P>
  * Several static methods of this class select trips from the
@@ -39,6 +40,8 @@ import java.util.Vector;
  *<P>
  * Ending location: Taken from the {@link #isEnded() completed trip}'s highest tstop id.
  * (See {@link #readLatestTStop()})
+ *<P>
+ * To end a trip, call {@link VehSettings#endCurrentTrip(RDBAdapter, Vehicle, int, int, int, TripCategory, int)}.
  *
  * @author jdmonin
  */

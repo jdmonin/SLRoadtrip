@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  Copyright (C) 2010 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010,2015 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -23,12 +23,14 @@ import java.awt.Container;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.HeadlessException;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;  // for VK_*
 import java.awt.event.KeyListener;
 
 import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -43,6 +45,8 @@ import javax.swing.SwingConstants;
  * If true is returned, call {@link #isChanged()} and {@link #getInputs()} to get the entered data.
  *<P>
  * Closing the dialog is equivalent to hitting the Cancel button.
+ *<P>
+ * In Read-Only mode there is no Continue button, only Close which behaves like Cancel.
  *
  * @author jdmonin
  */
@@ -60,16 +64,31 @@ public class MultiInputDialog
 	private String[] inputs;
 
 	/**
+	 * Are this dialog's fields read-only?
+	 * If so, {@link #inputTexts}[] elements are null, {@link #ok} is null.
+	 * @since 0.9.43
+	 */
+	private final boolean isReadOnly;
+
+	/**
 	 * False until end of {@link #clickOK()}.
+	 * Always false if {@link #isReadOnly}.
 	 */
 	private boolean inputsOK;
 
 	/**
 	 * False until a field content is changed during {@link #clickOK()}.
+	 * @see #isReadOnly
 	 */
 	private boolean anyChanges;
 
-	private JButton ok, cancel;
+	/** OK/Continue button, null if {@link #isReadOnly} */
+	private JButton ok;
+
+	/** Cancel button, Close if {@link #isReadOnly} */
+	private JButton cancel;
+
+	/** Input textfields; elements are null if {@link #isReadOnly} */
 	private JTextField[] inputTexts;
 
 	/**
@@ -83,12 +102,14 @@ public class MultiInputDialog
 	 * @param vals  Initial values for each field, or null; may contain nulls.
 	 *              Note that no reference to <tt>vals</tt> is kept in this object,
 	 *              although its string contents may be copied.
+	 * @param isReadOnly  If true, show the fields as read-only; dialog has Close button and no OK/Continue button
 	 * @throws HeadlessException  if GraphicsEnvironment.isHeadless()
 	 * @throws IllegalArgumentException if fieldnames.length < 1,
 	 *        or if vals != null && vals.length != fieldnames.length.
 	 */
     public MultiInputDialog
-        (JFrame owner, final String title, final String prompt, final String[] fieldnames, final String[] vals)
+        (JFrame owner, final String title, final String prompt,
+         final String[] fieldnames, final String[] vals, final boolean isReadOnly)
         throws HeadlessException, IllegalArgumentException
     {
     	super(owner, title, true);  // modal == true
@@ -104,6 +125,7 @@ public class MultiInputDialog
     			if ((vals[i] != null) && (vals[i].length() > 0))
     				inputs[i] = vals[i];
     	}
+    	this.isReadOnly = isReadOnly;
     	inputsOK = false;
     	anyChanges = false;
     	createAndPackLayout(prompt, fieldnames, vals);
@@ -158,42 +180,65 @@ public class MultiInputDialog
         /**
          * Interface setup: Input rows
          */
+	if (isReadOnly)
+		gbc.insets = new Insets(3, 6, 3, 6);  // padding around JLabels in GBL, since not using JTextFields
     	inputTexts = new JTextField[fieldnames.length];
     	for (int i = 0; i < fieldnames.length; ++i)
     	{
-    		JTextField tf = new JTextField(20); 
-    		if ((vals != null) && (vals[i] != null))
-    			tf.setText(vals[i]);
-    		tf.addKeyListener(this);     // for ESC/ENTER
-    		inputTexts[i] = tf;
+    		final String val = (vals != null) ? vals[i] : null;
+    		final JComponent valComp;
+
+    		if (! isReadOnly)
+    		{
+    			JTextField tf = new JTextField(20);
+    			if (val != null)
+    				tf.setText(val);
+    			tf.addKeyListener(this);     // for ESC/ENTER
+    			inputTexts[i] = tf;
+    			valComp = tf;
+    		} else {
+    			valComp = (val != null) ? new JLabel(val) : new JLabel();
+    		}
 
     		txt = new JLabel(fieldnames[i], SwingConstants.TRAILING);  // right-aligned
-    		txt.setLabelFor(inputTexts[i]);
+    		txt.setLabelFor(valComp);
             gbc.gridwidth = 1;
             gbl.setConstraints(txt, gbc);
     		bp.add(txt);
 
     		gbc.gridwidth = GridBagConstraints.REMAINDER;
-            gbl.setConstraints(inputTexts[i], gbc);
-    		bp.add(inputTexts[i]);
+    		gbl.setConstraints(valComp, gbc);
+    		bp.add(valComp);
     	}
 
         /**
          * Interface setup: Buttons
          */
-    	ok = new JButton("Continue");
-        ok.addActionListener(this);
-    	ok.setMnemonic(KeyEvent.VK_O);
-    	ok.setToolTipText("Accept these values and continue");
+	if (isReadOnly)
+	{
+		cancel = new JButton("Close");
+		cancel.addActionListener(this);
+		cancel.setMnemonic(KeyEvent.VK_ESCAPE);
 
-    	cancel = new JButton("Cancel");
-        cancel.addActionListener(this);
-    	cancel.setMnemonic(KeyEvent.VK_ESCAPE);
+		gbc.gridx = 1;  // skip left cell
+		gbc.anchor = GridBagConstraints.LINE_END;  // right-justify the single button
+	} else {
+		ok = new JButton("Continue");
+		ok.addActionListener(this);
+		ok.setMnemonic(KeyEvent.VK_O);
+		ok.setToolTipText("Accept these values and continue");
 
-        gbc.gridwidth = 1;
+		cancel = new JButton("Cancel");
+		cancel.addActionListener(this);
+		cancel.setMnemonic(KeyEvent.VK_ESCAPE);
+	}
+	gbc.gridwidth = 1;
 
-        gbl.setConstraints(ok, gbc);
-        bp.add(ok);
+	if (ok != null)
+	{
+		gbl.setConstraints(ok, gbc);
+		bp.add(ok);
+	}
 
         gbl.setConstraints(cancel, gbc);
         bp.add(cancel);
@@ -201,7 +246,7 @@ public class MultiInputDialog
         /**
          * Final assembly setup
          */
-    	getRootPane().setDefaultButton(ok);
+        getRootPane().setDefaultButton(isReadOnly ? cancel : ok);
         bp.validate();
         pack();
     }
@@ -264,10 +309,10 @@ public class MultiInputDialog
      */
 	public void actionPerformed(ActionEvent e)
 	{
-		if (e.getSource() == ok)
-			clickOK();
-		else if (e.getSource() == cancel)
+		if (e.getSource() == cancel)
 			clickCancel();
+		else if ((ok != null) && (e.getSource() == ok))
+			clickOK();
 	}
 
     /** Handle Enter or Esc key (KeyListener) */
@@ -279,14 +324,18 @@ public class MultiInputDialog
         switch (e.getKeyCode())
         {
         case KeyEvent.VK_ENTER:
-            clickOK();
+            if (! isReadOnly)
+        	clickOK();
+            e.consume();
             break;
 
         case KeyEvent.VK_CANCEL:
         case KeyEvent.VK_ESCAPE:
             clickCancel();
+            e.consume();
             break;
         }  // switch(e)
+
     }
 
 	/** stub for KeyListener */

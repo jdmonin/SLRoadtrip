@@ -51,12 +51,12 @@ public class DriverListDialog extends ItemListDialog
 
 	public Object showAdd()
 	{
-		return MiscTablesCRUDDialogs.createEditPersonDialog(owner, db, null, true);
+		return MiscTablesCRUDDialogs.createEditPersonDialog(owner, db, isReadOnly, null, true);
 	}
 
 	public boolean showEdit(Object item)
 	{
-		item = MiscTablesCRUDDialogs.createEditPersonDialog(owner, db, (Person) item, true);
+		item = MiscTablesCRUDDialogs.createEditPersonDialog(owner, db, isReadOnly, (Person) item, true);
 		return (item != null);
 	}
 

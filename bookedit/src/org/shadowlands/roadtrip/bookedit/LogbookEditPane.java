@@ -633,9 +633,10 @@ public class LogbookEditPane extends JPanel implements ActionListener, WindowLis
 					(parentf, noDriverMsg, "No driver found", JOptionPane.WARNING_MESSAGE);
 			}
 
-			// Create driver info if missing. TODO: Eventually this is part of 'new logbook' functionality
+			// Create driver info if missing. TODO: Eventually make this part of 'new logbook' functionality
 			if (newDriver)
-				currD = MiscTablesCRUDDialogs.createEditPersonDialog(parentf, conn, currD, true);
+				currD = MiscTablesCRUDDialogs.createEditPersonDialog
+				    (parentf, conn, isBackup || isReadOnly, currD, true);
 
 			if (currD == null)
 			{				
@@ -705,7 +706,8 @@ public class LogbookEditPane extends JPanel implements ActionListener, WindowLis
 
 				if (newVehicle)
 				{
-					cveh = MiscTablesCRUDDialogs.createEditVehicleDialog(parentf, conn, cveh, currD);
+					cveh = MiscTablesCRUDDialogs.createEditVehicleDialog
+						(parentf, conn, isBackup || isReadOnly, cveh, currD);
 					if (cveh == null)
 					{
 						System.err.println("Cancelled.");

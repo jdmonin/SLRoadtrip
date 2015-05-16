@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010,2012,2014 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010,2012,2014-2015 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -37,13 +37,15 @@ public abstract class MiscTablesCRUDDialogs
 	 * Dialog to create or edit a person, and update the database.
 	 * @param owner  Dialog's owner
 	 * @param conn  DB connection
+	 * @param isReadOnly  If true, show the fields as read-only; dialog only has Close button and not OK/Continue
 	 * @param p  Existing person, or null if new
 	 * @param driverIfNew  For new person, default to "Y" or "N" for driver question
 	 * @return  The {@link Person} created/edited, or null if cancelled.
 	 * @throws IllegalStateException if the db insert/update fails
 	 * @throws NullPointerException if anything other than {@code p} is null
 	 */
-	public static Person createEditPersonDialog(JFrame owner, RDBAdapter conn, Person p, final boolean driverIfNew)
+	public static Person createEditPersonDialog
+	    (JFrame owner, RDBAdapter conn, final boolean isReadOnly, Person p, final boolean driverIfNew)
 	    throws IllegalStateException, NullPointerException
 	{
 		final String[] labels = { "Name", "Driver?", "Comment" };
@@ -63,7 +65,7 @@ public abstract class MiscTablesCRUDDialogs
 		 * Show the dialog, wait for user input
 		 */
 		MultiInputDialog mid = new MultiInputDialog
-		    (owner, "Person information", "Information about this person", labels, vals);
+		    (owner, "Person information", "Information about this person", labels, vals, isReadOnly);
 		if (! mid.showAndWait())
 			return null;  // <--- Cancel button ---
 
@@ -90,13 +92,15 @@ public abstract class MiscTablesCRUDDialogs
 	 * Dialog to create or edit a vehicle, and update the database.
 	 * @param owner  Dialog's owner
 	 * @param conn  DB connection
+	 * @param isReadOnly  If true, show the fields as read-only; dialog has Close button and no OK/Continue button
 	 * @param v  Existing vehicle, or null if new
 	 * @param ownerIfNew  For new vehicle, the owner / main driver (for ID#)
 	 * @return  The {@link Vehicle} created/edited, or null if cancelled.
 	 * @throws IllegalStateException if the db insert/update fails
 	 * @throws NullPointerException if anything other than {@code v} is null
 	 */
-	public static Vehicle createEditVehicleDialog(JFrame owner, RDBAdapter conn, Vehicle v, final Person ownerIfNew)
+	public static Vehicle createEditVehicleDialog
+	    (JFrame owner, RDBAdapter conn, final boolean isReadOnly, Vehicle v, final Person ownerIfNew)
 	    throws IllegalStateException, NullPointerException
 	{
 		final String[] labels = { "Nickname", "DriverID", "MakeID", "Model", "Year", "Owned from", "Owned to", "VIN", "License plate/tag", "Original odometer", "Current odometer", "Comment" };
@@ -125,7 +129,7 @@ public abstract class MiscTablesCRUDDialogs
 		 * Show the dialog, wait for user input
 		 */
 		MultiInputDialog mid = new MultiInputDialog
-		    (owner, "Vehicle information", "Information about this vehicle", labels, vals);
+		    (owner, "Vehicle information", "Information about this vehicle", labels, vals, isReadOnly);
 		if (! mid.showAndWait())
 			return null;  // <--- Cancel button ---
 

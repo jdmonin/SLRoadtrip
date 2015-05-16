@@ -103,26 +103,26 @@ public abstract class MiscTablesCRUDDialogs
 	    (JFrame owner, RDBAdapter conn, final boolean isReadOnly, Vehicle v, final Person ownerIfNew)
 	    throws IllegalStateException, NullPointerException
 	{
-		final String[] labels = { "Nickname", "DriverID", "MakeID", "Model", "Year", "Owned from", "Owned to", "VIN", "License plate/tag", "Original odometer", "Current odometer", "Comment" };
-		String[] vals = new String[12];
+		final String[] labels = { "Nickname", "Active?", "DriverID", "MakeID", "Model", "Year", "Owned from", "Owned to", "VIN", "License plate/tag", "Original odometer", "Current odometer", "Comment" };
+		String[] vals = new String[13];
 		if (v != null)
 		{
 			vals[0] = v.getNickname();
-			vals[1] = Integer.toString(v.getDriverID());
-			vals[2] = Integer.toString(v.getMakeID());
-			vals[3] = v.getModel();
-			vals[4] = Integer.toString(v.getYear());
-			vals[5] = Integer.toString(v.getDate_from());
-			vals[6] = Integer.toString(v.getDate_to());
-			vals[7] = v.getVin();
-			vals[8] = v.getPlate();
-			vals[9] = Integer.toString(v.getOdometerOriginal());
-			vals[10] = Integer.toString(v.getOdometerCurrent());
-			vals[11] = v.getComment();
+			vals[1] = (v.isActive() ? "Y" : "N");
+			vals[2] = Integer.toString(v.getDriverID());
+			vals[3] = Integer.toString(v.getMakeID());
+			vals[4] = v.getModel();
+			vals[5] = Integer.toString(v.getYear());
+			vals[6] = Integer.toString(v.getDate_from());
+			vals[7] = Integer.toString(v.getDate_to());
+			vals[8] = v.getVin();
+			vals[9] = v.getPlate();
+			vals[10] = Integer.toString(v.getOdometerOriginal());
+			vals[11] = Integer.toString(v.getOdometerCurrent());
+			vals[12] = v.getComment();
 		} else {
-			for(int i = 0; i < 12; ++i)
-				vals[i] = null;
-			vals[1] = Integer.toString(ownerIfNew.getID());
+			vals[1] = "Y";
+			vals[2] = Integer.toString(ownerIfNew.getID());
 		}
 
 		/**
@@ -137,15 +137,19 @@ public abstract class MiscTablesCRUDDialogs
 		 * Update or insert the database
 		 */
 		vals = mid.getInputs();
+		final boolean isActive = (vals[1] != null) && (vals[1].equalsIgnoreCase("Y"));
 		if (v == null)
 		{
+			// TODO check ownerIfNew vs driverID in vals[2]
 			v = new Vehicle
-			    (vals[0], ownerIfNew, Integer.parseInt(vals[2]), vals[3], Integer.parseInt(vals[4]), Integer.parseInt(vals[5]),
-			     Integer.parseInt(vals[6]), vals[7], vals[8], Integer.parseInt(vals[9]), Integer.parseInt(vals[10]), vals[11]);
+			    (vals[0], ownerIfNew, Integer.parseInt(vals[3]), vals[4], Integer.parseInt(vals[5]), Integer.parseInt(vals[6]),
+			     Integer.parseInt(vals[7]), vals[8], vals[9], Integer.parseInt(vals[10]), Integer.parseInt(vals[11]), vals[12]);
+			v.setActive(isActive);
 			v.insert(conn);
 		} else if (mid.isChanged())
 		{
 			v.setNickname(vals[0]);
+			v.setActive(isActive);
 			// TODO driverid retrieve
 			// TODO any other permitted field changes
 			v.commit();

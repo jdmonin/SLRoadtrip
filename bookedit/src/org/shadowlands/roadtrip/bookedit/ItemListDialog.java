@@ -221,22 +221,35 @@ public abstract class ItemListDialog
 			return;
 		else if (src == btnClose)
 			dispose();
-		else if (src == btnAdd)
+
+		// assume adding or editing; try/catch in case of problems
+		try
 		{
-			final Object newObj = showAdd();
-			if (newObj != null)
+			if (src == btnAdd)
 			{
-				addItem(newObj);
-				// TODO -- re-sort or re-query list?
-				pack();
+				final Object newObj = showAdd();
+				if (newObj != null)
+				{
+					addItem(newObj);
+					// TODO -- re-sort or re-query list?
+					pack();
+				}
 			}
-		}
-		else if (src instanceof JButton)
-		{
-			final Object obj = ((JButton) src).getClientProperty(OBJDATA);
-			if (obj != null)
-				if (showEdit(obj))
-					((JButton) src).setText(obj.toString());  // TODO re-sort list?
+			else if (src instanceof JButton)
+			{
+				final Object obj = ((JButton) src).getClientProperty(OBJDATA);
+				if (obj != null)
+					if (showEdit(obj))
+						((JButton) src).setText(obj.toString());  // TODO re-sort list?
+			}
+		} catch (Exception ex) {
+			JOptionPane.showMessageDialog
+				(owner,
+				 "An error occurred: "
+				 + ex.getClass() + " " + ex.getMessage()
+				 + "\n\nFor more techical details, re-run from a command prompt.",
+				 null, JOptionPane.ERROR_MESSAGE);
+			ex.printStackTrace();
 		}
 	}
 

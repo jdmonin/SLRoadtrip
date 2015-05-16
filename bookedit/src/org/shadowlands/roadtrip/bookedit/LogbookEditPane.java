@@ -111,6 +111,7 @@ public class LogbookEditPane extends JPanel implements ActionListener, WindowLis
 	private JPanel pbtns;  // below JTable
 	private JButton bAddSimple, bAddWithStops, bAddDone, bAddCancel, bChgVehicle;
 	private JButton bTmpValidateDB;  // this is for quick test for db verifier; TODO move to a menu or something
+	private final JButton bVehicles, bDrivers;
 
 	/**
 	 * Create and show a new scrolling grid, in a new {@link JFrame}, to view or edit this logbook data.
@@ -167,7 +168,7 @@ public class LogbookEditPane extends JPanel implements ActionListener, WindowLis
 		}
 
 		// Buttons below JTable
-        GridLayout bgl = new GridLayout(3, 2);
+		GridLayout bgl = new GridLayout(3, 3);
 		pbtns = new JPanel(bgl);
 		bAddSimple = new JButton("+ Simple Trip");
 		bAddSimple.setToolTipText("Add a new trip. If clicked when already adding, ends current trip first.");
@@ -191,6 +192,13 @@ public class LogbookEditPane extends JPanel implements ActionListener, WindowLis
 		bTmpValidateDB.setToolTipText("Validate the db data logical structure. The physical structure is already verified when the DB is opened.");
 		bTmpValidateDB.addActionListener(this);
 		bTmpValidateDB.setVisible(true);
+		bVehicles = new JButton("Vehicles...");
+		bVehicles.setToolTipText("Show the list of vehicles in the logbook.");
+		bVehicles.addActionListener(this);
+		bVehicles.setEnabled(false);  // TODO add vehicle list functionality
+		bDrivers = new JButton("Drivers...");
+		bDrivers.setToolTipText("Show the list of drivers in the logbook.");
+		bDrivers.addActionListener(this);
 
 		// TODO temporarily disabling Add buttons until LTM.finishAdd() is tested.
 		//if (isReadOnly)
@@ -201,10 +209,13 @@ public class LogbookEditPane extends JPanel implements ActionListener, WindowLis
 
 		pbtns.add(bAddSimple);
 		pbtns.add(bAddWithStops);
+		pbtns.add(bTmpValidateDB);
 		pbtns.add(bAddDone);
 		pbtns.add(bAddCancel);
+		pbtns.add(new JLabel());
 		pbtns.add(bChgVehicle);
-		pbtns.add(bTmpValidateDB);
+		pbtns.add(bVehicles);
+		pbtns.add(bDrivers);
 		lbef.add(pbtns, BorderLayout.SOUTH);
 
 		lbef.pack();
@@ -236,6 +247,8 @@ public class LogbookEditPane extends JPanel implements ActionListener, WindowLis
 			actionAddTripFinish(false);
 		else if (src == bChgVehicle)
 			actionChangeVehicle(veh.isActive());
+		else if (src == bDrivers)
+			new DriverListDialog(conn, isReadOnly, lbef);
 		else if (src == bTmpValidateDB)
 			actionValidateDB();
 	}

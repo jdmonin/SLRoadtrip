@@ -39,7 +39,7 @@ public class DriverListDialog extends ItemListDialog
 	 */
 	public DriverListDialog(RDBAdapter db, final boolean isReadOnly, final JFrame owner)
 	{
-		super(db, isReadOnly, owner, null, "Driver", "Drivers");
+		super(db, isReadOnly, owner, null, false, "Driver", "Drivers");
 	}
 
 	// see superclass for method javadocs

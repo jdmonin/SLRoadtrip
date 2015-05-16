@@ -43,7 +43,7 @@ public class VehicleListDialog extends ItemListDialog
 	 */
 	public VehicleListDialog(RDBAdapter db, final boolean isReadOnly, final JFrame owner)
 	{
-		super(db, isReadOnly, owner, null, "Vehicle", "Vehicles");
+		super(db, isReadOnly, owner, null, true, "Vehicle", "Vehicles");
 	}
 
 	// see superclass for method javadocs
@@ -80,6 +80,11 @@ public class VehicleListDialog extends ItemListDialog
 	{
 		item = MiscTablesCRUDDialogs.createEditVehicleDialog(owner, db, isReadOnly, (Vehicle) item, null);
 		return (item != null);
+	}
+
+	public boolean isItemActive(final Object item)
+	{
+		return ((Vehicle) item).isActive();
 	}
 
 }

@@ -48,6 +48,9 @@ import org.shadowlands.roadtrip.db.RDBAdapter;
  * Parent class for the modal Driver and Vehicle list dialogs.
  *<P>
  * Subclasses must implement {@link #getAll()}, {@link #showAdd()}, and {@link #showEdit(Object)}.
+ *<P>
+ * If a subclass sets the {@link #hasActiveFlag} field when calling the constructor,
+ * the subclass should also override {@link #isItemActive(Object)}.
  * @since 0.9.43
  */
 @SuppressWarnings("serial")
@@ -61,6 +64,12 @@ public abstract class ItemListDialog
 	 * / {@link JComponent#getClientProperty(Object)}.
 	 */
 	private static final String OBJDATA = "obj";
+
+	/**
+	 * Does this data type have an "isActive" flag that should be displayed?
+	 * @see #isItemActive(Object)
+	 */
+	protected final boolean hasActiveFlag;
 
 	/** Is the data in this dialog read-only, or can items be added, edited, etc? */
 	protected final boolean isReadOnly;
@@ -84,8 +93,9 @@ public abstract class ItemListDialog
 	/**
 	 * Data items shown in {@link #jpItemList}, or null if none.
 	 * Filled by constructor posting a Runnable that calls {@link #getAll()}.
+	 * {@code inactiveItems} is null unless {@link #hasActiveFlag} is true.
 	 */
-	private List<Object> items;
+	private List<Object> activeItems, inactiveItems;
 
 	/** Button to add an item, or null if {@link #isReadOnly}. */
 	private final JButton btnAdd;
@@ -101,16 +111,18 @@ public abstract class ItemListDialog
 	 * @param isReadOnly  True if {@code db} should be treated as read-only
 	 * @param owner  Parent window
 	 * @param title  Window title, or null to use {@code objPlural}
+	 * @param hasActiveFlag  True if object type has an isActive flag that should be displayed
 	 * @param objName  Object type name, used in "Add Driver" button
 	 * @param objPlural  Object type plural name, used for "Drivers in this logbook:" label
 	 */
 	protected ItemListDialog
 		(final RDBAdapter db, final boolean isReadOnly, final JFrame owner,
-		 final String title, final String objName, final String objPlural)
+		 final String title, final boolean hasActiveFlag, final String objName, final String objPlural)
 	{
 		super(owner, (title != null) ? title : objPlural, true);
 		this.db = db;
 		this.isReadOnly = isReadOnly;
+		this.hasActiveFlag = hasActiveFlag;
 		this.owner = owner;
 
 		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
@@ -164,12 +176,14 @@ public abstract class ItemListDialog
 						 "Could not load " + objName + " data.\n\nError was: "
 						 + ex.getClass() + " " + ex.getMessage(),
 						 null, JOptionPane.ERROR_MESSAGE);
+					ex.printStackTrace();
 					return;
 				}
 
 				if (all != null)
 				{
-					items = new ArrayList<Object>();
+					activeItems = new ArrayList<Object>();
+					// inactiveItems will be created by addItem if needed
 					final int L = all.length;
 					for (int i = 0; i < L; ++i)
 						addItem(all[i]);
@@ -198,9 +212,17 @@ public abstract class ItemListDialog
 		if (itm == null)
 			return;
 
-		if (items == null)
-			items = new ArrayList<Object>();
-		items.add(itm);
+		final boolean isActive = (hasActiveFlag) ? isItemActive(itm) : true;
+		if (isActive)
+		{
+			if (activeItems == null)
+				activeItems = new ArrayList<Object>();
+			activeItems.add(itm);
+		} else {
+			if (inactiveItems == null)
+				inactiveItems = new ArrayList<Object>();
+			inactiveItems.add(itm);
+		}
 
 		JButton jbItm = new JButton(itm.toString());
 		jbItm.setBorderPainted(false);  // for a cleaner look
@@ -238,9 +260,28 @@ public abstract class ItemListDialog
 			else if (src instanceof JButton)
 			{
 				final Object obj = ((JButton) src).getClientProperty(OBJDATA);
-				if (obj != null)
-					if (showEdit(obj))
-						((JButton) src).setText(obj.toString());  // TODO re-sort list?
+				if (obj == null)
+					return;
+				final boolean wasActive = (hasActiveFlag) ? isItemActive(obj) : true;
+				if (showEdit(obj))
+				{
+					final boolean nowActive = (hasActiveFlag) ? isItemActive(obj) : true;
+
+					((JButton) src).setText(obj.toString());  // TODO re-sort list?
+
+					if (wasActive != nowActive)
+					{
+						if (wasActive)
+						{
+							activeItems.remove(obj);
+							inactiveItems.add(obj);
+						} else {
+							inactiveItems.remove(obj);
+							activeItems.add(obj);
+						}
+						// TODO re-section list?
+					}
+				}
 			}
 		} catch (Exception ex) {
 			JOptionPane.showMessageDialog
@@ -257,6 +298,7 @@ public abstract class ItemListDialog
 	 * Query the database to get all objects.
 	 * The item names will be displayed using their {@link Object#toString()}.
 	 * Item edit requests (clicks) will pass these objects to {@link #showEdit(Object)}.
+	 * If {@link #hasActiveFlag} is set, {@link #isItemActive(Object)} will be called for each item returned.
 	 *<P>
 	 * This returns an array because most of the db table class {@code getAll()}s return arrays.
 	 *<P>
@@ -267,18 +309,35 @@ public abstract class ItemListDialog
 	public abstract Object[] getAll();
 
 	/**
-	 * The 'Add' button was clicked; show GUI to add an item. Called from the AWT event thread.
+	 * The 'Add' button was clicked; show GUI to add an item.
+	 * If {@link #hasActiveFlag} is set, {@link #isItemActive(Object)} will be called on the returned item.
+	 * Called from the AWT event thread.
 	 * @return The object created, or null if the add was cancelled.
 	 *    If db-based, the object should already be committed to the db when returned.
 	 */
 	public abstract Object showAdd();
 
 	/**
-	 * An item name was clicked; show GUI to edit the item. Called from the AWT event thread.
+	 * An item name was clicked; show GUI to edit the item.
+	 * If {@link #hasActiveFlag} is set, {@link #isItemActive(Object)} will be called on the returned item.
+	 * Called from the AWT event thread.
 	 * @param item  The object to edit, from {@link #getAll()} or {@link #showAdd()}
 	 * @return true if {@code item} was changed and its display entry should be refreshed
 	 *    because {@link Object#toString() item.toString()} changed
 	 */
 	public abstract boolean showEdit(final Object item);
+
+	/**
+	 * Get the value of this item's isActive flag.
+	 * This default implementation always returns true;
+	 * override it in subclasses that use such a flag.
+	 * Ignored unless {@link #hasActiveFlag} is true.
+	 * @param item  The object to check, from {@link #getAll()} or {@link #showAdd()}
+	 * @return  True if the item is flagged as active, false if not.
+	 */
+	public boolean isItemActive(final Object item)
+	{
+		return true;
+	}
 
 }

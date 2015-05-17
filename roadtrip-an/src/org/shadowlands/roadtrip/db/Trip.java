@@ -1053,6 +1053,50 @@ public class Trip extends RDBRecord
 		return roadtrip_end_aid;
 	}
 
+	/**
+	 * Check roadtrip's ending geoarea and its {@link TStop}s' other areas;
+	 * optionally convert to local if all stops are in its starting area ({@link #getAreaID()}).
+	 *<P>
+	 * Used by {@link VehSettings#endCurrentTrip(RDBAdapter, Vehicle, int, int, int, TripCategory, int)}.
+	 *
+	 * @param clearEndAreaIfLocal  If true, and all TStops are local to the starting area,
+	 *     clear {@link #isRoadtrip()} and set {@link #isDirty()}.
+	 * @return  True if all tstops in the trip are local to its starting area
+	 * @throws IllegalStateException if the trip's final TStop is in geoarea 0 (none)
+	 * @since 0.9.50
+	 */
+	boolean checkRoadtripTStops(final boolean clearEndAreaIfLocal)
+		throws IllegalStateException
+	{
+		if (! isRoadtrip())
+			return false;
+
+		final int startAreaID = a_id;
+		final Vector<TStop> allTS = readAllTStops();
+		boolean wentOutsideStartArea = false;
+		for (TStop ts : allTS)
+		{
+			if (ts.getAreaID() != startAreaID)
+			{
+				wentOutsideStartArea = true;
+				break;
+			}
+		}
+
+		final TStop endTS = allTS.lastElement();  // not empty: all trips end at a TStop
+		final int endAreaID = endTS.getAreaID();
+		if (endAreaID == 0)
+			throw new IllegalArgumentException
+				("Ending tstop is in area 0 (none): id " + endTS.getID());
+
+		if (clearEndAreaIfLocal && ! wentOutsideStartArea)
+		{
+			roadtrip_end_aid = 0;
+			dirty = true;
+		}
+		return ! wentOutsideStartArea;
+	}
+
 	/** Trip's optional starting time (unix format) if set, or 0 */
 	public int getTime_start() {
 		return time_start;

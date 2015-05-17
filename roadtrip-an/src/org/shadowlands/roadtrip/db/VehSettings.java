@@ -893,7 +893,7 @@ public class VehSettings extends RDBRecord
 	 * Update the Trip and Vehicle odometers.
 	 * If ending a roadtrip, also update CURRENT_AREA.
 	 *<P>
-	 * Assumes {@link TStop} {@code tsid} is already created or updated.
+	 * Assumes ending {@link TStop} {@code tsid} is already created or updated in the db.
 	 *<P>
 	 * <b>Caller must validate</b> that data will be consistent: Odometer and time won't run backwards,
 	 * roadtrip ends at {@link Trip#getRoadtripEndAreaID()}, etc.
@@ -910,6 +910,7 @@ public class VehSettings extends RDBRecord
 	 * @param pax  Trip passenger count (optional), 0 if only the driver is in the vehicle, or -1 to omit or clear;
 	 *     ignored unless boolean {@link Settings#SHOW_TRIP_PAX} is set.
 	 * @throws IllegalArgumentException if {@code v} is null, {@code tsid} is 0, or {@code odo_total} is 0
+	 *     or a roadtrip's ending TStop is in GeoArea 0 (none)
 	 * @throws IllegalStateException  if no current trip
 	 *     ({@link #getCurrentTrip(RDBAdapter, Vehicle, boolean) getCurrentTrip(db, v, false)} is null)
 	 * @throws NullPointerException if {@code db} is null
@@ -926,6 +927,11 @@ public class VehSettings extends RDBRecord
 		if (currT == null)
 			throw new IllegalStateException
 				("No current trip for vehicle " + v.getID() + " " + v.toString());
+
+		// check roadtrip ending geoarea and other areas; convert to local trip if all TStops in starting area
+		if (currT.isRoadtrip())
+			currT.checkRoadtripTStops(true);
+				// throws IllegalArgumentException if ending tstop is in area 0 (none)
 
 		// check for tripcategory
 		{

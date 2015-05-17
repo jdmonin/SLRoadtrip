@@ -891,12 +891,15 @@ public class VehSettings extends RDBRecord
 	 * Set its {@link TripCategory} and passenger count if specified.
 	 * Clear CURRENT_TRIP.
 	 * Update the Trip and Vehicle odometers.
-	 * If ending a roadtrip, also update CURRENT_AREA.
+	 *<P>
+	 * If ending a roadtrip, also update CURRENT_AREA and the trip's {@link Trip#getRoadtripEndAreaID()}
+	 * from its ending TStop's geoarea.
+	 * A roadtrip whose stops are all in its starting geoarea will be converted to a local trip.
 	 *<P>
 	 * Assumes ending {@link TStop} {@code tsid} is already created or updated in the db.
 	 *<P>
 	 * <b>Caller must validate</b> that data will be consistent: Odometer and time won't run backwards,
-	 * roadtrip ends at {@link Trip#getRoadtripEndAreaID()}, etc.
+	 * currently stopped (not moving) at a committed TStop at ending location, etc.
 	 *<P>
 	 * Before v0.9.50, this method was in the {@code android.TripTStopEntry} Activity.
 	 *

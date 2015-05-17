@@ -1055,17 +1055,27 @@ public class Trip extends RDBRecord
 
 	/**
 	 * Check roadtrip's ending geoarea and its {@link TStop}s' other areas;
-	 * optionally convert to local if all stops are in its starting area ({@link #getAreaID()}).
+	 * optionally update its {@link #getRoadtripEndAreaID()}, or convert trip to local
+	 * if all stops are in its starting area ({@link #getAreaID()}).
+	 *<P>
+	 * Does nothing if ! {@link #isRoadtrip()}, will not check a local trip's TStop GeoAreas
+	 * because that field is unused in local trip TStops.
 	 *<P>
 	 * Used by {@link VehSettings#endCurrentTrip(RDBAdapter, Vehicle, int, int, int, TripCategory, int)}.
 	 *
-	 * @param clearEndAreaIfLocal  If true, and all TStops are local to the starting area,
-	 *     clear {@link #isRoadtrip()} and set {@link #isDirty()}.
-	 * @return  True if all tstops in the trip are local to its starting area
+	 * @param updateEndArea  If true, update the trip's {@link #getRoadtripEndAreaID()} field if needed:
+	 *   <UL>
+	 *     <LI> If all TStops are local to the starting area, clear {@link #isRoadtrip()}
+	 *     <LI> If the most recent TStop (highest {@code _id}) is in a GeoArea that isn't the end area,
+	 *       update the trip's end area from that TStop's
+	 *   </UL>
+	 *   Also sets {@link #isDirty()} if the area field is changed.
+	 * @return  True if all tstops in the trip are local to its starting area,
+	 *   or if the ending TStop's area was different from  {@link #getRoadtripEndAreaID()}
 	 * @throws IllegalStateException if the trip's final TStop is in geoarea 0 (none)
 	 * @since 0.9.50
 	 */
-	boolean checkRoadtripTStops(final boolean clearEndAreaIfLocal)
+	boolean checkRoadtripTStops(final boolean updateEndArea)
 		throws IllegalStateException
 	{
 		if (! isRoadtrip())
@@ -1089,12 +1099,27 @@ public class Trip extends RDBRecord
 			throw new IllegalArgumentException
 				("Ending tstop is in area 0 (none): id " + endTS.getID());
 
-		if (clearEndAreaIfLocal && ! wentOutsideStartArea)
+		boolean differentAID = false;
+		if (! wentOutsideStartArea)
 		{
-			roadtrip_end_aid = 0;
-			dirty = true;
+			differentAID = true;
+			if (updateEndArea)
+			{
+				roadtrip_end_aid = 0;
+				dirty = true;
+			}
 		}
-		return ! wentOutsideStartArea;
+		else if (endAreaID != roadtrip_end_aid)
+		{
+			differentAID = true;
+			if (updateEndArea)
+			{
+				roadtrip_end_aid = endAreaID;
+				dirty = true;
+			}
+		}
+
+		return differentAID;
 	}
 
 	/** Trip's optional starting time (unix format) if set, or 0 */

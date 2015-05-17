@@ -33,6 +33,14 @@ import org.shadowlands.roadtrip.db.Vehicle;
  */
 public abstract class MiscTablesCRUDDialogs
 {
+	/** Field types for {@link #createEditPersonDialog(JFrame, RDBAdapter, boolean, Person, boolean) */
+	private static final int[] FTYPES_DIA_PERSON =
+	{
+		MultiInputDialog.F_STRING | MultiInputDialog.F_FLAG_REQUIRED,
+		MultiInputDialog.F_BOOL,
+		MultiInputDialog.F_STRING
+	};
+
 	/**
 	 * Dialog to create or edit a person, and update the database.
 	 * @param owner  Dialog's owner
@@ -65,7 +73,8 @@ public abstract class MiscTablesCRUDDialogs
 		 * Show the dialog, wait for user input
 		 */
 		MultiInputDialog mid = new MultiInputDialog
-		    (owner, "Person information", "Information about this person", labels, vals, isReadOnly);
+		    (owner, "Person information", "Information about this person",
+		     labels, FTYPES_DIA_PERSON, vals, isReadOnly);
 		if (! mid.showAndWait())
 			return null;  // <--- Cancel button ---
 
@@ -88,6 +97,19 @@ public abstract class MiscTablesCRUDDialogs
 		return p;
 	}
 
+	/** Field types for {@link #createEditVehicleDialog(JFrame, RDBAdapter, boolean, Vehicle, Person)}. */
+	private static final int[] FTYPES_DIA_VEHICLE =
+	{
+		MultiInputDialog.F_STRING, MultiInputDialog.F_BOOL,
+		MultiInputDialog.F_INT | MultiInputDialog.F_FLAG_REQUIRED,  // TODO FK to person(driver)
+		MultiInputDialog.F_INT | MultiInputDialog.F_FLAG_REQUIRED,  // TODO FK to vehiclemake
+		MultiInputDialog.F_STRING, MultiInputDialog.F_INT | MultiInputDialog.F_FLAG_REQUIRED,
+		MultiInputDialog.F_TIMESTAMP, MultiInputDialog.F_TIMESTAMP,
+		MultiInputDialog.F_STRING, MultiInputDialog.F_STRING,
+		MultiInputDialog.F_ODOMETER, MultiInputDialog.F_ODOMETER,
+		MultiInputDialog.F_STRING
+	};
+
 	/**
 	 * Dialog to create or edit a vehicle, and update the database.
 	 * @param owner  Dialog's owner
@@ -103,7 +125,10 @@ public abstract class MiscTablesCRUDDialogs
 	    (JFrame owner, RDBAdapter conn, final boolean isReadOnly, Vehicle v, final Person ownerIfNew)
 	    throws IllegalStateException, NullPointerException
 	{
-		final String[] labels = { "Nickname", "Active?", "DriverID", "MakeID", "Model", "Year", "Owned from", "Owned to", "VIN", "License plate/tag", "Original odometer", "Current odometer", "Comment" };
+		// keep arrays congruent: labels[], FTYPES_DIA_VEHICLE[], vals[]
+		final String[] labels =
+			{ "Nickname", "Active?", "DriverID", "MakeID", "Model", "Year", "Owned from", "Owned to",
+			  "VIN", "License plate/tag", "Original odometer", "Current odometer", "Comment" };
 		String[] vals = new String[13];
 		if (v != null)
 		{
@@ -129,7 +154,8 @@ public abstract class MiscTablesCRUDDialogs
 		 * Show the dialog, wait for user input
 		 */
 		MultiInputDialog mid = new MultiInputDialog
-		    (owner, "Vehicle information", "Information about this vehicle", labels, vals, isReadOnly);
+		    (owner, "Vehicle information", "Information about this vehicle",
+		     labels, FTYPES_DIA_VEHICLE, vals, isReadOnly);
 		if (! mid.showAndWait())
 			return null;  // <--- Cancel button ---
 

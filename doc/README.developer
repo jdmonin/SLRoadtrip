@@ -222,6 +222,7 @@ r431	-	2015-05-03	3393a0f  Migration from svn to git, google code to github
 	0.9.43			Being developed now; minor improvements and bugfixes since 0.9.42.
 				Add build.xml to create slroadtrip-bookedit.jar.
 				Hide Frequent Trip buttons by default on new installs. (Settings menu can un-hide them)
+				Bookedit: View/edit details for all drivers and vehicles, including vehicle Active flag.
 				Bookedit: Better error handling if driver/vehicle settings are missing in db.
 				About box: Show build number at bottom, not in title bar. (git hashes are unwieldy up there)
 

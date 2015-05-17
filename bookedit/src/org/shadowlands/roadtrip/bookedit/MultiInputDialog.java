@@ -28,15 +28,21 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;  // for VK_*
 import java.awt.event.KeyListener;
+import java.text.DecimalFormat;
+import java.text.ParseException;
+import java.util.Date;
 
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JTextField;
 import javax.swing.KeyStroke;
 import javax.swing.SwingConstants;
+
+import org.shadowlands.roadtrip.util.RTRDateTimeFormatter;
 
 /**
  * A modal {@link JDialog} to prompt for multiple string inputs,
@@ -57,10 +63,50 @@ public class MultiInputDialog
     implements ActionListener, KeyListener
 {
 
+	// Dialog input/display field types, for formatted viewing and editing. @since 0.9.43
+
+	/** String field type */
+	public static final int F_STRING = 1;
+
+	/** Integer field type */
+	public static final int F_INT = 2;
+
+	/** Boolean field type: In string array, "Y" is true (case-insensitive) and any other value or null is false. */
+	public static final int F_BOOL = 3;
+
+	/** Odometer field type: Decimal is shifted 1 place to precisely store 10ths within integer field */
+	public static final int F_ODOMETER = 4;
+
+	/** Timestamp field type: Same format as db schema;
+	 *  UTC seconds since the unix epoch, like {@link System#currentTimeMillis()} / 1000L.
+	 */
+	public static final int F_TIMESTAMP = 5;
+
+	/** Field type flags mask; all flag bits are within this mask. */
+	public static final int F_FLAGS_MASK    = 0xFF000000;
+
+	/** Field flag: Read only */
+	public static final int F_FLAG_REQUIRED = 0x80000000;
+
+	/**
+	 * Field type for each element of {@link #inputs},
+	 * such as {@link #F_STRING} or {@link #F_TIMESTAMP},
+	 * including flag bits such as {@link #F_FLAG_REQUIRED}.
+	 * @since 0.9.43
+	 */
+	private final int[] ftypes;
+
+	/**
+	 * Field name labels, as passed to constructor.
+	 * @since 0.9.43
+	 */
+	private final String[] fnames;
+
 	/**
 	 * Initially set from constructor's passed-in <tt>vals[]</tt>.
-	 * Read from input textfields during {@link #clickOK()}. 
+	 * Read from input textfields during {@link #clickOK()}.
 	 * Any null elements represent 0-length strings.
+	 * Each element here is raw, not formatted; field type map is {@link #ftypes}[].
 	 */
 	private String[] inputs;
 
@@ -93,24 +139,39 @@ public class MultiInputDialog
 	private JTextField[] inputTexts;
 
 	/**
+	 * Our date and time format, for {@link FieldType#F_TIMESTAMP}.
+	 * May be null; initialized in constructor.
+	 * @since 0.9.43
+	 */
+	private transient RTRDateTimeFormatter dtf;
+
+	/**
 	 * Display a modal {@link JDialog} to prompt for multiple string inputs,
 	 * with Continue and Cancel buttons.  See the class javadoc for more details.
 	 *
 	 * @param owner  Frame owning this dialog
 	 * @param title  Dialog title
 	 * @param prompt  Prompt text
-	 * @param fieldnames Field names to display on-screen.
+	 * @param fieldnames Field names to display on-screen.  This array shouldn't be changed after calling;
+	 *     a reference to the passed-in array is held, the contents aren't copied.
+	 * @param fieldtypes Field type for each field.
+	 *     Each element is the field type for an element of {@link #inputs},
+	 *     such as {@link #F_STRING} or {@link #F_TIMESTAMP},
+	 *     including flag bits such as {@link #F_FLAG_REQUIRED}.
+	 *     This array shouldn't be changed after calling; a reference to the passed-in array is held,
+	 *     the contents aren't copied.
 	 * @param vals  Initial values for each field, or null; may contain nulls.
 	 *              Note that no reference to <tt>vals</tt> is kept in this object,
 	 *              although its string contents may be copied.
 	 * @param isReadOnly  If true, show the fields as read-only; dialog has Close button and no OK/Continue button
 	 * @throws HeadlessException  if GraphicsEnvironment.isHeadless()
 	 * @throws IllegalArgumentException if fieldnames.length < 1,
-	 *        or if vals != null && vals.length != fieldnames.length.
+	 *        or if vals != null &amp;&amp; vals.length != fieldnames.length,
+	 *        or if fieldtypes is null or fieldnames.length != fieldtypes.length.
 	 */
     public MultiInputDialog
         (JFrame owner, final String title, final String prompt,
-         final String[] fieldnames, final String[] vals, final boolean isReadOnly)
+         final String[] fieldnames, final int[] fieldtypes, final String[] vals, final boolean isReadOnly)
         throws HeadlessException, IllegalArgumentException
     {
     	super(owner, title, true);  // modal == true
@@ -119,6 +180,11 @@ public class MultiInputDialog
     		throw new IllegalArgumentException("fieldnames.length");
     	if ((vals != null) && (vals.length != fieldnames.length))
     		throw new IllegalArgumentException("vals.length");
+    	if ((fieldtypes == null) || (fieldtypes.length != fieldnames.length))
+    		throw new IllegalArgumentException("fieldtypes");
+
+    	fnames = fieldnames;
+    	ftypes = fieldtypes;
     	inputs = new String[fieldnames.length];
     	if (vals != null)
     	{
@@ -183,11 +249,50 @@ public class MultiInputDialog
          */
 	if (isReadOnly)
 		gbc.insets = new Insets(3, 6, 3, 6);  // padding around JLabels in GBL, since not using JTextFields
+	final char decimalSep = new DecimalFormat().getDecimalFormatSymbols().getDecimalSeparator();
+		// for odometers; java 1.5, android API 8 don't have DecimalFormatSymbols.getInstance()
+
     	inputTexts = new JTextField[fieldnames.length];
     	for (int i = 0; i < fieldnames.length; ++i)
     	{
-    		final String val = (vals != null) ? vals[i] : null;
+    		String val = (vals != null) ? vals[i] : null;
     		final JComponent valComp;
+		if (val != null)
+		{
+			// This is simple basic transformation for development versions; not user-friendly yet.
+
+			switch (ftypes[i] & ~F_FLAGS_MASK)
+			{
+			case F_ODOMETER:
+				final int L = val.length();
+				StringBuilder sb = new StringBuilder();
+				if (L < 2)
+				{
+					sb.append('0');
+					sb.append(decimalSep);
+					if (L == 1)
+						sb.append(val);
+					else
+						sb.append('0');
+				} else {
+					sb.append(val.subSequence(0, L-1));
+					sb.append(decimalSep);
+					sb.append(val.charAt(L-1));
+				}
+				val = sb.toString();
+				break;
+
+			case F_TIMESTAMP:
+				if (dtf == null)
+					dtf = new RTRDateTimeFormatter();
+				final long tstamp = 1000L * Long.parseLong(val);
+				if (tstamp == 0)
+					val = "";
+				else
+					val = dtf.formatDateTime(tstamp);
+				break;
+			}
+		}
 
     		if (! isReadOnly)
     		{
@@ -274,18 +379,81 @@ public class MultiInputDialog
 	}
 
 	/**
-	 * Read data fields, set {@link #isChanged()} and {@link #inputsAreOK()}. Dispose.
+	 * Read data fields, set {@link #isChanged()} and {@link #inputsAreOK()}. Dispose if no problems.
 	 */
 	private void clickOK()
 	{
 		boolean allEmpty = true;
+
+		/** Details if a field has problems; if you set this, set problemFld too. */
+		String problemMsg = null;
+		/** index within {@link #inputTexts}[] of field with problem, or -1 if none */
+		int problemFld = -1;
+		final char decimalSep = new DecimalFormat().getDecimalFormatSymbols().getDecimalSeparator();
+			// for odometers; java 1.5, android API 8 don't have DecimalFormatSymbols.getInstance()
+
 		for (int i = 0; i < inputTexts.length; ++i)
 		{
 			String it = inputTexts[i].getText().trim();
-			if (it.length() > 0)
+			final int L = it.length();
+			if (L > 0)
 			{
 				allEmpty = false;
-				if (! it.equals(inputs[i]))
+
+				// Parse any formatted fields, take others with their current value.
+				// This is simple basic transformation for development versions; not user-friendly yet.
+
+				switch (ftypes[i] & ~F_FLAGS_MASK)
+				{
+				case F_INT:
+					try {
+						Integer.parseInt(it);
+					} catch (NumberFormatException e) {
+						problemFld = i;
+						problemMsg = "Cannot read this number field.";
+					}
+					break;
+
+				case F_ODOMETER:
+					// expecting a whole number, or at most 1 digit after the decimal.
+					// To keep precision use string manipulation, not floats.
+					try {
+						int p = it.lastIndexOf(decimalSep);
+						if (p == -1)
+						{
+							p = L;
+						} else if (p < (L-2)) {
+							problemFld = i;
+							problemMsg =
+							  "Odometer must have at most 1 digit after the decimal.";
+						}
+						int odo = 0;
+						if (p > 0)
+							odo = 10 * Integer.parseInt(it.substring(0, p));
+						if (p == (L-2))
+							odo += Integer.parseInt(it.substring(p+1));
+						it = Integer.toString(odo);
+					} catch (NumberFormatException e) {
+						problemFld = i;
+						problemMsg = "Cannot read this odometer field.";
+					}
+					break;
+
+				case F_TIMESTAMP:
+					try {
+						if (dtf == null)
+							dtf = new RTRDateTimeFormatter();
+						Date dt = dtf.parseDateTime(it);
+						it = Long.toString(dt.getTime() / 1000L);
+					} catch (ParseException e) {
+						problemFld = i;
+						problemMsg = "Cannot read this date/time field.";
+					}
+					break;
+				}
+
+				// now compare to the original input
+				if ((problemMsg == null) && ! it.equals(inputs[i]))
 				{
 					inputs[i] = it;
 					anyChanges = true;
@@ -293,11 +461,26 @@ public class MultiInputDialog
 			}
 			else
 			{
-				if (inputs[i] != null)
-					anyChanges = true;
-				inputs[i] = null;
+				if (0 != (ftypes[i] & F_FLAG_REQUIRED))
+				{
+					problemFld = i;
+					problemMsg = "This field is required.";
+				} else {
+					if (inputs[i] != null)
+						anyChanges = true;
+					inputs[i] = null;
+				}
 			}
 		}
+
+		if (problemMsg != null)
+		{
+			inputTexts[problemFld].requestFocusInWindow();
+			JOptionPane.showMessageDialog
+				(getOwner(), fnames[problemFld] + ": " + problemMsg, null, JOptionPane.ERROR_MESSAGE);
+			return;  // <---- Problems found ----
+		}
+
 		if (allEmpty)
 		{
 			inputsOK = false;

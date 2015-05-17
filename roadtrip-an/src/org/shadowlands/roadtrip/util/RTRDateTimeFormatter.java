@@ -20,6 +20,7 @@
 package org.shadowlands.roadtrip.util;
 
 import java.text.DateFormat;  // for JavaImpl
+import java.text.ParseException;
 import java.util.Date;        // for JavaImpl
 
 /**
@@ -42,6 +43,12 @@ public class RTRDateTimeFormatter
 	protected java.text.DateFormat dft;
 
 	/**
+	 * Format for date + time.
+	 * @since 0.9.43
+	 */
+	protected java.text.DateFormat dfdt;
+
+	/**
 	 * Constructor for java locale-generic formatting.
 	 * For android-specific date/time formats, use child class util.android.RTRAndroidDateTimeFormatter instead.
 	 */
@@ -49,6 +56,7 @@ public class RTRDateTimeFormatter
 	{
 		dfd = java.text.DateFormat.getDateInstance(DateFormat.MEDIUM);
 		dft = java.text.DateFormat.getTimeInstance(DateFormat.SHORT);
+		dfdt = java.text.DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT);
 	}
 
 	public String formatDate(final long millis)
@@ -72,6 +80,48 @@ public class RTRDateTimeFormatter
 	}
 
 	/**
+	 * Format date and time together, using the same formats as
+	 * {@link #formatDate(long)} and {@link #formatTime(long)}.
+	 * @see #formatDateTime(Date)
+	 * @see #parseDateTime(String)
+	 * @param millis  Date and time, same format as {@link System#currentTimeMillis()}
+	 * @return  The formatted date and time
+	 * @since 0.9.43
+	 */
+	public String formatDateTime(final long millis)
+	{
+		return dfdt.format(new Date(millis));
+	}
+
+	/**
+	 * Format date and time together, using the same formats as
+	 * {@link #formatDate(Date)} and {@link #formatTime(Date)}.
+	 * @see #formatDateTime(long)
+	 * @see #parseDateTime(String)
+	 * @param dttm  Date and time
+	 * @return  The formatted date and time
+	 * @since 0.9.43
+	 */
+	public String formatDateTime(final Date dttm)
+	{
+		return dfdt.format(dttm);
+	}
+
+	/**
+	 * Parse a date and time as formatted by {@link #formatDateTime(Date)};
+	 * not a generic date-time parser.
+	 * @param dt  Date and time string, formatted by {@link #formatDateTime(long)} or {@link #formatDateTime(Date)}
+	 * @return  The parsed date and time
+	 * @throws ParseException  If a parsing error occurs
+	 * @since 0.9.43
+	 */
+	public Date parseDateTime(final String dt)
+		throws ParseException
+	{
+		return dfdt.parse(dt);
+	}
+
+	/**
 	 * Format separate date and time strings for a sequence of events: The time is always formatted,
 	 * the date is skipped (null) unless it's changed from the previous event's date.  Fields in the
 	 * provided {@code dt} structure track the previous month and day, and hold the formatted time and date.
@@ -90,6 +140,7 @@ public class RTRDateTimeFormatter
 	public boolean formatDateTimeInSeq(final long millis, DateAndTime dt)
 	{
 		final Date dobj = new Date(millis);
+		@SuppressWarnings("deprecation")
 		final int dMonth = dobj.getMonth(), dMDay = dobj.getDate();
 
 		final boolean changed = ((dMonth != dt.month) || (dMDay != dt.mday));

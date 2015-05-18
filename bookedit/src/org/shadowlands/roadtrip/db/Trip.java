@@ -979,7 +979,8 @@ public class Trip extends RDBRecord
 			Integer.toString(vehicleid), Integer.toString(driverid),
 			(catid != 0 ? Integer.toString(catid) : null),
 			Integer.toString(odo_start), (odo_end != 0 ? Integer.toString(odo_end) : null),
-			(a_id != 0 ? Integer.toString(a_id) : null), (tstopid_start != 0 ? Integer.toString(tstopid_start) : null),
+			(a_id != 0 ? Integer.toString(a_id) : null),
+			(tstopid_start != 0 ? Integer.toString(tstopid_start) : null),
 			Integer.toString(time_start), (time_end != 0 ? Integer.toString(time_end) : null),
 			start_lat, start_lon, end_lat, end_lon,
 			(freqtripid != 0 ? Integer.toString(freqtripid) : null),
@@ -1054,7 +1055,7 @@ public class Trip extends RDBRecord
 	}
 
 	/**
-	 * Check roadtrip's ending geoarea and its {@link TStop}s' other areas;
+	 * Check roadtrip's ending {@link GeoArea} and its {@link TStop}s' other areas;
 	 * optionally update its {@link #getRoadtripEndAreaID()}, or convert trip to local
 	 * if all stops are in its starting area ({@link #getAreaID()}).
 	 *<P>
@@ -1070,9 +1071,14 @@ public class Trip extends RDBRecord
 	 *       update the trip's end area from that TStop's
 	 *   </UL>
 	 *   Also sets {@link #isDirty()} if the area field is changed.
-	 * @return  True if all tstops in the trip are local to its starting area,
-	 *   or if the ending TStop's area was different from  {@link #getRoadtripEndAreaID()}
-	 * @throws IllegalStateException if the trip's final TStop is in geoarea 0 (none)
+	 *   <P>
+	 *   After a roadtrip is converted to local, its TStops will all still have the starting GeoArea in
+	 *   their geoarea field. Local trips' TStops do not use this field, and would have null there
+	 *   if the trip started as local. For the converted trip, clearing the TStops' geoarea field is
+	 *   not required for data consistency.
+	 * @return  True if all tstops in the trip are within its starting area,
+	 *   or if the ending TStop's area was different from {@link #getRoadtripEndAreaID()}
+	 * @throws IllegalStateException if the roadtrip's final TStop is in geoarea 0 (none)
 	 * @since 0.9.50
 	 */
 	boolean checkRoadtripTStops(final boolean updateEndArea)

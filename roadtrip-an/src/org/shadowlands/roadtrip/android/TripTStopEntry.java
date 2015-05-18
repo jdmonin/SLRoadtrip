@@ -1622,9 +1622,11 @@ public class TripTStopEntry extends Activity
 				locObjCreatedHere.setAreaID(areaLocs_areaID);
 				locObjCreatedHere.commit();
 
-				// no need to update locObj.areaid field too, because
-				// we're resuming from this stop, and won't be at
-				// locObj next time this activity is called.
+				// no need to also update locObj.areaid field, because
+				// we're resuming travel from this stop and won't be at
+				// locObj next time this activity is called; locObj and
+				// locObjCreatedHere are the same row in the db, which
+				// we've updated from locObjCreatedHere.
 			}
 
 		}
@@ -1826,7 +1828,7 @@ public class TripTStopEntry extends Activity
 				}
 			}
 		} else {
-			// Currently stopped; saving, resuming from stop, or ending trip.
+			// Currently stopped; saving, resuming travel from stop, or ending trip.
 			tsid = currTS.getID();
 			currTS.setOdos(odoTotal, odoTrip);
 			currTS.setTime_stop(stopTimeSec);

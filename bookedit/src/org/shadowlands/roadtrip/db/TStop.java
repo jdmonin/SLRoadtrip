@@ -788,14 +788,13 @@ public class TStop extends RDBRecord
 	 * For roadtrips:
 	 *<UL>
 	 * <LI> A roadtrip's starting tstop's area id is ignored, because it could be the
-	 *        ending tstop of a local trip. Use {@link Trip#getAreaID()} instead.
-	 * <LI> A roadtrip's ending tstop's area id should be the ending area,
+	 *        ending tstop of the previous local trip. Use {@link Trip#getAreaID()} instead.
+	 * <LI> A roadtrip's ending tstop's area id must be the ending area,
 	 *        same as {@link Trip#getRoadtripEndAreaID()}.
 	 * <LI> Other stops during a roadtrip: area id is set to the location's geoarea,
 	 *        such as the trip's starting or ending area.
 	 *        For stops between geoareas (displayed as area "none") like highway rest areas,
 	 *        area id is empty in TStop and Location.
-	 * <LI> 0 for area id is okay for a local tstop, but not for start/end location of the trip.
 	 *</UL>
 	 */
 	public int getAreaID() {

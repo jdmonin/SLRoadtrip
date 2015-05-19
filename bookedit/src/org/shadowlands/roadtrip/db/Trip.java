@@ -42,6 +42,7 @@ import java.util.Vector;
  * (See {@link #readLatestTStop()})
  *<P>
  * To end a trip, call {@link VehSettings#endCurrentTrip(RDBAdapter, Vehicle, int, int, int, TripCategory, int)}.
+ * If all of a roadtrip's tstops are in its starting GeoArea, it will be converted to a local trip when ended.
  *
  * @author jdmonin
  */

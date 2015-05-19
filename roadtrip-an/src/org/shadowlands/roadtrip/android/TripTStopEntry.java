@@ -891,11 +891,13 @@ public class TripTStopEntry extends Activity
 	}
 
 	/**
-	 * Select the matching GeoArea's radio button, update {@link #areaLocs_areaID},
-	 * and optionally update related data.  (Stops during a roadtrip have several GeoArea radios
+	 * Select the matching GeoArea's radio button, update {@link #areaLocs_areaID}
+	 * and {@link #loc}'s autocomplete adapter, and optionally update related data fields.
+	 * (Stops during a roadtrip have several GeoArea radios
 	 * to select the starting area, no area, or ending area.)
+	 * For a local trip, updates the current GeoArea textview; does not show the roadtrip GeoArea radio buttons.
 	 *<P>
-	 * Before changing the currently selected button, this method confirmas with the user
+	 * Before changing the currently selected button, this method confirms with the user
 	 * if they've already picked a location there. This method is also used because the radios
 	 * are laid out 2 columns and 2 rows, so a RadioGroup won't simply work.
 	 *<P>
@@ -908,7 +910,8 @@ public class TripTStopEntry extends Activity
 	 *   Used only for the confirmation dialog if the area changes after a location is chosen.
 	 * @param alsoUpdateData If true, also update currTS,
 	 *   and re-query location fields.  If false, only change the
-	 *   checkmark, {@link #areaLocs_areaID}, and {@link #rbRoadtripArea_chosen}.
+	 *   checkmark, {@link #areaLocs_areaID}, {@link #loc} autocomplete adapter,
+	 *   and {@link #rbRoadtripArea_chosen}.
 	 * @param confirmChange  User-confirm action, if <tt>alsoUpdateData</tt>,
 	 *   if they've already chosen a Location in another geoarea:
 	 *   <UL>
@@ -958,7 +961,20 @@ public class TripTStopEntry extends Activity
 			rbRoadtripArea_chosen.setChecked(false);
 
 		RadioButton toChg;
-		if (areaID == currT.getAreaID())
+		if (stopEndsTrip || ! currT.isRoadtrip())
+		{
+			toChg = null;
+
+			// Update displayed current-geoarea name
+			TextView tv = (TextView) findViewById(R.id.trip_tstop_area_local_value);
+			if (tv != null)
+			{
+				if ((newAreaText == null) || (areaID == 0))
+					newAreaText = getResources().getString(R.string.none);
+				tv.setText(newAreaText);
+			}
+		}
+		else if (areaID == currT.getAreaID())
 			toChg = rbRoadtripAreaStart;
 		else if (areaID == currT.getRoadtripEndAreaID())
 			toChg = rbRoadtripAreaEnd;
@@ -1259,12 +1275,17 @@ public class TripTStopEntry extends Activity
 
 	/**
 	 * Choose another geoarea for the current stop. This could transform a local trip into a roadtrip.
+	 * This button is also visible when ending a roadtip; the dialog for that omits GeoArea "none"
+	 * by calling {@link #onCreateDialog(int) onCreateDialog(trip_tstop_area_local_row)}.
 	 * @see #onClick_BtnAreaOther(View)
 	 * @since 0.9.50
 	 */
 	public void onClick_BtnAreaLocalOther(View v)
 	{
-		Toast.makeText(this, "Not implemented yet (TODO)", Toast.LENGTH_SHORT).show();
+		if (currT.isRoadtrip() && stopEndsTrip)
+			showDialog(R.id.trip_tstop_area_local_row);
+		else
+			Toast.makeText(this, "Not implemented yet (TODO)", Toast.LENGTH_SHORT).show();
 	}
 
 	/** Show or hide the roadtrip other-geoarea dropdown if available */
@@ -2170,12 +2191,44 @@ public class TripTStopEntry extends Activity
 	}
 
 	/**
-	 * Callback for displaying {@link DatePickerDialog} after {@link #onClick_BtnStartDate(View)}.
+	 * Callback for displaying {@link DatePickerDialog} after {@link #onClick_BtnStartDate(View)},
+	 * or "Choose a new GeoArea" after {@link #onClick_BtnAreaLocalOther(View)}.
+	 * @param id  Unique dialog key, borrowed from various controls' {@code R.id}s:
+	 *    <UL>
+	 *    <LI> {@code trip_tstop_area_local_row}: Show "Choose a new GeoArea for this stop" without "none" choice
+	 *    <LI> {@code trip_tstop_btn_cont_date}: Choose a date for Continue time
+	 *    <LI> Otherwise: Choose a date for Stopped At time
+	 *    </UL>
 	 * @see #onDateSet(DatePicker, int, int, int)
 	 */
 	@Override
 	protected Dialog onCreateDialog(final int id)
 	{
+		if (id == R.id.trip_tstop_area_local_row)
+		{
+			final View popupLayout = getLayoutInflater().inflate
+				(R.layout.trip_tstop_popup_choose_area, null);
+			final Spinner areas = (Spinner) popupLayout.findViewById(R.id.logbook_show_popup_locs_areas);
+			SpinnerDataFactory.setupGeoAreasSpinner(db, this, areas, areaLocs_areaID, false);
+
+			AlertDialog.Builder alert = new AlertDialog.Builder(this);
+			alert.setView(popupLayout);
+			alert.setPositiveButton(android.R.string.ok,
+					new DialogInterface.OnClickListener()
+			{
+				public void onClick(DialogInterface dialog, int whichButton)
+				{
+					final GeoArea newArea = (GeoArea) areas.getSelectedItem();
+					if (newArea == null)
+						return;  // unlikely
+					selectRoadtripAreaButton(newArea.getID(), newArea.getName(), true, 0);
+				}
+			});
+			alert.setNegativeButton(android.R.string.cancel, null);
+
+			return alert.create();
+		}
+
 		if (id == R.id.trip_tstop_btn_cont_date)
 		{
 			currentDateToPick = contTime;

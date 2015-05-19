@@ -236,6 +236,7 @@
 <string name="trip_tstart_loc_prompt">Please enter the starting location.</string>
 <string name="trip_tstop_entry_calc_total_odo">Calculator: Total odometer</string>
 <string name="trip_tstop_entry_calc_trip_odo">Calculator: Trip odometer</string>
+<string name="trip_tstop_entry_choose_geoarea">Choose a geographic area for this stop.</string>
 <string name="trip_tstop_entry_clear_location">Clear\nlocation</string>
 <string name="trip_tstop_entry_geo_area">Geographic\narea</string>
 <string name="trip_tstop_entry_keep_location">Keep\nlocation</string>
@@ -246,7 +247,7 @@
 <string name="trip_tstop_entry_time_cont_update">Updated the Continue Time to the current time. Change it manually if this should not be the case.</string>
 <string name="trip_tstop_entry_totalodo_low">The total odometer is lower than %1$d, the previous stop\'s value.</string>
 <string name="trip_tstop_entry_tripodo_low">The trip odometer is lower than %1$.1f, the previous stop\'s value.</string>
-<string name="trip_tstop_entry_roadtrip_end_geoarea">To end the roadtrip, this stop must be within the ending geo area.</string>
+<string name="trip_tstop_entry_roadtrip_end_geoarea">To end the roadtrip, this stop must be within the ending or starting geo area.</string>
 <string name="trip_tstop_gas_atprice"> \@ Price</string>
 <string name="trip_tstop_gas_brand_grade">Brand/\nGrade</string>
 <string name="trip_tstop_gas_equalscost"> = Cost</string>

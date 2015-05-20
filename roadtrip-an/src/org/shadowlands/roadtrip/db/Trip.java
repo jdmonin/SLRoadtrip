@@ -1030,11 +1030,19 @@ public class Trip extends RDBRecord
 		dirty = true;
 	}
 
+	/**
+	 * Get the starting total-odometer value (trip-odo is 0.0 here) of this trip.
+	 * @see #getOdo_end()
+	 */
 	public int getOdo_start() {
 		return odo_start;
 	}
 
-	/** Get the total-odometer value (not trip-odo) at the end of this trip, or 0 if still in progress. */
+	/**
+	 * Get the ending total-odometer value (not trip-odo) of this trip, or 0 if still in progress.
+	 * @see #isEnded()
+	 * @see #getOdo_start()
+	 */
 	public int getOdo_end() {
 		return odo_end;
 	}
@@ -1045,12 +1053,18 @@ public class Trip extends RDBRecord
 		dirty = true;
 	}
 
-	/** Get the area ID, or for roadtrips, the starting area ID. */
+	/**
+	 * Get the {@link GeoArea} ID, or for roadtrips the starting area ID.
+	 * @see #isRoadtrip()
+	 */
 	public int getAreaID() {
 		return a_id;
 	}
 
-	/** For roadtrips, get the ending area ID; for local trips, returns 0. */
+	/**
+	 * For roadtrips, get the ending {@link GeoArea} ID; for local trips, returns 0.
+	 * @see #isRoadtrip()
+	 */
 	public int getRoadtripEndAreaID() {
 		return roadtrip_end_aid;
 	}
@@ -1165,8 +1179,9 @@ public class Trip extends RDBRecord
 	}
 
 	/**
-	 * Is this trip ended?  Completed trips have an odo-end value.
-	 * @return if the trip is completed 
+	 * Is this trip ended?  Completed trips have a nonzero
+	 * total-odometer value in {@link #getOdo_end()}.
+	 * @return true if the trip is completed
 	 */
 	public final boolean isEnded()
 	{

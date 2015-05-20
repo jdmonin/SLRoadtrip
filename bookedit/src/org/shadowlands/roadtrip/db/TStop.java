@@ -516,6 +516,8 @@ public class TStop extends RDBRecord
     /**
      * Create the new trip stop which represents the start of a trip,
      * but don't yet write to the database.  <tt>trip_odo</tt> will be 0.
+     * GeoArea ID will be 0 for local trips; if {@link Trip#isRoadtrip()}, will be {@link Trip#getAreaID()}.
+     *<P>
      * When ready to write (after any changes you make to this object),
      * call {@link #insert(RDBAdapter)}.
      *
@@ -531,7 +533,7 @@ public class TStop extends RDBRecord
     		final String geo_lat, final String geo_lon)
     {
     	this(trip, odo_total, 0, 0, time_continue, loc.getID(),
-    		(trip.getRoadtripEndAreaID() > 0 ? trip.getAreaID() : 0),  // only roadtrips use areaID here
+    		(trip.isRoadtrip() ? trip.getAreaID() : 0),  // only roadtrips use areaID here
     		geo_lat, geo_lon, 0, 0, null);
     	odo_trip_0_beginTrip = true;
     }
@@ -783,14 +785,14 @@ public class TStop extends RDBRecord
 	/**
 	 * Get the GeoArea ID, or 0 if empty/unused.
 	 *<P>
-	 * For local trips: unused; use {@link Trip#getAreaID()} instead.
+	 * For local trips: Field is unused, call {@link Trip#getAreaID()} instead.
 	 *<P>
 	 * For roadtrips:
 	 *<UL>
 	 * <LI> A roadtrip's starting tstop's area id is ignored, because it could be the
 	 *        ending tstop of the previous local trip. Use {@link Trip#getAreaID()} instead.
-	 * <LI> A roadtrip's ending tstop's area id must be the ending area,
-	 *        same as {@link Trip#getRoadtripEndAreaID()}.
+	 * <LI> A roadtrip's ending tstop's area id must be the ending area
+	 *        {@link Trip#getRoadtripEndAreaID()}, or the starting area {@link Trip#getAreaID()}.
 	 * <LI> Other stops during a roadtrip: area id is set to the location's geoarea,
 	 *        such as the trip's starting or ending area.
 	 *        For stops between geoareas (displayed as area "none") like highway rest areas,

@@ -486,10 +486,10 @@ public class TripTStopEntry extends Activity
 				TextView tv = (TextView) findViewById(R.id.trip_tstop_loc_label);
 				if (tv != null)
 				{
-					if (0 == currT.getRoadtripEndAreaID())  // 0 for local trips
-						tv.setText(R.string.destination);
-					else
+					if (currT.isRoadtrip())
 						tv.setText(R.string.destination_within_the_area);
+					else
+						tv.setText(R.string.destination);
 				}
 				tv = (TextView) findViewById(R.id.trip_tstop_prompt);
 				if (tv != null)

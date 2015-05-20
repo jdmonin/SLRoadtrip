@@ -798,6 +798,63 @@ public class RDBJDBCAdapter implements RDBAdapter
 		}
 	}
 
+	public void update
+	    (final String tabname, final String where, final String[] whereArgs, final String[] fn, final String[] fv)
+	    throws IllegalStateException, IllegalArgumentException
+	{
+		if (fn == null)
+			throw new IllegalArgumentException("null fn");
+		if (fn.length != fv.length)
+			throw new IllegalArgumentException("length mismatch");
+
+		StringBuilder sb = new StringBuilder("update ");
+		sb.append(tabname);
+		sb.append(" set ");
+		for (int i = 0; i < fv.length; ++i)
+		{
+			if (i > 0)
+				sb.append(", ");
+			sb.append(fn[i]);
+			sb.append(" = ?");
+		}
+		if (where != null)
+		{
+			sb.append(" where ");
+			sb.append(where);
+		}
+
+		try
+		{
+			PreparedStatement prep = conn.prepareStatement(sb.toString());
+			for (int i = 0; i < fv.length; ++i)
+			{
+				final String v = fv[i];
+				if (v != null)
+					prep.setString(i+1, v);
+				else
+					prep.setNull(i+1, java.sql.Types.VARCHAR);
+			}
+			if (whereArgs != null)
+			{
+				final int offset = 1 + fv.length;
+				for (int i = 0; i < whereArgs.length; ++i)
+				{
+					final String v = whereArgs[i];
+					if (v != null)
+						prep.setString(i + offset, v);
+					else
+						prep.setNull(i + offset, java.sql.Types.VARCHAR);
+				}
+			}
+			prep.executeUpdate();
+		} catch (SQLException e) {
+			IllegalStateException ise
+				= new IllegalStateException("error: " + e.getClass() + ":" + e.getMessage());
+			ise.initCause(e);
+			throw ise;
+		}
+	}
+
 	public void updateField(final String tabname, final String kf, final String kv, final String fn, final String fv)
 	    throws IllegalStateException
 	{

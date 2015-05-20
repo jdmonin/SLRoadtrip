@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010-2011,2014 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2011,2014-2015 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -283,11 +283,13 @@ public interface RDBAdapter
 
 	/**
 	 * Update fields of an existing row in a table, by id.
-	 * @param tabname  Table to update
+	 * @param tabname  Table to update; not null
 	 * @param id  Primary key "_id" value
-	 * @param fn  Field names
+	 * @param fn  Field names to update; not null
 	 * @param fv  Field values, in the same field order as <tt>fn[]</tt>.
 	 *          May contain nulls.
+	 *          Int field values can be included in this String array,
+	 *          because sqlite is lax about column types.
 	 * @throws IllegalStateException if conn has been closed, table not found, etc.
 	 * @throws IllegalArgumentException if fn.length != fv.length
 	 */
@@ -296,12 +298,14 @@ public interface RDBAdapter
 
 	/**
 	 * Update fields of an existing row in a table, by string key field.
-	 * @param tabname  Table to update
-	 * @param kf  Key fieldname
+	 * @param tabname  Table to update; not null
+	 * @param kf  Key fieldname; not null
 	 * @param kv  Key value
-	 * @param fn  Field names to update
+	 * @param fn  Field names to update; not null
 	 * @param fv  Field values, in the same field order as <tt>fn[]</tt>.
 	 *          May contain nulls.
+	 *          Int field values can be included in this String array,
+	 *          because sqlite is lax about column types.
 	 * @throws IllegalStateException if conn has been closed, table not found, etc.
 	 * @throws IllegalArgumentException if fn.length != fv.length
 	 */
@@ -309,8 +313,30 @@ public interface RDBAdapter
 	    throws IllegalStateException, IllegalArgumentException;
 
 	/**
+	 * Update fields of an existing row in a table, using a {@code where} clause.
+	 * @param tabname  Table to update; not null
+	 * @param where  {@code Where} clause, or null to update all rows; may contain {@code ?} which will be
+	 *       filled from {@code whereArgs} contents, as with PreparedStatements.
+	 *       Do not include the "where" keyword.
+	 * @param whereArgs  Strings to bind against each {@code ?} in {@code where},
+	 *       or null if {@code where} has none of those. May contain nulls.
+	 *       Int field args can be included in this String array,
+	 *       because sqlite is lax about column types.
+	 *       Must be same length as the number of {@code ?} placeholders.
+	 * @param fn  Field names to update
+	 * @param fv  Field values, in the same field order as {@code fn[]}.
+	 *       May contain nulls. Int field values can be included in this String array.
+	 * @throws IllegalStateException if conn has been closed, table not found, etc.
+	 * @throws IllegalArgumentException if fn is null or fn.length != fv.length
+	 * @since 0.9.50
+	 */
+	public void update
+	    (final String tabname, final String where, final String[] whereArgs, final String[] fn, final String[] fv)
+	    throws IllegalStateException, IllegalArgumentException;
+
+	/**
 	 * Update a field in an existing row in a table, given a string-type key field name.
-	 * @param tabname  Table to update
+	 * @param tabname  Table to update; not null
 	 * @param kf  Key fieldname
 	 * @param kv  Key value
 	 * @param fn  Field name to update

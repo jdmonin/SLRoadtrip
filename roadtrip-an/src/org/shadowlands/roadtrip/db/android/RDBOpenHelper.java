@@ -568,6 +568,25 @@ public class RDBOpenHelper
 			// TODO chk retcode/exceptions?	
 	}
 
+	public void update
+	    (final String tabname, final String where, final String[] whereArgs, final String[] fn, final String[] fv)
+	    throws IllegalStateException, IllegalArgumentException
+	{
+		if (fn == null)
+			throw new IllegalArgumentException("null fn");
+		if (fn.length != fv.length)
+			throw new IllegalArgumentException("length mismatch");
+
+		if (db == null)
+			db = getWritableDatabase();  // TODO chk exceptions
+
+		ContentValues cv = new ContentValues();
+		for (int i = 0; i < fn.length; ++i)
+			cv.put(fn[i], fv[i]);
+		db.update(tabname, cv, where, whereArgs);
+			// TODO chk retcode/exceptions?
+	}
+
 	public void updateField(final String tabname, final String kf, final String kv, final String fn, final String fv)
 	    throws IllegalStateException
 	{

@@ -31,8 +31,10 @@ import java.awt.event.KeyListener;
 import java.text.DecimalFormat;
 import java.text.ParseException;
 import java.util.Date;
+import java.util.Vector;
 
 import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
@@ -42,6 +44,10 @@ import javax.swing.JTextField;
 import javax.swing.KeyStroke;
 import javax.swing.SwingConstants;
 
+import org.shadowlands.roadtrip.db.Person;
+import org.shadowlands.roadtrip.db.RDBAdapter;
+import org.shadowlands.roadtrip.db.RDBRecord;
+import org.shadowlands.roadtrip.db.VehicleMake;
 import org.shadowlands.roadtrip.util.RTRDateTimeFormatter;
 
 /**
@@ -82,6 +88,13 @@ public class MultiInputDialog
 	 */
 	public static final int F_TIMESTAMP = 5;
 
+	/**
+	 * {@link VehicleMake} field type; shows a {@link JComboBox}.
+	 * The selected VehicleMake ID is given and returned as a string
+	 * to fit the dialog's "set of string inputs" model.
+	 */
+	public static final int F_DB_VEHICLEMAKE = 6;
+
 	/** Field type flags mask; all flag bits are within this mask. */
 	public static final int F_FLAGS_MASK    = 0xFF000000;
 
@@ -104,7 +117,7 @@ public class MultiInputDialog
 
 	/**
 	 * Initially set from constructor's passed-in <tt>vals[]</tt>.
-	 * Read from input textfields during {@link #clickOK()}.
+	 * Read from {@link #inputTexts}[] fields during {@link #clickOK()}.
 	 * Any null elements represent 0-length strings.
 	 * Each element here is raw, not formatted; field type map is {@link #ftypes}[].
 	 */
@@ -135,11 +148,15 @@ public class MultiInputDialog
 	/** Cancel button, Close if {@link #isReadOnly} */
 	private JButton cancel;
 
-	/** Input textfields; elements are null if {@link #isReadOnly} */
-	private JTextField[] inputTexts;
+	/**
+	 * Input fields which will be copied to {@link #inputs}[]; elements are null if {@link #isReadOnly}.
+	 * Elements are {@link JTextField} unless their field type calls for another type,
+	 * which will be mentioned in the field type javadoc ({@link #F_DB_VEHICLEMAKE}, etc).
+	 */
+	private JComponent[] inputTexts;
 
 	/**
-	 * Our date and time format, for {@link FieldType#F_TIMESTAMP}.
+	 * Our date and time format, for {@link #F_TIMESTAMP}.
 	 * May be null; initialized in constructor.
 	 * @since 0.9.43
 	 */
@@ -163,6 +180,8 @@ public class MultiInputDialog
 	 * @param vals  Initial values for each field, or null; may contain nulls.
 	 *              Note that no reference to <tt>vals</tt> is kept in this object,
 	 *              although its string contents may be copied.
+	 * @param db  DB connection to use for retrieving dropdown lists (all vehicle makes, all drivers, etc)
+	 *     as needed by field types ({@link #F_DB_VEHICLEMAKE, etc).
 	 * @param isReadOnly  If true, show the fields as read-only; dialog has Close button and no OK/Continue button
 	 * @throws HeadlessException  if GraphicsEnvironment.isHeadless()
 	 * @throws IllegalArgumentException if fieldnames.length < 1,
@@ -171,7 +190,8 @@ public class MultiInputDialog
 	 */
     public MultiInputDialog
         (JFrame owner, final String title, final String prompt,
-         final String[] fieldnames, final int[] fieldtypes, final String[] vals, final boolean isReadOnly)
+         final String[] fieldnames, final int[] fieldtypes, final String[] vals,
+         final RDBAdapter db, final boolean isReadOnly)
         throws HeadlessException, IllegalArgumentException
     {
     	super(owner, title, true);  // modal == true
@@ -195,7 +215,7 @@ public class MultiInputDialog
     	this.isReadOnly = isReadOnly;
     	inputsOK = false;
     	anyChanges = false;
-    	createAndPackLayout(prompt, fieldnames, vals);
+    	createAndPackLayout(prompt, fieldnames, vals, db);
     }
 
     /** Did the user hit Continue? (not Cancel or Close Window) */
@@ -221,8 +241,11 @@ public class MultiInputDialog
      * @param prompt Text to display above fields, or null
      * @param fieldnames Field name strings; one field is created per fieldname.
      * @param vals  Initial values per field, or nulls, same as constructor
+     * @param db  DB connection to use for retrieving dropdown lists (all vehicle makes, all drivers, etc)
+     *     as needed by field types ({@link #F_DB_VEHICLEMAKE, etc).
      */
-    private void createAndPackLayout(final String prompt, final String[] fieldnames, final String[] vals)
+    private void createAndPackLayout
+	(final String prompt, final String[] fieldnames, final String[] vals, final RDBAdapter db)
     {
     	JLabel txt;  // this variable is reused during loops here 
 
@@ -252,18 +275,22 @@ public class MultiInputDialog
 	final char decimalSep = new DecimalFormat().getDecimalFormatSymbols().getDecimalSeparator();
 		// for odometers; java 1.5, android API 8 don't have DecimalFormatSymbols.getInstance()
 
-    	inputTexts = new JTextField[fieldnames.length];
+    	inputTexts = new JComponent[fieldnames.length];
     	for (int i = 0; i < fieldnames.length; ++i)
     	{
     		String val = (vals != null) ? vals[i] : null;
-    		final JComponent valComp;
-		if (val != null)
-		{
-			// This is simple basic transformation for development versions; not user-friendly yet.
+    		JComponent valComp = null;
 
-			switch (ftypes[i] & ~F_FLAGS_MASK)
+		// Some field types will create a certain component type.
+		// For the rest, a new JTextfield containing val will be created.
+		// Some string field types (like F_ODOMETER) need val to be formatted for display;
+		// this is simple basic string transformation for development versions; not user-friendly yet.
+
+		switch (ftypes[i] & ~F_FLAGS_MASK)
+		{
+		case F_ODOMETER:
+			if (val != null)
 			{
-			case F_ODOMETER:
 				final int L = val.length();
 				StringBuilder sb = new StringBuilder();
 				if (L < 2)
@@ -280,9 +307,12 @@ public class MultiInputDialog
 					sb.append(val.charAt(L-1));
 				}
 				val = sb.toString();
-				break;
+			}
+			break;
 
-			case F_TIMESTAMP:
+		case F_TIMESTAMP:
+			if (val != null)
+			{
 				if (dtf == null)
 					dtf = new RTRDateTimeFormatter();
 				final long tstamp = 1000L * Long.parseLong(val);
@@ -290,21 +320,31 @@ public class MultiInputDialog
 					val = "";
 				else
 					val = dtf.formatDateTime(tstamp);
-				break;
+			}
+			break;
+
+		case F_DB_VEHICLEMAKE:
+			valComp = createObjComboBox(val, VehicleMake.getAll(db));  // null if no VehMakes
+		}
+
+		if (valComp == null)
+		{
+			if (! isReadOnly)
+			{
+				JTextField tf = new JTextField(20);
+				if (val != null)
+					tf.setText(val);
+				tf.addKeyListener(this);     // for ESC/ENTER
+				valComp = tf;
+			} else {
+				valComp = (val != null) ? new JLabel(val) : new JLabel();
 			}
 		}
 
-    		if (! isReadOnly)
-    		{
-    			JTextField tf = new JTextField(20);
-    			if (val != null)
-    				tf.setText(val);
-    			tf.addKeyListener(this);     // for ESC/ENTER
-    			inputTexts[i] = tf;
-    			valComp = tf;
-    		} else {
-    			valComp = (val != null) ? new JLabel(val) : new JLabel();
-    		}
+		if (isReadOnly)
+			valComp.setEnabled(false);
+		else
+			inputTexts[i] = valComp;
 
     		txt = new JLabel(fieldnames[i], SwingConstants.TRAILING);  // right-aligned
     		txt.setLabelFor(valComp);
@@ -359,7 +399,42 @@ public class MultiInputDialog
         pack();
     }
 
-    /**
+	/**
+	 * Given a list of items from the database, and optionally a currently selected item ID,
+	 * create a {@link JComboBox}. Used in {@link #createAndPackLayout(String, String[], String[], RDBAdapter)}.
+	 * @param curr Current ID, from Integer.toString because that's how it's passed to constructor, or null
+	 * @param all All items to show in the combo box. These have been retrieved from the database
+	 *     with a call like {@code Vehicle.getAll(..)} and should each have unique {@link RDBRecord#getID()}s.
+	 * @return The new combo box, or null if {@code all} is null or empty
+	 * @since 0.9.43
+	 */
+	private JComponent createObjComboBox(final String curr, final Vector<? extends RDBRecord> all)
+	{
+		if ((all == null) || all.isEmpty())
+			return null;
+
+		int currID = 0;
+		try {
+			if ((curr != null) && ! curr.isEmpty())
+				currID = Integer.parseInt(curr);
+		} catch (NumberFormatException e) {}
+
+		JComboBox dropdown = new JComboBox(all);
+		dropdown.setEditable(false);
+		for (int i = all.size() - 1; i>=0; --i)
+		{
+			final RDBRecord r = all.get(i);
+			if (currID == r.getID())
+			{
+				dropdown.setSelectedItem(r);
+				break;
+			}
+		}
+
+		return dropdown;
+	}
+
+/**
      * Show the dialog (modal) and wait for the user to type their inputs
      * and hit the "Continue" button or the "Cancel" button.
      * Closing the dialog is treated as Cancel.
@@ -394,11 +469,31 @@ public class MultiInputDialog
 
 		for (int i = 0; i < inputTexts.length; ++i)
 		{
-			String it = inputTexts[i].getText().trim();
-			final int L = it.length();
-			if (L > 0)
+			Object item = null;
+			JComponent ifield = inputTexts[i];
+			if (ifield instanceof JTextField)
+			{
+				String it = ((JTextField) inputTexts[i]).getText().trim();
+				if (! it.isEmpty())
+					item = it;
+			}
+			else if (ifield instanceof JComboBox)
+			{
+				item = ((JComboBox) ifield).getSelectedItem();
+			}
+
+			if (item != null)
 			{
 				allEmpty = false;
+
+				String it;
+				if (item instanceof String)
+					it = (String) item;
+				else if (item instanceof RDBRecord)
+					it = Integer.toString(((RDBRecord) item).getID());
+				else
+					it = null;
+				final int L = (it != null) ? it.length() : 0;
 
 				// Parse any formatted fields, take others with their current value.
 				// This is simple basic transformation for development versions; not user-friendly yet.
@@ -475,7 +570,9 @@ public class MultiInputDialog
 
 		if (problemMsg != null)
 		{
-			inputTexts[problemFld].requestFocusInWindow();
+			final JComponent prFldCompo = inputTexts[problemFld];
+			if (prFldCompo != null)
+				prFldCompo.requestFocusInWindow();
 			JOptionPane.showMessageDialog
 				(getOwner(), fnames[problemFld] + ": " + problemMsg, null, JOptionPane.ERROR_MESSAGE);
 			return;  // <---- Problems found ----

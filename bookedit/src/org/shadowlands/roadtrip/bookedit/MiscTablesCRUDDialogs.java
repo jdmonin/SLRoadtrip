@@ -74,7 +74,7 @@ public abstract class MiscTablesCRUDDialogs
 		 */
 		MultiInputDialog mid = new MultiInputDialog
 		    (owner, "Person information", "Information about this person",
-		     labels, FTYPES_DIA_PERSON, vals, isReadOnly);
+		     labels, FTYPES_DIA_PERSON, vals, conn, isReadOnly);
 		if (! mid.showAndWait())
 			return null;  // <--- Cancel button ---
 
@@ -102,7 +102,7 @@ public abstract class MiscTablesCRUDDialogs
 	{
 		MultiInputDialog.F_STRING, MultiInputDialog.F_BOOL,
 		MultiInputDialog.F_INT | MultiInputDialog.F_FLAG_REQUIRED,  // TODO FK to person(driver)
-		MultiInputDialog.F_INT | MultiInputDialog.F_FLAG_REQUIRED,  // TODO FK to vehiclemake
+		MultiInputDialog.F_DB_VEHICLEMAKE | MultiInputDialog.F_FLAG_REQUIRED,
 		MultiInputDialog.F_STRING, MultiInputDialog.F_INT | MultiInputDialog.F_FLAG_REQUIRED,
 		MultiInputDialog.F_TIMESTAMP, MultiInputDialog.F_TIMESTAMP,
 		MultiInputDialog.F_STRING, MultiInputDialog.F_STRING,
@@ -127,7 +127,7 @@ public abstract class MiscTablesCRUDDialogs
 	{
 		// keep arrays congruent: labels[], FTYPES_DIA_VEHICLE[], vals[]
 		final String[] labels =
-			{ "Nickname", "Active?", "DriverID", "MakeID", "Model", "Year", "Owned from", "Owned to",
+			{ "Nickname", "Active?", "DriverID", "Make", "Model", "Year", "Owned from", "Owned to",
 			  "VIN", "License plate/tag", "Original odometer", "Current odometer", "Comment" };
 		String[] vals = new String[13];
 		if (v != null)
@@ -155,7 +155,7 @@ public abstract class MiscTablesCRUDDialogs
 		 */
 		MultiInputDialog mid = new MultiInputDialog
 		    (owner, "Vehicle information", "Information about this vehicle",
-		     labels, FTYPES_DIA_VEHICLE, vals, isReadOnly);
+		     labels, FTYPES_DIA_VEHICLE, vals, conn, isReadOnly);
 		if (! mid.showAndWait())
 			return null;  // <--- Cancel button ---
 
@@ -167,9 +167,13 @@ public abstract class MiscTablesCRUDDialogs
 		if (v == null)
 		{
 			// TODO check ownerIfNew vs driverID in vals[2]
+			final int date_from = (vals[6] != null) ? Integer.parseInt(vals[6]) : 0,
+			          date_to = (vals[7] != null) ? Integer.parseInt(vals[7]) : 0,
+			          odo_orig = (vals[10] != null) ? Integer.parseInt(vals[10]) : 0,
+			          odo_curr = (vals[11] != null) ? Integer.parseInt(vals[11]) : 0;
 			v = new Vehicle
-			    (vals[0], ownerIfNew, Integer.parseInt(vals[3]), vals[4], Integer.parseInt(vals[5]), Integer.parseInt(vals[6]),
-			     Integer.parseInt(vals[7]), vals[8], vals[9], Integer.parseInt(vals[10]), Integer.parseInt(vals[11]), vals[12]);
+			    (vals[0], ownerIfNew, Integer.parseInt(vals[3]), vals[4], Integer.parseInt(vals[5]),
+			     date_from, date_to, vals[8], vals[9], odo_orig, odo_curr, vals[12]);
 			v.setActive(isActive);
 			v.insert(conn);
 		} else if (mid.isChanged())

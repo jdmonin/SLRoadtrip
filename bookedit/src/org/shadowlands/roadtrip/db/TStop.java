@@ -19,6 +19,7 @@
 
 package org.shadowlands.roadtrip.db;
 
+import java.util.List;
 import java.util.Vector;
 
 /**
@@ -81,6 +82,9 @@ public class TStop extends RDBRecord
     /** {@code max(_id)} for use in {@link #readPreviousTStopWithinTrip(RDBAdapter, Trip, TStop)} */
     private static final String MAX_FIELD_ID = "max(_id)";
 
+    /** Where-clause {@code tripid=? and _id<>? } for use in {@link #tripUpdateTStopsGeoArea(Trip, TStop, List)} */
+    private static final String WHERE_TRIPID_AND_NOT_TSTOPID = FIELD_TRIPID + " = ? AND _id <> ?";
+
     /** db table fields.
      * The "descr" field is now used for the "location" of the stop.
      * @see #buildInsertUpdate()
@@ -94,8 +98,9 @@ public class TStop extends RDBRecord
 	    { FIELD_TRIPID, FIELD_ODO_TOTAL, "odo_trip", FIELD_TIME_STOP, "time_continue",
     	  FIELD_LOCID, "a_id", "geo_lat", "geo_lon", "flag_sides",
 		  "descr", "via_route", "via_id", "comment", "_id" };
-    private final static String[] FIELD_TIME_CONTINUE_ARR =
-    	{ "time_continue" };
+    private final static String[] FIELD_TIME_CONTINUE_ARR = { "time_continue" };
+    /** Field array with only the GeoArea ID field: { {@code "a_id"} } */
+    private final static String[] FIELD_AREA_ID_ARR = { "a_id" };
 
     /** Maximum length (255) of comment field. */
     public static final int MAXLEN = 255;  // The value 255 is also hardcoded into trip_tstop_entry.xml
@@ -1046,6 +1051,60 @@ public class TStop extends RDBRecord
 			return ts.odo_trip;
 		}
 		return -1;  // Unexpected location for previous tstop
+	}
+
+	/**
+	 * For converting a local trip to a roadtrip, update its TStops' {@link GeoArea} field ({@code a_id}).
+	 * In local trips this field is null; when converting to roadtrip, all previous stops must be
+	 * updated to the trip's starting geoarea {@link Trip#getAreaID()}.
+	 *<P>
+	 * The trip's newest TStop {@code tsExcept} is the one that caused it to be converted:
+	 * This TStop is already in a different geoarea, or not in any geoarea.  Its {@code a_id} field
+	 * will not be changed by this method.
+	 *<P>
+	 * Most trips begin at the previous trip's ending TStop. That shared TStop has the previous trip's
+	 * {@code tripid} and will not be updated by this method. Its {@code a_id} would be null for a local
+	 * previous trip, but in a roadtrip null {@code a_id} means the stop isn't in any geoarea.
+	 * Code which looks at the start of a roadtrip knows to ignore the shared TStop's {@code a_id}
+	 * and use {@link Trip#getAreaID()} for the trip's starting geoarea.
+	 *<P>
+	 * Not public; package access for use by {@link Trip#convertLocalToRoadtrip(TStop)} only.
+	 *
+	 * @param trip  Update area of TStops which have this trip ID, using this trip's db connection
+	 * @param tsExcept  Trip's newest TStop: Will not change this TStop's GeoArea field
+	 * @param cachedStops  Null, or for convenience a list of cached stops whose GeoArea should be updated.
+	 *     Assumed to be part of {@code trip}, this method does not check their {@link #getTripID()}s.
+	 *     Will skip updating any cached stop whose ID is {@link TStop#getID() tsExcept.getID()}
+	 * @throws NullPointerException if {@code trip} or {@code tsExcept} is null, or if {@code trip} isn't committed
+	 * @since 0.9.50
+	 */
+	static void tripUpdateTStopsGeoArea
+		(final Trip trip, final TStop tsExcept, final List<TStop> cachedStops)
+		throws NullPointerException
+	{
+		final int newAreaID = trip.getAreaID();
+		final int exceptTSID = tsExcept.getID();
+
+		final String[] whereArgs = { Integer.toString(trip.getID()), Integer.toString(exceptTSID) };
+		final String[] fv = { Integer.toString(newAreaID) };
+		trip.dbConn.update(TABNAME, WHERE_TRIPID_AND_NOT_TSTOPID, whereArgs, FIELD_AREA_ID_ARR, fv);
+
+		if (cachedStops != null)
+		{
+			// Don't use iterator, to avoid unlikely ConcurrentModificationException:
+			// this cache update is just for convenience and can accept problems,
+			// shouldn't cause any.
+
+			final int L = cachedStops.size();
+			for (int i = 0; i < L; ++i)
+			{
+				TStop ts = cachedStops.get(i);
+				if ((exceptTSID == ts.id) || (newAreaID == ts.areaid))
+					continue;
+
+				ts.areaid = newAreaID;
+			}
+		}
 	}
 
 	/**

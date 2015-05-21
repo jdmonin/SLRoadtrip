@@ -24,6 +24,9 @@ import java.util.Vector;
  * In-memory representation, and database access for, a Trip.
  * Trips can be local within a {@link GeoArea}, or a "roadtrip" between areas.
  * See schema file and its comments for details.
+ * An ongoing local trip can be converted to a roadtrip with {@link #convertLocalToRoadtrip(TStop)}.
+ * A roadtrip which never left its starting area will be converted to a local trip by
+ * {@code VehSettings.endCurrentTrip}, see end of this javadoc section for details.
  *<P>
  * Several static methods of this class select trips from the
  * database by different criteria, see method list for details.
@@ -38,11 +41,11 @@ import java.util.Vector;
  * same odo_total as the trip's odo_start, and null time_stop.
  * (See {@link #readStartTStop(boolean)})
  *<P>
- * Ending location: Taken from the {@link #isEnded() completed trip}'s highest tstop id.
+ * Ending location: Taken from the {@link #isEnded() completed trip}'s highest TStop id.
  * (See {@link #readLatestTStop()})
  *<P>
  * To end a trip, call {@link VehSettings#endCurrentTrip(RDBAdapter, Vehicle, int, int, int, TripCategory, int)}.
- * If all of a roadtrip's tstops are in its starting GeoArea, it will be converted to a local trip when ended.
+ * If all of a roadtrip's TStops are in its starting GeoArea, that method will convert it to a local trip.
  *
  * @author jdmonin
  */
@@ -1362,6 +1365,56 @@ public class Trip extends RDBRecord
 
 		// Finally, delete the trip
 		this.delete();
+	}
+
+	/**
+	 * Convert a local trip to a roadtrip, based on a newly added {@link TStop}
+	 * outside the trip's {@link GeoArea}, and update the database.
+	 *<P>
+	 * Since it's a local trip, its previous {@link TStop}s (if any) are all in its
+	 * starting area ({@link #getAreaID()}). A new {@code TStop} has just been added,
+	 * which is in a different area or not in any area.
+	 *<P>
+	 * When calling this method, {@code newOtherAreaStop} must already be committed
+	 * to the db, and this trip must have been inserted already and have a {@link #getID()},
+	 * but the trip record's fields may have uncommitted changes. Those will be committed
+	 * by this method along with the geoarea fields.
+	 *<P>
+	 * This method updates the trip by setting a proposed {@link #getRoadtripEndAreaID()}
+	 * from {@code newOtherAreaStop}'s area if any, otherwise from {@link #getAreaID()}.
+	 * It sets the geoarea field of the trip's other TStops to the starting area
+	 * without changing {@code newOtherAreaStop}'s geoarea.  These updates are
+	 * immediately committed to the db.
+	 *
+	 * @param newOtherAreaStop Newest stop of the trip, this stop is in a different geoarea.
+	 *     Must already be committed to the db.
+	 * @throws IllegalStateException if this trip is already a roadtrip
+	 * @throws IllegalArgumentException  If {@code newOtherAreaStop} is not yet committed to DB
+	 *     or is in this trip's starting geoarea {@link #getAreaID()}
+	 * @throws NullPointerException if {@code newOtherAreaStop} is null
+	 * @since 0.9.50
+	 */
+	public void convertLocalToRoadtrip(final TStop newOtherAreaStop)
+		throws IllegalStateException, IllegalArgumentException, NullPointerException
+	{
+		if (isRoadtrip())
+			throw new IllegalStateException("trip is already a roadtrip");
+		if (newOtherAreaStop.getID() <= 0)
+			throw new IllegalArgumentException("newStop.id not committed");
+
+		int endAreaID = newOtherAreaStop.getAreaID();
+		if (endAreaID == a_id)
+			throw new IllegalArgumentException("newStop is in starting area id " + endAreaID);
+		if (endAreaID == 0)
+			endAreaID = a_id;
+
+		roadtrip_end_aid = endAreaID;
+		dirty = true;
+
+		// update the TStops, then commit the changed trip data.
+		// TODO add transaction support
+		TStop.tripUpdateTStopsGeoArea(this, newOtherAreaStop, allStops);
+		commit();
 	}
 
 	/**

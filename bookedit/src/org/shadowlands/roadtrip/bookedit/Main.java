@@ -116,6 +116,12 @@ public class Main
 		private JPanel btns;
 		private JButton bNew, bOpen, bOpenBackup, bExit;
 
+		/**
+		 * Current directory from opening a file with {@link JFileChooser}, or null if no file chosen yet.
+		 * Used when calling {@link #chooseFile(boolean, boolean)} again.
+		 */
+		private File prevFileOpenDir;
+
 		public StartupChoiceFrame()
 		{
 			super("BookEdit: Choose File or Backup");
@@ -187,12 +193,20 @@ public class Main
 			}
 		}
 
-		/** return the chosen file, or null if nothing was chosen */
+		/**
+		 * Show a {@link JFileChooser} to browse and Open or Save a logbook file.
+		 * @param notNew  True for Open existing, false for Save new file
+		 * @param forBackups  True to open logbook read-only, false to open for editing
+		 * @return the chosen file, or null if nothing was chosen
+		 */
 		private File chooseFile(final boolean notNew, final boolean forBackups)
 		{
 			// TODO respect forBackups
 			// TODO filtering: setFileFilter, addChoosableFileFilter, etc
 			final JFileChooser fc = new JFileChooser();
+			if (prevFileOpenDir != null)
+				fc.setCurrentDirectory(prevFileOpenDir);
+
 			int returnVal;
 			if (notNew)
 				returnVal = fc.showOpenDialog(this);
@@ -200,8 +214,10 @@ public class Main
 				returnVal = fc.showSaveDialog(this);
 			if (returnVal != JFileChooser.APPROVE_OPTION)
 				return null;
+
 			File file = fc.getSelectedFile();
 			System.out.println("file path: " + file.getAbsolutePath());
+			prevFileOpenDir = fc.getCurrentDirectory();  // for next time
 			return file;
 		}
 

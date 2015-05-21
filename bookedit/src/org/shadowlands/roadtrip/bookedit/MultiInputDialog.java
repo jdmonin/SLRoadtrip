@@ -90,10 +90,18 @@ public class MultiInputDialog
 
 	/**
 	 * {@link VehicleMake} field type; shows a {@link JComboBox}.
-	 * The selected VehicleMake ID is given and returned as a string
+	 * The selected VehicleMake ID is given and returned as a string,
 	 * to fit the dialog's "set of string inputs" model.
 	 */
 	public static final int F_DB_VEHICLEMAKE = 6;
+
+	/**
+	 * Driver ({@link Person}) field type; shows a {@link JComboBox}
+	 * containing all people having the {@code is_driver} flag set.
+	 * The selected Person ID is given and returned as a string,
+	 * to fit the dialog's "set of string inputs" model.
+	 */
+	public static final int F_DB_PERSON_DRIVER = 7;
 
 	/** Field type flags mask; all flag bits are within this mask. */
 	public static final int F_FLAGS_MASK    = 0xFF000000;
@@ -325,6 +333,11 @@ public class MultiInputDialog
 
 		case F_DB_VEHICLEMAKE:
 			valComp = createObjComboBox(val, VehicleMake.getAll(db));  // null if no VehMakes
+			break;
+
+		case F_DB_PERSON_DRIVER:
+			valComp = createObjComboBox(val, Person.getAll(db, true));  // null if no drivers (people)
+			break;
 		}
 
 		if (valComp == null)
@@ -424,6 +437,41 @@ public class MultiInputDialog
 		for (int i = all.size() - 1; i>=0; --i)
 		{
 			final RDBRecord r = all.get(i);
+			if (currID == r.getID())
+			{
+				dropdown.setSelectedItem(r);
+				break;
+			}
+		}
+
+		return dropdown;
+	}
+
+	/**
+	 * Given a list of items from the database, and optionally a currently selected item ID,
+	 * create a {@link JComboBox}. Used in {@link #createAndPackLayout(String, String[], String[], RDBAdapter)}.
+	 * @param curr Current ID, from Integer.toString because that's how it's passed to constructor, or null
+	 * @param all All items to show in the combo box. These have been retrieved from the database
+	 *     with a call like {@code Vehicle.getAll(..)} and should each have unique {@link RDBRecord#getID()}s.
+	 * @return The new combo box, or null if {@code all} is null or empty
+	 * @since 0.9.43
+	 */
+	private JComponent createObjComboBox(final String curr, final RDBRecord[] all)
+	{
+		if ((all == null) || all.length == 0)
+			return null;
+
+		int currID = 0;
+		try {
+			if ((curr != null) && ! curr.isEmpty())
+				currID = Integer.parseInt(curr);
+		} catch (NumberFormatException e) {}
+
+		JComboBox dropdown = new JComboBox(all);
+		dropdown.setEditable(false);
+		for (int i = all.length - 1; i>=0; --i)
+		{
+			final RDBRecord r = all[i];
 			if (currID == r.getID())
 			{
 				dropdown.setSelectedItem(r);

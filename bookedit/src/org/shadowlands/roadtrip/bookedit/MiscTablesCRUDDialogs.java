@@ -101,7 +101,7 @@ public abstract class MiscTablesCRUDDialogs
 	private static final int[] FTYPES_DIA_VEHICLE =
 	{
 		MultiInputDialog.F_STRING, MultiInputDialog.F_BOOL,
-		MultiInputDialog.F_INT | MultiInputDialog.F_FLAG_REQUIRED,  // TODO FK to person(driver)
+		MultiInputDialog.F_DB_PERSON_DRIVER | MultiInputDialog.F_FLAG_REQUIRED,
 		MultiInputDialog.F_DB_VEHICLEMAKE | MultiInputDialog.F_FLAG_REQUIRED,
 		MultiInputDialog.F_STRING, MultiInputDialog.F_INT | MultiInputDialog.F_FLAG_REQUIRED,
 		MultiInputDialog.F_TIMESTAMP, MultiInputDialog.F_TIMESTAMP,
@@ -127,7 +127,7 @@ public abstract class MiscTablesCRUDDialogs
 	{
 		// keep arrays congruent: labels[], FTYPES_DIA_VEHICLE[], vals[]
 		final String[] labels =
-			{ "Nickname", "Active?", "DriverID", "Make", "Model", "Year", "Owned from", "Owned to",
+			{ "Nickname", "Active?", "Main Driver", "Make", "Model", "Year", "Owned from", "Owned to",
 			  "VIN", "License plate/tag", "Original odometer", "Current odometer", "Comment" };
 		String[] vals = new String[13];
 		if (v != null)

@@ -785,12 +785,17 @@ public class TripTStopEntry extends Activity
 
 			// Look up and show current geoarea name
 			TextView tv = (TextView) findViewById(R.id.trip_tstop_area_local_value);
-			if ((tv != null) && (areaLocs_areaID > 0))
+			if (tv != null)
 			{
-				try {
-					GeoArea ga = new GeoArea(db, areaLocs_areaID);
-					tv.setText(ga.getName());
-				} catch (Exception e) {}  // ignore: display only, and inconsistency should not occur
+				int aID = (currT.isRoadtrip()) ? areaLocs_areaID : currT.getAreaID();
+					// for local trips, areaLocs_areaID may be 0 if stopped
+				if (aID > 0)
+				{
+					try {
+						GeoArea ga = new GeoArea(db, aID);
+						tv.setText(ga.getName());
+					} catch (Exception e) {}  // very unlikely, ignore: used for display only
+				}
 			}
 		}
 	}

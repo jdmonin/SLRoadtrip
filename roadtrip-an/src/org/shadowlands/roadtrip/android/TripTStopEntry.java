@@ -136,9 +136,11 @@ public class TripTStopEntry extends Activity
 	 * the areaID of locations in {@link #areaLocs}, or -1.
 	 * For roadtrips, also the currently selected area ID of
 	 * {@link #rbRoadtripArea_chosen}.
-	 * 0 is used for all local trips.
 	 * Geoarea id 0 is OK for tstops/locations within a roadtrip, but not
 	 * for the start or end tstop/location.
+	 *<P>
+	 * In local trips, each stop's {@link TStop#getAreaID()} will be 0.
+	 * {@code areaLocs_areaID} is not 0, is {@link Trip#getAreaID()} during local trips.
 	 */
 	private int areaLocs_areaID;
 
@@ -668,7 +670,11 @@ public class TripTStopEntry extends Activity
 		{
 			if (currTS != null)
 			{
-				areaLocs_areaID = currTS.getAreaID();
+				if (currT.isRoadtrip())
+					areaLocs_areaID = currTS.getAreaID();
+				else
+					// get geoarea from trip: local currTS will have 0 (unused field)
+					areaLocs_areaID = currT.getAreaID();
 			}
 			else if ((prevLocObj != null) && currT.isRoadtrip() && ! stopEndsTrip)
 			{
@@ -679,14 +685,15 @@ public class TripTStopEntry extends Activity
 					areaLocs_areaID = pArea;
 			}
 		}
+
 		if (areaLocs_areaID == -1)
 		{
 			if (! stopEndsTrip)
 			{
 				areaLocs_areaID = currA.getID();
 			} else {
-				areaLocs_areaID = currT.getRoadtripEndAreaID();
-				if (areaLocs_areaID == 0)  // rtrEndAreaID is 0 for local trips
+				areaLocs_areaID = currT.getRoadtripEndAreaID();  // will be 0 for local trips
+				if (areaLocs_areaID == 0)  // can't end trip in geoarea 0
 					areaLocs_areaID = currA.getID();
 			}
 		}
@@ -785,17 +792,12 @@ public class TripTStopEntry extends Activity
 
 			// Look up and show current geoarea name
 			TextView tv = (TextView) findViewById(R.id.trip_tstop_area_local_value);
-			if (tv != null)
+			if ((tv != null) && (areaLocs_areaID > 0))
 			{
-				int aID = (currT.isRoadtrip()) ? areaLocs_areaID : currT.getAreaID();
-					// for local trips, areaLocs_areaID may be 0 if stopped
-				if (aID > 0)
-				{
-					try {
-						GeoArea ga = new GeoArea(db, aID);
-						tv.setText(ga.getName());
-					} catch (Exception e) {}  // very unlikely, ignore: used for display only
-				}
+				try {
+					GeoArea ga = new GeoArea(db, areaLocs_areaID);
+					tv.setText(ga.getName());
+				} catch (Exception e) {}  // very unlikely, ignore: used for display only
 			}
 		}
 	}
@@ -1586,8 +1588,8 @@ public class TripTStopEntry extends Activity
 			{
 				areaLocs_areaID = currA.getID();
 			} else {
-				areaLocs_areaID = currT.getRoadtripEndAreaID();
-				if (areaLocs_areaID == 0)  // rtrEndAreaID is 0 for local trips
+				areaLocs_areaID = currT.getRoadtripEndAreaID();  // will be 0 for local trips
+				if (areaLocs_areaID == 0)  // can't end trip in geoarea 0
 					areaLocs_areaID = currA.getID();
 			}
 		}
@@ -1833,9 +1835,12 @@ public class TripTStopEntry extends Activity
 			= (areaLocs_areaID > 0) && (! currT.isRoadtrip())
 			  && (areaLocs_areaID != currT.getAreaID());
 
+			// note: the following code assumes wantsConvertLocalToRoadtrip implies areaLocs_areaID > 0
+
 		if (! isCurrentlyStopped)
 		{
 			// Create a new TStop; set tsid (not currTS).
+
 			int areaID;  // geoarea of new tstop
 			if (stopEndsTrip)
 			{
@@ -1858,6 +1863,7 @@ public class TripTStopEntry extends Activity
 			else if ((areaLocs_areaID != -1)
 				 && (currT.isRoadtrip() || wantsConvertLocalToRoadtrip))
 				areaID = areaLocs_areaID;
+				// New tstop during roadtrip; 0 is OK since not ending trip.
 				// historical db note: before March 2011 (r48) unless stopEndsTrip, tstop.a_id always 0
 			else
 				areaID = 0;  // unused in local trip tstops
@@ -1914,6 +1920,8 @@ public class TripTStopEntry extends Activity
 				// continue-time
 				if ((! stopEndsTrip) && (contTimeSec != 0))
 					currTS.setTime_continue(contTimeSec, false);
+
+				// when ending trip, check tstop's geoarea vs trip's areas
 				if (stopEndsTrip)
 				{
 					// For local trips, this ending TStop's areaID is already 0.

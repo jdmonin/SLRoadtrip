@@ -956,6 +956,9 @@ public class TripTStopEntry extends Activity
 			return;  // <--- Early return: Popup to confirm ---
 		}
 
+		// Start by updating the display.
+		// Afterwards we'll also update the data fields if requested.
+
 		if (rbRoadtripArea_chosen != null)
 			// un-select previous
 			rbRoadtripArea_chosen.setChecked(false);
@@ -983,6 +986,8 @@ public class TripTStopEntry extends Activity
 		else
 			toChg = rbRoadtripAreaOther;
 
+		// Update GUI-related activity fields
+
 		areaLocs_areaID = areaID;
 		rbRoadtripArea_chosen = toChg;
 
@@ -993,6 +998,8 @@ public class TripTStopEntry extends Activity
 		{
 			return;   // <--- Early return: No data changes ---
 		}
+
+		// Re-query and update other activity data fields
 
 		final Editable prevLocText;
 		if (locObjIsDifferentArea && (confirmChange == 2))
@@ -1275,17 +1282,17 @@ public class TripTStopEntry extends Activity
 
 	/**
 	 * Choose another geoarea for the current stop. This could transform a local trip into a roadtrip.
-	 * This button is also visible when ending a roadtip; the dialog for that omits GeoArea "none"
+	 * This button is also visible when ending a roadtrip; the dialog for that omits GeoArea "none"
 	 * by calling {@link #onCreateDialog(int) onCreateDialog(trip_tstop_area_local_row)}.
+	 * Choosing an area in the dialog will update {@link #areaLocs_areaID} and related activity fields,
+	 * even if ! {@link Trip#isRoadtrip() currT.isRoadtrip()}.
 	 * @see #onClick_BtnAreaOther(View)
 	 * @since 0.9.50
 	 */
 	public void onClick_BtnAreaLocalOther(View v)
 	{
-		if (currT.isRoadtrip() && stopEndsTrip)
-			showDialog(R.id.trip_tstop_area_local_row);
-		else
-			Toast.makeText(this, "Not implemented yet (TODO)", Toast.LENGTH_SHORT).show();
+		showDialog(R.id.trip_tstop_area_local_row);
+			// omit "none" in case stopEndsTrip; will add it soon.
 	}
 
 	/** Show or hide the roadtrip other-geoarea dropdown if available */
@@ -1563,6 +1570,11 @@ public class TripTStopEntry extends Activity
 		// areaID is set in onCreate, but check just in case.
 		// This is a fallback in case other checks somehow missed it,
 		// to avoid data inconsistency caused by ending a trip at null geoarea.
+
+		// TODO: if not stopEndsTrip, allow conversion of local to roadtrip but
+		//    still preserve areaLocs_areaID == 0 if stopping in null geoarea;
+		//    might move wantsConvertLocalToRoadtrip decl up here.
+
 		if ((areaLocs_areaID <= 0) && (stopEndsTrip || ! currT.isRoadtrip()))
 		{
 			if (! stopEndsTrip)
@@ -1810,10 +1822,16 @@ public class TripTStopEntry extends Activity
 
 		}  // if (bundle contains gas brand)
 
+		// Now either create a new TStop in the database, or update currTS there.
+
+		final boolean wantsConvertLocalToRoadtrip
+			= (areaLocs_areaID > 0) && (! currT.isRoadtrip())
+			  && (areaLocs_areaID != currT.getAreaID());
+
 		if (! isCurrentlyStopped)
 		{
 			// Create a new TStop; set tsid (not currTS).
-			int areaID;
+			int areaID;  // geoarea of new tstop
 			if (stopEndsTrip)
 			{
 				// For local trips, this ending TStop's areaID will be 0.
@@ -1825,12 +1843,15 @@ public class TripTStopEntry extends Activity
 				// Similar code is below, used when updating an existing TStop;
 				// search for "For local trips, this ending TStop's areaID".
 
-				if (currT.isRoadtrip() && (areaLocs_areaID == currT.getAreaID()))
-					areaID = areaLocs_areaID;
+				if (wantsConvertLocalToRoadtrip)
+					areaID = areaLocs_areaID;  // in a non-local area. Assert: areaID > 0
+				else if (currT.isRoadtrip() && (areaLocs_areaID == currT.getAreaID()))
+					areaID = areaLocs_areaID;  // in starting area
 				else
-					areaID = currT.getRoadtripEndAreaID();  // will be 0 if local trip
+					areaID = currT.getRoadtripEndAreaID();  // in ending area, or 0 if local trip
 			}
-			else if (currT.isRoadtrip() && (areaLocs_areaID != -1))
+			else if ((areaLocs_areaID != -1)
+				 && (currT.isRoadtrip() || wantsConvertLocalToRoadtrip))
 				areaID = areaLocs_areaID;
 				// historical db note: before March 2011 (r48) unless stopEndsTrip, tstop.a_id always 0
 			else
@@ -1852,6 +1873,8 @@ public class TripTStopEntry extends Activity
 			currT.addCommittedTStop(newStop);  // add it to the Trip's list
 			if (! stopEndsTrip)
 				VehSettings.setCurrentTStop(db, currV, newStop);
+			if (wantsConvertLocalToRoadtrip && (areaID >= ((stopEndsTrip) ? 1 : 0)))
+				currT.convertLocalToRoadtrip(newStop);
 			// Don't set currTS field yet, it needs to be null for code here.
 
 			// Now set the gas info, if any:
@@ -1875,7 +1898,8 @@ public class TripTStopEntry extends Activity
 			currTS.setLocationID(locID);
 			currTS.setVia_id(viaID);
 			currTS.setComment(comment);
-			if (currT.isRoadtrip() && (areaLocs_areaID != -1))
+			if ((currT.isRoadtrip() || wantsConvertLocalToRoadtrip)
+			    && (areaLocs_areaID >= ((stopEndsTrip) ? 1 : 0)))
 				currTS.setAreaID(areaLocs_areaID);
 
 			if (! saveOnly)
@@ -1934,6 +1958,13 @@ public class TripTStopEntry extends Activity
 			}
 
 			currTS.commit();
+
+			if (wantsConvertLocalToRoadtrip)
+			{
+				final int newAreaID = currTS.getAreaID();
+				if ((newAreaID != currT.getAreaID()) && (newAreaID >= ((stopEndsTrip) ? 1 : 0)))
+					currT.convertLocalToRoadtrip(currTS);
+			}
 
 			// Now set the gas info, if any:
 			if (bundleGas != null)

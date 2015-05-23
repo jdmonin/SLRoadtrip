@@ -106,7 +106,8 @@ public abstract class MiscTablesCRUDDialogs
 		MultiInputDialog.F_STRING, MultiInputDialog.F_INT | MultiInputDialog.F_FLAG_REQUIRED,
 		MultiInputDialog.F_TIMESTAMP, MultiInputDialog.F_TIMESTAMP,
 		MultiInputDialog.F_STRING, MultiInputDialog.F_STRING,
-		MultiInputDialog.F_ODOMETER, MultiInputDialog.F_ODOMETER,
+		MultiInputDialog.F_ODOMETER | MultiInputDialog.F_FLAG_READONLY,
+		MultiInputDialog.F_ODOMETER,
 		MultiInputDialog.F_STRING
 	};
 

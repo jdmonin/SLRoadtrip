@@ -106,8 +106,11 @@ public class MultiInputDialog
 	/** Field type flags mask; all flag bits are within this mask. */
 	public static final int F_FLAGS_MASK    = 0xFF000000;
 
-	/** Field flag: Read only */
+	/** Field flag: Required */
 	public static final int F_FLAG_REQUIRED = 0x80000000;
+
+	/** Field flag: Always read-only */
+	public static final int F_FLAG_READONLY = 0x40000000;
 
 	/**
 	 * Field type for each element of {@link #inputs},
@@ -132,7 +135,7 @@ public class MultiInputDialog
 	private String[] inputs;
 
 	/**
-	 * Are this dialog's fields read-only?
+	 * Are this dialog's fields all read-only?
 	 * If so, {@link #inputTexts}[] elements are null, {@link #ok} is null.
 	 * @since 0.9.43
 	 */
@@ -157,7 +160,8 @@ public class MultiInputDialog
 	private JButton cancel;
 
 	/**
-	 * Input fields which will be copied to {@link #inputs}[]; elements are null if {@link #isReadOnly}.
+	 * Input fields which will be copied to {@link #inputs}[]; elements are null if {@link #isReadOnly}
+	 * or if the field has {@link #F_FLAG_READONLY} set.
 	 * Elements are {@link JTextField} unless their field type calls for another type,
 	 * which will be mentioned in the field type javadoc ({@link #F_DB_VEHICLEMAKE}, etc).
 	 */
@@ -237,6 +241,9 @@ public class MultiInputDialog
      *<P>
      * <b>Note:</b> The user's text is trimmed, and if its length is 0,
      * the array element will be <b>null</b>, not a 0-length string.
+     *<P>
+     * Read-only fields have the values passed into the constructor
+     * except that 0-length strings have been replaced by null.
      *
      * @return The input values if {@link #inputsAreOK()},
      *     in the same order as field names passed to constructor,
@@ -278,8 +285,9 @@ public class MultiInputDialog
         /**
          * Interface setup: Input rows
          */
-	if (isReadOnly)
-		gbc.insets = new Insets(3, 6, 3, 6);  // padding around JLabels in GBL, since not using JTextFields
+    	final Insets defaultInsets = gbc.insets;
+    	final Insets labelInsets
+    		= new Insets(3, 6, 3, 6);  // padding around JLabels in GBL; unlike JTextField, no built-in padding
 	final char decimalSep = new DecimalFormat().getDecimalFormatSymbols().getDecimalSeparator();
 		// for odometers; java 1.5, android API 8 don't have DecimalFormatSymbols.getInstance()
 
@@ -287,6 +295,7 @@ public class MultiInputDialog
     	for (int i = 0; i < fieldnames.length; ++i)
     	{
     		String val = (vals != null) ? vals[i] : null;
+    		final boolean isFieldReadOnly = (0 != (ftypes[i] & F_FLAG_READONLY));
     		JComponent valComp = null;
 
 		// Some field types will create a certain component type.
@@ -342,7 +351,7 @@ public class MultiInputDialog
 
 		if (valComp == null)
 		{
-			if (! isReadOnly)
+			if (! (isReadOnly || isFieldReadOnly))
 			{
 				JTextField tf = new JTextField(20);
 				if (val != null)
@@ -362,13 +371,17 @@ public class MultiInputDialog
     		txt = new JLabel(fieldnames[i], SwingConstants.TRAILING);  // right-aligned
     		txt.setLabelFor(valComp);
             gbc.gridwidth = 1;
+            gbc.insets = labelInsets;
             gbl.setConstraints(txt, gbc);
     		bp.add(txt);
 
     		gbc.gridwidth = GridBagConstraints.REMAINDER;
+    		gbc.insets = (valComp instanceof JLabel) ? labelInsets : defaultInsets;
     		gbl.setConstraints(valComp, gbc);
     		bp.add(valComp);
     	}
+
+	gbc.insets = defaultInsets;
 
         /**
          * Interface setup: Buttons
@@ -519,6 +532,9 @@ public class MultiInputDialog
 		{
 			Object item = null;
 			JComponent ifield = inputTexts[i];
+			if (ifield == null)
+				continue;  // field has F_FLAG_READONLY
+
 			if (ifield instanceof JTextField)
 			{
 				String it = ((JTextField) inputTexts[i]).getText().trim();

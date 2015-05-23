@@ -684,15 +684,27 @@ public class Vehicle extends RDBRecord
 		dirty = true;
 	}
 
-	/** format is: [ nickname - ] year model */
-	public String toString() {
-		final String nick_dash;
+	/** format is: "[ nickname - ] year [model]" */
+	public String toString()
+	{
+		StringBuilder sb = new StringBuilder();
 		if ((nickname != null) && (nickname.length() > 0))
-			nick_dash = nickname + " - ";
-		else
-			nick_dash = "";
+		{
+			sb.append(nickname);
+			sb.append(" - ");
+		}
+		if (year != 0)
+			sb.append(year);
+		if ((model != null) && (model.length() > 0))
+		{
+			sb.append(' ');
+			sb.append(model);
+		}
+		// TODO else, consider lookup makeid
 
-		return nick_dash + ((year != 0) ? Integer.toString(year) + " " : "") + model;
+		if (sb.length() == 0)
+			sb.append("(Vehicle, all fields empty)");  // fallback, GUI enforces fields; can skip I18N
+		return sb.toString();
 	}
 
 	/**

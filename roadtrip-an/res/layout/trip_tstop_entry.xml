@@ -131,7 +131,7 @@
 		    android:onClick="onClick_BtnAreasETOtherDropdown" />
 	    </LinearLayout>
 
-	    <!-- local: single geoarea with "Other..." -->
+	    <!-- local: single geoarea with "Change" -->
 	    <LinearLayout android:id="@+id/trip_tstop_area_local_row"
 		android:orientation="horizontal"
 		android:layout_width="fill_parent"
@@ -142,11 +142,11 @@
 		    android:layout_weight="1"
 		    android:textSize="18sp"
 		    android:gravity="center_vertical|left" />
-		<Button android:id="@+id/trip_tstop_btn_area_other"
-		    android:text="@string/other__dots"
+		<Button
+		    android:text="@string/change"
 		    android:layout_width="wrap_content"
 		    android:layout_height="fill_parent"
-		    android:onClick="onClick_BtnAreaLocalOther" />
+		    android:onClick="onClick_BtnAreaLocalChange" />
 	    </LinearLayout>
 	</LinearLayout>
     </TableRow>

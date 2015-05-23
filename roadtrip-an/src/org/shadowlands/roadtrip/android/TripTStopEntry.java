@@ -1279,7 +1279,7 @@ public class TripTStopEntry extends Activity
 
 	/**
 	 * For roadtrips, update GUI and data from a click on the 'ending geoarea' button.
-	 * @see #onClick_BtnAreaLocalOther(View)
+	 * @see #onClick_BtnAreaLocalChange(View)
 	 * @since 0.9.50
 	 */
 	public void onClick_BtnAreaOther(View v)
@@ -1288,7 +1288,8 @@ public class TripTStopEntry extends Activity
 	}
 
 	/**
-	 * Choose another geoarea for the current stop. This could transform a local trip into a roadtrip.
+	 * Button during local trips to choose another geoarea for the current stop.
+	 * This could transform a local trip into a roadtrip.
 	 * This button is also visible when ending a roadtrip; the dialog for that omits GeoArea "none"
 	 * by calling {@link #onCreateDialog(int) onCreateDialog(trip_tstop_area_local_row)}.
 	 * Choosing an area in the dialog will update {@link #areaLocs_areaID} and related activity fields,
@@ -1296,7 +1297,7 @@ public class TripTStopEntry extends Activity
 	 * @see #onClick_BtnAreaOther(View)
 	 * @since 0.9.50
 	 */
-	public void onClick_BtnAreaLocalOther(View v)
+	public void onClick_BtnAreaLocalChange(View v)
 	{
 		showDialog(R.id.trip_tstop_area_local_row);
 			// omit "none" in case stopEndsTrip; will add it soon.
@@ -2237,7 +2238,7 @@ public class TripTStopEntry extends Activity
 
 	/**
 	 * Callback for displaying {@link DatePickerDialog} after {@link #onClick_BtnStartDate(View)},
-	 * or "Choose a new GeoArea" after {@link #onClick_BtnAreaLocalOther(View)}.
+	 * or "Choose a new GeoArea" after {@link #onClick_BtnAreaLocalChange(View)}.
 	 * @param id  Unique dialog key, borrowed from various controls' {@code R.id}s:
 	 *    <UL>
 	 *    <LI> {@code trip_tstop_area_local_row}: Show "Choose a new GeoArea for this stop" without "none" choice

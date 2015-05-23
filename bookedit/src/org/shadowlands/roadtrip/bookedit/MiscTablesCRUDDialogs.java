@@ -165,15 +165,23 @@ public abstract class MiscTablesCRUDDialogs
 		 */
 		vals = mid.getInputs();
 		final boolean isActive = (vals[1] != null) && (vals[1].equalsIgnoreCase("Y"));
+		Person mainDriv = null;
+		if (vals[2] != null)
+		{
+			try {
+				mainDriv = new Person(conn, Integer.parseInt(vals[2]));
+			} catch (Exception e) {}
+		}
+		final int date_from = (vals[6] != null) ? Integer.parseInt(vals[6]) : 0,
+		          date_to = (vals[7] != null) ? Integer.parseInt(vals[7]) : 0,
+		          odo_curr = (vals[11] != null) ? Integer.parseInt(vals[11]) : 0;
 		if (v == null)
 		{
-			// TODO check ownerIfNew vs driverID in vals[2]
-			final int date_from = (vals[6] != null) ? Integer.parseInt(vals[6]) : 0,
-			          date_to = (vals[7] != null) ? Integer.parseInt(vals[7]) : 0,
-			          odo_orig = (vals[10] != null) ? Integer.parseInt(vals[10]) : 0,
-			          odo_curr = (vals[11] != null) ? Integer.parseInt(vals[11]) : 0;
+			if (mainDriv == null)
+				mainDriv = ownerIfNew;
+			final int odo_orig = (vals[10] != null) ? Integer.parseInt(vals[10]) : 0;
 			v = new Vehicle
-			    (vals[0], ownerIfNew, Integer.parseInt(vals[3]), vals[4], Integer.parseInt(vals[5]),
+			    (vals[0], mainDriv, Integer.parseInt(vals[3]), vals[4], Integer.parseInt(vals[5]),
 			     date_from, date_to, vals[8], vals[9], odo_orig, odo_curr, vals[12]);
 			v.setActive(isActive);
 			v.insert(conn);
@@ -181,8 +189,18 @@ public abstract class MiscTablesCRUDDialogs
 		{
 			v.setNickname(vals[0]);
 			v.setActive(isActive);
-			// TODO driverid retrieve
-			// TODO any other permitted field changes
+			if (mainDriv != null)
+				v.setDriverID(mainDriv);
+			if (vals[3] != null)
+				v.setMakeID(Integer.parseInt(vals[3]));
+			v.setModel(vals[4]);  // may be null
+			v.setYear((vals[5] != null) ? Integer.parseInt(vals[5]) : 0);
+			v.setDate_from(date_from);
+			v.setDate_to(date_to);
+			v.setVin(vals[8]);
+			v.setPlate(vals[9]);
+			v.setOdometerCurrent(odo_curr);
+			v.setComment(vals[12]);
 			v.commit();
 		}
 

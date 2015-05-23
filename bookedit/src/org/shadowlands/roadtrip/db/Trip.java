@@ -1424,6 +1424,7 @@ public class Trip extends RDBRecord
 	 *
 	 * @param newStop  New stop to add
 	 * @throws IllegalArgumentException  New stop is not yet committed to DB
+	 * @see #updateCachedCurrentTStop(TStop)
 	 */
 	public void addCommittedTStop(TStop newStop)
 		throws IllegalArgumentException
@@ -1446,6 +1447,42 @@ public class Trip extends RDBRecord
 		if (allStops == null)
 			allStops = new Vector<TStop>();
 		allStops.addElement(newStop);
+	}
+
+	/**
+	 * Update cached data fields for the trip's current (most recent) TStop, to prevent stale cached info.
+	 * The entire cached TStop object will be replaced by {@code currTS} within the cache,
+	 * instead of copying all its fields' contents.
+	 * Please call {@link TStop#commit() currTS.commit()} before this method.
+	 * If the TStop isn't the most recent cached stop, does nothing.
+	 * @param currTS  Updated current (most recent) TStop within this trip
+	 * @throws IllegalArgumentException if {@link TStop#getTripID() currTS.getTripID()} != this trip's ID
+	 * @throws NullPointerException if {@code currTS} is null
+	 * @see #addCommittedTStop(TStop)
+	 * @since 0.9.43
+	 */
+	public void updateCachedCurrentTStop(TStop currTS)
+		throws IllegalArgumentException, NullPointerException
+	{
+		final int currTSTrip = currTS.getTripID();
+		if (currTSTrip != id)
+			throw new IllegalArgumentException
+				("wrong trip id: this is " + id + ", tstop trip is " + currTSTrip);
+		if (allStops == null)
+			return;
+
+		synchronized (allStops)
+		{
+			final int L = allStops.size();
+			if (L == 0)
+				return;
+			TStop currCached = allStops.lastElement();
+			if (currCached.getID() == currTS.getID())
+			{
+				allStops.remove(L - 1);
+				allStops.add(currTS);
+			}
+		}
 	}
 
 	/**

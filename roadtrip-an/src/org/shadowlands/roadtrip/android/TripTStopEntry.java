@@ -1881,7 +1881,7 @@ public class TripTStopEntry extends Activity
 			TStop newStop = new TStop
 			  (currT, odoTotal, odoTrip, stopTimeSec, 0, locID, areaID, null, null, flags, viaID, comment);
 			tsid = newStop.insert(db);
-			currT.addCommittedTStop(newStop);  // add it to the Trip's list
+			currT.addCommittedTStop(newStop);  // update the Trip's cached TStop list, if any
 			if (! stopEndsTrip)
 				VehSettings.setCurrentTStop(db, currV, newStop);
 			if (wantsConvertLocalToRoadtrip && (areaID >= ((stopEndsTrip) ? 1 : 0)))
@@ -1971,6 +1971,7 @@ public class TripTStopEntry extends Activity
 			}
 
 			currTS.commit();
+			currT.updateCachedCurrentTStop(currTS);
 
 			if (wantsConvertLocalToRoadtrip)
 			{

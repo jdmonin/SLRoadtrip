@@ -2,7 +2,7 @@
 <!--
  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
 
- This file Copyright (C) 2010-2012 Jeremy D Monin (jdmonin@nand.net)
+ This file Copyright (C) 2010-2012,2015 Jeremy D Monin (jdmonin@nand.net)
 
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
@@ -40,20 +40,16 @@
     android:layout_height="fill_parent"
 	>
 	<TableRow>
-		<Button android:id="@+id/main_btn_local_trip"
-		        android:text="@string/local_trip"
-		        android:onClick="onClick_BtnLocalTrip"/>
-		<Button android:id="@+id/main_btn_freq_local"
-		        android:text="@string/frequent_local"
-		        android:onClick="onClick_BtnFreqLocal"/>
+		<Button android:id="@+id/main_btn_begin_trip"
+			android:text="@string/begin_trip"
+			android:onClick="onClick_BtnBeginTrip"
+			android:layout_span="2" />
 	</TableRow>
 	<TableRow>
-		<Button android:id="@+id/main_btn_road_trip"
-		        android:text="@string/road_trip"
-		        android:onClick="onClick_BtnRoadTrip"/>
-		<Button android:id="@+id/main_btn_freq_roadtrip"
-		        android:text="@string/frequent_roadtrip"
-		        android:onClick="onClick_BtnFreqRoadtrip"/>
+		<Button android:id="@+id/main_btn_begin_freqtrip"
+			android:text="@string/begin_frequent_trip"
+			android:onClick="onClick_BtnBeginFreq"
+			android:layout_span="2" />
 	</TableRow>
 	<TableRow>
 		<Button android:id="@+id/main_btn_change_driver_vehicle"

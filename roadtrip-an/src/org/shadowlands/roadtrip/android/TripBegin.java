@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010-2014 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2015 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -479,7 +479,7 @@ public class TripBegin extends Activity
 				i.putExtra(VehSettings.PREV_LOCATION, locObj.getID());
 			}
 			startActivityForResult
-			    (i, R.id.main_btn_freq_local);
+			    (i, R.id.main_btn_begin_freqtrip);
 			// When it returns with the result, its intent should contain
 			// an int extra "_id" that's the chosen FreqTrip.
 			// (see onActivityResult)
@@ -793,7 +793,7 @@ public class TripBegin extends Activity
 	@Override
 	public void onActivityResult(final int requestCode, final int resultCode, Intent idata)
 	{
-		if (requestCode == R.id.main_btn_freq_local)
+		if (requestCode == R.id.main_btn_begin_freqtrip)
 		{
 			if ((resultCode == RESULT_CANCELED) || (idata == null))
 			{

@@ -55,9 +55,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ContextMenu.ContextMenuInfo;
-import android.view.ViewGroup.LayoutParams;
 import android.widget.Button;
-import android.widget.TableRow;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -84,7 +82,7 @@ public class Main extends Activity
 	 */
 	private TextView tvCurrentSet;
 
-	private Button localTrip, roadTrip, freqLocal, freqRoad,
+	private Button btnBeginTrip, btnBeginFreq,
 	    changeDriverOrVeh, endTrip, stopContinue;
 
 	/** Called when the activity is first created.
@@ -100,37 +98,17 @@ public class Main extends Activity
 	    tvCurrentSet = (TextView) findViewById(R.id.main_text_current); 
 		db = new RDBOpenHelper(this);
 
-		localTrip    = (Button) findViewById(R.id.main_btn_local_trip);
-		roadTrip     = (Button) findViewById(R.id.main_btn_road_trip);
-		freqLocal    = (Button) findViewById(R.id.main_btn_freq_local);
-		freqRoad     = (Button) findViewById(R.id.main_btn_freq_roadtrip);
+		btnBeginTrip = (Button) findViewById(R.id.main_btn_begin_trip);
+		btnBeginFreq = (Button) findViewById(R.id.main_btn_begin_freqtrip);
 		endTrip      = (Button) findViewById(R.id.main_btn_end_trip);
 		stopContinue = (Button) findViewById(R.id.main_btn_stop_continue);
 		changeDriverOrVeh = (Button) findViewById(R.id.main_btn_change_driver_vehicle);
 
-		// Allow long-press on Frequent buttons
-		registerForContextMenu(freqLocal);
-		registerForContextMenu(freqRoad);
+		// Allow long-press on Frequent-trip button (TODO) better interface for this
+		registerForContextMenu(btnBeginFreq);
 
 		if (Settings.getBoolean(db, Settings.HIDE_FREQTRIP, false))
-		{
-			LayoutParams vlp = localTrip.getLayoutParams();
-			if (vlp instanceof TableRow.LayoutParams)
-			{
-				((TableRow.LayoutParams) vlp).span = 2;
-				localTrip.setLayoutParams(vlp);
-			}
-
-			vlp = roadTrip.getLayoutParams();
-			if (vlp instanceof TableRow.LayoutParams)
-			{
-				((TableRow.LayoutParams) vlp).span = 2;
-				roadTrip.setLayoutParams(vlp);
-			}
-
-			freqLocal.setVisibility(View.GONE);
-			freqRoad.setVisibility(View.GONE);
-		}
+			btnBeginFreq.setVisibility(View.GONE);
 
 		// see onResume for rest of initialization.
 	}
@@ -181,26 +159,22 @@ public class Main extends Activity
 	/** Create long-press menu for Frequent buttons */
 	@Override
 	public void onCreateContextMenu(ContextMenu menu, View v, ContextMenuInfo menuInfo) {		
-		if (v == freqLocal)
-			menu.add(Menu.NONE, R.id.main_btn_freq_local, Menu.NONE, R.string.main_create_freq_from_recent);			
-		else if (v == freqRoad)
-			menu.add(Menu.NONE, R.id.main_btn_freq_roadtrip, Menu.NONE, R.string.main_create_freq_from_recent);
+		if (v == btnBeginFreq)
+			menu.add(Menu.NONE, R.id.main_btn_begin_freqtrip, Menu.NONE, R.string.main_create_freq_from_recent);
 		else
 			super.onCreateContextMenu(menu, v, menuInfo);
 	}
 
-	/** Handle long-press on Frequent buttons */
+	/** Handle long-press on Frequent buttons: Call {@link #listRecentTripsForMakeFreq()} */
 	@Override
 	public boolean onContextItemSelected(MenuItem item)
 	{
 		switch(item.getItemId())
 		{
-		case R.id.main_btn_freq_local:
-			listRecentTripsForMakeFreq(true);
+		case R.id.main_btn_begin_freqtrip:
+			listRecentTripsForMakeFreq();
 			break;
-		case R.id.main_btn_freq_roadtrip:
-			listRecentTripsForMakeFreq(false);
-			break;
+
 		default:
 			return super.onContextItemSelected(item);
 		}
@@ -485,15 +459,12 @@ public class Main extends Activity
 			visTrip = View.INVISIBLE;
 			visNotTrip = View.VISIBLE;
 		}
-		localTrip.setVisibility(visNotTrip);
-		roadTrip.setVisibility(visNotTrip);
+		btnBeginTrip.setVisibility(visNotTrip);
 		if (Settings.getBoolean(db, Settings.HIDE_FREQTRIP, false))
 		{
-			freqLocal.setVisibility(View.GONE);
-			freqRoad.setVisibility(View.GONE);
+			btnBeginFreq.setVisibility(View.GONE);
 		} else {
-			freqLocal.setVisibility(visNotTrip);
-			freqRoad.setVisibility(visNotTrip);			
+			btnBeginFreq.setVisibility(visNotTrip);
 		}
 	    endTrip.setVisibility(visTrip);
 	    stopContinue.setVisibility(visTrip);
@@ -534,24 +505,16 @@ public class Main extends Activity
 			db.close();
 	}
 
-	public void onClick_BtnLocalTrip(View v)
+	/** Show {@link TripBegin} to begin a new non-frequent trip. */
+	public void onClick_BtnBeginTrip(View v)
 	{
-		beginTrip(true, false);
+		beginTrip(false);
 	}
 
-	public void onClick_BtnRoadTrip(View v)
+	/** Show {@link TripBegin} to begin a new frequent trip. */
+	public void onClick_BtnBeginFreq(View v)
 	{
-		beginTrip(false, false);	
-	}
-
-	public void onClick_BtnFreqLocal(View v)
-	{
-		beginTrip(true, true);
-	}
-
-	public void onClick_BtnFreqRoadtrip(View v)
-	{
-		beginTrip(false, true);
+		beginTrip(true);
 	}
 
 	public void onClick_BtnEndTrip(View v)
@@ -599,11 +562,9 @@ public class Main extends Activity
 	}
 
 	/** Start the {@link TripBegin} activity with these flags */
-	private void beginTrip(final boolean isLocal, final boolean isFrequent)
+	private void beginTrip(final boolean isFrequent)
 	{
 		Intent tbi = new Intent(Main.this, TripBegin.class);
-		if (! isLocal)
-			tbi.putExtra(TripBegin.EXTRAS_FLAG_NONLOCAL, true);
 		if (isFrequent)
 			tbi.putExtra(TripBegin.EXTRAS_FLAG_FREQUENT, true);
 		startActivity(tbi);		
@@ -615,15 +576,12 @@ public class Main extends Activity
 	 * If the most-recent trip is already based on frequent,
 	 * ask the user to confirm first.
 	 */
-	private void listRecentTripsForMakeFreq(final boolean wantsLocal)
+	private void listRecentTripsForMakeFreq()
 	{
-		Trip t = Trip.recentTripForVehicle(db, currV, wantsLocal);
+		Trip t = Trip.recentTripForVehicle(db, currV, false, false);
 		if (t == null)
 		{
-			final int stringid = (wantsLocal)
-				? R.string.main_no_recent_local_trips_for_vehicle
-				: R.string.main_no_recent_roadtrips_for_vehicle;
-			Toast.makeText(this, stringid, Toast.LENGTH_SHORT).show();
+			Toast.makeText(this, R.string.main_no_recent_trips_for_vehicle, Toast.LENGTH_SHORT).show();
 			return;
 		}
 		// TODO some listing activity for them,

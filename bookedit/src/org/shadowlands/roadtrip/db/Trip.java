@@ -69,11 +69,17 @@ public class Trip extends RDBRecord
 		  FIELD_TIME_START, "time_end", "start_lat", "start_lon", "end_lat", "end_lon",
 		  "freqtripid", "comment", "passengers", "roadtrip_end_aid", "has_continue", "_id" };
 
-    /** Field names/where-clause for use in {@link #recentTripForVehicle(RDBAdapter, Vehicle, boolean)} */
+    /**
+     * Field names/where-clause for use in {@link #recentTripForVehicle(RDBAdapter, Vehicle, boolean, boolean)}.
+     * @since 0.9.50
+     */
+    private static final String WHERE_VID = "vid = ?";
+
+    /** Field names/where-clause for use in {@link #recentTripForVehicle(RDBAdapter, Vehicle, boolean, boolean)}. */
     private static final String WHERE_VID_AND_NOT_ROADTRIP =
     	"vid = ? and roadtrip_end_aid is null";
 
-    /** Field names/where-clause for use in {@link #recentTripForVehicle(RDBAdapter, Vehicle, boolean)} */
+    /** Field names/where-clause for use in {@link #recentTripForVehicle(RDBAdapter, Vehicle, boolean, boolean)}. */
     private static final String WHERE_VID_AND_IS_ROADTRIP =
     	"vid = ? and roadtrip_end_aid is not null";
 
@@ -426,22 +432,29 @@ public class Trip extends RDBRecord
 	}
 
     /**
-     * Get the most recent local trip or roadtrip for this vehicle, if any.
+     * Get the most recent trip, local trip, or roadtrip for this vehicle, if any.
      * Does not call {@link #readAllTStops()} on the returned trip.
      * @param db  db connection
      * @param veh  vehicle to look for; not null
-     * @param wantsLocal  If true, local trip only; if false, roadtrip only.
+     * @param localOnly  If true get most recent local trip, exclude roadtrips
+     * @param roadtripOnly  If true get most recent roadtrip, exclude local trips
      * @return Most recent Trip for this Vehicle, sorted by _id descending, or null if none
      * @throws IllegalStateException if db not open
+     * @throws IllegalArgumentException if both {@code localOnly} and {@code roadtripOnly}
      * @since 0.9.03
      * @see #recentInDB(RDBAdapter)
      */
-    public static Trip recentTripForVehicle(RDBAdapter db, Vehicle veh, final boolean wantsLocal)
-    	throws IllegalStateException
+    public static Trip recentTripForVehicle
+	(RDBAdapter db, Vehicle veh, final boolean localOnly, final boolean roadtripOnly)
+	throws IllegalStateException, IllegalArgumentException
     {
     	if (db == null)
     		throw new IllegalStateException("db null");
-    	final String where = (wantsLocal) ? WHERE_VID_AND_NOT_ROADTRIP : WHERE_VID_AND_IS_ROADTRIP;
+    	if (localOnly && roadtripOnly)
+    		throw new IllegalArgumentException();
+    	final String where =
+		(localOnly) ? WHERE_VID_AND_NOT_ROADTRIP
+			    : (roadtripOnly) ? WHERE_VID_AND_IS_ROADTRIP : WHERE_VID;
     	Vector<String[]> sv = db.getRows
     		(TABNAME, where, new String[]{ Integer.toString(veh.getID()) }, FIELDS_AND_ID, "_id DESC", 1);
     		// LIMIT 1

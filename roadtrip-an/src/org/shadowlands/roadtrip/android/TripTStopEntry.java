@@ -726,7 +726,7 @@ public class TripTStopEntry extends Activity
 					{
 						startActivityForResult
 							(new Intent(this, TripTStopChooseFreq.class),
-							 R.id.main_btn_freq_local);
+							 R.id.main_btn_begin_freqtrip);
 
 						// When it returns with the result, its intent should contain
 						// an int extra "_id" that's the chosen
@@ -2225,7 +2225,7 @@ public class TripTStopEntry extends Activity
 			  0, 0, 0);
 			break;
 
-		case R.id.main_btn_freq_local:  // TripTStopChooseFreq
+		case R.id.main_btn_begin_freqtrip:  // TripTStopChooseFreq
 			if (idata != null)
 			{
 				int id = idata.getIntExtra("_id", 0);

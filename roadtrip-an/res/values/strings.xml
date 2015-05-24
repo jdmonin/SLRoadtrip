@@ -36,6 +36,7 @@
 <string name="backups">Backups</string>
 <string name="backup_now">Backup Now</string>
 <string name="begin__initcap">Begin</string>
+<string name="begin_frequent_trip">Begin Frequent Trip</string>
 <string name="begin_trip">Begin Trip</string>
 <string name="build__fmt">Build: %1s</string>
 <string name="cancel_trip">Cancel Trip</string>
@@ -81,7 +82,6 @@
 <string name="internal__error_occurred">An internal error occurred: %1s</string>
 <string name="internal__missing_required_bundle">Internal error: Missing required bundle when calling activity.</string>
 <string name="keep_this">Keep this</string>
-<string name="local_trip">Local Trip</string>
 <string name="location">Location</string>
 <string name="make_this_a_frequent_trip">Make this a Frequent Trip...</string>
 <string name="make_this_another_frequent_trip">Make this another Frequent Trip...</string>
@@ -179,8 +179,7 @@
 <string name="main_destination_area">Destination area:</string>
 <string name="main_from_frequent_trip">From frequent trip:</string>
 <string name="main_no_current_trip">No current trip.</string>
-<string name="main_no_recent_local_trips_for_vehicle">No recent local trips found for this vehicle.</string>
-<string name="main_no_recent_roadtrips_for_vehicle">No recent roadtrips found for this vehicle.</string>
+<string name="main_no_recent_trips_for_vehicle">No recent trips found for this vehicle.</string>
 <string name="main_roadtrip_in_progress">Roadtrip in progress.</string>
 <string name="main_roadtrip_start_area">Roadtrip start area:</string>
 <string name="main_trip_based_on_frequent">This trip is based on another frequent trip.</string>

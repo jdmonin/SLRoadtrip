@@ -29,7 +29,7 @@ import org.shadowlands.roadtrip.db.RDBAdapter;
  * @since 0.9.43
  */
 @SuppressWarnings("serial")
-public class DriverListDialog extends ItemListDialog
+public class DriverListDialog extends ItemListDialog<Person>
 {
 	/**
 	 * Create and show a list of drivers in this logbook.
@@ -44,19 +44,19 @@ public class DriverListDialog extends ItemListDialog
 
 	// see superclass for method javadocs
 
-	public Object[] getAll()
+	public Person[] getAll()
 	{
 		return Person.getAll(db, true);
 	}
 
-	public Object showAdd()
+	public Person showAdd()
 	{
 		return MiscTablesCRUDDialogs.createEditPersonDialog(owner, db, isReadOnly, null, true);
 	}
 
-	public boolean showEdit(Object item)
+	public boolean showEdit(Person item)
 	{
-		item = MiscTablesCRUDDialogs.createEditPersonDialog(owner, db, isReadOnly, (Person) item, true);
+		item = MiscTablesCRUDDialogs.createEditPersonDialog(owner, db, isReadOnly, item, true);
 		return (item != null);
 	}
 

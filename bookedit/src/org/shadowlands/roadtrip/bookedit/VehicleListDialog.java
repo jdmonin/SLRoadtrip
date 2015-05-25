@@ -33,7 +33,7 @@ import org.shadowlands.roadtrip.db.Vehicle;
  * @since 0.9.43
  */
 @SuppressWarnings("serial")
-public class VehicleListDialog extends ItemListDialog
+public class VehicleListDialog extends ItemListDialog<Vehicle>
 {
 	/**
 	 * Create and show a list of vehicles in this logbook.
@@ -48,12 +48,12 @@ public class VehicleListDialog extends ItemListDialog
 
 	// see superclass for method javadocs
 
-	public Object[] getAll()
+	public Vehicle[] getAll()
 	{
 		return Vehicle.getAll(db, 0);
 	}
 
-	public Object showAdd()
+	public Vehicle showAdd()
 	{
 		Person defaultDriver = null;
 		{
@@ -76,15 +76,15 @@ public class VehicleListDialog extends ItemListDialog
 		return MiscTablesCRUDDialogs.createEditVehicleDialog(owner, db, isReadOnly, null, defaultDriver);
 	}
 
-	public boolean showEdit(Object item)
+	public boolean showEdit(Vehicle item)
 	{
-		item = MiscTablesCRUDDialogs.createEditVehicleDialog(owner, db, isReadOnly, (Vehicle) item, null);
+		item = MiscTablesCRUDDialogs.createEditVehicleDialog(owner, db, isReadOnly, item, null);
 		return (item != null);
 	}
 
-	public boolean isItemActive(final Object item)
+	public boolean isItemActive(final Vehicle item)
 	{
-		return ((Vehicle) item).isActive();
+		return item.isActive();
 	}
 
 }

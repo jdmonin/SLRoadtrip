@@ -48,20 +48,23 @@ import org.shadowlands.roadtrip.db.RDBAdapter;
 
 /**
  * Parent class for the modal Driver and Vehicle list dialogs.
+ * Framework to list data objects of type {@code E} and allow user to
+ * request adding or editing them.
  *<P>
- * Subclasses must implement {@link #getAll()}, {@link #showAdd()}, and {@link #showEdit(Object)}.
+ * Subclasses should specify a concrete element type and must implement
+ * {@link #getAll()}, {@link #showAdd()}, and {@link #showEdit(Object)}.
  *<P>
  * If a subclass sets the {@link #hasActiveFlag} field when calling the constructor,
  * the subclass should also override {@link #isItemActive(Object)}.
  * @since 0.9.43
  */
 @SuppressWarnings("serial")
-public abstract class ItemListDialog
+public abstract class ItemListDialog<E>
 	extends JDialog
 	implements ActionListener
 {
 	/**
-	 * Key to associate {@link #items} data with entries in {@link #jpItemList}
+	 * Key to associate {@link #activeItems}/{@link #inactiveItems} data with entries in {@link #jpItemList}
 	 * using {@link JComponent#putClientProperty(Object, Object)}
 	 * / {@link JComponent#getClientProperty(Object)}.
 	 * @see #ACTCOMP
@@ -110,7 +113,7 @@ public abstract class ItemListDialog
 	 * Filled by constructor posting a Runnable that calls {@link #getAll()}.
 	 * {@code inactiveItems} is null unless {@link #hasActiveFlag} is true.
 	 */
-	private List<Object> activeItems, inactiveItems;
+	private List<E> activeItems, inactiveItems;
 
 	/** Button to add an item, or null if {@link #isReadOnly}. */
 	private final JButton btnAdd;
@@ -150,9 +153,9 @@ public abstract class ItemListDialog
 		lblTop.setBorder(BorderFactory.createEmptyBorder(3,3,3,3));
 		add(lblTop, BorderLayout.NORTH);
 
-		activeItems = new ArrayList<Object>();
+		activeItems = new ArrayList<E>();
 		if (hasActiveFlag)
-			inactiveItems = new ArrayList<Object>();
+			inactiveItems = new ArrayList<E>();
 
 		jpItemList = new JPanel();
 		jpItemList.setLayout(new GridLayout(0, 1, 0, 3));
@@ -188,7 +191,7 @@ public abstract class ItemListDialog
 		SwingUtilities.invokeLater(new Runnable() {
 			public void run()
 			{
-				final Object[] all;
+				final E[] all;
 				try
 				{
 					if (hasActiveFlag)
@@ -237,7 +240,7 @@ public abstract class ItemListDialog
 	 * @param itm  Item to add, or null to do nothing.  The item's name in the list
 	 *     is its {@link Object#toString() itm.toString()}.
 	 */
-	protected void addItem(final Object itm)
+	protected void addItem(final E itm)
 	{
 		if (itm == null)
 			return;
@@ -291,7 +294,7 @@ public abstract class ItemListDialog
 	 * @param itmComp  Component showing the item name
 	 * @param activeChanged  True if {@code itm}'s isActive flag changed
 	 */
-	protected void updateItem(final Object itm, final JButton itmComp, final boolean activeChanged)
+	protected void updateItem(final E itm, final JButton itmComp, final boolean activeChanged)
 	{
 		itmComp.setText(itm.toString());
 
@@ -331,7 +334,7 @@ public abstract class ItemListDialog
 		{
 			if (src == btnAdd)
 			{
-				final Object newObj = showAdd();
+				final E newObj = showAdd();
 				if (newObj != null)
 				{
 					addItem(newObj);
@@ -341,7 +344,8 @@ public abstract class ItemListDialog
 			}
 			else if (src instanceof JButton)
 			{
-				final Object obj = ((JButton) src).getClientProperty(OBJDATA);
+				@SuppressWarnings("unchecked")
+				final E obj = (E) ((JButton) src).getClientProperty(OBJDATA);
 				if (obj == null)
 					return;
 				final boolean wasActive = (hasActiveFlag) ? isItemActive(obj) : true;
@@ -375,7 +379,7 @@ public abstract class ItemListDialog
 	 * and display an error dialog.
 	 * @return  All objects of this type currently in the db, or null if none (not an empty list)
 	 */
-	public abstract Object[] getAll();
+	public abstract E[] getAll();
 
 	/**
 	 * The 'Add' button was clicked; show GUI to add an item.
@@ -384,7 +388,7 @@ public abstract class ItemListDialog
 	 * @return The object created, or null if the add was cancelled.
 	 *    If db-based, the object should already be committed to the db when returned.
 	 */
-	public abstract Object showAdd();
+	public abstract E showAdd();
 
 	/**
 	 * An item name was clicked; show GUI to edit the item.
@@ -394,7 +398,7 @@ public abstract class ItemListDialog
 	 * @return true if {@code item} was changed and its display entry should be refreshed
 	 *    because {@link Object#toString() item.toString()} changed
 	 */
-	public abstract boolean showEdit(final Object item);
+	public abstract boolean showEdit(final E item);
 
 	/**
 	 * Get the value of this item's isActive flag.
@@ -404,7 +408,7 @@ public abstract class ItemListDialog
 	 * @param item  The object to check, from {@link #getAll()} or {@link #showAdd()}
 	 * @return  True if the item is flagged as active, false if not.
 	 */
-	public boolean isItemActive(final Object item)
+	public boolean isItemActive(final E item)
 	{
 		return true;
 	}

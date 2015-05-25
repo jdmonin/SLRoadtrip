@@ -75,13 +75,20 @@ import android.widget.Toast;
  * To start a roadtrip or a frequent trip, use
  * {@link #EXTRAS_FLAG_FREQUENT} or {@link #EXTRAS_FLAG_NONLOCAL}
  * when creating the intent to start this activity.
+ *<P>
+ * To simplify interaction, all trips begin as local trips except
+ * when the user has chosen a frequent trip that's a roadtrip.
  *
  * @author jdmonin
  */
 public class TripBegin extends Activity
 	implements TextWatcher, OnDateSetListener, OnItemClickListener
 {
-	/** Flag for non-local (roadtrip), for {@link Intent#putExtra(String, boolean)} */
+	/**
+	 * Flag for non-local (roadtrip), for {@link Intent#putExtra(String, boolean)}.
+	 * Starting with v0.9.50, only frequent trips use this flag; all other trips
+	 * from {@link Main} activity begin as local trips.
+	 */
 	public static final String EXTRAS_FLAG_NONLOCAL = "nonlocal";
 
 	/** Flag for frequent trip, for {@link Intent#putExtra(String, boolean)} */

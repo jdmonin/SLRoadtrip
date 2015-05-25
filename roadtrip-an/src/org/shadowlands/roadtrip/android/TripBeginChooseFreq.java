@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010,2012,2014 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010,2012,2014-2015 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -43,7 +43,8 @@ import android.widget.ListView;
 import android.widget.Toast;
 
 /**
- * When starting a {@link FreqTrip frequent trip}, choose a {@link FreqTrip}.
+ * When user has pressed "Begin Frequent Trip" button in the {@link Main} activity,
+ * {@link TripBegin} initially comes here to choose a {@link FreqTrip}.
  *<P>
  * Called from {@link TripBegin} with {@link Activity#startActivityForResult(android.content.Intent, int)}.
  * When it returns to <tt>TripBegin</tt> with the result, its intent should contain

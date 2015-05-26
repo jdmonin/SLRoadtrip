@@ -108,6 +108,7 @@
 	    />
 	<ImageButton
 		android:src="@android:drawable/arrow_down_float"
+		android:contentDescription="@string/show_dropdown"
 	    android:layout_width="wrap_content"
 	    android:layout_height="wrap_content"
 	    android:onClick="onClick_BtnRoadtripDestiDropdown"

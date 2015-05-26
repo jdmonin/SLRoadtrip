@@ -7,7 +7,7 @@
  this activity's numeric input fields use android:digits="0123456789,."
  per comments in http://code.google.com/p/android/issues/detail?id=2626 .
 
- Copyright (C) 2010-2012 Jeremy D Monin (jdmonin@nand.net)
+ This file Copyright (C) 2010-2012,2015 Jeremy D Monin (jdmonin@nand.net)
 
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
@@ -126,6 +126,7 @@
 				android:layout_height="wrap_content" />
 			<ImageButton
 				android:src="@android:drawable/arrow_down_float"
+				android:contentDescription="@string/show_dropdown"
 			    android:layout_width="24px"
 			    android:layout_height="24px"
 			    android:layout_gravity="center_vertical"

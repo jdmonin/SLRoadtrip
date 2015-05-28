@@ -20,6 +20,7 @@
 package org.shadowlands.roadtrip.android;
 
 import org.shadowlands.roadtrip.R;
+import org.shadowlands.roadtrip.android.util.Misc;
 import org.shadowlands.roadtrip.db.GeoArea;
 import org.shadowlands.roadtrip.db.Person;
 import org.shadowlands.roadtrip.db.RDBAdapter;
@@ -32,8 +33,10 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
+import android.text.format.DateFormat;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 /**
@@ -118,6 +121,7 @@ public class DriverEntry extends Activity
 		}
 
 		cameFromEdit_person = null;
+		final View addedOnRow = findViewById(R.id.driver_entry_added_on_row);
 		if ((cameFromEdit_id != 0) && ! cameFromAskNew)
 		{
 			try
@@ -127,6 +131,20 @@ public class DriverEntry extends Activity
 				String s = cameFromEdit_person.getComment();
 				if ((s != null) && (s.length() > 0))
 					comment.setText(s);
+				final int da = cameFromEdit_person.getDateAdded();
+				if (da != 0)
+				{
+					TextView tv = (TextView) findViewById(R.id.driver_entry_added_on);
+					if (tv != null)
+					{
+						StringBuffer fmt_dow_shortdate
+							= Misc.buildDateFormatDOWShort(this, false);
+						tv.setText
+							(DateFormat.format(fmt_dow_shortdate, da * 1000L));
+					}
+				} else {
+					addedOnRow.setVisibility(View.GONE);
+				}
 			} catch (Throwable e) {
 				// should not happen
 				Toast.makeText(this, R.string.not_found, Toast.LENGTH_SHORT).show();
@@ -134,6 +152,8 @@ public class DriverEntry extends Activity
 				finish();
 				return;   // <--- Early return: Could not load from db to view fields ---
 			}
+		} else {
+			addedOnRow.setVisibility(View.GONE);
 		}
 
 		// Unless we're doing initial setup, hide local-geoarea name field

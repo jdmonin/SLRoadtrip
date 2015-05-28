@@ -27,6 +27,7 @@
 <string name="app_name">Shadowlands RoadTrip</string>
 <string name="about">About</string>
 <string name="active">Active</string>
+<string name="added_on">Added on</string>
 <string name="all_vehicles">All vehicles</string>
 <string name="androidstartup_pleaseCreate">Welcome!\n\nPlease begin by entering your name and vehicle.</string>
 <string name="androidstartup_restoreBkup">If you already use Shadowlands RoadTrip, you can restore a backup file to continue:</string>

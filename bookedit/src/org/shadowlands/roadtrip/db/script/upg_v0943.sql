@@ -1,4 +1,4 @@
--- Upgrade from v0940 to v0943: (2015-05-14)
+-- Upgrade from v0940 to v0943: (2015-05-26)
 
 -- This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
 -- 
@@ -17,6 +17,10 @@
 --  You should have received a copy of the GNU General Public License
 --  along with this program.  If not, see http://www.gnu.org/licenses/ .
 
--- This upgrade has no changes for current installs; the only difference is
--- that in new 0943 installs, settings('HIDE_FREQTRIP') is 1.
+ALTER TABLE geoarea ADD COLUMN date_added int;
+ALTER TABLE person  ADD COLUMN date_added int;
+ALTER TABLE vehicle ADD COLUMN date_added int;
 
+-- The other schema change for 0943 is that in
+-- new installs, settings('HIDE_FREQTRIP') is 1.
+-- That change does not affect current installs.

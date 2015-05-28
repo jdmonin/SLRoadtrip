@@ -47,15 +47,22 @@ public class Vehicle extends RDBRecord
     private static final String TABNAME = "vehicle";
 
     private static final String[] FIELDS =
-        { "nickname", "driverid", "makeid", "model", "year", "date_from", "date_to", "vin", "odo_orig", "odo_curr", "last_tripid", "distance_storage", "expense_currency", "expense_curr_sym", "expense_curr_deci", "fuel_curr_deci", "fuel_type", "fuel_qty_unit", "fuel_qty_deci", "comment", "is_active", "plate" };
+        { "nickname", "driverid", "makeid", "model", "year", "date_from", "date_to", "vin", "odo_orig", "odo_curr",
+	  "last_tripid", "distance_storage", "expense_currency", "expense_curr_sym", "expense_curr_deci", "fuel_curr_deci",
+	  "fuel_type", "fuel_qty_unit", "fuel_qty_deci", "comment", "is_active", "date_added", "plate" };
     private static final String[] FIELDS_AND_ID =
-    	{ "nickname", "driverid", "makeid", "model", "year", "date_from", "date_to", "vin", "odo_orig", "odo_curr", "last_tripid", "distance_storage", "expense_currency", "expense_curr_sym", "expense_curr_deci", "fuel_curr_deci", "fuel_type", "fuel_qty_unit", "fuel_qty_deci", "comment", "is_active", "plate", "_id" };
+    	{ "nickname", "driverid", "makeid", "model", "year", "date_from", "date_to", "vin", "odo_orig", "odo_curr",
+	  "last_tripid", "distance_storage", "expense_currency", "expense_curr_sym", "expense_curr_deci", "fuel_curr_deci",
+	  "fuel_type", "fuel_qty_unit", "fuel_qty_deci", "comment", "is_active", "date_added", "plate", "_id" };
+    // If you add or change fields, remember to update initFields and other methods.
+
     /**
-     * Basic fields only, for commit.  Omits:
+     * Basic fields only, for {@link #commit()}.  Omits:
      * "distance_storage", "expense_currency", "expense_curr_sym", "expense_curr_deci", "fuel_curr_deci", "fuel_type", "fuel_qty_unit", "fuel_qty_deci"
      */
     private static final String[] FIELDS_BASIC =
-    	{ "nickname", "driverid", "makeid", "model", "year", "date_from", "date_to", "vin", "odo_orig", "odo_curr", "last_tripid", "comment", "is_active", "plate" };
+    	{ "nickname", "driverid", "makeid", "model", "year", "date_from", "date_to", "vin", "odo_orig", "odo_curr",
+	  "last_tripid", "comment", "is_active", "date_added", "plate" };
     private static final String[] FIELDS_ODO_LASTTRIP =
     	{ "odo_curr", "last_tripid" }; 
 
@@ -104,7 +111,11 @@ public class Vehicle extends RDBRecord
     /** model year, or 0 if unknown */
     private int year;
 
-    /** see sql schema for date fmt.  0 is assumed empty/unused. */
+    /**
+     * From/to dates of vehicle in use. see sql schema for date fmt.
+     * 0 is empty/unused (null).
+     * @see #date_added
+     */
     private int date_from, date_to;
 
     /** optional VIN */
@@ -145,6 +156,13 @@ public class Vehicle extends RDBRecord
 	private String comment;
 
 	private boolean is_active;
+
+	/**
+	 * Date this vehicle was added, or 0 if empty/null.
+	 * @see #date_from
+	 * @since 0.9.43
+	 */
+	private int date_added;
 
 	/** null unless {@link #readAllTrips(boolean)} called */
     private transient Vector<Trip> allTrips;
@@ -254,7 +272,7 @@ public class Vehicle extends RDBRecord
     /**
      * Existing record: Fill our obj fields from db-record string contents.
      * @param db  connection
-     * @param rec, as returned by db.getRows(FIELDS_AND_ID); last element is _id
+     * @param rec, as returned by db.getRows({@link #FIELDS_AND_ID}); last element is _id
      * @throws RDBKeyNotFoundException not thrown, but required due to super call
      * @throws IllegalArgumentException if rec.length is too short
      */
@@ -267,15 +285,15 @@ public class Vehicle extends RDBRecord
 
     /**
      * Fill our obj fields from db-record string contents.
-     * <tt>_id</tt> is not filled; the constructor has filled it already.
-     * @param rec, as returned by db.getRow(FIELDS) or db.getRows(FIELDS_AND_ID)
+     * {@code _id} is not filled here; the constructor has filled it already.
+     * @param rec, as returned by db.getRow({@link #FIELDS}) or db.getRows({@link #FIELDS_AND_ID})
      * @throws IllegalArgumentException if rec.length is too short
      */
 	private void initFields(final String[] rec)
 	    throws IllegalArgumentException
 	{
-		if (rec.length < 22)
-			throw new IllegalArgumentException("length < 22: " + rec.length);
+		if (rec.length < 23)
+			throw new IllegalArgumentException("length < 23: " + rec.length);
 		nickname = rec[0];
     	driverid = Integer.parseInt(rec[1]);  // FK
     	makeid = Integer.parseInt(rec[2]);  // FK
@@ -302,7 +320,9 @@ public class Vehicle extends RDBRecord
     	fuel_qty_deci = Integer.parseInt(rec[18]);
     	comment = rec[19];
     	is_active = rec[20].equals("1");
-    	plate = rec[21];
+	if (rec[21] != null)
+		date_added = Integer.parseInt(rec[21]);
+    	plate = rec[22];
 	}
 
     /**
@@ -313,6 +333,7 @@ public class Vehicle extends RDBRecord
      * <tt>last_tripid</tt> will be null, because this new vehicle
      * hasn't been on any trips yet.
      * <tt>is_active</tt> will be true.
+     * {@link #getDate_added()}'s field will be set to the current time using {@link System#currentTimeMillis()}.
      *
      * @param nickname  Nickname or color, or null; used in {@link #toString()}
      * @param driver    Vehicle's usual driver or owner
@@ -352,6 +373,7 @@ public class Vehicle extends RDBRecord
     	last_tripid = 0;
     	this.comment = comment;
     	this.is_active = true;
+	date_added = (int) (System.currentTimeMillis() / 1000L);
     }
 
     /**
@@ -401,7 +423,7 @@ public class Vehicle extends RDBRecord
     }
 
 	/**
-     * Insert a new record based on field and value.
+     * Insert a new record with the current field values of this object.
 	 * Clears dirty field; sets id and dbConn fields.
      * @return new record's primary key (_id)
      * @throws IllegalStateException if the insert fails
@@ -410,6 +432,7 @@ public class Vehicle extends RDBRecord
         throws IllegalStateException
     {
     	String dte_f, dte_t, last_tid;
+	final String dte_a = (date_added != 0) ? Integer.toString(date_added) : null;
     	if (date_from != 0)
     		dte_f = Integer.toString(date_from);
     	else
@@ -430,7 +453,7 @@ public class Vehicle extends RDBRecord
     		  // TODO construc/gui, not hardcoded, for these:  (also getters/setters/commit)
     		  //    "distance_storage", "expense_currency", "expense_curr_sym", "expense_curr_deci", "fuel_curr_deci", "fuel_type", "fuel_qty_unit", "fuel_qty_deci"
     		  "MI", "USD", "$", "2", "3", "G", "ga", "3",
-    		  comment, (is_active ? "1" : "0"), plate };
+    		  comment, (is_active ? "1" : "0"), dte_a, plate };
     	id = db.insert(TABNAME, FIELDS, fv, true);
 		dirty = false;
     	dbConn = db;
@@ -451,6 +474,7 @@ public class Vehicle extends RDBRecord
         throws IllegalStateException, NullPointerException
 	{
     	String dte_f, dte_t, l_tripid;
+	final String dte_a = (date_added != 0) ? Integer.toString(date_added) : null;
     	if (date_from != 0)
     		dte_f = Integer.toString(date_from);
     	else
@@ -467,7 +491,7 @@ public class Vehicle extends RDBRecord
             { nickname, Integer.toString(driverid), Integer.toString(makeid),
     		  model, Integer.toString(year), dte_f, dte_t, vin,
     		  Integer.toString(odo_orig), Integer.toString(odo_curr), l_tripid,
-    		  comment, (is_active ? "1" : "0"), plate };
+    		  comment, (is_active ? "1" : "0"), dte_a, plate };
 		dbConn.update(TABNAME, id, FIELDS_BASIC, fv);
 		dirty = false;
 	}
@@ -534,7 +558,19 @@ public class Vehicle extends RDBRecord
 	}
 
 	/**
+	 * Get the date this {@link Vehicle} was added to the database, if known.
+	 * @return  The date added, in unix format.  0 if field is empty (null).
+	 * @see #getDate_from()
+	 * @since 0.9.43
+	 */
+	public int getDate_added()
+	{
+		return date_added;
+	}
+
+	/**
 	 * @return the Date From ("in use since" date), unix format.  0 for empty/unused.
+	 * @see #getDate_added()
 	 */
 	public int getDate_from() {
 		return date_from;

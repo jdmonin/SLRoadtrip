@@ -1,5 +1,5 @@
 -- org.shadowlands.roadtrip
--- version 0.9.43 schema (2015-05-14) for SQLite 3.4 or higher
+-- version 0.9.43 schema (2015-05-26) for SQLite 3.4 or higher
 --
 -- The db schema version is sometimes lower than the app version, never higher.
 --
@@ -113,16 +113,18 @@ create table app_db_upgrade_hist ( db_vers_to int not null, db_vers_from not nul
     -- db_vers_from, db_vers_to are schema version numbers, like 908
     -- upg_time is unix format
 
-create table geoarea ( _id integer PRIMARY KEY AUTOINCREMENT not null, aname varchar(255) not null );
+create table geoarea ( _id integer PRIMARY KEY AUTOINCREMENT not null, aname varchar(255) not null, date_added int );
+    -- date_added field added in schema v0943; may be null in data from older schemas
 
-create table person ( _id integer PRIMARY KEY AUTOINCREMENT not null, is_driver int not null, name varchar(255) not null unique, contact_uri varchar(255), is_active int not null default 1, comment varchar(255) );
+create table person ( _id integer PRIMARY KEY AUTOINCREMENT not null, is_driver int not null, name varchar(255) not null unique, contact_uri varchar(255), is_active int not null default 1, date_added int, comment varchar(255) );
+    -- date_added field added in schema v0943; may be null in data from older schemas
 
 create index "person~d" ON person(is_driver);
 
 create table vehiclemake ( _id integer PRIMARY KEY AUTOINCREMENT not null, mname varchar(255) not null unique, is_user_add int );
 	-- see bottom of file for inserts into vehiclemake
 
-create table vehicle ( _id integer PRIMARY KEY AUTOINCREMENT not null, nickname varchar(255), driverid int not null, makeid int not null, model varchar(255), year integer not null, date_from integer, date_to integer, vin varchar(64), plate varchar(64), odo_orig integer not null, odo_curr integer not null, last_tripid integer, distance_storage varchar(2) not null, expense_currency varchar(3) not null, expense_curr_sym varchar(3) not null, expense_curr_deci integer not null, fuel_curr_deci integer not null, fuel_type varchar(1) not null, fuel_qty_unit varchar(2) not null, fuel_qty_deci integer not null, comment varchar(255), is_active int not null default 1 );
+create table vehicle ( _id integer PRIMARY KEY AUTOINCREMENT not null, nickname varchar(255), driverid int not null, makeid int not null, model varchar(255), year integer not null, date_from integer, date_to integer, vin varchar(64), plate varchar(64), odo_orig integer not null, odo_curr integer not null, last_tripid integer, distance_storage varchar(2) not null, expense_currency varchar(3) not null, expense_curr_sym varchar(3) not null, expense_curr_deci integer not null, fuel_curr_deci integer not null, fuel_type varchar(1) not null, fuel_qty_unit varchar(2) not null, fuel_qty_deci integer not null, comment varchar(255), is_active int not null default 1, date_added int );
     -- To reduce write freq, update odo_curr only at end of each trip, not at each trip stop.
     -- Also update last_tripid at the end of each trip, or if a trip was in progress and then the current vehicle changed.
     --   If the vehicle has never finished a trip, last_tripid is 0 or null.
@@ -136,6 +138,7 @@ create table vehicle ( _id integer PRIMARY KEY AUTOINCREMENT not null, nickname 
     -- fuel_curr_deci is per-unit price # digits after decimal
     -- fuel_qty_unit is 'ga' or 'L'
     -- fuel_type is 'G' gas, 'D' diesel
+    -- date_added field added in schema v0943; may be null in data from older schemas
 
 create table tripcategory ( _id integer PRIMARY KEY AUTOINCREMENT not null, cname varchar(255) not null unique, rank int not null, is_work_related int not null default 0, is_user_add int );
 	-- rank is a place number for on-screen order (instead of alphabetical listing)

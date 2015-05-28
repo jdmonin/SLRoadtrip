@@ -459,7 +459,7 @@ public class LogbookEditPane extends JPanel implements ActionListener, WindowLis
 		try
 		{
 			AppInfo aivers = new AppInfo(conn, AppInfo.KEY_DB_CURRENT_SCHEMAVERSION);
-			System.out.println("AppInfo: Current schemaversion: " + aivers.getValue());
+			System.out.println("AppInfo: DB schemaversion: " + aivers.getValue());
 		} catch (RDBKeyNotFoundException e)
 		{
 			System.err.println("Not found: " + e.keyString);

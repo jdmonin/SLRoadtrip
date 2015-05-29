@@ -147,7 +147,11 @@ public class Main extends Activity
 		super.onPrepareOptionsMenu(menu);
 		MenuItem item = menu.findItem(R.id.menu_main_canceltrip);
 		if (item != null)
+		{
+			if (currV == null)
+				currV = Settings.getCurrentVehicle(db, false);  // can happen after screen rotation
 			item.setEnabled(null != VehSettings.getCurrentTrip(db, currV, false));
+		}
 
 		return true;
 	}

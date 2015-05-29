@@ -145,9 +145,9 @@ public class VehicleEntry
 	private Calendar dateFrom;
 
 	/**
-	 * Date formatter for use with
+	 * Date formatter (Day of Week\nDate), for use with
 	 * {@link DateFormat#format(CharSequence, Calendar)} by {@link #btnDateFrom}.
-	 * initialized in {@link #updateScreenFieldsFromVehicle()} or {@link #updateDateButton()}.
+	 * initialized in {@link #updateDateButton()}.
 	 */
 	private StringBuffer fmt_dow_shortdate;
 
@@ -325,10 +325,10 @@ public class VehicleEntry
 			TextView tvG = (TextView) findViewById(R.id.vehicle_entry_added_on);
 			if (tvG != null)
 			{
-				if (fmt_dow_shortdate == null)
-					fmt_dow_shortdate = Misc.buildDateFormatDOWShort(this, false);
+				// don't use fmt_dow_shortdate which includes \n
+				StringBuffer fmt_dow_shortdt = Misc.buildDateFormatDOWShort(this, false);
 				tvG.setText
-					(DateFormat.format(fmt_dow_shortdate, veh.getDate_added() * 1000L));
+					(DateFormat.format(fmt_dow_shortdt, veh.getDate_added() * 1000L));
 			}
 		} else {
 			if (vv != null)

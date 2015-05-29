@@ -220,7 +220,14 @@ r431	-	2015-05-03	3393a0f  Migration from svn to git, google code to github
 				Disable odometer button wraparound (0 -> 9999999) seen in trip odo.
 				TripTStopEntry calculator: Add Reset button, Clear no longer doubles as Reset.
 	0.9.43			Being developed now; minor improvements and bugfixes since 0.9.42.
-				Add build.xml to create slroadtrip-bookedit.jar.
+				- New field "Date Added" for drivers, vehicles, GeoAreas
+				SLRoadtrip android app:
+				- Hide Frequent Trip buttons by default on new installs. (Settings menu can un-hide them)
+				- About box: Show build number at bottom, not in title bar. (git hashes are unwieldy up there)
+				BookEdit desktop utility app:
+				- Add build.xml to create slroadtrip-bookedit.jar.
+				- View/edit details for all drivers and vehicles, including vehicle Active flag.
+				- Better error handling if driver/vehicle settings are missing in db.
 
 Also see doc/hist/*.sql for previous schema updates.
 
@@ -252,6 +259,8 @@ Other source included (libraries), and software licenses:
 
 Shadowlands Roadtrip is licensed under GPL v3 or later
 (the GNU General Public License).  See the COPYING file for details.
+
+Included graphics are copyright (C) Jeremy D Monin, licensed (CC) By-SA 3.0.
 
 Includes portions of GNU Trove 2.1.0 as source, which is licensed under
 LGPL v2.1 or later (the GNU Lesser General Public License).

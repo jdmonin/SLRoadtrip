@@ -32,8 +32,8 @@ public class GeoArea extends RDBRecord
 	private static final String TABNAME = "geoarea";
 	private static final String VALFIELD = "aname";
 	private static final String VALFIELD_SORT = "aname COLLATE NOCASE";  // syntax may be sqlite-specific
-	private static final String[] FIELDS = { VALFIELD };
-	private static final String[] FIELDS_AND_ID = { VALFIELD, "_id" };
+	private static final String[] FIELDS = { VALFIELD, "date_added" };
+	private static final String[] FIELDS_AND_ID = { VALFIELD, "date_added", "_id" };
 
 	/**
 	 * Placeholder for "(none)" UI entry in {@link #getAll(RDBAdapter, boolean)},
@@ -51,6 +51,12 @@ public class GeoArea extends RDBRecord
 	}
 
 	private String aname;
+
+	/**
+	 * Date this geoarea was added, or 0 if empty/null.
+	 * @since 0.9.43
+	 */
+	private int date_added;
 
 	/**
 	 * Get the GeoAreas currently in the database, optionally beginning with the {@link #GEOAREA_NONE} placeholder.
@@ -125,10 +131,13 @@ public class GeoArea extends RDBRecord
     	if (rec == null)
     		throw new RDBKeyNotFoundException(id);
     	aname = rec[0];
+	if (rec[1] != null)
+		date_added = Integer.parseInt(rec[1]);
     }
 
     /**
      * Create a new GeoArea (not yet inserted to the database).
+     * {@link #getDateAdded()}'s field will be set to the current time using {@link System#currentTimeMillis()}.
      * @param areaname  name; not null
      * @throws IllegalArgumentException if areaname is null
      */
@@ -137,6 +146,7 @@ public class GeoArea extends RDBRecord
     {
     	super();
     	setName(areaname);
+	date_added = (int) (System.currentTimeMillis() / 1000L);
     }
 
     /**
@@ -151,6 +161,8 @@ public class GeoArea extends RDBRecord
     {
     	super(db, Integer.parseInt(fieldsAndID[FIELDS.length]));
     	aname = fieldsAndID[0];
+	if (fieldsAndID[1] != null)
+		date_added = Integer.parseInt(fieldsAndID[1]);
     }
 
     public String getName() { return aname; }
@@ -170,8 +182,8 @@ public class GeoArea extends RDBRecord
     }
 
     /**
-     * Insert a new record with the current areaname.
-	 * Clears dirty field; sets id and dbConn fields.
+     * Insert a new record with the current field values of this object.
+     * Clears dirty field; sets id and dbConn fields.
      * @param db  db connection
      * @return new record's primary key (_id)
      * @throws IllegalStateException if the insert fails (db closed, etc)
@@ -179,7 +191,8 @@ public class GeoArea extends RDBRecord
     public int insert(RDBAdapter db)
         throws IllegalStateException
     {
-    	String[] fv = { aname };
+	final String dateAdded_str = (date_added != 0) ? Integer.toString(date_added) : null;
+	String[] fv = { aname, dateAdded_str };
     	id = db.insert(TABNAME, FIELDS, fv, true);
 		dirty = false;
     	dbConn = db;
@@ -199,9 +212,20 @@ public class GeoArea extends RDBRecord
 	public void commit()
         throws IllegalStateException, NullPointerException
 	{
-    	String[] fv = { aname };
+		final String dateAdded_str = (date_added != 0) ? Integer.toString(date_added) : null;
+		String[] fv = { aname, dateAdded_str };
 		dbConn.update(TABNAME, id, FIELDS, fv);
 		dirty = false;
+	}
+
+	/**
+	 * Get the date this {@link GeoArea} was added to the database, if known.
+	 * @return  The date added, in unix format, or 0 if field is empty (null).
+	 * @since 0.9.43
+	 */
+	public int getDateAdded()
+	{
+		return date_added;
 	}
 
 	/** area name */

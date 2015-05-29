@@ -125,7 +125,11 @@ public class Main extends Activity
 		super.onPrepareOptionsMenu(menu);
 		MenuItem item = menu.findItem(R.id.menu_main_canceltrip);
 		if (item != null)
+		{
+			if (currV == null)
+				currV = Settings.getCurrentVehicle(db, false);  // can happen after screen rotation
 			item.setEnabled(null != VehSettings.getCurrentTrip(db, currV, false));
+		}
 
 		return true;
 	}
@@ -213,8 +217,8 @@ public class Main extends Activity
 						&& (! gitversion.equals("?")))
 					{
 						about_str.append("\n");
-						about_str.append(res.getString(R.string.build__fmt, gitversion));
-							// "Build: 66a175e"
+						about_str.append(res.getString(R.string.build_number__fmt, gitversion));
+							// "Build number: 66a175e"
 					}
 				} catch (Exception e) {
 				} finally {

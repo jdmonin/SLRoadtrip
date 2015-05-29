@@ -114,6 +114,16 @@
 		  android:maxLines="1"
 		  android:capitalize="characters"></EditText>
     </TableRow>
+    <TableRow android:id="@+id/vehicle_entry_added_on_row" >
+		<TextView
+		    android:layout_width="wrap_content"
+		    android:layout_height="fill_parent"
+		    android:text="@string/added_on" />
+		<TextView
+		    android:id="@+id/vehicle_entry_added_on"
+		    android:layout_width="wrap_content"
+		    android:layout_height="wrap_content" />
+    </TableRow>
     <TableRow>
 		<TextView  
 		    android:layout_width="wrap_content" 

@@ -2,7 +2,7 @@
 <!--
  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
 
- This file Copyright (C) 2010,2012 Jeremy D Monin (jdmonin@nand.net)
+ This file Copyright (C) 2010,2012,2015 Jeremy D Monin (jdmonin@nand.net)
 
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
@@ -55,6 +55,16 @@
 		    android:layout_height="wrap_content"
 		    android:layout_weight="1"
 		    android:minLines="2" />
+    </TableRow>
+    <TableRow android:id="@+id/driver_entry_added_on_row" >
+		<TextView
+		    android:layout_width="wrap_content"
+		    android:layout_height="fill_parent"
+		    android:text="@string/added_on" />
+		<TextView
+		    android:id="@+id/driver_entry_added_on"
+		    android:layout_width="wrap_content"
+		    android:layout_height="wrap_content" />
     </TableRow>
 </TableLayout>
 <!-- GeoArea info entry. Shown only during initial setup of the app. -->

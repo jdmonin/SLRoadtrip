@@ -27,6 +27,7 @@
 <string name="app_name">Shadowlands RoadTrip</string>
 <string name="about">About</string>
 <string name="active">Active</string>
+<string name="added_on">Added on</string>
 <string name="all_vehicles">All vehicles</string>
 <string name="androidstartup_pleaseCreate">Welcome!\n\nPlease begin by entering your name and vehicle.</string>
 <string name="androidstartup_restoreBkup">If you already use Shadowlands RoadTrip, you can restore a backup file to continue:</string>
@@ -38,7 +39,7 @@
 <string name="begin__initcap">Begin</string>
 <string name="begin_frequent_trip">Begin Frequent Trip</string>
 <string name="begin_trip">Begin Trip</string>
-<string name="build__fmt">Build: %1s</string>
+<string name="build_number__fmt">Build number: %1s</string>
 <string name="calculator">Calculator...</string>
 <string name="cancel_trip">Cancel Trip</string>
 <string name="change">Change</string>

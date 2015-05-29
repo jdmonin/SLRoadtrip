@@ -31,6 +31,7 @@ import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 
 import org.shadowlands.roadtrip.db.RDBAdapter;
@@ -115,6 +116,12 @@ public class Main
 		private JPanel btns;
 		private JButton bNew, bOpen, bOpenBackup, bExit;
 
+		/**
+		 * Current directory from opening a file with {@link JFileChooser}, or null if no file chosen yet.
+		 * Used when calling {@link #chooseFile(boolean, boolean)} again.
+		 */
+		private File prevFileOpenDir;
+
 		public StartupChoiceFrame()
 		{
 			super("BookEdit: Choose File or Backup");
@@ -172,19 +179,34 @@ public class Main
 			{
 				openLogbook(chooseFile(true, false), false, false);
 			}
+			else if (src == bNew)
+			{
+				JOptionPane.showMessageDialog
+					(this,
+					 "Not yet implemented.\nUse the android app to create new logbooks for now.",
+					 null, JOptionPane.INFORMATION_MESSAGE);
+				// TODO implement it
+			}
 			else if (src == bExit)
 			{
 				System.exit(0);
 			}
-			// TODO deal with other buttons
 		}
 
-		/** return the chosen file, or null if nothing was chosen */
+		/**
+		 * Show a {@link JFileChooser} to browse and Open or Save a logbook file.
+		 * @param notNew  True for Open existing, false for Save new file
+		 * @param forBackups  True to open logbook read-only, false to open for editing
+		 * @return the chosen file, or null if nothing was chosen
+		 */
 		private File chooseFile(final boolean notNew, final boolean forBackups)
 		{
 			// TODO respect forBackups
 			// TODO filtering: setFileFilter, addChoosableFileFilter, etc
 			final JFileChooser fc = new JFileChooser();
+			if (prevFileOpenDir != null)
+				fc.setCurrentDirectory(prevFileOpenDir);
+
 			int returnVal;
 			if (notNew)
 				returnVal = fc.showOpenDialog(this);
@@ -192,8 +214,10 @@ public class Main
 				returnVal = fc.showSaveDialog(this);
 			if (returnVal != JFileChooser.APPROVE_OPTION)
 				return null;
+
 			File file = fc.getSelectedFile();
 			System.out.println("file path: " + file.getAbsolutePath());
+			prevFileOpenDir = fc.getCurrentDirectory();  // for next time
 			return file;
 		}
 

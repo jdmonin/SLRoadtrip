@@ -2613,7 +2613,6 @@ public class TripTStopEntry extends Activity
 		calcOdoIsTrip = isOdoTrip;
 		calcOperation = CALC_OP_NONE;
 		calcPrevOperand = 0;
-		calcNextPressClears = false;
 
 		calcValue = (EditText) calcItems.findViewById(R.id.trip_tstop_popup_odo_calc_value);
 		calc0 = calcItems.findViewById(R.id.trip_tstop_popup_odo_calc_0);
@@ -2629,6 +2628,7 @@ public class TripTStopEntry extends Activity
 		calcDeci = calcItems.findViewById(R.id.trip_tstop_popup_odo_calc_deci);
 		calcDeci.setEnabled(isOdoTrip);
 		calcLoadValueFromOdo();
+		calcNextPressClears = true;
 
 		AlertDialog.Builder alert = new AlertDialog.Builder(this);
 		if (isOdoTrip)

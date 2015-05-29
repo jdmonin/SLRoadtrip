@@ -1,6 +1,5 @@
 -- org.shadowlands.roadtrip
--- version 0.9.40 schema (2014-02-15) for SQLite 3.4 or higher
--- with newer comments (2015-05-09).
+-- version 0.9.43 schema (2015-05-26) for SQLite 3.4 or higher
 --
 -- The db schema version is sometimes lower than the app version, never higher.
 --
@@ -14,22 +13,22 @@
 -- and doing a fresh install with the new schema, then restoring a
 -- previous backup that has an older schema (which will also upgrade).
 
-PRAGMA user_version = 0940;
+PRAGMA user_version = 0943;
 
 -- This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
--- 
+--
 --  This file Copyright (C) 2010-2015 Jeremy D Monin (jdmonin@nand.net)
--- 
+--
 --  This program is free software: you can redistribute it and/or modify
 --  it under the terms of the GNU General Public License as published by
 --  the Free Software Foundation, either version 3 of the License, or
 --  (at your option) any later version.
--- 
+--
 --  This program is distributed in the hope that it will be useful,
 --  but WITHOUT ANY WARRANTY; without even the implied warranty of
 --  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 --  GNU General Public License for more details.
--- 
+--
 --  You should have received a copy of the GNU General Public License
 --  along with this program.  If not, see http://www.gnu.org/licenses/ .
 
@@ -67,22 +66,26 @@ create table appinfo ( _id integer PRIMARY KEY AUTOINCREMENT not null, aifield v
 	--                       	 value is '' if using the default backup location DBBackup.getDBBackupPath(Context).
 	-- DB_BACKUP_THISFILE: written just before closing db for backup copy; if backup fails, clear it afterwards (copy it back from DB_BACKUP_PREVFILE)
 	-- DB_BACKUP_THISTIME: (unix format) time of DB_BACKUP_THISFILE
-	-- DB_CURRENT_SCHEMAVERSION '0940' if upgraded to current schema version
+	-- DB_CURRENT_SCHEMAVERSION '0943' if upgraded to current schema version
 
-insert into appinfo (aifield, aivalue) values ('DB_CREATE_SCHEMAVERSION', '0940');
-insert into appinfo (aifield, aivalue) values ('DB_CURRENT_SCHEMAVERSION', '0940');
+insert into appinfo (aifield, aivalue) values ('DB_CREATE_SCHEMAVERSION', '0943');
+insert into appinfo (aifield, aivalue) values ('DB_CURRENT_SCHEMAVERSION', '0943');
 
 create table settings ( _id integer PRIMARY KEY AUTOINCREMENT not null, sname varchar(32) not null unique, svalue varchar(64), ivalue int );
 	-- General current settings. See also veh_settings.
 	-- Each setting uses svalue or ivalue. Empty strings (svalues) are stored as null, not as a string of length 0.
 	--
 	-- DISTANCE_DISPLAY: KM or MI
-	-- CURRENT_VEHICLE (int _id within vehicles) -- if this changes, update CURRENT_TRIP too; see vehicle.last_tripid comment
+	-- CURRENT_VEHICLE (int _id within vehicles) -- if this changes, update veh_settings('CURRENT_TRIP') too;
+	--   see also vehicle.last_tripid comment
 	-- REQUIRE_TRIPCAT (bool) -- is trip category required for new trips?  Added in app version 0.9.12.
 	-- LOGVIEW_ODO_TRIP_DELTA (int) -- logview trip odometers normal (0), delta (1), or both (2)  Added in 0.9.12.
-	-- HIDE_FREQTRIP (bool) -- Hide the Frequent Trip buttons?  Added in app version 0.9.12.
+	-- HIDE_FREQTRIP (bool) -- Hide the Frequent Trip buttons?  Added in app version 0.9.12, default = no.
+	--   Default yes in 0.9.43 (schema v0943) for new installs only.
 	-- HIDE_VIA (bool) -- Hide the Via entry field?  Added in app version 0.9.12.
 	-- SHOW_TRIP_PAX (bool) -- Show the optional Passenger Count field for trip?  Added in app version 0.9.13.
+
+insert into settings (sname, ivalue) values ('HIDE_FREQTRIP', 1);
 
 create table veh_settings ( _id integer PRIMARY KEY AUTOINCREMENT not null, vid int not null, sname varchar(32) not null, svalue varchar(64), ivalue int );
 	-- Per-vehicle settings, added in v0940: More flexible than adding fields to the vehicle table.
@@ -110,16 +113,18 @@ create table app_db_upgrade_hist ( db_vers_to int not null, db_vers_from not nul
     -- db_vers_from, db_vers_to are schema version numbers, like 908
     -- upg_time is unix format
 
-create table geoarea ( _id integer PRIMARY KEY AUTOINCREMENT not null, aname varchar(255) not null );
+create table geoarea ( _id integer PRIMARY KEY AUTOINCREMENT not null, aname varchar(255) not null, date_added int );
+    -- date_added field added in schema v0943; may be null in data from older schemas
 
-create table person ( _id integer PRIMARY KEY AUTOINCREMENT not null, is_driver int not null, name varchar(255) not null unique, contact_uri varchar(255), is_active int not null default 1, comment varchar(255) );
+create table person ( _id integer PRIMARY KEY AUTOINCREMENT not null, is_driver int not null, name varchar(255) not null unique, contact_uri varchar(255), is_active int not null default 1, date_added int, comment varchar(255) );
+    -- date_added field added in schema v0943; may be null in data from older schemas
 
 create index "person~d" ON person(is_driver);
 
 create table vehiclemake ( _id integer PRIMARY KEY AUTOINCREMENT not null, mname varchar(255) not null unique, is_user_add int );
 	-- see bottom of file for inserts into vehiclemake
 
-create table vehicle ( _id integer PRIMARY KEY AUTOINCREMENT not null, nickname varchar(255), driverid int not null, makeid int not null, model varchar(255), year integer not null, date_from integer, date_to integer, vin varchar(64), plate varchar(64), odo_orig integer not null, odo_curr integer not null, last_tripid integer, distance_storage varchar(2) not null, expense_currency varchar(3) not null, expense_curr_sym varchar(3) not null, expense_curr_deci integer not null, fuel_curr_deci integer not null, fuel_type varchar(1) not null, fuel_qty_unit varchar(2) not null, fuel_qty_deci integer not null, comment varchar(255), is_active int not null default 1 );
+create table vehicle ( _id integer PRIMARY KEY AUTOINCREMENT not null, nickname varchar(255), driverid int not null, makeid int not null, model varchar(255), year integer not null, date_from integer, date_to integer, vin varchar(64), plate varchar(64), odo_orig integer not null, odo_curr integer not null, last_tripid integer, distance_storage varchar(2) not null, expense_currency varchar(3) not null, expense_curr_sym varchar(3) not null, expense_curr_deci integer not null, fuel_curr_deci integer not null, fuel_type varchar(1) not null, fuel_qty_unit varchar(2) not null, fuel_qty_deci integer not null, comment varchar(255), is_active int not null default 1, date_added int );
     -- To reduce write freq, update odo_curr only at end of each trip, not at each trip stop.
     -- Also update last_tripid at the end of each trip, or if a trip was in progress and then the current vehicle changed.
     --   If the vehicle has never finished a trip, last_tripid is 0 or null.
@@ -133,6 +138,7 @@ create table vehicle ( _id integer PRIMARY KEY AUTOINCREMENT not null, nickname 
     -- fuel_curr_deci is per-unit price # digits after decimal
     -- fuel_qty_unit is 'ga' or 'L'
     -- fuel_type is 'G' gas, 'D' diesel
+    -- date_added field added in schema v0943; may be null in data from older schemas
 
 create table tripcategory ( _id integer PRIMARY KEY AUTOINCREMENT not null, cname varchar(255) not null unique, rank int not null, is_work_related int not null default 0, is_user_add int );
 	-- rank is a place number for on-screen order (instead of alphabetical listing)
@@ -186,21 +192,16 @@ create table tstop ( _id integer PRIMARY KEY AUTOINCREMENT not null, tripid int 
 	-- a_id is the tstop's geoarea.
 	--    For local trips: a_id is null (look at trip.aid instead)
 	--    For roadtrips:
+	--       A roadtrip's ending tstop's area id should be the ending area.
 	--       A roadtrip's starting tstop's area id is ignored, because it could be the
 	--         ending tstop of a local trip.
-	--       A roadtrip's ending tstop's area id should be the ending area trip.roadtrip_end_aid.
-	--       Other stops during a roadtrip: area id is set to the location's geoarea,
-	--        such as the trip's starting or ending area.
-	--        For stops between geoareas (displayed as area "none") like highway rest areas,
-	--        area id is null in tstop and location.
-	--     0 for a_id is okay for a local tstop, but not for start/end location of the trip.
-	--     a_id is denormalized from location.a_id, and used mostly while a trip is in progress.
-	--        Later this field might be helpful for searching for tstops by area.
-	--     Historical note: before March 2011 (r48) unless stopEndsTrip, a_id is always null: assume trip.aid.
+	--       Other stops during roadtrip: a_id is set for any roadtrip stop
+	--         which is within the starting or ending geoarea.
+	--         for stops 'in the middle' (neither start or end area), a_id is null.
+	--     0 for a_id is ok for a local tstop, but not ok for start/end location of trip.
 	-- via_route, via_id are the route from the previous tstop's location;
 	--    they are ignored for the tstop which starts a trip. (via_id goes to the via_route table)
-	-- locid is required since app version 0.9.05.
-	-- descr is null for all new rows (starting with v0.9.05), because the required
+	-- descr is null for all new rows (starting with app version 0.9.05), because the separate
 	--    location record (locid) stores the description.  Older data may use descr.
 	-- flag_sides: bitmask, indicates this row has sidetables (exercise, food, gas, car-service).
 	--    also used for temporary flags.  In TStop.java see FLAG_*, TEMPFLAG_*.

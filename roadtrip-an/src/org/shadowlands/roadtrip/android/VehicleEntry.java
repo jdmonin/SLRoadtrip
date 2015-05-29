@@ -145,9 +145,9 @@ public class VehicleEntry
 	private Calendar dateFrom;
 
 	/**
-	 * Date formatter for use with
+	 * Date formatter (Day of Week\nDate), for use with
 	 * {@link DateFormat#format(CharSequence, Calendar)} by {@link #btnDateFrom}.
-	 * initialized once in {@link #updateDateButton()}.
+	 * initialized in {@link #updateDateButton()}.
 	 */
 	private StringBuffer fmt_dow_shortdate;
 
@@ -244,6 +244,9 @@ public class VehicleEntry
 		View vv = findViewById(R.id.vehicle_entry_geoarea_text);  // not editing: hide GeoArea display field
 		if (vv != null)
 			vv.setVisibility(View.GONE);
+		vv = findViewById(R.id.vehicle_entry_added_on_row);
+		if (vv != null)
+			vv.setVisibility(View.GONE);
 
 		etGeoArea = (AutoCompleteTextView) findViewById(R.id.vehicle_entry_geoarea);
 		GeoArea[] areas = GeoArea.getAll(db, -1);
@@ -312,6 +315,25 @@ public class VehicleEntry
 		odo_orig.setEnabled(false);
 		odo_curr.setCurrent10d(veh.getOdometerCurrent(), true);
 		comment.setText(veh.getComment());
+
+		View vv = findViewById(R.id.vehicle_entry_added_on_row);
+		if (veh.getDate_added() != 0)
+		{
+			if (vv != null)
+				vv.setVisibility(View.VISIBLE);
+
+			TextView tvG = (TextView) findViewById(R.id.vehicle_entry_added_on);
+			if (tvG != null)
+			{
+				// don't use fmt_dow_shortdate which includes \n
+				StringBuffer fmt_dow_shortdt = Misc.buildDateFormatDOWShort(this, false);
+				tvG.setText
+					(DateFormat.format(fmt_dow_shortdt, veh.getDate_added() * 1000L));
+			}
+		} else {
+			if (vv != null)
+				vv.setVisibility(View.GONE);
+		}
 
 		if (veh.getDate_from() != 0)
 		{

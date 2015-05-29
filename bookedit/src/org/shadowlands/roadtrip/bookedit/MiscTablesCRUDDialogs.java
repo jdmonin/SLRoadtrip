@@ -57,7 +57,7 @@ public abstract class MiscTablesCRUDDialogs
 	    (JFrame owner, RDBAdapter conn, final boolean isReadOnly, Person p, final boolean driverIfNew)
 	    throws IllegalStateException, NullPointerException
 	{
-		final String[] labels = { "Name", "Driver?", "Date added", "Comment" };
+		final String[] labels = { "Name", "Driver?", "Added at", "Comment" };
 		String[] vals = new String[4];
 		if (p != null)
 		{
@@ -133,7 +133,7 @@ public abstract class MiscTablesCRUDDialogs
 	{
 		// keep arrays congruent: labels[], FTYPES_DIA_VEHICLE[], vals[]
 		final String[] labels =
-			{ "Nickname", "Active?", "Main Driver", "Make", "Model", "Year", "Date added", "Owned from",
+			{ "Nickname", "Active?", "Main Driver", "Make", "Model", "Year", "Added at", "Owned from",
 			  "Owned to", "VIN", "License plate/tag", "Original odometer", "Current odometer", "Comment" };
 		String[] vals = new String[14];
 		if (v != null)

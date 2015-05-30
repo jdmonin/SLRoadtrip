@@ -728,7 +728,7 @@ public class RDBOpenHelper
 		case 908: res = R.raw.upg_v0908;  break;   // 2012-04-01
 		case 909: res = R.raw.upg_v0909;  break;   // 2012-12-06
 		case 940: res = R.raw.upg_v0940;  break;   // 2014-02-15
-		case 943: res = R.raw.upg_v0943;  break;   // 2015-05-14
+		case 943: res = R.raw.upg_v0943;  break;   // 2015-05-26
 		}
 
 		if (res == 0)

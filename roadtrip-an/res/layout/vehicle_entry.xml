@@ -138,7 +138,7 @@
 			android:layout_height="wrap_content" />
     </TableRow>
     <!-- GeoArea: Read-only textview for existing vehicle, or editable text/dropdown for new one -->
-    <TableRow>
+    <TableRow android:id="@+id/vehicle_entry_geo_area_row" >
 		<TextView
 		    android:text="@string/vehicle_entry_current_geo_area"
 		    android:layout_width="wrap_content"

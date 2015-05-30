@@ -98,6 +98,9 @@ public class VehicleEntry
 
 	/**
 	 * If true, {@link #EXTRAS_FLAG_ASKED_NEW} was set.
+	 * Can't assume that if false there's a current vehicle, because
+	 * this field is also false during initial setup of the first
+	 * vehicle in the database. Check {@link #cameFromEdit_veh} != null.
 	 */
 	private boolean cameFromAskNew;
 
@@ -265,9 +268,9 @@ public class VehicleEntry
 			etGeoArea.setAdapter((ArrayAdapter<GeoArea>) null);
 		}
 	    } else {
-		// editing an existing vehicle
+		// editing an existing vehicle, or initial setup
 
-		View v = findViewById(R.id.vehicle_entry_geoarea);  // not new: hide GeoArea text field
+		View v = findViewById(R.id.vehicle_entry_geoarea);  // not new, or only 1 area: hide GeoArea dropdown
 		if (v != null)
 			v.setVisibility(View.GONE);
 		v = findViewById(R.id.vehicle_entry_geoarea_arrow);
@@ -285,6 +288,15 @@ public class VehicleEntry
 				if (geoa != null)
 					tvG.setText(geoa.getName());
 			}
+		} else {
+			// initial setup: hide entire GeoArea row and "Added on" row
+
+			View vv = findViewById(R.id.vehicle_entry_geo_area_row);
+			if (vv != null)
+				vv.setVisibility(View.GONE);
+			vv = findViewById(R.id.vehicle_entry_added_on_row);
+			if (vv != null)
+				vv.setVisibility(View.GONE);
 		}
 	    }
 

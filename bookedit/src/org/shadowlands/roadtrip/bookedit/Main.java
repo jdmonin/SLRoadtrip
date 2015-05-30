@@ -56,6 +56,15 @@ public class Main
 	 */
 	public static final String APP_VERSION_STRING = "0.9.43";
 
+	/**
+	 * For GUI adjustments as needed, detect if we're running on Mac OS X.
+	 * To identify osx from within java, see technote TN2110:
+	 * http://developer.apple.com/technotes/tn2002/tn2110.html
+	 * @since 0.9.43
+	 */
+	public static final boolean isJavaOnOSX =
+		System.getProperty("os.name").toLowerCase().contains("os x");
+
 	private String dbFilename = null;
 	private StartupChoiceFrame scf;
 	private RDBAdapter conn = null;

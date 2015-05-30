@@ -33,6 +33,7 @@ import java.text.ParseException;
 import java.util.Date;
 import java.util.Vector;
 
+import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
@@ -267,6 +268,8 @@ public class MultiInputDialog
     	GridBagLayout gbl = new GridBagLayout();
     	Container bp = getContentPane();  // button panel (TODO) name
     	bp.setLayout(gbl);
+	if (bp instanceof JComponent)
+		((JComponent) bp).setBorder(BorderFactory.createEmptyBorder(6, 6, 6, 6));
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.fill = GridBagConstraints.BOTH;
@@ -287,7 +290,8 @@ public class MultiInputDialog
          */
     	final Insets defaultInsets = gbc.insets;
     	final Insets labelInsets
-    		= new Insets(3, 6, 3, 6);  // padding around JLabels in GBL; unlike JTextField, no built-in padding
+    		= new Insets(3, 6, 3, 6);  // padding around JLabels; on OSX, unlike JTextField, no built-in padding
+	final Insets valueLabelInsets = (Main.isJavaOnOSX) ? labelInsets : defaultInsets;
 	final char decimalSep = new DecimalFormat().getDecimalFormatSymbols().getDecimalSeparator();
 		// for odometers; java 1.5, android API 8 don't have DecimalFormatSymbols.getInstance()
 
@@ -376,7 +380,7 @@ public class MultiInputDialog
     		bp.add(txt);
 
     		gbc.gridwidth = GridBagConstraints.REMAINDER;
-    		gbc.insets = (valComp instanceof JLabel) ? labelInsets : defaultInsets;
+    		gbc.insets = (valComp instanceof JLabel) ? valueLabelInsets : defaultInsets;
     		gbl.setConstraints(valComp, gbc);
     		bp.add(valComp);
     	}

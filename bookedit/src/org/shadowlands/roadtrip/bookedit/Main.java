@@ -19,6 +19,7 @@
 
 package org.shadowlands.roadtrip.bookedit;
 
+import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -120,7 +121,13 @@ public class Main
 		// TODO handle isNew (create schema, etc)
 		dbFilename = chooseFile.getAbsolutePath();
 
+		// Responsiveness: show "busy" mouse cursor while retrieving data
+		scf.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+
 		LogbookEditPane.setupFromMain(dbFilename, chooseFile.getName(), scf, isBak, isReadOnly);
+
+		// At this point the data is visible, or an error message was shown
+		scf.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
 	}
 
 	/** Gives buttons with choice of new, open, open backup, exit */

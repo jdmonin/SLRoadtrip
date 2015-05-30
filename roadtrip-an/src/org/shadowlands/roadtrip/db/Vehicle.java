@@ -272,7 +272,7 @@ public class Vehicle extends RDBRecord
     /**
      * Existing record: Fill our obj fields from db-record string contents.
      * @param db  connection
-     * @param rec, as returned by db.getRows({@link #FIELDS_AND_ID}); last element is _id
+     * @param rec  Record's field contents, as returned by db.getRows({@link #FIELDS_AND_ID}); last element is _id
      * @throws RDBKeyNotFoundException not thrown, but required due to super call
      * @throws IllegalArgumentException if rec.length is too short
      */
@@ -286,7 +286,8 @@ public class Vehicle extends RDBRecord
     /**
      * Fill our obj fields from db-record string contents.
      * {@code _id} is not filled here; the constructor has filled it already.
-     * @param rec, as returned by db.getRow({@link #FIELDS}) or db.getRows({@link #FIELDS_AND_ID})
+     * @param rec  Record's field contents, as returned by db.getRow({@link #FIELDS})
+     *     or db.getRows({@link #FIELDS_AND_ID})
      * @throws IllegalArgumentException if rec.length is too short
      */
 	private void initFields(final String[] rec)

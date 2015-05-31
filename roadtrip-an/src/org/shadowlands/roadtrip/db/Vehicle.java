@@ -105,7 +105,12 @@ public class Vehicle extends RDBRecord
     /** usual driver, a {@link Person} ID */
     private int driverid;
 
+    /**
+     * {@link VehicleMake} ID.
+     * @see #makeidName
+     */
     private int makeid;
+
     private String model;
 
     /** model year, or 0 if unknown */
@@ -163,6 +168,12 @@ public class Vehicle extends RDBRecord
 	 * @since 0.9.43
 	 */
 	private int date_added;
+
+	/**
+	 * Cached name of {@link #makeid}, if needed and available from db, in {@link #toString()}.
+	 * @since 0.9.43
+	 */
+	private transient String makeidName;
 
 	/** null unless {@link #readAllTrips(boolean)} called */
     private transient Vector<Trip> allTrips;
@@ -721,23 +732,40 @@ public class Vehicle extends RDBRecord
 		dirty = true;
 	}
 
-	/** format is: "[ nickname - ] year [model]" */
+	/** format is: "[ nickname - ] year [model or make]" */
 	public String toString()
 	{
 		StringBuilder sb = new StringBuilder();
 		if ((nickname != null) && (nickname.length() > 0))
 		{
 			sb.append(nickname);
-			sb.append(" - ");
+			sb.append(" -");
 		}
 		if (year != 0)
+		{
+			sb.append(' ');
 			sb.append(year);
+		}
 		if ((model != null) && (model.length() > 0))
 		{
 			sb.append(' ');
 			sb.append(model);
+		} else {
+			// no model: try to use makeid
+			if ((makeidName == null) && (dbConn != null))
+			{
+				try {
+					VehicleMake mk = new VehicleMake(dbConn, makeid);
+					makeidName = mk.getName();
+				}
+				catch(Exception e) {}
+			}
+			if (makeidName != null)
+			{
+				sb.append(' ');
+				sb.append(makeidName);
+			}
 		}
-		// TODO else, consider lookup makeid
 
 		if (sb.length() == 0)
 			sb.append("(Vehicle, all fields empty)");  // fallback, GUI enforces fields; can skip I18N

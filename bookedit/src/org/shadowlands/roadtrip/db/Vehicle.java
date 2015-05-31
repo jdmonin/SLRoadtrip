@@ -23,6 +23,8 @@ import java.util.Vector;
 
 /**
  * In-memory representation, and database access for, a Vehicle.
+ * To distinctly identify the vehicle at least one of the Year, Model, or Nickname fields
+ * should be set; see {@link #toString()}.
  *<P>
  * Some read-only fields are public, instead of having getters.
  * Final is implied, but can't be declared because of strict java syntax checks.
@@ -558,7 +560,7 @@ public class Vehicle extends RDBRecord
 		dirty = true;
 	}
 
-	/** @return the model year */
+	/** @return the model year, or 0 if unknown */
 	public int getYear() {
 		return year;
 	}

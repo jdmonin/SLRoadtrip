@@ -25,7 +25,8 @@ import org.shadowlands.roadtrip.db.Person;
 import org.shadowlands.roadtrip.db.RDBAdapter;
 
 /**
- * Create and show a list of drivers in this logbook.
+ * Create and show a list of drivers ({@link Person}s) in this logbook. Drivers are edited from here by
+ * {@link MiscTablesCRUDDialogs#createEditPersonDialog(JFrame, RDBAdapter, boolean, Person, boolean)}.
  * @since 0.9.43
  */
 @SuppressWarnings("serial")

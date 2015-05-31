@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010-2014 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2015 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -359,17 +359,33 @@ public class TripBegin extends Activity
 			{
 				// disable "continue from"; we'll use "new location"
 				rbLocContinue.setEnabled(false);
-				rbLocContinue.setVisibility(View.GONE);
 				rbLocGroup.check(R.id.trip_begin_radio_loc_new);
+				rbLocGroup.setVisibility(View.GONE);
 				tvLocContinue.setVisibility(View.GONE);
 				// rbLocNew.setChecked(true);
 			} else {
-				rbLocContinue.setVisibility(View.VISIBLE);
+				final boolean isRBHidden = (rbLocGroup.getVisibility() != View.VISIBLE);
+				if (isRBHidden)
+					rbLocGroup.setVisibility(View.VISIBLE);
 				rbLocContinue.setEnabled(true);
 				rbLocGroup.check(R.id.trip_begin_radio_loc_cont);
 				// rbLocContinue.setChecked(true);
+				tvLocContinue.setVisibility(View.VISIBLE);
 				tvLocContinue.setText
 					(getResources().getString(R.string.continue_from_colon) + " " + startingPrevTStop.readLocationText());
+				if (isRBHidden)
+				{
+					// Update height of starting-location textview to match
+					// the radio buttons again, once those have been un-hidden.
+					rbLocContinue.post(new Runnable() {
+						public void run() {
+							final int rbHeight = rbLocContinue.getHeight(),
+							          tvHeight = tvLocContinue.getHeight();
+							if (tvHeight < rbHeight)
+								tvLocContinue.setHeight(rbHeight);
+						}
+					});
+				}
 			}
 
 			// How recent was that vehicle's most recent trip? (Historical Mode)

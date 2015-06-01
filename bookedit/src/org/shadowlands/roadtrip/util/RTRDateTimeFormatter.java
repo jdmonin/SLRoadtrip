@@ -44,6 +44,7 @@ public class RTRDateTimeFormatter
 
 	/**
 	 * Format for date + time.
+	 * To ease parsing, date portion should use the same DateFormat instance type as {@link #dfd}.
 	 * @since 0.9.43
 	 */
 	protected java.text.DateFormat dfdt;
@@ -110,15 +111,29 @@ public class RTRDateTimeFormatter
 	/**
 	 * Parse a date and time as formatted by {@link #formatDateTime(Date)};
 	 * not a generic date-time parser.
-	 * @param dt  Date and time string, formatted by {@link #formatDateTime(long)} or {@link #formatDateTime(Date)}
-	 * @return  The parsed date and time
+	 * @param dt  Date and time string, formatted by {@link #formatDateTime(long)} or {@link #formatDateTime(Date)}.
+	 *    To be more user-friendly, if date and time parsing fails, will attempt to parse as date only.
+	 *    If that fails, the original date-and-time parse exception is re-thrown.
+	 * @return  The parsed date and time, with the time's hh:mm interpreted in the local timezone. If {@code dt}
+	 *    contained only a date (without hh:mm), the returned time of day will be local midnight (00:00) at the
+	 *    start of the parsed date.
 	 * @throws ParseException  If a parsing error occurs
 	 * @since 0.9.43
 	 */
 	public Date parseDateTime(final String dt)
 		throws ParseException
 	{
-		return dfdt.parse(dt);
+		try
+		{
+			return dfdt.parse(dt);
+		} catch (ParseException e) {
+			try
+			{
+				return dfd.parse(dt);  // try to parse without expecting a time of day
+			} catch (ParseException e2) {
+				throw e;  // re-throw original exception, not date-only parse exception
+			}
+		}
 	}
 
 	/**

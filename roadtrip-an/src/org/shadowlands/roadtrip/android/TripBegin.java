@@ -71,13 +71,21 @@ import android.widget.Toast;
  * Assumes no current trip.
  * Assumes CURRENT_DRIVER, CURRENT_VEHICLE are set.
  *<P>
- * By default, the trip will be a local non-frequent trip.
- * To start a roadtrip or a frequent trip, use
+ * To simplify interaction, all trips begin as local trips except
+ * when the user has chosen a frequent trip that's a roadtrip.
+ *<P>
+ * By default the trip will not be a frequent trip. To start
+ * a frequent trip or frequent roadtrip, use
  * {@link #EXTRAS_FLAG_FREQUENT} or {@link #EXTRAS_FLAG_NONLOCAL}
  * when creating the intent to start this activity.
  *<P>
- * To simplify interaction, all trips begin as local trips except
- * when the user has chosen a frequent trip that's a roadtrip.
+ * If the "Change Driver/Vehicle" button is pressed,
+ * the {@link ChangeDriverOrVehicle} activity is shown;
+ * returning from that, {@link #onActivityResult(int, int, Intent)}
+ * will probably call {@link #updateDriverVehTripTextAndButtons()}.
+ *<P>
+ * The method handling the Begin Trip button that finishes
+ * this Activity is {@link #onClick_BtnBeginTrip(View)}.
  *
  * @author jdmonin
  */
@@ -108,13 +116,13 @@ public class TripBegin extends Activity
 	private AutoCompleteTextView etGeoArea;
 	private GeoAreaOnItemClickListener etGeoAreaListener;
 
-	/** continue from prev, or enter a new, location */
+	/** continue from prev, or enter a new, location. This and {@link #tvLocContinue} are shown/hidden together. */
 	private RadioGroup rbLocGroup;
-	/** continue from prev location */
+	/** continue from prev location. Part of {@link #rbLocGroup}. */
 	private RadioButton rbLocContinue;
-	/** previous-location textview */
+	/** previous-location textview. If no previous trip, this and {@link #rbLocGroup} are hidden. */
 	private TextView tvLocContinue;
-	/** new-location textfield */
+	/** new-location textfield. Typing here calls {@link #afterTextChanged(Editable)}. */
 	private AutoCompleteTextView etLocNew;
 	/** starting date-time */
 	private Calendar startTime;
@@ -128,7 +136,7 @@ public class TripBegin extends Activity
 	 */
 	private StringBuffer fmt_dow_shortdate;
 	private Button btnStartDate;
-	private TimePicker tpStartTime;  // TODO on wraparound: Chg date
+	private TimePicker tpStartTime;  // TODO on hour wraparound: Chg date
 	/** optional passenger count */
 	private EditText etPax;
 	/** optional {@link TripCategory} */
@@ -186,7 +194,7 @@ public class TripBegin extends Activity
 		rbLocContinue = (RadioButton) findViewById(R.id.trip_begin_radio_loc_cont);
 		tvLocContinue = (TextView) findViewById(R.id.trip_begin_loc_cont_text);
 		etLocNew = (AutoCompleteTextView) findViewById(R.id.trip_begin_loc_new);
-		etLocNew.addTextChangedListener(this);  // for related radiobutton
+		etLocNew.addTextChangedListener(this);  // for related radiobutton R.id.trip_begin_radio_loc_new
 		if (isRoadtrip)
 			etGeoArea = (AutoCompleteTextView) findViewById(R.id.trip_begin_roadtrip_desti);
 		btnStartDate = (Button) findViewById(R.id.trip_begin_btn_start_date);
@@ -327,8 +335,8 @@ public class TripBegin extends Activity
 		if ((prevVId == vID) && (prevDId == dID))
 			return;
 
-		// TODO string resources, not hardcoded
-		
+		// TODO I18N: string resources, not hardcoded
+
 		StringBuffer txt = new StringBuffer("Current driver: ");
 		txt.append(currD.toString());
 		txt.append("\nCurrent vehicle: ");
@@ -366,17 +374,34 @@ public class TripBegin extends Activity
 			{
 				// disable "continue from"; we'll use "new location"
 				rbLocContinue.setEnabled(false);
-				rbLocContinue.setVisibility(View.GONE);
 				rbLocGroup.check(R.id.trip_begin_radio_loc_new);
+				rbLocGroup.setVisibility(View.GONE);
 				tvLocContinue.setVisibility(View.GONE);
 				// rbLocNew.setChecked(true);
 			} else {
-				rbLocContinue.setVisibility(View.VISIBLE);
+				final boolean isRBHidden = (rbLocGroup.getVisibility() != View.VISIBLE);
+				if (isRBHidden)
+					rbLocGroup.setVisibility(View.VISIBLE);
 				rbLocContinue.setEnabled(true);
 				rbLocGroup.check(R.id.trip_begin_radio_loc_cont);
 				// rbLocContinue.setChecked(true);
+				tvLocContinue.setVisibility(View.VISIBLE);
 				tvLocContinue.setText
-					(getResources().getString(R.string.continue_from_colon) + " " + startingPrevTStop.readLocationText());
+					(getResources().getString(R.string.continue_from_colon)
+					 + " " + startingPrevTStop.readLocationText());
+				if (isRBHidden)
+				{
+					// Update height of starting-location textview to match
+					// the radio buttons again, once those have been un-hidden.
+					rbLocContinue.post(new Runnable() {
+						public void run() {
+							final int rbHeight = rbLocContinue.getHeight(),
+							          tvHeight = tvLocContinue.getHeight();
+							if (tvHeight < rbHeight)
+								tvLocContinue.setHeight(rbHeight);
+						}
+					});
+				}
 			}
 
 			// How recent was that vehicle's most recent trip? (Historical Mode)
@@ -848,7 +873,8 @@ public class TripBegin extends Activity
 	}
 
 	/**
-	 * If new-location text is typed into {@link #etLocNew}, ensure the related radiobutton is marked.
+	 * If new-location text is typed into {@link #etLocNew}, ensure the related radiobutton
+	 * {@code R.id.trip_begin_radio_loc_new} is marked, not {@link #rbLocContinue}.
 	 * (for addTextChangedListener / {@link TextWatcher}) 
 	 */
 	public void afterTextChanged(Editable arg0)

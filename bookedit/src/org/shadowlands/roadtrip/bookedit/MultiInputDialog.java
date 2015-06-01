@@ -33,6 +33,7 @@ import java.text.ParseException;
 import java.util.Date;
 import java.util.Vector;
 
+import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
@@ -53,9 +54,11 @@ import org.shadowlands.roadtrip.util.RTRDateTimeFormatter;
 /**
  * A modal {@link JDialog} to prompt for multiple string inputs,
  * with Continue and Cancel buttons.
+ * Input fields can have types such as {@link #F_TIMESTAMP} and flags such as {@link #F_FLAG_REQUIRED}.
  *<P>
  * After construction, call {@link #showAndWait()}, which will block until Continue or Cancel is pressed.
  * If true is returned, call {@link #isChanged()} and {@link #getInputs()} to get the entered data.
+ * If additional validation is needed, use {@link #setValidationListener(Validator)}.
  *<P>
  * Closing the dialog is equivalent to hitting the Cancel button.
  *<P>
@@ -135,6 +138,14 @@ public class MultiInputDialog
 	private String[] inputs;
 
 	/**
+	 * Optional validation callback during {@link #clickOK()} processing;
+	 * see {@link MultiInputDialog.Validator#validateFields(String[])}.
+	 * @since 0.9.43
+	 */
+	private transient Validator validator;
+
+
+	/**
 	 * Are this dialog's fields all read-only?
 	 * If so, {@link #inputTexts}[] elements are null, {@link #ok} is null.
 	 * @since 0.9.43
@@ -175,8 +186,9 @@ public class MultiInputDialog
 	private transient RTRDateTimeFormatter dtf;
 
 	/**
-	 * Display a modal {@link JDialog} to prompt for multiple string inputs,
-	 * with Continue and Cancel buttons.  See the class javadoc for more details.
+	 * Create a modal {@link JDialog} to prompt for multiple string inputs,
+	 * with Continue and Cancel buttons.  Call {@link #showAndWait()} to display.
+	 * See the class javadoc for more details.
 	 *
 	 * @param owner  Frame owning this dialog
 	 * @param title  Dialog title
@@ -238,8 +250,9 @@ public class MultiInputDialog
 
     /**
      * The values entered by the user, if the Continue button was pushed.
+     * Valid only after {@link #showAndWait()}.
      *<P>
-     * <b>Note:</b> The user's text is trimmed, and if its length is 0,
+     * <b>Note:</b> String fields' text is trimmed, and if its trimmed length is 0
      * the array element will be <b>null</b>, not a 0-length string.
      *<P>
      * Read-only fields have the values passed into the constructor
@@ -250,6 +263,13 @@ public class MultiInputDialog
      *     or array of nulls otherwise.
      */
     public String[] getInputs() { return inputs; }
+
+    /**
+     * Set or clear the optional additional validation callback.
+     * See {@link MultiInputDialog.Validator} javadoc for details.
+     * @param val  New validator, or null to clear
+     */
+    public void setValidationListener(Validator val) { validator = val; }
 
     /**
      * Create the components and do layout.
@@ -267,6 +287,8 @@ public class MultiInputDialog
     	GridBagLayout gbl = new GridBagLayout();
     	Container bp = getContentPane();  // button panel (TODO) name
     	bp.setLayout(gbl);
+	if (bp instanceof JComponent)
+		((JComponent) bp).setBorder(BorderFactory.createEmptyBorder(6, 6, 6, 6));
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.fill = GridBagConstraints.BOTH;
@@ -287,7 +309,8 @@ public class MultiInputDialog
          */
     	final Insets defaultInsets = gbc.insets;
     	final Insets labelInsets
-    		= new Insets(3, 6, 3, 6);  // padding around JLabels in GBL; unlike JTextField, no built-in padding
+    		= new Insets(3, 6, 3, 6);  // padding around JLabels; on OSX, unlike JTextField, no built-in padding
+	final Insets valueLabelInsets = (Main.isJavaOnOSX) ? labelInsets : defaultInsets;
 	final char decimalSep = new DecimalFormat().getDecimalFormatSymbols().getDecimalSeparator();
 		// for odometers; java 1.5, android API 8 don't have DecimalFormatSymbols.getInstance()
 
@@ -376,7 +399,7 @@ public class MultiInputDialog
     		bp.add(txt);
 
     		gbc.gridwidth = GridBagConstraints.REMAINDER;
-    		gbc.insets = (valComp instanceof JLabel) ? labelInsets : defaultInsets;
+    		gbc.insets = (valComp instanceof JLabel) ? valueLabelInsets : defaultInsets;
     		gbl.setConstraints(valComp, gbc);
     		bp.add(valComp);
     	}
@@ -499,6 +522,9 @@ public class MultiInputDialog
      * Show the dialog (modal) and wait for the user to type their inputs
      * and hit the "Continue" button or the "Cancel" button.
      * Closing the dialog is treated as Cancel.
+     * If "Continue" was pressed, validation is performed based on field types and flags.
+     * After successful validation, the method returns and the input field contents
+     * are available from {@link #getInputs()}.
      * @return true if "Continue" button was pressed, false otherwise
      */
     @SuppressWarnings("deprecation")  // show()
@@ -515,7 +541,9 @@ public class MultiInputDialog
 	}
 
 	/**
-	 * Read data fields, set {@link #isChanged()} and {@link #inputsAreOK()}. Dispose if no problems.
+	 * Read data fields, set {@link #isChanged()} and {@link #inputsAreOK()}.
+	 * Validate based on field types and flags, if OK also call {@link #validator} if defined.
+	 * Dispose if no problems.
 	 */
 	private void clickOK()
 	{
@@ -632,13 +660,20 @@ public class MultiInputDialog
 			}
 		}
 
+		if ((problemMsg == null) && (validator != null))
+		{
+			// additional validation
+			problemMsg = validator.validateFields(inputs);
+		}
+
 		if (problemMsg != null)
 		{
-			final JComponent prFldCompo = inputTexts[problemFld];
+			final String fldname = (problemFld != -1) ? (fnames[problemFld]  + ": ") : "";
+			final JComponent prFldCompo = (problemFld != -1) ? inputTexts[problemFld] : null;
 			if (prFldCompo != null)
 				prFldCompo.requestFocusInWindow();
 			JOptionPane.showMessageDialog
-				(getOwner(), fnames[problemFld] + ": " + problemMsg, null, JOptionPane.ERROR_MESSAGE);
+				(getOwner(), fldname + problemMsg, null, JOptionPane.ERROR_MESSAGE);
 			return;  // <---- Problems found ----
 		}
 
@@ -690,6 +725,29 @@ public class MultiInputDialog
 
 	/** stub for KeyListener */
 	public void keyTyped(KeyEvent e) { }
+
+	// end of KeyListener methods
+
+	/**
+	 * Optional input validation callback beyond field types and flags.
+	 * For example, this could be used when at least one of several fields is required,
+	 * but none of them are individually required.
+	 * For details see {@link #validateFields(String[])}.
+	 * @since 0.9.43
+	 */
+	public static abstract class Validator
+	{
+		/**
+		 * Callback to validate contents of the input fields.
+		 * This is called only after {@code MultiInputDialog}'s successful internal validation
+		 * based on field types and flags such as {@link MultiInputDialog#F_FLAG_REQUIRED F_FLAG_REQUIRED}.
+		 *<P>
+		 * If items fail validation, you should return a message that will be displayed to the user.
+		 * @param vals  Raw field input values to check, formatted same as {@link MultiInputDialog#getInputs() getInputs()}
+		 * @return  Null if validation was OK, otherwise a message to the user to explain why validation failed.
+		 */
+		public abstract String validateFields(final String[] vals);
+	}
 
 	/** uncomment for unit testing.
 

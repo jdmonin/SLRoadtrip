@@ -261,6 +261,7 @@
 <string name="vehicle_entry_hint_nickname">Optional nickname or color</string>
 <string name="vehicle_entry_hint_year">Model year</string>
 <string name="vehicle_entry_in_use_since">In use\nsince</string>
+<string name="vehicle_entry_nickyearmodel_prompt">Enter a nickname, color, year, or model to identify this vehicle.</string>
 <string name="vehicle_entry_odo_curr_low">The current odometer is lower than the original odometer.</string>
 <string name="vehicle_entry_plate_tag">Plate/\nTag</string>
 <string name="vehicle_entry_plate_tag_hint">License plate (optional)</string>

@@ -125,6 +125,8 @@ create table vehiclemake ( _id integer PRIMARY KEY AUTOINCREMENT not null, mname
 	-- see bottom of file for inserts into vehiclemake
 
 create table vehicle ( _id integer PRIMARY KEY AUTOINCREMENT not null, nickname varchar(255), driverid int not null, makeid int not null, model varchar(255), year integer not null, date_from integer, date_to integer, vin varchar(64), plate varchar(64), odo_orig integer not null, odo_curr integer not null, last_tripid integer, distance_storage varchar(2) not null, expense_currency varchar(3) not null, expense_curr_sym varchar(3) not null, expense_curr_deci integer not null, fuel_curr_deci integer not null, fuel_type varchar(1) not null, fuel_qty_unit varchar(2) not null, fuel_qty_deci integer not null, comment varchar(255), is_active int not null default 1, date_added int );
+    -- Required fields to help distinctly identify a vehicle: year <> 0 or nickname != null or model != null
+    --   (see Vehicle.toString() javadoc). Before v0.9.43 the apps required a year but always allowed 0 for it.
     -- To reduce write freq, update odo_curr only at end of each trip, not at each trip stop.
     -- Also update last_tripid at the end of each trip, or if a trip was in progress and then the current vehicle changed.
     --   If the vehicle has never finished a trip, last_tripid is 0 or null.

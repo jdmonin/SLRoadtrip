@@ -23,6 +23,8 @@ import java.util.Vector;
 
 /**
  * In-memory representation, and database access for, a Vehicle.
+ * To distinctly identify the vehicle at least one of the Year, Model, or Nickname fields
+ * should be set; see {@link #toString()}.
  *<P>
  * Some read-only fields are public, instead of having getters.
  * Final is implied, but can't be declared because of strict java syntax checks.
@@ -106,7 +108,12 @@ public class Vehicle extends RDBRecord
     /** usual driver, a {@link Person} ID */
     private int driverid;
 
+    /**
+     * {@link VehicleMake} ID.
+     * @see #makeidName
+     */
     private int makeid;
+
     private String model;
 
     /** model year, or 0 if unknown */
@@ -164,6 +171,12 @@ public class Vehicle extends RDBRecord
 	 * @since 0.9.43
 	 */
 	private int date_added;
+
+	/**
+	 * Cached name of {@link #makeid}, if needed and available from db, in {@link #toString()}.
+	 * @since 0.9.43
+	 */
+	private transient String makeidName;
 
 	/** null unless {@link #readAllTrips(boolean)} called */
     private transient Vector<Trip> allTrips;
@@ -273,7 +286,7 @@ public class Vehicle extends RDBRecord
     /**
      * Existing record: Fill our obj fields from db-record string contents.
      * @param db  connection
-     * @param rec, as returned by db.getRows({@link #FIELDS_AND_ID}); last element is _id
+     * @param rec  Record's field contents, as returned by db.getRows({@link #FIELDS_AND_ID}); last element is _id
      * @throws RDBKeyNotFoundException not thrown, but required due to super call
      * @throws IllegalArgumentException if rec.length is too short
      */
@@ -287,7 +300,8 @@ public class Vehicle extends RDBRecord
     /**
      * Fill our obj fields from db-record string contents.
      * {@code _id} is not filled here; the constructor has filled it already.
-     * @param rec, as returned by db.getRow({@link #FIELDS}) or db.getRows({@link #FIELDS_AND_ID})
+     * @param rec  Record's field contents, as returned by db.getRow({@link #FIELDS})
+     *     or db.getRows({@link #FIELDS_AND_ID})
      * @throws IllegalArgumentException if rec.length is too short
      */
 	private void initFields(final String[] rec)
@@ -547,7 +561,7 @@ public class Vehicle extends RDBRecord
 		dirty = true;
 	}
 
-	/** @return the model year */
+	/** @return the model year, or 0 if unknown */
 	public int getYear() {
 		return year;
 	}
@@ -721,23 +735,40 @@ public class Vehicle extends RDBRecord
 		dirty = true;
 	}
 
-	/** format is: "[ nickname - ] year [model]" */
+	/** format is: "[ nickname - ] year [model or make]" */
 	public String toString()
 	{
 		StringBuilder sb = new StringBuilder();
 		if ((nickname != null) && (nickname.length() > 0))
 		{
 			sb.append(nickname);
-			sb.append(" - ");
+			sb.append(" -");
 		}
 		if (year != 0)
+		{
+			sb.append(' ');
 			sb.append(year);
+		}
 		if ((model != null) && (model.length() > 0))
 		{
 			sb.append(' ');
 			sb.append(model);
+		} else {
+			// no model: try to use makeid
+			if ((makeidName == null) && (dbConn != null))
+			{
+				try {
+					VehicleMake mk = new VehicleMake(dbConn, makeid);
+					makeidName = mk.getName();
+				}
+				catch(Exception e) {}
+			}
+			if (makeidName != null)
+			{
+				sb.append(' ');
+				sb.append(makeidName);
+			}
 		}
-		// TODO else, consider lookup makeid
 
 		if (sb.length() == 0)
 			sb.append("(Vehicle, all fields empty)");  // fallback, GUI enforces fields; can skip I18N

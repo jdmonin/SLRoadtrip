@@ -21,6 +21,7 @@ package org.shadowlands.roadtrip.bookedit;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
+import java.awt.Cursor;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
@@ -401,7 +402,11 @@ public class LogbookEditPane extends JPanel implements ActionListener, WindowLis
 	 *
 	 * @param fname  Full path of DB file to open; should not currently be open
 	 * @param fnshort  Filename (not full path) to display in window
-	 * @param parentf  Parent frame, for error dialogs if needed
+	 * @param parentf  Parent frame, for error dialogs if needed.
+	 *     For responsiveness, assumes that when {@code setupFromMain} is called, {@code parentf} is showing
+	 *     {@link Cursor#WAIT_CURSOR}. If this method asks whether to upgrade, it will reset to
+	 *     {@link Cursor#DEFAULT_CURSOR} while the asking dialog is showing, then back to
+	 *     {@code WAIT_CURSOR} for the upgrade process.
 	 * @param isBackup  Is this a backup file (treat as read-only, and copy before upgrade if needed)?
 	 * @param isReadOnly  Is this db read-only (no edits allowed)?
 	 */
@@ -523,6 +528,11 @@ public class LogbookEditPane extends JPanel implements ActionListener, WindowLis
 			} else {
 				// ask whether to upgrade temp copy (changes won't be saved) or in place, or cancel
 
+				if (parentf != null)
+					// reset cursor from WAIT_CURSOR while asking this,
+					// so it doesn't look like parent frame has frozen
+					parentf.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+
 				final String[] upg_exit = { "Upgrade", "Read-only", "Cancel" };
 				final int choice = JOptionPane.showOptionDialog(parentf,
 					"To use this database, it must be upgraded from older schema version "
@@ -534,6 +544,9 @@ public class LogbookEditPane extends JPanel implements ActionListener, WindowLis
 					JOptionPane.DEFAULT_OPTION,
 					JOptionPane.QUESTION_MESSAGE,
 					null, upg_exit, upg_exit[1]);
+
+				if (parentf != null)
+					parentf.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 
 				switch (choice)
 				{
@@ -748,7 +761,6 @@ public class LogbookEditPane extends JPanel implements ActionListener, WindowLis
 		new LogbookEditPane(fnshort, cveh, conn, isBackup || isReadOnly);
 
 		// When pane closes, that will call conn.close() .
-
 	}
 
 	/**

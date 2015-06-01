@@ -107,7 +107,7 @@ public abstract class MiscTablesCRUDDialogs
 		MultiInputDialog.F_STRING, MultiInputDialog.F_BOOL,
 		MultiInputDialog.F_DB_PERSON_DRIVER | MultiInputDialog.F_FLAG_REQUIRED,
 		MultiInputDialog.F_DB_VEHICLEMAKE | MultiInputDialog.F_FLAG_REQUIRED,
-		MultiInputDialog.F_STRING, MultiInputDialog.F_INT | MultiInputDialog.F_FLAG_REQUIRED,
+		MultiInputDialog.F_STRING, MultiInputDialog.F_INT,
 		MultiInputDialog.F_TIMESTAMP | MultiInputDialog.F_FLAG_READONLY,
 		MultiInputDialog.F_TIMESTAMP, MultiInputDialog.F_TIMESTAMP,
 		MultiInputDialog.F_STRING, MultiInputDialog.F_STRING,
@@ -143,7 +143,9 @@ public abstract class MiscTablesCRUDDialogs
 			vals[2] = Integer.toString(v.getDriverID());
 			vals[3] = Integer.toString(v.getMakeID());
 			vals[4] = v.getModel();
-			vals[5] = Integer.toString(v.getYear());
+			final int yr = v.getYear();
+			if (yr != 0)
+				vals[5] = Integer.toString(yr);
 			final int da = v.getDate_added();
 			if (da != 0)
 				vals[6] = Integer.toString(da);
@@ -160,11 +162,31 @@ public abstract class MiscTablesCRUDDialogs
 		}
 
 		/**
-		 * Show the dialog, wait for user input
+		 * Show the dialog, wait for user input.
+		 * Validate that nickname, year, or model is not blank.
 		 */
 		MultiInputDialog mid = new MultiInputDialog
 		    (owner, "Vehicle information", "Information about this vehicle",
 		     labels, FTYPES_DIA_VEHICLE, vals, conn, isReadOnly);
+		mid.setValidationListener(new MultiInputDialog.Validator()
+		    {
+			@Override
+			public String validateFields(final String[] vals)
+			{
+				if ((vals[0] != null) || (vals[4] != null))
+					return null;
+
+				int yr = 0;
+				try {
+					yr = Integer.parseInt(vals[5]);
+				} catch (NumberFormatException e) {}
+
+				if (yr == 0)
+					return "Enter a nickname, color, year, or model to identify this vehicle.";
+				else
+					return null;
+			}
+		    });
 		if (! mid.showAndWait())
 			return null;  // <--- Cancel button ---
 
@@ -187,9 +209,10 @@ public abstract class MiscTablesCRUDDialogs
 		{
 			if (mainDriv == null)
 				mainDriv = ownerIfNew;
+			final int yr = (vals[5] != null) ? Integer.parseInt(vals[5]) : 0;
 			final int odo_orig = (vals[11] != null) ? Integer.parseInt(vals[11]) : 0;
 			v = new Vehicle
-			    (vals[0], mainDriv, Integer.parseInt(vals[3]), vals[4], Integer.parseInt(vals[5]),
+			    (vals[0], mainDriv, Integer.parseInt(vals[3]), vals[4], yr,
 			     date_from, date_to, vals[9], vals[10], odo_orig, odo_curr, vals[13]);
 			v.setActive(isActive);
 			v.insert(conn);

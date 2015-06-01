@@ -29,7 +29,9 @@ import org.shadowlands.roadtrip.db.VehSettings;
 import org.shadowlands.roadtrip.db.Vehicle;
 
 /**
- * Create and show a list of vehicles in this logbook.
+ * Create and show a list of {@link Vehicle}s in this logbook.
+ * Vehicles are edited from here by
+ * {@link MiscTablesCRUDDialogs#createEditVehicleDialog(JFrame, RDBAdapter, boolean, Vehicle, Person)}.
  * @since 0.9.43
  */
 @SuppressWarnings("serial")

@@ -34,6 +34,7 @@ import org.shadowlands.roadtrip.db.VehicleMake;
 import org.shadowlands.roadtrip.db.android.RDBOpenHelper;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.DatePickerDialog;
 import android.app.DatePickerDialog.OnDateSetListener;
 import android.app.Dialog;
@@ -98,6 +99,9 @@ public class VehicleEntry
 
 	/**
 	 * If true, {@link #EXTRAS_FLAG_ASKED_NEW} was set.
+	 * Can't assume that if false there's a current vehicle, because
+	 * this field is also false during initial setup of the first
+	 * vehicle in the database. Check {@link #cameFromEdit_veh} != null.
 	 */
 	private boolean cameFromAskNew;
 
@@ -150,6 +154,13 @@ public class VehicleEntry
 	 * initialized in {@link #updateDateButton()}.
 	 */
 	private StringBuffer fmt_dow_shortdate;
+
+	/**
+	 * True if {@link #onClick_BtnOK(View)} has already shown
+	 * a Toast with {@link R.string#vehicle_entry_nickyearmodel_prompt}.
+	 * @since 0.9.43
+	 */
+	private boolean showedToast_NicknameYearModel;
 
 	/** Called when the activity is first created. */
 	@Override
@@ -265,9 +276,9 @@ public class VehicleEntry
 			etGeoArea.setAdapter((ArrayAdapter<GeoArea>) null);
 		}
 	    } else {
-		// editing an existing vehicle
+		// editing an existing vehicle, or initial setup
 
-		View v = findViewById(R.id.vehicle_entry_geoarea);  // not new: hide GeoArea text field
+		View v = findViewById(R.id.vehicle_entry_geoarea);  // not new, or only 1 area: hide GeoArea dropdown
 		if (v != null)
 			v.setVisibility(View.GONE);
 		v = findViewById(R.id.vehicle_entry_geoarea_arrow);
@@ -285,6 +296,15 @@ public class VehicleEntry
 				if (geoa != null)
 					tvG.setText(geoa.getName());
 			}
+		} else {
+			// initial setup: hide entire GeoArea row and "Added on" row
+
+			View vv = findViewById(R.id.vehicle_entry_geo_area_row);
+			if (vv != null)
+				vv.setVisibility(View.GONE);
+			vv = findViewById(R.id.vehicle_entry_added_on_row);
+			if (vv != null)
+				vv.setVisibility(View.GONE);
 		}
 	    }
 
@@ -308,7 +328,8 @@ public class VehicleEntry
 		nickname.setText(veh.getNickname());
 		// driver is already set
 		vmodel.setText(veh.getModel());
-		year.setText(Integer.toString(veh.getYear()));
+		final int yr = veh.getYear();
+		year.setText(yr != 0 ? Integer.toString(yr) : "");
 		vin.setText(veh.getVin());
 		plate.setText(veh.getPlate());
 		odo_orig.setCurrent10d(veh.getOdometerOriginal(), true);
@@ -421,15 +442,8 @@ public class VehicleEntry
 				geoAreaObj = geoAreaObj_orig;
 				etGeoArea.setText(geoAreaObj_orig.toString());
 			}
-
 		} else {
-			// we'll need to clear the text first, to show all values in the dropdown
-			etGeoArea.setText("");
-			etGeoArea.post(new Runnable() {
-				public void run() {
-					etGeoArea.showDropDown();
-				}
-			});
+			etGeoArea.showDropDown();
 		}
 	}
 
@@ -487,16 +501,19 @@ public class VehicleEntry
 		// TODO blank -> null, not 0-length
 		// TODO look for null getSelectedItem in spinners
 
-		final int yr;
+		int yr = 0;
 		try
 		{
 			yr = Integer.parseInt(year.getText().toString());
 		}
 		catch (NumberFormatException e)
 		{
-			year.requestFocus();
-			Toast.makeText(this, R.string.vehicle_entry_year, Toast.LENGTH_SHORT).show();
-			return;
+			if (year.getText().length() > 0)
+			{
+				year.requestFocus();
+				Toast.makeText(this, R.string.vehicle_entry_year, Toast.LENGTH_SHORT).show();
+				return;
+			}
 		}
 
 		if (odo_curr.getCurrent10d() < odo_orig.getCurrent10d())
@@ -516,6 +533,31 @@ public class VehicleEntry
 		String plateText = plate.getText().toString().trim();
 		if (plateText.length() == 0)
 			plateText = null;
+
+		String nicknameText = nickname.getText().toString().trim();
+		if (nicknameText.length() == 0)
+			nicknameText = null;
+
+		String modelText = vmodel.getText().toString().trim();
+		if (modelText.length() == 0)
+			modelText = null;
+
+		if ((nicknameText == null) && (yr == 0) && (modelText == null))
+		{
+			nickname.requestFocus();
+			final String txt = getResources().getString(R.string.vehicle_entry_nickyearmodel_prompt);
+			if (! showedToast_NicknameYearModel)
+			{
+				Toast.makeText(this, txt, Toast.LENGTH_LONG).show();
+				showedToast_NicknameYearModel = true;
+			} else {
+				AlertDialog.Builder alert = new AlertDialog.Builder(this);
+				alert.setMessage(txt);
+				alert.setNeutralButton(android.R.string.ok, null);
+				alert.show();
+			}
+			return;  // <--- Early return: nickname, year, model are all empty ---
+		}
 
 		if (cameFromAskNew && (etGeoArea != null))
 		{
@@ -541,9 +583,9 @@ public class VehicleEntry
 		if (cameFromEdit_veh == null)
 		{
 			nv = new Vehicle
-			  (nickname.getText().toString(),
+			  (nicknameText,
 			   nvDriv, ((VehicleMake) vmake.getSelectedItem()).getID(),
-			   vmodel.getText().toString(),
+			   modelText,
 			   yr,
 			   datefrom_int, 0, vin.getText().toString(), plateText,
 			   odo_orig.getCurrent10d(), odo_curr.getCurrent10d(),
@@ -552,10 +594,10 @@ public class VehicleEntry
 			nv.insert(db);
 		} else {
 			nv = cameFromEdit_veh;
-			nv.setNickname(nickname.getText().toString());
+			nv.setNickname(nicknameText);
 			nv.setDriverID(nvDriv);
 			nv.setMakeID(((VehicleMake) vmake.getSelectedItem()).getID());
-			nv.setModel(vmodel.getText().toString());
+			nv.setModel(modelText);
 			nv.setYear(yr);
 			nv.setDate_from(datefrom_int);
 			nv.setVin(vin.getText().toString());

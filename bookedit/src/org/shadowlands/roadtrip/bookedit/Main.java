@@ -19,6 +19,7 @@
 
 package org.shadowlands.roadtrip.bookedit;
 
+import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -33,6 +34,7 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.UIManager;
 
 import org.shadowlands.roadtrip.db.RDBAdapter;
 import org.shadowlands.roadtrip.db.RDBSchema;
@@ -55,6 +57,15 @@ public class Main
 	 */
 	public static final String APP_VERSION_STRING = "0.9.50";
 
+	/**
+	 * For GUI adjustments as needed, detect if we're running on Mac OS X.
+	 * To identify osx from within java, see technote TN2110:
+	 * http://developer.apple.com/technotes/tn2002/tn2110.html
+	 * @since 0.9.43
+	 */
+	public static final boolean isJavaOnOSX =
+		System.getProperty("os.name").toLowerCase().contains("os x");
+
 	private String dbFilename = null;
 	private StartupChoiceFrame scf;
 	private RDBAdapter conn = null;
@@ -67,6 +78,11 @@ public class Main
 	 */
 	public static void main(String[] args)
 	{
+		try
+		{
+			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+		} catch (Exception e) {}
+
 		// TODO look for a filename
 		// TODO allow option for open bkup, etc, with cmdline flags
 		Main m = new Main();
@@ -105,7 +121,13 @@ public class Main
 		// TODO handle isNew (create schema, etc)
 		dbFilename = chooseFile.getAbsolutePath();
 
+		// Responsiveness: show "busy" mouse cursor while retrieving data
+		scf.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+
 		LogbookEditPane.setupFromMain(dbFilename, chooseFile.getName(), scf, isBak, isReadOnly);
+
+		// At this point the data is visible, or an error message was shown
+		scf.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
 	}
 
 	/** Gives buttons with choice of new, open, open backup, exit */

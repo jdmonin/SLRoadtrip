@@ -745,12 +745,14 @@ public class Vehicle extends RDBRecord
 		}
 		if (year != 0)
 		{
-			sb.append(' ');
+			if (sb.length() > 0)
+				sb.append(' ');
 			sb.append(year);
 		}
 		if ((model != null) && (model.length() > 0))
 		{
-			sb.append(' ');
+			if (sb.length() > 0)
+				sb.append(' ');
 			sb.append(model);
 		} else {
 			// no model: try to use makeid
@@ -764,7 +766,8 @@ public class Vehicle extends RDBRecord
 			}
 			if (makeidName != null)
 			{
-				sb.append(' ');
+				if (sb.length() > 0)
+					sb.append(' ');
 				sb.append(makeidName);
 			}
 		}

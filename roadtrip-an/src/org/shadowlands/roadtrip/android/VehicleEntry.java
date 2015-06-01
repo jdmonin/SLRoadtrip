@@ -442,15 +442,8 @@ public class VehicleEntry
 				geoAreaObj = geoAreaObj_orig;
 				etGeoArea.setText(geoAreaObj_orig.toString());
 			}
-
 		} else {
-			// we'll need to clear the text first, to show all values in the dropdown
-			etGeoArea.setText("");
-			etGeoArea.post(new Runnable() {
-				public void run() {
-					etGeoArea.showDropDown();
-				}
-			});
+			etGeoArea.showDropDown();
 		}
 	}
 

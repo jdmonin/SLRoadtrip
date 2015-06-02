@@ -23,6 +23,7 @@ import javax.swing.JFrame;
 
 import org.shadowlands.roadtrip.db.Person;
 import org.shadowlands.roadtrip.db.RDBAdapter;
+import org.shadowlands.roadtrip.db.Settings;
 import org.shadowlands.roadtrip.db.Vehicle;
 
 /**
@@ -131,6 +132,13 @@ public abstract class MiscTablesCRUDDialogs
 	    (JFrame owner, RDBAdapter conn, final boolean isReadOnly, Vehicle v, final Person ownerIfNew)
 	    throws IllegalStateException, NullPointerException
 	{
+		boolean isCurrV = false;
+		if (v != null)
+		{
+			Vehicle currV = Settings.getCurrentVehicle(conn, false);
+			isCurrV = (currV != null) && (currV.getID() == v.getID());
+		}
+
 		// keep arrays congruent: labels[], FTYPES_DIA_VEHICLE[], vals[]
 		final String[] labels =
 			{ "Nickname", "Active?", "Main Driver", "Make", "Model", "Year", "Added at", "Owned from",
@@ -139,7 +147,7 @@ public abstract class MiscTablesCRUDDialogs
 		if (v != null)
 		{
 			vals[0] = v.getNickname();
-			vals[1] = (v.isActive() ? "Y" : "N");
+			vals[1] = (isCurrV) ? "Current Vehicle" : (v.isActive() ? "Y" : "N");
 			vals[2] = Integer.toString(v.getDriverID());
 			vals[3] = Integer.toString(v.getMakeID());
 			vals[4] = v.getModel();
@@ -156,6 +164,10 @@ public abstract class MiscTablesCRUDDialogs
 			vals[11] = Integer.toString(v.getOdometerOriginal());
 			vals[12] = Integer.toString(v.getOdometerCurrent());
 			vals[13] = v.getComment();
+
+			if (isCurrV && ! isReadOnly)
+				// Temporarily set isActive field read-only
+				FTYPES_DIA_VEHICLE[1] |= MultiInputDialog.F_FLAG_READONLY;
 		} else {
 			vals[1] = "Y";
 			vals[2] = Integer.toString(ownerIfNew.getID());
@@ -187,14 +199,22 @@ public abstract class MiscTablesCRUDDialogs
 					return null;
 			}
 		    });
-		if (! mid.showAndWait())
+
+		final boolean continu = mid.showAndWait();
+
+		if (isCurrV && ! isReadOnly)
+			// clear isActive field's temporary read-only flag
+			FTYPES_DIA_VEHICLE[1] &= ~ MultiInputDialog.F_FLAG_READONLY;
+		if (! continu)
+		{
 			return null;  // <--- Cancel button ---
+		}
 
 		/**
 		 * Update or insert the database
 		 */
 		vals = mid.getInputs();
-		final boolean isActive = (vals[1] != null) && (vals[1].equalsIgnoreCase("Y"));
+		final boolean isActive = isCurrV || ((vals[1] != null) && (vals[1].equalsIgnoreCase("Y")));
 		Person mainDriv = null;
 		if (vals[2] != null)
 		{
@@ -219,7 +239,8 @@ public abstract class MiscTablesCRUDDialogs
 		} else if (mid.isChanged())
 		{
 			v.setNickname(vals[0]);
-			v.setActive(isActive);
+			if (! isCurrV)
+				v.setActive(isActive);
 			if (mainDriv != null)
 				v.setDriverID(mainDriv);
 			if (vals[3] != null)

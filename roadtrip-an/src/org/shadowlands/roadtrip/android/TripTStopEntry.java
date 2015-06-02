@@ -1670,7 +1670,7 @@ public class TripTStopEntry extends Activity
 			}
 			TStop newStop = new TStop(currT, odoTotal, odoTrip, stopTimeSec, 0, locID, areaID, null, null, flags, viaID, comment);
 			tsid = newStop.insert(db);
-			currT.addCommittedTStop(newStop);  // add it to the Trip's list
+			currT.addCommittedTStop(newStop);  // update the Trip's cached TStop list, if any
 			if (! stopEndsTrip)
 				VehSettings.setCurrentTStop(db, currV, newStop);
 			// Don't set currTS field yet, it needs to be null for code here.
@@ -1743,6 +1743,7 @@ public class TripTStopEntry extends Activity
 			}
 
 			currTS.commit();
+			currT.updateCachedCurrentTStop(currTS);
 
 			// Now set the gas info, if any:
 			if (bundleGas != null)

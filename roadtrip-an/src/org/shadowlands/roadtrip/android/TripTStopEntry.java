@@ -1864,7 +1864,7 @@ public class TripTStopEntry extends Activity
 			else if ((areaLocs_areaID != -1)
 				 && (currT.isRoadtrip() || wantsConvertLocalToRoadtrip))
 				areaID = areaLocs_areaID;
-				// New tstop during roadtrip; 0 is OK since not ending trip.
+				// New tstop during roadtrip; areaID 0 is OK since not ending trip.
 				// historical db note: before March 2011 (r48) unless stopEndsTrip, tstop.a_id always 0
 			else
 				areaID = 0;  // unused in local trip tstops

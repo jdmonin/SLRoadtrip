@@ -25,6 +25,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.io.File;
+import java.util.prefs.BackingStoreException;
+import java.util.prefs.Preferences;
 
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
@@ -139,8 +141,23 @@ public class Main
 		private JButton bNew, bOpen, bOpenBackup, bExit;
 
 		/**
+		 * {@link Preferences} key in {@link #userPrefs} for directory of the most recently opened logbook.
+		 * @since 0.9.43
+		 */
+		private final static String PREV_OPENED_DIR = "prevOpenedDir";
+
+		/**
+		 * Persistently stored user preferences between runs, such as {@link #PREV_OPENED_DIR}.
+		 * Windows stores these under HKCU in the registry, OSX/Unix under the home directory.
+		 * @since 0.9.43
+		 */
+		private Preferences userPrefs;
+
+		/**
 		 * Current directory from opening a file with {@link JFileChooser}, or null if no file chosen yet.
 		 * Used when calling {@link #chooseFile(boolean, boolean)} again.
+		 * Stored between runs at {@link #userPrefs}({@link #PREV_OPENED_DIR})
+		 * using {@link #tryStorePrevOpenedDir()}.
 		 */
 		private File prevFileOpenDir;
 
@@ -161,6 +178,9 @@ public class Main
 
 			getContentPane().add(btns);
 			getRootPane().setDefaultButton(bOpen);
+
+			userPrefs = Preferences.userNodeForPackage(Main.class);
+			tryGetPrevOpenedDir();
 		}
 
 		/**
@@ -239,8 +259,58 @@ public class Main
 
 			File file = fc.getSelectedFile();
 			System.out.println("file path: " + file.getAbsolutePath());
+
 			prevFileOpenDir = fc.getCurrentDirectory();  // for next time
+			tryStorePrevOpenedDir();
+
 			return file;
+		}
+
+		/**
+		 * Read from persistent {@link #userPrefs} and change 'current' directory field
+		 *  ({@link #prevFileOpenDir}) to that of the most recently opened logbook if possible.
+		 *  Catches and ignores exceptions; directory may have moved, etc.
+		 *  @see #tryStorePrevOpenedDir()
+		 */
+		private void tryGetPrevOpenedDir()
+		{
+			prevFileOpenDir = null;
+
+			try
+			{
+				if (userPrefs == null)
+					return;  // unlikely, just in case
+
+				final String dir = userPrefs.get(PREV_OPENED_DIR, null);
+				if (dir == null)
+					return;
+
+				final File fdir = new File(dir);
+				if (fdir.exists() && fdir.isDirectory())
+					prevFileOpenDir = fdir;
+
+			} catch (RuntimeException e) {
+				// ignore SecurityException, IllegalStateException
+			}
+		}
+
+		/**
+		 * Store the current directory {@link #prevFileOpenDir} to persistent {@link #userPrefs} preferences.
+		 * Catches and ignores exceptions, because this field is stored only for convenience.
+		 * @see #tryGetPrevOpenedDir()
+		 */
+		private void tryStorePrevOpenedDir()
+		{
+			if ((prevFileOpenDir == null) || (userPrefs == null))
+				return;
+
+			try
+			{
+				userPrefs.put(PREV_OPENED_DIR, prevFileOpenDir.getAbsolutePath());
+				userPrefs.flush();
+			}
+			catch (BackingStoreException ex) {}
+			catch (SecurityException se) {}
 		}
 
 	}  // inner class StartupChoiceFrame

@@ -790,7 +790,7 @@ public class TStop extends RDBRecord
 	/**
 	 * Get the GeoArea ID, or 0 if empty/unused.
 	 *<P>
-	 * For local trips: Field is unused, call {@link Trip#getAreaID()} instead.
+	 * For local trips: Field is unused and unread, assumed null; call {@link Trip#getAreaID()} instead.
 	 *<P>
 	 * For roadtrips:
 	 *<UL>
@@ -798,9 +798,9 @@ public class TStop extends RDBRecord
 	 *        ending tstop of the previous local trip. Use {@link Trip#getAreaID()} instead.
 	 * <LI> A roadtrip's ending tstop's area id must be the ending area
 	 *        {@link Trip#getRoadtripEndAreaID()}, or the starting area {@link Trip#getAreaID()}.
-	 * <LI> Other stops during a roadtrip: area id is set to the location's geoarea,
-	 *        such as the trip's starting or ending area.
-	 *        For stops between geoareas (displayed as area "none") like highway rest areas,
+	 * <LI> Other stops during a roadtrip: area id is set to the {@link Location}'s geoarea,
+	 *        such as the trip's starting or ending area. Can be any area, doesn't need to be start or end.
+	 *        For stops geographically between geoareas (displayed as area "none") like highway rest areas,
 	 *        area id is empty in TStop and Location.
 	 *</UL>
 	 */

@@ -147,6 +147,9 @@ create table tripcategory ( _id integer PRIMARY KEY AUTOINCREMENT not null, cnam
 	-- see bottom of file for inserts into tripcategory
 
 create table trip ( _id integer PRIMARY KEY AUTOINCREMENT not null, vid integer not null, did int not null, catid int, odo_start int not null, odo_end int, aid int, tstopid_start int, time_start int not null, time_end int, start_lat float, start_lon float, end_lat float, end_lon float, freqtripid int, comment varchar(255), passengers int, roadtrip_end_aid int, has_continue int not null default 0 );
+	-- Trips can be local within a GeoArea (aid field), or a "roadtrip" between areas (roadtrip_end_aid != null).
+	--    Any TStop along the way on a roadtrip can be in any geoarea or in none (between/outside of defined areas),
+	--    but the roadtrip must end at a TStop within roadtrip_end_aid.
 	-- vid is vehicle, did is driver
 	-- if tstopid_start not null, it's the endpoint of a previous trip with the same odo_total.
 	--    This gives the starting location (descr and/or locid) for the trip.
@@ -192,15 +195,16 @@ create table tstop ( _id integer PRIMARY KEY AUTOINCREMENT not null, tripid int 
 	--    see trip table's comments.
 	-- odo_total is the vehicle's overall odometer, odo_trip is distance within this trip at this tstop.
 	-- a_id is the tstop's geoarea.
-	--    For local trips: a_id is null (look at trip.aid instead)
+	--    For local trips: a_id is assumed null (use trip.aid instead), field is ignored and unread by java code.
 	--    For roadtrips:
-	--       A roadtrip's ending tstop's area id should be the ending area.
-	--       A roadtrip's starting tstop's area id is ignored, because it could be the
-	--         ending tstop of a local trip.
-	--       Other stops during roadtrip: a_id is set for any roadtrip stop
-	--         which is within the starting or ending geoarea.
-	--         for stops 'in the middle' (neither start or end area), a_id is null.
-	--     0 for a_id is ok for a local tstop, but not ok for start/end location of trip.
+	--       A roadtrip's starting tstop's area id is ignored, because the trip's starting area is known (trip.aid)
+	--         and the tstop could be the ending tstop of a local trip.
+	--       A roadtrip's ending tstop's area id must be the ending area (trip.roadtrip_end_aid)
+	--         or its starting area (trip.aid)
+	--       Other stops during roadtrip: a_id is set to the location's geoarea,
+	--         such as the trip's starting or ending geoarea. Can be any area, doesn't need to be start or end.
+	--         For stops geographically between geoareas (displayed as area "None")
+	--         like highway rest areas, a_id is null in the tstop and location.
 	-- via_route, via_id are the route from the previous tstop's location;
 	--    they are ignored for the tstop which starts a trip. (via_id goes to the via_route table)
 	-- descr is null for all new rows (starting with app version 0.9.05), because the separate

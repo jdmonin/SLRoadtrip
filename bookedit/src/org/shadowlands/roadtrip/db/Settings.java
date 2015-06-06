@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010-2014 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2015 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -29,7 +29,8 @@ package org.shadowlands.roadtrip.db;
  * If you restore the database from a backup, call {@link #clearSettingsCache()}
  * to remove cached references to the overwritten db's settings objects.
  *<P>
- * In version 0.9.40, some settings became per-vehicle {@link VehSettings}. In older versions they're all here.
+ * In version 0.9.40, some settings became per-vehicle {@link VehSettings}.
+ * In older versions they're all in this global table.
  *
  * @see RDBSchema#checkSettings(RDBAdapter, int)
  * @see AppInfo
@@ -270,8 +271,8 @@ public class Settings extends RDBRecord
      * @return  Setting's value, or <tt>settdefault</tt> if not found
      * @throws IllegalArgumentException  if db null
      * @throws IllegalStateException if db not open
-     * @see #setInt(RDBAdapter, String, boolean)
-     * @see #getBoolean(RDBAdapter, String, int)
+     * @see #setInt(RDBAdapter, String, int)
+     * @see #getBoolean(RDBAdapter, String, boolean)
      * @since 0.9.12
      */
     public static int getInt(RDBAdapter db, final String settname, final int settdefault)

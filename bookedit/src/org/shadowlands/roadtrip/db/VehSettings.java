@@ -869,7 +869,7 @@ public class VehSettings extends RDBRecord
 	 * @throws IllegalStateException if the db isn't open
 	 * @throws IllegalArgumentException if {@code v} is null, or if a non-null {@code tr}'s dbconn isn't db;
 	 *         if {@code tr}'s dbconn is null, this will be in the exception detail text.
-	 * @see #endCurrentTrip(RDBAdapter, Vehicle, Trip, int, int, int, TripCategory, int, boolean)
+	 * @see #endCurrentTrip(RDBAdapter, Vehicle, int, int, int, TripCategory, int)
 	 */
 	public static void setCurrentTrip(RDBAdapter db, final Vehicle v, Trip tr)
 		throws IllegalArgumentException, IllegalStateException

@@ -843,11 +843,19 @@ public class LogbookEditPane extends JPanel implements ActionListener, WindowLis
 
 	/**
 	 * Interactive {@link LogbookTableModel} adapter, with logbook trip data in {@link #ltm}, for our Swing GUI.
+	 *<P>
+	 * The GUI has column headings, so this adapter clears the {@link LogbookTableModel#render_comments_brackets}
+	 * rendering flag.
 	 */
 	private static class LBSwingTableModel extends AbstractTableModel implements TableChangeListener
 	{
 		public LogbookTableModel ltm;
 		private final boolean isReadOnly;
+
+		static
+		{
+			LogbookTableModel.render_comments_brackets = false;
+		}
 
 		/**
     	 * Create and populate with existing data.

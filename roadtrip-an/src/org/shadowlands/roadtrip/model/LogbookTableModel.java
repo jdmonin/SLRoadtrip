@@ -109,6 +109,17 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	   { null, null, "\\", "End-odo" } };
 
 	/**
+	 * Rendering preference for TStop comments:
+	 * When true, {@code addRowsFromTrips} will place any {@link TStop#getComment()} text within [square brackets].
+	 * True by default.
+	 *<P>
+	 * This preference is static because the constructor renders trip data immediately, and its value doesn't
+	 * change within an app so it's not completely useful as a constructor parameter.
+	 * @since 0.9.43
+	 */
+	public static boolean render_comments_brackets = true;
+
+	/**
 	 * Preference: When true, show trips in Simple mode (1 line per trip, no TStop details).
 	 * The standard-mode headings are {@link #COL_HEADINGS}.
 	 * The simple-mode headings are {@link #COL_HEADINGS_SIMPLE}.
@@ -704,6 +715,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 		RTRDateTimeFormatter.DateAndTime prevShownDT = new RTRDateTimeFormatter.DateAndTime();
 
 		final int L = td.size();
+		final boolean doCommentBrackets = render_comments_brackets;  // shorter name, cache value
 
 		// Does next trip continue from the same tstop and odometer?
 		boolean nextTripUsesSameStop = false;  // Updated at bottom of loop.
@@ -967,7 +979,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 					// Comment, if any
 					String stopc = ts.getComment();
 					if (stopc != null)
-						tr[7] = "[" + stopc + "]";
+						tr[7] = (doCommentBrackets) ? ("[" + stopc + "]") : stopc;
 
 					// Done with this row
 					tText.addElement(tr);

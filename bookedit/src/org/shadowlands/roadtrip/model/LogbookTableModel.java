@@ -61,8 +61,8 @@ import org.shadowlands.roadtrip.util.RTRDateTimeFormatter;
  * Assumes that data won't change elsewhere while displayed; for example,
  * cached ViaRoute object contents.
  *<P>
- * Preferences: Before creating the LTM, you can set {@link #trip_odo_delta_mode}
- * and/or {@link #trip_simple_mode}.
+ * <B>Preferences:</B> Before creating the LTM, you can set {@link #trip_odo_delta_mode},
+ * {@link #trip_simple_mode}, and/or {@link #render_comments_brackets}.
  *
  * @author jdmonin
  */

@@ -61,8 +61,8 @@ import org.shadowlands.roadtrip.util.RTRDateTimeFormatter;
  * Assumes that data won't change elsewhere while displayed; for example,
  * cached ViaRoute object contents.
  *<P>
- * Preferences: Before creating the LTM, you can set {@link #trip_odo_delta_mode}
- * and/or {@link #trip_simple_mode}.
+ * <B>Preferences:</B> Before creating the LTM, you can set {@link #trip_odo_delta_mode},
+ * {@link #trip_simple_mode}, and/or {@link #render_comments_brackets}.
  *
  * @author jdmonin
  */
@@ -107,6 +107,17 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	   { null, "Resume-time" },
 	   { null , "End-Time", null, null, "Trip-odo", "via", "End at" },
 	   { null, null, "\\", "End-odo" } };
+
+	/**
+	 * Rendering preference for TStop comments:
+	 * When true, {@code addRowsFromTrips} will place any {@link TStop#getComment()} text within [square brackets].
+	 * True by default.
+	 *<P>
+	 * This preference is static because the constructor renders trip data immediately, and its value doesn't
+	 * change within an app so it's not completely useful as a constructor parameter.
+	 * @since 0.9.43
+	 */
+	public static boolean render_comments_brackets = true;
 
 	/**
 	 * Preference: When true, show trips in Simple mode (1 line per trip, no TStop details).
@@ -704,6 +715,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 		RTRDateTimeFormatter.DateAndTime prevShownDT = new RTRDateTimeFormatter.DateAndTime();
 
 		final int L = td.size();
+		final boolean doCommentBrackets = render_comments_brackets;  // shorter name, cache value
 
 		// Does next trip continue from the same tstop and odometer?
 		boolean nextTripUsesSameStop = false;  // Updated at bottom of loop.
@@ -967,7 +979,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 					// Comment, if any
 					String stopc = ts.getComment();
 					if (stopc != null)
-						tr[7] = "[" + stopc + "]";
+						tr[7] = (doCommentBrackets) ? ("[" + stopc + "]") : stopc;
 
 					// Done with this row
 					tText.addElement(tr);

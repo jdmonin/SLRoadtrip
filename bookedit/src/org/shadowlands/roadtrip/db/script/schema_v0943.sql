@@ -203,6 +203,8 @@ create table tstop ( _id integer PRIMARY KEY AUTOINCREMENT not null, tripid int 
 	--         or its starting area (trip.aid)
 	--       Other stops during roadtrip: a_id is set to the location's geoarea,
 	--         such as the trip's starting or ending geoarea. Can be any area, doesn't need to be start or end.
+	--         (Before app v0.9.50, will always be start or end or null; the UI didn't include other areas
+	--         during a roadtrip. The schema and Model didn't have that limitation.)
 	--         For stops geographically between geoareas (displayed as area "None")
 	--         like highway rest areas, a_id is null in the tstop and location.
 	-- via_route, via_id are the route from the previous tstop's location;

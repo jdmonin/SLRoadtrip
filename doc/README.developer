@@ -22,6 +22,13 @@ Contents:
 The project development site is https://github.com/jdmonin/SLRoadtrip
 
 
+Java/Android versions required:
+
+To allow for broad device support, currently the android app requires 2.2
+(Froyo) or newer, and the BookEdit log viewer requires java 5 or newer.
+The app uses newer features such as ActionBar if available.
+
+
 How to build:
 
 These instructions are for Eclipse; instructions for Android Studio are TBD.
@@ -123,7 +130,9 @@ Overview of source dir:
 
 Some common files, mostly db-related, are duplicated between the android and
 bookedit source directories: src/org/shadowlands/roadtrip/db and model, and
-SQL scripts to create and upgrade the schema.
+SQL scripts to create and upgrade the schema. The db package is a cross-platform
+database API so the android app and BookEdit (JDBC) can use, update, and upgrade
+the roadtrip database consistently.
 
 Android: If you want the commit hash to show in the About box: Before building,
 manually edit res/raw/gitversion.txt to contain the commit hash, then refresh
@@ -219,7 +228,7 @@ r431	-	2015-05-03	3393a0f  Migration from svn to git, google code to github
 				Change linked odometer at 1st whole-number change, not just 2nd and further ones.
 				Disable odometer button wraparound (0 -> 9999999) seen in trip odo.
 				TripTStopEntry calculator: Add Reset button, Clear no longer doubles as Reset.
-	0.9.43			Being developed now; minor improvements and bugfixes since 0.9.42.
+e3dae2e	0.9.43	2015-06-07	First release to include a BookEdit jar; minor improvements and bugfixes since 0.9.42:
 				- New field "Date Added" for drivers, vehicles, GeoAreas
 				- Vehicle: Model year no longer required; has always allowed 0 in schema and apps
 				SLRoadtrip android app:
@@ -229,6 +238,7 @@ r431	-	2015-05-03	3393a0f  Migration from svn to git, google code to github
 				- Add build.xml to create slroadtrip-bookedit.jar.
 				- View/edit details for all drivers and vehicles, including vehicle Active flag.
 				- Better error handling if driver/vehicle settings are missing in db.
+	0.9.50			Being developed now; improvements and bugfixes since 0.9.43
 
 Also see doc/hist/*.sql for previous schema updates.
 

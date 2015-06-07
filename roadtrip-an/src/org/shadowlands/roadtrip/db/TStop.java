@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010-2014 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2015 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -775,18 +775,18 @@ public class TStop extends RDBRecord
 	/**
 	 * Get the GeoArea ID, or 0 if empty/unused.
 	 *<P>
-	 * For local trips: unused; use {@link Trip#getAreaID()} instead.
+	 * For local trips: Field is unused and unread, assumed null; call {@link Trip#getAreaID()} instead.
 	 *<P>
 	 * For roadtrips:
 	 *<UL>
-	 * <LI> A roadtrip's ending tstop's area id should be the ending area,
-	 *        same as {@link Trip#getRoadtripEndAreaID()}.
 	 * <LI> A roadtrip's starting tstop's area id is ignored, because it could be the
 	 *        ending tstop of a local trip. Use {@link Trip#getAreaID()} instead.
-	 * <LI> Other stops during roadtrip: area id is set for any roadtrip stop
-	 *        which is within the starting or ending geoarea.
-	 *        For stops 'in the middle' (neither start or end area), area id is unused.
-	 * <LI> 0 for area id is ok for a local tstop, but not ok for start/end location of trip.
+	 * <LI> A roadtrip's ending tstop's area id must be the ending area
+	 *        {@link Trip#getRoadtripEndAreaID()}.
+	 * <LI> Other stops during a roadtrip: area id is set to the {@link Location}'s geoarea,
+	 *        such as the trip's starting or ending area. Can be any area, doesn't need to be start or end.
+	 *        For stops geographically between geoareas (displayed as area "none") like highway rest areas,
+	 *        area id is empty in TStop and Location.
 	 *</UL>
 	 */
 	public int getAreaID() {
@@ -794,7 +794,7 @@ public class TStop extends RDBRecord
 	}
 
 	/**
-	 * Set the GeoArea field.
+	 * Set the GeoArea field.  See {@link #getAreaID()} for semantics.
 	 * @param a_id  New GeoArea ID, or 0 for null
 	 * @throws IllegalArgumentException if &lt; 0
 	 */

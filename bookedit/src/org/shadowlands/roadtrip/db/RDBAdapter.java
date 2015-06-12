@@ -169,6 +169,23 @@ public interface RDBAdapter
 	    throws IllegalStateException, IllegalArgumentException;
 
 	/**
+	 * Get one integer field in one row, by row ID.
+	 * Returns {@code def} if row not found or field's value is null.
+	 * @param tabname Table to query
+	 * @param id      ID field value, for primary key field "_id"
+	 * @param fn  Field name to get
+	 * @param def  Value to return if key value not found
+	 * @return field value, or <tt>def</tt> if not found
+	 * @throws IllegalStateException if conn has been closed, table not found, etc.
+	 * @see #getRowIntField(String, String, String, String, int)
+	 * @see #getRowIntField(String, String, String, String[], int)
+	 * @see #getRow(String, int, String[])
+	 * @since 0.9.50
+	 */
+	public int getRowIntField(final String tabname, final int id, final String fn, final int def)
+	    throws IllegalStateException;
+
+	/**
 	 * Get one integer field in one row, given a string-type key field name.
 	 * Returns <tt>def</tt> if key value not found.
 	 *
@@ -179,6 +196,8 @@ public interface RDBAdapter
 	 * @param def  Value to return if key value not found
 	 * @return field value, or <tt>def</tt> if not found
 	 * @throws IllegalStateException if conn has been closed, table not found, etc.
+	 * @see #getRowIntField(String, int, String, int)
+	 * @see #getRowIntField(String, String, String, String[], int)
 	 * @see #getRowField(String, String, String, String)
 	 * @since 0.9.07
 	 */
@@ -201,6 +220,8 @@ public interface RDBAdapter
 	 * @return field value, or <tt>def</tt> if not found.
 	 * @throws IllegalStateException if conn has been closed, table not found, etc.
 	 * @throws IllegalArgumentException  if where is null, but whereArgs is not
+	 * @see #getRowIntField(String, int, String, int)
+	 * @see #getRowIntField(String, String, String, String, int)
 	 * @see #getRowField(String, String, String, String[])
 	 * @since 0.9.07
 	 */

@@ -285,30 +285,22 @@ public class Trip extends RDBRecord
 		 * its trip (sTrip0), to find the starting time (timeStart)
 		 * for the time range to load.
 		 */
-		String tripIDstr;
+		final int tripID;
 		if (towardsNewer)
-			tripIDstr = db.getRowField(TABNAME,
+			tripID = db.getRowIntField(TABNAME,
 				"min(_id)",
 				WHERE_TIME_START_AFTER_AND_VID,
-				new String[]{ Integer.toString(tt1), vIDstr } );
+				new String[]{ Integer.toString(tt1), vIDstr }, -1 );
 		else
-			tripIDstr = db.getRowField(TABNAME,
+			tripID = db.getRowIntField(TABNAME,
 				"max(_id)",
 				WHERE_TIME_START_BEFORE_AND_VID,
-				new String[]{ Integer.toString(tt0), vIDstr } );
-		if (tripIDstr == null)
+				new String[]{ Integer.toString(tt0), vIDstr }, -1 );
+		if (tripID == -1)
 		{
 			return null;  // <--- nothing found ---
 		}
-		String timeStartStr = db.getRowField(TABNAME, "_id", tripIDstr, FIELD_TIME_START);
-		if (timeStartStr == null)
-			return null;  // shouldn't happen
-		final int timeStart;
-		try {
-			timeStart = Integer.parseInt(timeStartStr);
-		} catch (NumberFormatException e) {
-			return null;  // shouldn't happen
-		}
+		final int timeStart = db.getRowIntField(TABNAME, tripID, FIELD_TIME_START, 0);
 
 		/**
 		 * Now, load weeks beyond that starting time.

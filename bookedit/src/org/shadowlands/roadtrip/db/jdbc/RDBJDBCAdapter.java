@@ -44,6 +44,9 @@ public class RDBJDBCAdapter implements RDBAdapter
 	/** sql-scripts location within JAR; includes trailing slash. */
 	private static final String SQL_SCRIPTS_DIR = "/org/shadowlands/roadtrip/db/script/";
 
+	/** Primary key {@code "_id=?"} for where-clauses */
+	private static final String WHERE_ID = "_id=?";
+
 	/** Connection to the db, opened in constructor; null if {@link #close()} was called. */
 	private Connection conn;
 
@@ -582,6 +585,13 @@ public class RDBJDBCAdapter implements RDBAdapter
 		return retval;
 	}
 
+	public int getRowIntField(final String tabname, final int id, final String fn, final int def)
+	    throws IllegalStateException
+	{
+		final String[] whereArgs = { Integer.toString(id) } ;
+		return getRowIntField(tabname, fn, WHERE_ID, whereArgs, def);
+	}
+
 	public int getRowIntField(final String tabname, final String kf, final String kv, final String fn, final int def)
 	    throws IllegalStateException
 	{
@@ -877,7 +887,7 @@ public class RDBJDBCAdapter implements RDBAdapter
 	public void delete(final String tabname, final int id)
 	    throws IllegalStateException
 	{
-		delete(tabname, "_id = ?", id);
+		delete(tabname, WHERE_ID, id);
 	}
 
 	public void delete(final String tabname, final String where, final int whereArg)

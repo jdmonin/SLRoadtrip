@@ -400,6 +400,13 @@ public class RDBOpenHelper
 		return rv;
 	}
 
+	public int getRowIntField(final String tabname, final int id, final String fn, final int def)
+	    throws IllegalStateException
+	{
+		final String[] whereArgs = { Integer.toString(id) } ;
+		return getRowIntField(tabname, fn, WHERE_ID, whereArgs, def);
+	}
+
 	public int getRowIntField(final String tabname, final String kf, final String kv, final String fn, final int def)
 	    throws IllegalStateException
 	{

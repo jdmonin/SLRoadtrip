@@ -141,6 +141,24 @@ public class BackupsRestore
 			return;
 		}
 
+		// try to show backup file size
+		try
+		{
+			final File bkFile = new File(bkupFullPath);
+			final long szKB = (bkFile.length() / 1024);
+			final String sizeStr;
+
+			// show whole KB below about 0.9 MB, MB with decimals above that
+			if (szKB < 900)
+				sizeStr = getResources().getString(R.string.amount_kB, szKB);  // %1$d kB
+			else
+				sizeStr = getResources().getString(R.string.amount_MB, szKB / 1024.0f);  // %1$.2f MB
+
+			TextView tv = (TextView) findViewById(R.id.backups_restore_filesize);
+			if (tv != null)
+				tv.setText(sizeStr);
+		} catch (Exception e) {}
+
 		btnRestore = (Button) findViewById(R.id.backups_restore_btn_restore);
 
 		TextView tvPath = (TextView) findViewById(R.id.backups_restore_filepath);

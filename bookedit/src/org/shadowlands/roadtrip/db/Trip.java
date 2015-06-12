@@ -70,6 +70,14 @@ public class Trip extends RDBRecord
 		  "freqtripid", "comment", "passengers", "roadtrip_end_aid", "has_continue", "_id" };
 
     /**
+     * The two table fields for trip's starting and ending time; {@code time_start} is required (not null),
+     * {@code time_end} is optional.
+     * Used in {@link #getDBEarliestLatestTripTimes(RDBAdapter)}.
+     * @since 0.9.50
+     */
+    private static final String[] FIELDS_TIMES = { "time_start", "time_end" };
+
+    /**
      * Field names/where-clause for use in {@link #recentTripForVehicle(RDBAdapter, Vehicle, boolean, boolean)}.
      * @since 0.9.50
      */
@@ -484,6 +492,47 @@ public class Trip extends RDBRecord
 		} catch (RDBKeyNotFoundException e) {
 			return null;  // required by compiler, but we know the ID exists
 		}
+    }
+
+    /**
+     * Retrieve the earliest and latest trip timestamps in the database.
+     * Uses {@code min(_id), max(_id)} to get earliest and latest trip;
+     * with multiple vehicles and if trip({@code max(_id)}) hasn't finished,
+     * there may be a more recent completed trip. This method is accurate
+     * enough for an overall range of trip dates in the database.
+     * Does not examine {@link TStop} times.
+     * @param db  db connection
+     * @return  The earliest trip's starting time, and the latest trip's ending time
+     *     if available or starting time if not.  If no trips, returns null.
+     *     All timestamps are in Unix format.
+     * @throws IllegalStateException if db not open
+     * @since 0.9.50
+     */
+    public static int[] getDBEarliestLatestTripTimes(RDBAdapter db)
+	throws IllegalStateException
+    {
+	if (db == null)
+		throw new IllegalStateException("db null");
+
+	int[] ret = new int[2];
+
+	final int minId = db.getRowIntField(TABNAME, "min(_id)", null, (String[]) null, -1);
+	if (minId == -1)
+		return null;  // <--- Early return: No trips ---
+
+	final int maxId = db.getRowIntField(TABNAME, "max(_id)", null, (String[]) null, -1);  // has min -> has max
+
+	// start time of earliest trip
+	ret[0] = db.getRowIntField(TABNAME, minId, FIELD_TIME_START, 0);
+
+	// times of latest trip
+	String[] row = db.getRow(TABNAME, maxId, FIELDS_TIMES);
+	if (row[1] != null)
+		ret[1] = Integer.parseInt(row[1]);  // ending time
+	if (ret[1] == 0)
+		ret[1] = Integer.parseInt(row[0]);  // starting time
+
+	return ret;
     }
 
     /**

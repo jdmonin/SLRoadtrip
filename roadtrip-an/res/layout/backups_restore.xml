@@ -70,6 +70,19 @@
 		    android:layout_height="wrap_content"
 		    />
     </TableRow>
+    <TableRow>
+		<TextView android:id="@+id/backups_restore_trip_daterange_label"
+		    android:layout_width="wrap_content"
+		    android:layout_height="wrap_content"
+		    android:text="@string/backups_restore_trip_dates"
+		    android:visibility="invisible"
+		    />
+		<TextView android:id="@+id/backups_restore_trip_daterange"
+		    android:layout_weight="1"
+		    android:layout_width="fill_parent"
+		    android:layout_height="wrap_content"
+		    />
+    </TableRow>
 </TableLayout>
 <TextView android:id="@+id/backups_restore_validating"
     android:layout_width="fill_parent" 

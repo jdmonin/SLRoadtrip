@@ -31,6 +31,7 @@ import org.shadowlands.roadtrip.android.util.Misc;
 import org.shadowlands.roadtrip.db.AppInfo;
 import org.shadowlands.roadtrip.db.RDBAdapter;
 import org.shadowlands.roadtrip.db.RDBSchema;
+import org.shadowlands.roadtrip.db.Trip;
 import org.shadowlands.roadtrip.db.RDBSchema.UpgradeCopyCaller;
 import org.shadowlands.roadtrip.db.RDBVerifier;
 import org.shadowlands.roadtrip.db.Settings;
@@ -104,6 +105,14 @@ public class BackupsRestore
 
 	/** Backup file's timestamp, or -1 if not yet read */
 	private int bkupAtTime = -1;
+
+	/**
+	 * Backup file's earliest and latest trip times, or 0 if not yet read or no trips in db.
+	 * Read from DB at progress level "30%", after {@code RDBVerifier#LEVEL_MDATA}
+	 * and before {@link RDBVerifier#LEVEL_TDATA}.
+	 * @since 0.9.50
+	 */
+	private int tripEarliest, tripLatest;
 
 	private boolean alreadyValidated = false;
 	private boolean validatedOK = false;
@@ -320,7 +329,8 @@ public class BackupsRestore
 
 	/**
 	 * Set the "validating..." textfield to show % percent.
-	 * @param percent  How many % to show; if 1, also update backup date/time textfield
+	 * @param percent  How many % to show; if 1, also update backup date/time textfield from {@link #bkupAtTime};
+	 *     if 30, also update trip date range from {@link #tripEarliest} and {@link #tripLatest}.
 	 */
 	protected void updateValidateProgress(final int percent)
 	{
@@ -340,6 +350,30 @@ public class BackupsRestore
 					fmt_dow_shortdate = Misc.buildDateFormatDOWShort(BackupsRestore.this, false);
 				vfield.setText(DateFormat.format(fmt_dow_shortdate, bkupAtTime * 1000L));
 			}
+		}
+
+		else if (percent == 30)
+		{
+			vfield = (TextView) findViewById(R.id.backups_restore_trip_daterange_label);
+			if (vfield != null)
+				vfield.setVisibility(View.VISIBLE);
+
+			vfield = (TextView) findViewById(R.id.backups_restore_trip_daterange);
+			if (vfield != null)
+				if (tripEarliest != 0)
+				{
+					if (fmt_dow_shortdate == null)
+						fmt_dow_shortdate = Misc.buildDateFormatDOWShort
+							(BackupsRestore.this, false);
+
+					StringBuilder sb = new StringBuilder();
+					sb.append(DateFormat.format(fmt_dow_shortdate, tripEarliest * 1000L));
+					sb.append(" - ");  // TODO any further I18N beyond dateformat?
+					sb.append(DateFormat.format(fmt_dow_shortdate, tripLatest * 1000L));
+					vfield.setText(sb);
+				} else {
+					vfield.setText(R.string.no_trips_found);
+				}
 		}
 	}
 
@@ -532,7 +566,20 @@ public class BackupsRestore
 			int rc = v.verify(RDBVerifier.LEVEL_MDATA);
 			if (rc == 0)
 			{
+				// No problems so far. Query oldest/newest trip times,
+				// then post progress (including those) and validate TDATA.
+				// publishProgress(30) listener will update on-screen textfield
+				// from tripEarliest, tripLatest.
+
+				final int[] tripTimes = Trip.getDBEarliestLatestTripTimes(bkupDB);
+				if (tripTimes != null)
+				{
+					tripEarliest = tripTimes[0];
+					tripLatest = tripTimes[1];
+				}
+
 				publishProgress(Integer.valueOf(30));
+
 				rc = v.verify(RDBVerifier.LEVEL_TDATA);
 			}
 			final boolean ok = (0 == rc);  // TODO progress bar

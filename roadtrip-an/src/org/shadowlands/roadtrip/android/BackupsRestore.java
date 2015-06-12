@@ -40,6 +40,7 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.res.Resources;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.text.format.DateFormat;
@@ -129,6 +130,7 @@ public class BackupsRestore
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.backups_restore);
+		final Resources res = getResources();
 
 		final Intent in = getIntent();
 		bkupFullPath = in.getStringExtra(KEY_FULL_PATH);
@@ -150,9 +152,9 @@ public class BackupsRestore
 
 			// show whole KB below about 0.9 MB, MB with decimals above that
 			if (szKB < 900)
-				sizeStr = getResources().getString(R.string.amount_kB, szKB);  // %1$d kB
+				sizeStr = res.getString(R.string.amount_kB, szKB);  // %1$d kB
 			else
-				sizeStr = getResources().getString(R.string.amount_MB, szKB / 1024.0f);  // %1$.2f MB
+				sizeStr = res.getString(R.string.amount_MB, szKB / 1024.0f);  // %1$.2f MB
 
 			TextView tv = (TextView) findViewById(R.id.backups_restore_filesize);
 			if (tv != null)
@@ -173,14 +175,14 @@ public class BackupsRestore
 			if (bkupSchemaVers >= RDBSchema.DB_VERSION_MIN_UPGRADE)
 				copyAndUpgradeTempFile();
 			else
-				versMsg = getResources().getString(R.string.backups_restore_too_old_beta);
+				versMsg = res.getString(R.string.backups_restore_too_old_beta);
 		}
 		else if (bkupSchemaVers > RDBSchema.DATABASE_VERSION)
 		{
 			// "This backup file's schema version %1$d is too new too restore, this app uses version %2$d.
 			//  Please use a newer version of Shadowlands Roadtrip."
 			versMsg = String.format
-				(getResources().getString(R.string.backups_restore_too_new_version),
+				(res.getString(R.string.backups_restore_too_new_version),
 				 Integer.valueOf(bkupSchemaVers), Integer.valueOf(RDBSchema.DATABASE_VERSION));
 		}
 		if (versMsg != null)

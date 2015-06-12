@@ -53,8 +53,13 @@ public interface RDBAdapter
 	/**
 	 * Get one row, given a string-type key field name, or all rows except matching.
 	 * Returns null if the row isn't found.
+	 *<P>
+	 * {@code kf} must not be null; if you want all rows in the table
+	 * or to use aggregate functions over all rows, call
+	 * {@link #getRows(String, String, String[], String[], String, int)} instead.
+	 *
 	 * @param tabname Table to query
-	 * @param kf  Key fieldname; to search case-insensitively, use "fieldname COLLATE NOCASE".
+	 * @param kf  Key fieldname, not null; to search case-insensitively, use "fieldname COLLATE NOCASE".
 	 *              To get all rows except {@code kv} ({@code kf} &lt;&gt; {@code kv}),
 	 *              the {@code kf} string should end with &lt;&gt;
 	 * @param kv  Key value; must not be null
@@ -71,7 +76,8 @@ public interface RDBAdapter
 	 * Get one or more rows matching a key field-value pair, or all rows except matching.
 	 * Returns null if no rows are found.
 	 *<P>
-	 * <tt>kf</tt> must not be null; if you want all rows in the table, use
+	 * {@code kf} must not be null; if you want all rows in the table
+	 * or to use aggregate functions over all rows, call
 	 * {@link #getRows(String, String, String[], String[], String, int)} instead.
 	 *
 	 * @param tabname Table to query
@@ -98,13 +104,18 @@ public interface RDBAdapter
 	/**
 	 * Get one or more rows matching a SQL Where clause, or all rows in a table.
 	 * Returns null if no rows are found.
+	 * Supports aggregate functions such as <tt>max(fld)</tt>.
+	 * (If you want to call a single aggregate function, you can use
+	 * {@link #getRowField(String, String, String, String[])},
+	 * {@link #getRowIntField(String, String, String, String[], int) getRowIntField(..)},
+	 * etc. for a simpler return value.)
 	 *
 	 * @param tabname Table to query
 	 * @param where  Where-clause, or null for all rows; may contain <tt>?</tt> which will be
 	 *       filled from <tt>whereArgs</tt> contents, as with PreparedStatements.
 	 *       Do not include the "where" keyword.
 	 * @param whereArgs  Strings to bind against each <tt>?</tt> in <tt>where</tt>, or null if <tt>where</tt> has none of those
-	 * @param fieldnames  Field names to return
+	 * @param fieldnames  Field names to return, or aggregate functions such as <tt>max(fld)</tt>
 	 * @param orderby  Order-by field(s) sql clause, or null; may contain "desc" and/or "COLLATE NOCASE" for sorting
 	 * @param limit  Maximum number of rows to return, or 0 for no limit
 	 * @return  Corresponding field values to field names, or null if errors or if table not found.

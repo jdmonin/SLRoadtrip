@@ -1171,7 +1171,7 @@ public class Trip extends RDBRecord
 			}
 		}
 
-		final TStop endTS = allTS.lastElement();  // not empty: all trips end at a TStop
+		final TStop endTS = allTS.lastElement();  // never null: all trips end at a TStop
 		final int endAreaID = endTS.getAreaID();
 		if (endAreaID == 0)
 			throw new IllegalArgumentException
@@ -1183,6 +1183,7 @@ public class Trip extends RDBRecord
 			differentAID = true;
 			if (updateEndArea)
 			{
+				// convert roadtrip to local trip
 				roadtrip_end_aid = 0;
 				dirty = true;
 			}
@@ -1435,16 +1436,19 @@ public class Trip extends RDBRecord
 	 * by this method along with the geoarea fields.
 	 *<P>
 	 * This method updates the trip by setting a proposed {@link #getRoadtripEndAreaID()}
-	 * from {@code newOtherAreaStop}'s area if any, otherwise from {@link #getAreaID()}.
-	 * It sets the geoarea field of the trip's other TStops to the starting area
+	 * from {@code newOtherAreaStop}'s area if any, otherwise from {@link #getAreaID()} as a
+	 * non-zero placeholder. It sets the geoarea field of the trip's earlier TStops to the starting area
 	 * without changing {@code newOtherAreaStop}'s geoarea.  These updates are
 	 * immediately committed to the db.
+	 *<P>
+	 * Later when the trip is actually ended, its final TStop's GeoArea will be
+	 * used as the trip's ending area.
 	 *
 	 * @param newOtherAreaStop Newest stop of the trip, this stop is in a different geoarea.
 	 *     Must already be committed to the db.
 	 * @throws IllegalStateException if this trip is already a roadtrip
-	 * @throws IllegalArgumentException  If {@code newOtherAreaStop} is not yet committed to DB
-	 *     or is in this trip's starting geoarea {@link #getAreaID()}
+	 * @throws IllegalArgumentException  If {@code newOtherAreaStop} is not yet committed to DB,
+	 *     or is in this trip's starting geoarea {@link #getAreaID()} which would not be a roadtrip.
 	 * @throws NullPointerException if {@code newOtherAreaStop} is null
 	 * @since 0.9.50
 	 */

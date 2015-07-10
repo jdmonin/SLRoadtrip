@@ -1587,6 +1587,8 @@ public class TripTStopEntry extends Activity
 		// TODO: if not stopEndsTrip, allow conversion of local to roadtrip but
 		//    still preserve areaLocs_areaID == 0 if stopping in null geoarea;
 		//    might move wantsConvertLocalToRoadtrip decl up here.
+		//    (Be sure roadtrip_end_aid isn't 0, that means local trip in db;
+		//     Trip.convertLocalToRoadtrip uses trip's starting area as a nonzero placeholder)
 
 		if ((areaLocs_areaID <= 0) && (stopEndsTrip || ! currT.isRoadtrip()))
 		{
@@ -1843,6 +1845,9 @@ public class TripTStopEntry extends Activity
 			  && (areaLocs_areaID != currT.getAreaID());
 
 			// note: the following code assumes wantsConvertLocalToRoadtrip implies areaLocs_areaID > 0
+			//       A roadtrip can't end in geoarea 0, the db uses that value when it's a local trip.
+			//       (TODO) different placeholder than 0, because Trip.convertLocalToRoadtrip can handle 0
+			//              by using trip.areaid as a nonzero ending area id.
 
 		if (! isCurrentlyStopped)
 		{
@@ -2252,7 +2257,8 @@ public class TripTStopEntry extends Activity
 	 * or "Choose a new GeoArea" after {@link #onClick_BtnAreaLocalChange(View)}.
 	 * @param id  Unique dialog key, borrowed from various controls' {@code R.id}s:
 	 *    <UL>
-	 *    <LI> {@code trip_tstop_area_local_row}: Show "Choose a new GeoArea for this stop" without "none" choice
+	 *    <LI> {@code trip_tstop_area_local_row}: Show "Choose a new GeoArea for this stop" without "none" choice.
+	 *         (Used when the trip is currently local, to convert it to a roadtrip)
 	 *    <LI> {@code trip_tstop_btn_cont_date}: Choose a date for Continue time
 	 *    <LI> Otherwise: Choose a date for Stopped At time
 	 *    </UL>
@@ -2263,6 +2269,8 @@ public class TripTStopEntry extends Activity
 	{
 		if (id == R.id.trip_tstop_area_local_row)
 		{
+			// converting local to roadtrip: choose tstop's geoarea
+
 			final View popupLayout = getLayoutInflater().inflate
 				(R.layout.trip_tstop_popup_choose_area, null);
 			final Spinner areas = (Spinner) popupLayout.findViewById(R.id.logbook_show_popup_locs_areas);

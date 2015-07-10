@@ -109,9 +109,10 @@ public class SpinnerDataFactory
 	 * @param withNone  If true, include a GeoArea "(none)" with id 0 as the first item: {@link GeoArea#GEOAREA_NONE}
 	 * @return true on success, false if could not populate from database
 	 */
-	public static boolean setupGeoAreasSpinner(RDBAdapter db, Context ctx, Spinner sp, final int currentID, final boolean withNone)
+	public static boolean setupGeoAreasSpinner
+		(RDBAdapter db, Context ctx, Spinner sp, final int currentID, final boolean withNone, final int exceptID)
 	{
-		GeoArea[] areas = populateGeoAreasList(db, ctx, withNone);
+		GeoArea[] areas = populateGeoAreasList(db, ctx, withNone, exceptID);
 	    if (areas == null)
 	    	return false;
 
@@ -188,21 +189,23 @@ public class SpinnerDataFactory
 	}
 
 	/**
-	 * For {@link #setupGeoAreasSpinner(RDBAdapter, Context, Spinner, int, boolean)},
+	 * For {@link #setupGeoAreasSpinner(RDBAdapter, Context, Spinner, int, boolean, int)},
 	 * gather the list of GeoAreas from the database.
 	 *
 	 * @param db  connection to use
 	 * @param ctx  context; ignored unless <tt>withNone</tt>; used for strings for withNone
 	 * @param withNone  If true, include "(none)" as first entry; its id is 0
+	 * @param exceptID  IF not -1, a geoarea to exclude from the list
 	 * @return array of areas, or null
 	 */
-	private static GeoArea[] populateGeoAreasList(RDBAdapter db, final Context ctx, final boolean withNone)
+	private static GeoArea[] populateGeoAreasList
+		(RDBAdapter db, final Context ctx, final boolean withNone, final int exceptID)
 	{
 		GeoArea[] areas = null; 
 
     	try
     	{
-    		areas = GeoArea.getAll(db, withNone);
+    		areas = GeoArea.getAll(db, withNone, exceptID);
     	}
     	catch (SQLiteException e)
     	{}

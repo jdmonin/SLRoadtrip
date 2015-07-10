@@ -2274,7 +2274,7 @@ public class TripTStopEntry extends Activity
 			final View popupLayout = getLayoutInflater().inflate
 				(R.layout.trip_tstop_popup_choose_area, null);
 			final Spinner areas = (Spinner) popupLayout.findViewById(R.id.logbook_show_popup_locs_areas);
-			SpinnerDataFactory.setupGeoAreasSpinner(db, this, areas, areaLocs_areaID, false);
+			SpinnerDataFactory.setupGeoAreasSpinner(db, this, areas, areaLocs_areaID, false, -1);
 
 			AlertDialog.Builder alert = new AlertDialog.Builder(this);
 			alert.setView(popupLayout);

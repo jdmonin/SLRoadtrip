@@ -260,7 +260,7 @@ public class LogbookShow extends Activity
 
 		/** When GeoArea spinner selection changes, query for locations in that area: */
 		final Spinner areas = (Spinner) askItems.findViewById(R.id.logbook_show_popup_locs_areas);
-		SpinnerDataFactory.setupGeoAreasSpinner(db, fromActivity, areas, askLocationAndShow_areaID, true);
+		SpinnerDataFactory.setupGeoAreasSpinner(db, fromActivity, areas, askLocationAndShow_areaID, true, -1);
 		areas.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
 			public void onItemSelected
 				(AdapterView<?> ctx, View view, int pos, long id)

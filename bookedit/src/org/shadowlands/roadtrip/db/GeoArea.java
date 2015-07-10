@@ -61,7 +61,7 @@ public class GeoArea extends RDBRecord
 	/**
 	 * Get the GeoAreas currently in the database, optionally beginning with the {@link #GEOAREA_NONE} placeholder.
 	 * @param db  database connection
-	 * @param withAreaNone
+	 * @param withAreaNone  If true, the list begins with {@link #GEOAREA_NONE}
 	 * @return an array of GeoArea objects from the database, ordered by name, or null if none.
 	 *     If {@code withAreaNone} is true, {@link #GEOAREA_NONE} is returned at [0].
 	 *     Even if {@code withAreaNone} is true, null is returned if there are no GeoAreas in the db.
@@ -70,23 +70,33 @@ public class GeoArea extends RDBRecord
 	 */
 	public static GeoArea[] getAll(RDBAdapter db, final boolean withAreaNone)
 	{
-		return getAll(db, -1, withAreaNone);
+		return getAll(db, withAreaNone, -1);
 	}
 
     /**
-     * Get the GeoAreas currently in the database.
+     * Get the GeoAreas currently in the database, optionally excluding one.
      * @param db  database connection
      * @param exceptID  Exclude this area; -1 to return all areas
      * @return an array of GeoArea objects from the database, ordered by name, or null if none.
-     *   <br><b>NOTE:</b> This array may end with a null value if <tt>exceptID</tt> is used.
      * @see #getAll(RDBAdapter, boolean)
      */
     public static GeoArea[] getAll(RDBAdapter db, final int exceptID)
     {
-	return getAll(db, exceptID, false);
+	return getAll(db, false, exceptID);
     }
 
-    private static GeoArea[] getAll(RDBAdapter db, final int exceptID, final boolean withAreaNone)
+    /**
+     * Get the GeoAreas currently in the database, optionally excluding one,
+     * and optionally beginning with the {@link #GEOAREA_NONE} placeholder.
+     * @param db  database connection
+     * @param withAreaNone  If true, the list begins with {@link #GEOAREA_NONE}
+     * @param exceptID  Exclude this area; -1 to return all areas
+     * @return an array of GeoArea objects from the database, ordered by name, or null if none.
+     *     If {@code withAreaNone} is true, {@link #GEOAREA_NONE} is returned at [0].
+     *     Even if {@code withAreaNone} is true, null is returned if there are no GeoAreas in the db
+     *     or if {@code exceptID} is the only geoarea.
+     */
+    public static GeoArea[] getAll(RDBAdapter db, final boolean withAreaNone, final int exceptID)
     {
     	final Vector<String[]> geos;
     	if (exceptID != -1)

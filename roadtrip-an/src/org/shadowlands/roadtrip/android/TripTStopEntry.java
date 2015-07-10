@@ -90,6 +90,10 @@ import android.widget.Toast;
  * user if we've stopped at one of those {@link FreqTripTStop frequent TStops}.
  * If that activity is canceled, this one will be too.
  *<P>
+ * This activity is finished by pressing one of the two large buttons
+ * {@link #onClick_BtnEnterTStop(View)} or {@link #onClick_BtnSaveChanges(View)},
+ * which validate the displayed fields and update the database.
+ *<P>
  * If stopping here creates a new {@link Location} or {@link ViaRoute}, and the
  * text is changed when resuming the trip, make sure the new item's text is updated
  * in the database.
@@ -899,9 +903,10 @@ public class TripTStopEntry extends Activity
 
 	/**
 	 * Select the matching GeoArea's radio button, update {@link #areaLocs_areaID}
-	 * and {@link #loc}'s autocomplete adapter, and optionally update related data fields.
-	 * (Stops during a roadtrip have several GeoArea radios
-	 * to select the starting area, no area, or ending area.)
+	 * and {@link #loc}'s autocomplete adapter, and optionally update the Activity's
+	 * related data fields. (Does not change anything in the db)
+	 *<P>
+	 * Stops during a roadtrip have several GeoArea radios to select the starting area, no area, or ending area.
 	 * For a local trip, updates the current GeoArea textview; does not show the roadtrip GeoArea radio buttons.
 	 *<P>
 	 * Before changing the currently selected button, this method confirms with the user
@@ -964,7 +969,7 @@ public class TripTStopEntry extends Activity
 		}
 
 		// Start by updating the display.
-		// Afterwards we'll also update the data fields if requested.
+		// Afterwards we'll also update the activity's data fields if requested.
 
 		if (rbRoadtripArea_chosen != null)
 			// un-select previous
@@ -1394,7 +1399,7 @@ public class TripTStopEntry extends Activity
 	 * and {@link #onClick_BtnEnterTStop(View)}.
 	 *<P>
 	 * Check for required fields, prompt if missing. Otherwise
-	 * save changes, continue from stop if {@link #isCurrentlyStopped}
+	 * save changes to db, continue from stop if {@link #isCurrentlyStopped}
 	 * unless <tt>saveOnly</tt>, and finish this Activity.
 	 * @param saveOnly  If true, save changes but don't leave
 	 *   the stop or continue the trip.
@@ -1558,7 +1563,7 @@ public class TripTStopEntry extends Activity
 			}
 		}
 
-		// area ID @ end of roadtrip
+		// validate area ID @ end of roadtrip
 		if (stopEndsTrip && currT.isRoadtrip()
 			&& (areaLocs_areaID != currT.getRoadtripEndAreaID())
 			&& (areaLocs_areaID != currT.getAreaID()))
@@ -1611,6 +1616,7 @@ public class TripTStopEntry extends Activity
 		/**
 		 * Done checking data entered, time to update the db.
 		 * tsid is the TStop ID we'll create or update here.
+		 * May convert a local trip into a roadtrip; see wantsConvertLocalToRoadtrip below.
 		 */
 		final int tsid;
 
@@ -1885,8 +1891,13 @@ public class TripTStopEntry extends Activity
 			currT.addCommittedTStop(newStop);  // update the Trip's cached TStop list, if any
 			if (! stopEndsTrip)
 				VehSettings.setCurrentTStop(db, currV, newStop);
+
+			// Convert local trip to roadtrip now if requested.
+			// areaID 0 (none) is allowed for TStops during a trip,
+			// but not for the final tstop ending the trip.
 			if (wantsConvertLocalToRoadtrip && (areaID >= ((stopEndsTrip) ? 1 : 0)))
 				currT.convertLocalToRoadtrip(newStop);
+
 			// Don't set currTS field yet, it needs to be null for code here.
 
 			// Now set the gas info, if any:

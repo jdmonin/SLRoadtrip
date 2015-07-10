@@ -93,6 +93,8 @@ import android.widget.Toast;
  * This activity is finished by pressing one of the two large buttons
  * {@link #onClick_BtnEnterTStop(View)} or {@link #onClick_BtnSaveChanges(View)},
  * which validate the displayed fields and update the database.
+ * If the trip is local, but a {@link Location} in a different {@link GeoArea} was
+ * chosen or created, the local trip is converted here to a roadtrip.
  *<P>
  * If stopping here creates a new {@link Location} or {@link ViaRoute}, and the
  * text is changed when resuming the trip, make sure the new item's text is updated
@@ -115,6 +117,7 @@ public class TripTStopEntry extends Activity
 	 * Also used when calling {@link #selectRoadtripAreaButton(int, String, boolean, int)}
 	 * when the "Other" radio button should be checked, regardless of the Area ID selected in "Other".
 	 * @see #areaOtherID
+	 * @see #areaLocs_areaID
 	 * @since 0.9.50
 	 */
 	private static final int GEOAREAID_OTHER_NEW = -2;
@@ -1563,7 +1566,7 @@ public class TripTStopEntry extends Activity
 			}
 		}
 
-		// validate area ID @ end of roadtrip
+		// validate area ID @ end of roadtrip: starting or ending, and not 0 (none)
 		if (stopEndsTrip && currT.isRoadtrip()
 			&& (areaLocs_areaID != currT.getRoadtripEndAreaID())
 			&& (areaLocs_areaID != currT.getAreaID()))
@@ -1848,6 +1851,7 @@ public class TripTStopEntry extends Activity
 			//       A roadtrip can't end in geoarea 0, the db uses that value when it's a local trip.
 			//       (TODO) different placeholder than 0, because Trip.convertLocalToRoadtrip can handle 0
 			//              by using trip.areaid as a nonzero ending area id.
+			//              Still can't allow tstop in area 0 if stopEndsTrip.
 
 		if (! isCurrentlyStopped)
 		{
@@ -2259,6 +2263,12 @@ public class TripTStopEntry extends Activity
 	 *    <UL>
 	 *    <LI> {@code trip_tstop_area_local_row}: Show "Choose a new GeoArea for this stop" without "none" choice.
 	 *         (Used when the trip is currently local, to convert it to a roadtrip)
+	 *         When "OK" is pressed, sets {@link #areaLocs_areaID} by calling
+	 *         {@link #selectRoadtripAreaButton(int, String, boolean, int)}.
+	 *         The spinner includes the current (starting) geoarea as the default selection,
+	 *         for visual consistency and to prevent accidentally choosing the first area in the list.
+	 *         If the starting geoarea is still the selected one when the activity is finished,
+	 *         the trip will remain local.
 	 *    <LI> {@code trip_tstop_btn_cont_date}: Choose a date for Continue time
 	 *    <LI> Otherwise: Choose a date for Stopped At time
 	 *    </UL>
@@ -2275,6 +2285,7 @@ public class TripTStopEntry extends Activity
 				(R.layout.trip_tstop_popup_choose_area, null);
 			final Spinner areas = (Spinner) popupLayout.findViewById(R.id.logbook_show_popup_locs_areas);
 			SpinnerDataFactory.setupGeoAreasSpinner(db, this, areas, areaLocs_areaID, false, -1);
+				// (TODO) geoarea "none" can be allowed unless stopEndsTrip
 
 			AlertDialog.Builder alert = new AlertDialog.Builder(this);
 			alert.setView(popupLayout);

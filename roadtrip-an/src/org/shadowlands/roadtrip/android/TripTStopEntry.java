@@ -780,8 +780,18 @@ public class TripTStopEntry extends Activity
 
 				etRoadtripAreaOther.setAdapter(adapter);
 
-				// TODO set areaOtherID from areaLocs_areaID and fill its text:
-				// only if areaOtherID isn't start, end, or none
+				// If areaLocs_areaID isn't start, end, or none, set areaOtherID and show its name
+				if ((areaLocs_areaID != 0) && (areaLocs_areaID != gaID_s) && (areaLocs_areaID != gaID_e))
+				{
+					areaOtherID = areaLocs_areaID;
+
+					for (int j = 0; j < othera.length; ++j)
+						if (othera[j].getID() == areaLocs_areaID)
+						{
+							etRoadtripAreaOther.setText(othera[j].getName());
+							break;
+						}
+				}
 
 				if (etRoadtripAreaOtherListener == null)
 					etRoadtripAreaOtherListener = new GeoAreaOnItemClickListener();

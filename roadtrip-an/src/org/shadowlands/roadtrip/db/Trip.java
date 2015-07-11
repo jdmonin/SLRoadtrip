@@ -1161,6 +1161,8 @@ public class Trip extends RDBRecord
 
 		final int startAreaID = a_id;
 		final Vector<TStop> allTS = readAllTStops();
+		if (allTS == null)
+			return false;  // unlikely: all trips end at a TStop
 		boolean wentOutsideStartArea = false;
 		for (TStop ts : allTS)
 		{
@@ -1171,11 +1173,11 @@ public class Trip extends RDBRecord
 			}
 		}
 
-		final TStop endTS = allTS.lastElement();  // never null: all trips end at a TStop
+		final TStop endTS = allTS.lastElement();  // never null: readAllTStops() won't return an empty list
 		final int endAreaID = endTS.getAreaID();
 		if (endAreaID == 0)
 			throw new IllegalArgumentException
-				("Ending tstop is in area 0 (none): id " + endTS.getID());
+				("Ending tstop is in area 0 (none): ts id " + endTS.getID());
 
 		boolean differentAID = false;
 		if (! wentOutsideStartArea)
@@ -1443,6 +1445,11 @@ public class Trip extends RDBRecord
 	 *<P>
 	 * Later when the trip is actually ended, its final TStop's GeoArea will be
 	 * used as the trip's ending area.
+	 *<P>
+	 * <B>Lifecycle:</B> An ongoing local trip can be converted to a roadtrip at any TStop.
+	 * A roadtrip can be converted to local at the trip's completion, when we are sure
+	 * there won't be any new TStops added in other areas, by
+	 * {@link VehSettings#endCurrentTrip(RDBAdapter, Vehicle, int, int, int, TripCategory, int)}.
 	 *
 	 * @param newOtherAreaStop Newest stop of the trip, this stop is in a different geoarea.
 	 *     Must already be committed to the db.

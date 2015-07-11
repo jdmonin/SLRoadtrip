@@ -932,6 +932,7 @@ public class VehSettings extends RDBRecord
 				("No current trip for vehicle " + v.getID() + " " + v.toString());
 
 		// check roadtrip ending geoarea and other areas; convert to local trip if all TStops in starting area
+		// or update trip's ending geoarea to match final TStop's
 		if (currT.isRoadtrip())
 			currT.checkRoadtripTStops(true);
 				// throws IllegalArgumentException if ending tstop is in area 0 (none)

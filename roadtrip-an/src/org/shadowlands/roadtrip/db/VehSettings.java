@@ -51,6 +51,10 @@ public class VehSettings extends RDBRecord
 	 * int setting for current {@link GeoArea} area ID.
 	 * During a roadtrip, this is the trip's starting area ID; when the
 	 * roadtrip ends, will be changed to {@link Trip#getRoadtripEndAreaID()}.
+	 * While the roadtrip is active, this field is ignored except as a fallback;
+	 * the area ID considered 'current' during the roadtrip comes from
+	 * {@link #CURRENT_TSTOP}'s record if any, or {@link #PREV_LOCATION} otherwise.
+	 * @see #getCurrentArea(RDBAdapter, Vehicle, boolean)
 	 */
 	public static final String CURRENT_AREA = "CURRENT_AREA";
 
@@ -81,6 +85,7 @@ public class VehSettings extends RDBRecord
 	 * Used during trips to build dropdowns of {@link ViaRoute}s between
 	 * {@code PREV_LOCATION} and current TStop's location.
 	 * If this setting is missing, no impact beyond ViaRoute setup on current trip.
+	 * @see #getPreviousLocation(RDBAdapter, Vehicle, boolean)
 	 * @since 0.8.13
 	 */
 	public static final String PREV_LOCATION = "PREV_LOCATION";
@@ -644,6 +649,8 @@ public class VehSettings extends RDBRecord
 
 	/**
 	 * Get the setting for {@link #CURRENT_AREA} if set.
+	 * See {@link #CURRENT_AREA} javadocs or schema comments for
+	 * when this setting is and isn't updated.
 	 *<P>
 	 * The record is cached after the first call, so if it changes,
 	 * please call {@link #setCurrentArea(RDBAdapter, Vehicle, GeoArea)}.

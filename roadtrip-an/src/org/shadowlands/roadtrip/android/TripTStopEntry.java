@@ -136,18 +136,24 @@ public class TripTStopEntry extends Activity
 	private Trip currT;
 	private TStop currTS;
 
-	/** all locations in the {@link #areaLocs_areaID} area, or null; set from {@link #currA} in {@link #onCreate(Bundle)} */
+	/**
+	 * All locations within the {@link GeoArea} having ID {@link #areaLocs_areaID}, or null;
+	 * filled in {@link #onCreate(Bundle)} when {@link #areaLocs_areaID} is calculated,
+	 * updated when the selected area changes in {@link #selectRoadtripAreaButton(int, String, boolean, int)}.
+	 */
 	private Location[] areaLocs;
 
 	/**
-	 * the areaID of locations in {@link #areaLocs}, or -1.
-	 * For roadtrips, also the currently selected area ID of
-	 * {@link #rbRoadtripArea_chosen}.
+	 * The {@link GeoArea} ID of locations in {@link #areaLocs}, or -1 if that could not be determined.
+	 * For roadtrips, also the currently selected area ID of {@link #rbRoadtripArea_chosen}.
 	 * Geoarea id 0 is OK for tstops/locations within a roadtrip, but not
 	 * for the start or end tstop/location.
 	 *<P>
 	 * In local trips, each stop's {@link TStop#getAreaID()} will be 0.
 	 * {@code areaLocs_areaID} is not 0, is {@link Trip#getAreaID()} during local trips.
+	 * During a roadtrip, is taken from {@link #currTS}.{@link TStop#getAreaID() getAreaID()}
+	 * if currently stopped, otherwise from {@link #prevLocObj}.{@link Location#getAreaID() getAreaID()}
+	 * if available, or {@link #currA}. See {@link #onCreate(Bundle)} code for details.
 	 */
 	private int areaLocs_areaID;
 
@@ -672,7 +678,7 @@ public class TripTStopEntry extends Activity
 			onRestoreInstanceState(savedInstanceState);
 
 		// If needed, determine current area.
-		// Based on current area, set up Location auto-complete
+		// (If this logic changes, update areaLocs_areaID javadoc)
 		if (areaLocs_areaID == -1)
 		{
 			if (currTS != null)
@@ -693,17 +699,20 @@ public class TripTStopEntry extends Activity
 			}
 		}
 
+		// fallback for current area if the usual sources aren't populated (if it's a new vehicle, for example)
 		if (areaLocs_areaID == -1)
 		{
 			if (! stopEndsTrip)
 			{
-				areaLocs_areaID = currA.getID();
+				areaLocs_areaID = currA.getID();  // likely == trip's starting area
 			} else {
 				areaLocs_areaID = currT.getRoadtripEndAreaID();  // will be 0 for local trips
 				if (areaLocs_areaID == 0)  // can't end trip in geoarea 0
 					areaLocs_areaID = currA.getID();
 			}
 		}
+
+		// Based on current area, set up Location auto-complete
 		areaLocs = Location.getAll(db, areaLocs_areaID);
 		if (areaLocs != null)
 		{
@@ -1863,6 +1872,10 @@ public class TripTStopEntry extends Activity
 			//              by using trip.areaid as a nonzero ending area id.
 			//              Still can't allow tstop in area 0 if stopEndsTrip.
 
+		/**
+		 * Done creating/updating related and 'master record' data.
+		 * Now, create or update the actual TStop.
+		 */
 		if (! isCurrentlyStopped)
 		{
 			// Create a new TStop; set tsid (not currTS).
@@ -1888,11 +1901,13 @@ public class TripTStopEntry extends Activity
 			}
 			else if ((areaLocs_areaID != -1)
 				 && (currT.isRoadtrip() || wantsConvertLocalToRoadtrip))
+			{
 				areaID = areaLocs_areaID;
 				// New tstop during roadtrip; areaID 0 is OK since not ending trip.
 				// historical db note: before March 2011 (r48) unless stopEndsTrip, tstop.a_id always 0
-			else
+			} else {
 				areaID = 0;  // unused in local trip tstops
+			}
 
 			int flags = 0;
 			if (! stopEndsTrip)

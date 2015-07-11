@@ -1305,13 +1305,23 @@ public class TripTStopEntry extends Activity
 	}
 
 	/**
-	 * For roadtrips, update GUI and data from a click on the 'ending geoarea' button.
+	 * For roadtrips, update GUI and data from a click on the 'other geoarea' button.
 	 * @see #onClick_BtnAreaLocalChange(View)
 	 * @since 0.9.50
 	 */
 	public void onClick_BtnAreaOther(View v)
 	{
-		selectRoadtripAreaButton(GEOAREAID_OTHER_NEW, null, true, 0);
+		String areaName = null;
+		if (etRoadtripAreaOther != null)
+		{
+			Editable aNEd = etRoadtripAreaOther.getText();
+			if ((aNEd != null) && (aNEd.length() > 0))
+				areaName = aNEd.toString();
+			else
+				areaName = getResources().getString(R.string.other__dots);  // fallback: "Other..."
+		}
+
+		selectRoadtripAreaButton(GEOAREAID_OTHER_NEW, areaName, true, 0);
 	}
 
 	/**

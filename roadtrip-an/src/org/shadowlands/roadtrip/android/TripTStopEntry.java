@@ -116,7 +116,7 @@ public class TripTStopEntry extends Activity
 	 * in {@link #etRoadtripAreaOther} and its record not yet created.
 	 * Also used when calling {@link #selectRoadtripAreaButton(int, String, boolean, int)}
 	 * when the "Other" radio button should be checked, regardless of the Area ID selected in "Other".
-	 * @see #areaOtherID
+	 * @see #areaOther
 	 * @see #areaLocs_areaID
 	 * @since 0.9.50
 	 */
@@ -358,7 +358,7 @@ public class TripTStopEntry extends Activity
 	/**
 	 * For roadtrips, the Other Geoarea textfield.
 	 * Its radiobutton is {@link #rbRoadtripAreaOther}.
-	 * The selected GeoArea ID from the adapter, if any, is {@link #areaOtherID}.
+	 * The selected GeoArea from the adapter, if any, is {@link #areaOther}.
 	 * Autocomplete selections call {@link #etRoadtripAreaOtherListener}.
 	 * @since 0.9.50
 	 */
@@ -368,12 +368,22 @@ public class TripTStopEntry extends Activity
 	private GeoAreaOnItemClickListener etRoadtripAreaOtherListener;
 
 	/**
-	 * ID of roadtrip geoarea selected in {@link #etRoadtripAreaOther},
-	 * 0 if none, or {@link #GEOAREAID_OTHER_NEW} for a newly entered name.
+	 * Roadtrip geoarea selected in {@link #etRoadtripAreaOther},
+	 * {@link GeoArea#GEOAREA_NONE} if none, or null for a newly entered name.
 	 * Updated in {@link TripTStopEntry.GeoAreaOnItemClickListener}.
 	 * @since 0.9.50
+	 * @see #GEOAREAID_OTHER_NEW
+	 * @see #areaOther_prev
 	 */
-	private int areaOtherID;
+	private GeoArea areaOther;
+
+	/**
+	 * Previous {@link #areaOther} when a new one is selected.
+	 * used by {@link #showRoadtripAreaButtonConfirmDialog(int, String, String, String)}
+	 * in case Cancel button is pressed.
+	 * @since 0.9.50
+	 */
+	private GeoArea areaOther_prev;
 
 	///////////////////////////////
 	// Start of calculator fields
@@ -781,6 +791,8 @@ public class TripTStopEntry extends Activity
 			selectRoadtripAreaButton(areaLocs_areaID, null, false, 0);
 
 			etRoadtripAreaOther = (AutoCompleteTextView) findViewById(R.id.trip_tstop_areas_et_other);
+			areaOther = null;
+			areaOther_prev = null;
 			GeoArea[] othera = GeoArea.getAll(db, -1);
 			if (othera != null)
 			{
@@ -789,14 +801,13 @@ public class TripTStopEntry extends Activity
 
 				etRoadtripAreaOther.setAdapter(adapter);
 
-				// If areaLocs_areaID isn't start, end, or none, set areaOtherID and show its name
+				// If areaLocs_areaID isn't start, end, or none, set areaOther and show its name
 				if ((areaLocs_areaID != 0) && (areaLocs_areaID != gaID_s) && (areaLocs_areaID != gaID_e))
 				{
-					areaOtherID = areaLocs_areaID;
-
 					for (int j = 0; j < othera.length; ++j)
 						if (othera[j].getID() == areaLocs_areaID)
 						{
+							areaOther = othera[j];
 							etRoadtripAreaOther.setText(othera[j].getName());
 							break;
 						}
@@ -938,7 +949,7 @@ public class TripTStopEntry extends Activity
 	 * Before v0.9.50, this method was {@code hilightRoadtripAreaButton}.
 	 *
 	 * @param areaID  GeoArea ID to select, 0 for none, or {@link #GEOAREAID_OTHER_NEW}
-	 *   to determine it from {@link #areaOtherID} or {@link #etRoadtripAreaOther} contents
+	 *   to determine it from {@link #areaOther} or {@link #etRoadtripAreaOther} contents
 	 * @param newAreaText  New GeoArea's name, or null for "none" (no area) or "other" (separate text field).
 	 *   Not needed unless <tt>alsoUpdateData</tt>.
 	 *   Used only for the confirmation dialog if the area changes after a location is chosen.
@@ -963,10 +974,10 @@ public class TripTStopEntry extends Activity
 		final boolean btnWasOther = (areaID == GEOAREAID_OTHER_NEW);
 		if (btnWasOther)
 		{
-			if (areaOtherID > 0)
+			if (areaOther != null)
 			{
-				areaID = areaOtherID;
-				// TODO validate contents too, in case text was changed since selection
+				areaID = areaOther.getID();
+				// TODO validate area name too, in case text was changed since selection
 			} else {
 				// TODO try to query from text; may want to create a new area
 				// If it's new, check if new geoarea obj created at this tstop
@@ -1116,6 +1127,9 @@ public class TripTStopEntry extends Activity
 		alert.setNeutralButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
 		  public void onClick(DialogInterface dialog, int whichButton)
 		  {
+			// canceled, staying in the previous geoarea:
+			// don't change the area, just make sure the original geoarea is the only radio button selected.
+
 			// rbRoadtripArea_chosen won't necessarily be the one checked right now. Un-check all.
 			rbRoadtripAreaStart.setChecked(false);
 			rbRoadtripAreaEnd.setChecked(false);
@@ -1135,6 +1149,14 @@ public class TripTStopEntry extends Activity
 
 			rbRoadtripArea_chosen = toChg;
 			toChg.setChecked(true);
+
+			if (toChg == rbRoadtripAreaOther)
+				areaOther = areaOther_prev;
+
+			if (areaOther == null)
+				etRoadtripAreaOther.setText("");
+			else
+				etRoadtripAreaOther.setText(areaOther.getName());
 		  }
 		});
 
@@ -1305,6 +1327,7 @@ public class TripTStopEntry extends Activity
 	/** For roadtrips, update GUI and data from a click on the 'starting geoarea' button. */
 	public void onClick_BtnAreaStart(View v)
 	{
+		areaOther_prev = areaOther;  // in case change is canceled
 		selectRoadtripAreaButton
 			(currT.getAreaID(), rbRoadtripAreaStart.getText().toString(), true, 0);
 	}
@@ -1312,18 +1335,22 @@ public class TripTStopEntry extends Activity
 	/** For roadtrips, update GUI and data from a click on the 'no geoarea' button. */
 	public void onClick_BtnAreaNone(View v)
 	{
+		areaOther_prev = areaOther;  // in case change is canceled
 		selectRoadtripAreaButton(0, null, true, 0);
 	}
 
 	/** For roadtrips, update GUI and data from a click on the 'ending geoarea' button. */
 	public void onClick_BtnAreaEnd(View v)
 	{
+		areaOther_prev = areaOther;  // in case change is canceled
 		selectRoadtripAreaButton
 			(currT.getRoadtripEndAreaID(), rbRoadtripAreaEnd.getText().toString(), true, 0);
 	}
 
 	/**
 	 * For roadtrips, update GUI and data from a click on the 'other geoarea' button.
+	 * Should be called only when the radio button is clicked, not when text is typed
+	 * or an area is selected from {@link #etRoadtripAreaOther}.
 	 * @see #onClick_BtnAreaLocalChange(View)
 	 * @since 0.9.50
 	 */
@@ -1339,6 +1366,7 @@ public class TripTStopEntry extends Activity
 				areaName = getResources().getString(R.string.other__dots);  // fallback: "Other..."
 		}
 
+		areaOther_prev = areaOther;
 		selectRoadtripAreaButton(GEOAREAID_OTHER_NEW, areaName, true, 0);
 	}
 
@@ -3002,6 +3030,9 @@ public class TripTStopEntry extends Activity
 		outState.putInt("TCR", contTimeRunningHourMinute);
 		outState.putBoolean("TCRT", contTimeRunningAlreadyToasted);
 		outState.putInt("AID", areaLocs_areaID);
+		outState.putCharSequence("AIDO_TXT", etRoadtripAreaOther.getText());
+		outState.putInt("AIDO_ID", (areaOther != null) ? areaOther.getID() : -1);  // getID might be 0
+		outState.putInt("AIDO_PR", (areaOther_prev != null) ? areaOther_prev.getID() : -1);
 		outState.putInt("LOCID", (locObj != null) ? locObj.getID() : 0);
 		outState.putInt("VIAID", (viaRouteObj != null) ? viaRouteObj.getID() : 0);
 	}
@@ -3040,7 +3071,33 @@ public class TripTStopEntry extends Activity
 		contTimeRunningAlreadyToasted = inState.getBoolean("TCRT");
 		areaLocs_areaID = inState.getInt("AID", -1);
 
-		int id = inState.getInt("LOCID");
+		etRoadtripAreaOther.setText(inState.getCharSequence("AIDO_TXT"));
+		int id = inState.getInt("AIDO_ID", -1);
+		if (id == 0) {
+			areaOther = GeoArea.GEOAREA_NONE;
+		} else if (id > 0) {
+			try {
+				areaOther = new GeoArea(db, id);
+			}
+			catch (IllegalStateException e) {}
+			catch (RDBKeyNotFoundException e) {}
+		} else {
+			areaOther = null;
+		}
+		id = inState.getInt("AIDO_PR", -1);
+		if (id == 0) {
+			areaOther_prev = GeoArea.GEOAREA_NONE;  // unlikely, covered just in case
+		} else if (id > 0) {
+			try {
+				areaOther_prev = new GeoArea(db, id);
+			}
+			catch (IllegalStateException e) {}
+			catch (RDBKeyNotFoundException e) {}
+		} else {
+			areaOther_prev = null;
+		}
+
+		id = inState.getInt("LOCID");
 		if (id > 0)
 			try {
 				locObj = new Location(db, id);
@@ -3138,7 +3195,7 @@ public class TripTStopEntry extends Activity
 
 	/**
 	 * For Other GeoArea autocomplete, the callback for {@link OnItemClickListener}
-	 * when an area is selected, to set {@link #areaOtherID} and update other data
+	 * when an area is selected, to set {@link #areaOther} and update other data
 	 * by calling {@link TripTStopEntry#onClick_RBAreaOther(View)}.
 	 */
 	private class GeoAreaOnItemClickListener implements OnItemClickListener
@@ -3151,13 +3208,22 @@ public class TripTStopEntry extends Activity
 				return;
 
 			GeoArea area = (GeoArea) la.getItem(position);
-			final int areaID = (area == null) ? 0 : area.getID();
 
-			if ((areaID == areaOtherID) && rbRoadtripAreaOther.isChecked())
+			if (rbRoadtripAreaOther.isChecked() && (area != null) && (areaOther != null)
+			    && area.getID() == areaOther.getID())
 				return;
 
-			areaOtherID = areaID;
-			onClick_BtnAreaOther(null);  // update radios, ask for confirmation if loc entered, etc
+			areaOther_prev = areaOther;
+			areaOther = area;
+
+			// update radios, ask for confirmation if loc entered, etc
+			String areaName;
+			Editable aNEd = etRoadtripAreaOther.getText();
+			if ((aNEd != null) && (aNEd.length() > 0))
+				areaName = aNEd.toString();
+			else
+				areaName = getResources().getString(R.string.other__dots);  // "Other..."
+			selectRoadtripAreaButton(GEOAREAID_OTHER_NEW, areaName, true, 0);
 		}
 	}
 

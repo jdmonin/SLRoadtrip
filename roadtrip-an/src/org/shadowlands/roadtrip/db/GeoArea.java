@@ -38,6 +38,7 @@ public class GeoArea extends RDBRecord
 	/**
 	 * Placeholder for "(none)" UI entry in {@link #getAll(RDBAdapter, boolean)},
 	 * to allow for locations outside of any known geoarea.
+	 * Not actually a record in the database; {@link #getID()} is 0.
 	 *<P>
 	 * <B>I18N:</B> To localize this and any other static text,
 	 * call {@link RDBRecord#localizeStatics(String, String)}.

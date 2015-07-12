@@ -1116,7 +1116,25 @@ public class TripTStopEntry extends Activity
 		alert.setNeutralButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
 		  public void onClick(DialogInterface dialog, int whichButton)
 		  {
-			// don't change the area, do nothing
+			// rbRoadtripArea_chosen won't necessarily be the one checked right now. Un-check all.
+			rbRoadtripAreaStart.setChecked(false);
+			rbRoadtripAreaEnd.setChecked(false);
+			rbRoadtripAreaNone.setChecked(false);
+			rbRoadtripAreaOther.setChecked(false);
+
+			RadioButton toChg;
+			final int areaID = areaLocs_areaID;
+			if (areaID == currT.getAreaID())
+				toChg = rbRoadtripAreaStart;
+			else if (areaID == currT.getRoadtripEndAreaID())
+				toChg = rbRoadtripAreaEnd;
+			else if (areaID == 0)
+				toChg = rbRoadtripAreaNone;
+			else
+				toChg = rbRoadtripAreaOther;
+
+			rbRoadtripArea_chosen = toChg;
+			toChg.setChecked(true);
 		  }
 		});
 

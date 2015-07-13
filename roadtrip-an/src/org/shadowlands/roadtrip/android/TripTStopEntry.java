@@ -365,12 +365,12 @@ public class TripTStopEntry extends Activity
 	private AutoCompleteTextView etRoadtripAreaOther;
 
 	/** For roadtrips, The listener for autocompete selections in {@link #etRoadtripAreaOther}. */
-	private GeoAreaOnItemClickListener etRoadtripAreaOtherListener;
+	private GeoAreaListenerWatcher etRoadtripAreaOtherListener;
 
 	/**
 	 * Roadtrip geoarea selected in {@link #etRoadtripAreaOther},
 	 * {@link GeoArea#GEOAREA_NONE} if none, or null for a newly entered name.
-	 * Updated in {@link TripTStopEntry.GeoAreaOnItemClickListener}.
+	 * Updated in {@link TripTStopEntry.GeoAreaListenerWatcher}.
 	 * @since 0.9.50
 	 * @see #GEOAREAID_OTHER_NEW
 	 * @see #areaOther_prev
@@ -804,6 +804,9 @@ public class TripTStopEntry extends Activity
 			etRoadtripAreaOther = (AutoCompleteTextView) findViewById(R.id.trip_tstop_areas_et_other);
 			areaOther = null;
 			areaOther_prev = null;
+			if (etRoadtripAreaOtherListener == null)
+				etRoadtripAreaOtherListener = new GeoAreaListenerWatcher();
+
 			GeoArea[] othera = GeoArea.getAll(db, -1);
 			if (othera != null)
 			{
@@ -829,12 +832,13 @@ public class TripTStopEntry extends Activity
 						areaOtherCreatedHere = areaOther;
 				}
 
-				if (etRoadtripAreaOtherListener == null)
-					etRoadtripAreaOtherListener = new GeoAreaOnItemClickListener();
 				etRoadtripAreaOther.setOnItemClickListener(etRoadtripAreaOtherListener);
 			} else {
 				etRoadtripAreaOther.setAdapter((ArrayAdapter<GeoArea>) null);
 			}
+
+			etRoadtripAreaOther.addTextChangedListener(etRoadtripAreaOtherListener);
+
 		} else {
 			View v = findViewById(R.id.trip_tstop_areas_row1);
 			if (v != null)
@@ -968,6 +972,7 @@ public class TripTStopEntry extends Activity
 	 *   to determine it from {@link #areaOther} or {@link #etRoadtripAreaOther} contents
 	 * @param newAreaText  New GeoArea's name, or null for "none" (no area) or "other" (separate text field).
 	 *   Not needed unless <tt>alsoUpdateData</tt>.
+	 *   Used for display and/or geoarea textfield contents, will not go directly into the database.
 	 *   Used only for the confirmation dialog if the area changes after a location is chosen.
 	 * @param alsoUpdateData If true, also update currTS,
 	 *   and re-query location fields.  If false, only change the
@@ -1093,7 +1098,7 @@ public class TripTStopEntry extends Activity
 	 * which this dialog's buttons will call again to do the action chosen.
 	 * @param areaID  GeoArea ID to confirm changing to
 	 * @param locText  Location text currently entered, or null
-	 * @param newAreaText  New GeoArea's name
+	 * @param newAreaText  New GeoArea's name; used for display and/or geoarea textfield contents
 	 * @param viaText  ViaRoute text currently entered, or null
 	 */
 	private void showRoadtripAreaButtonConfirmDialog
@@ -3280,11 +3285,13 @@ public class TripTStopEntry extends Activity
 	}
 
 	/**
-	 * For Other GeoArea autocomplete, the callback for {@link OnItemClickListener}
-	 * when an area is selected, to set {@link #areaOther} and update other data
-	 * by calling {@link TripTStopEntry#onClick_RBAreaOther(View)}.
+	 * For Other GeoArea autocomplete, the callbacks for {@link OnItemClickListener}
+	 * and {@link TextWatcher} when an area is selected or typed, to set or clear
+	 * {@link #areaOther} and update other fields by calling
+	 * {@link TripTStopEntry#selectRoadtripAreaButton(int, String, boolean, int) selectRoadtripAreaButton}
+	 * ({@link TripTStopEntry#GEOAREAID_OTHER_NEW GEOAREAID_OTHER_NEW}, {@code areaName, true, 0)}.
 	 */
-	private class GeoAreaOnItemClickListener implements OnItemClickListener
+	private class GeoAreaListenerWatcher implements OnItemClickListener, TextWatcher
 	{
 		/** For Other GeoArea autocomplete, the callback for {@link OnItemClickListener} */
 		public void onItemClick(AdapterView<?> parent, View clickedOn, int position, long rowID)
@@ -3311,6 +3318,40 @@ public class TripTStopEntry extends Activity
 				areaName = getResources().getString(R.string.other__dots);  // "Other..."
 			selectRoadtripAreaButton(GEOAREAID_OTHER_NEW, areaName, true, 0);
 		}
+
+		/**
+		 * If new geoarea text is typed into {@link TripTStopEntry#etRoadtripAreaOther etRoadtripAreaOther},
+		 * and {@link TripTStopEntry#areaOther areaOther} no longer matches that text, clear {@code areaOther}.
+		 * (for addTextChangedListener / {@link TextWatcher})
+		 */
+		public void afterTextChanged(Editable et)
+		{
+			final String newText = et.toString().trim();
+			final boolean newTextEmpty = (newText.length() == 0);
+
+			boolean wantCheckRadio = ! newTextEmpty;  // check it unless newly empty
+
+			if ((areaOther != null) && (newTextEmpty || ! areaOther.getName().equalsIgnoreCase(newText)))
+			{
+				// Mismatch: object no longer matches typed GeoArea description
+
+				areaOther_prev = areaOther;
+				areaOther = null;
+			}
+
+			// update radios, ask for confirmation if loc entered, etc
+			if (wantCheckRadio && ! rbRoadtripAreaOther.isChecked())
+				selectRoadtripAreaButton(GEOAREAID_OTHER_NEW, newText, true, 0);
+				// TODO even if already checked, maybe remove location adapter if changed areaOther
+		}
+
+		/** required stub for {@link TextWatcher} */
+		public void beforeTextChanged(CharSequence arg0, int arg1, int arg2, int arg3)
+		{ }
+
+		/** required stub for {@link TextWatcher} */
+		public void onTextChanged(CharSequence arg0, int arg1, int arg2, int arg3)
+		{ }
 	}
 
 }

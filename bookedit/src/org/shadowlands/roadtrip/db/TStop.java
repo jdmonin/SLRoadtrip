@@ -141,6 +141,14 @@ public class TStop extends RDBRecord
      */
     public static final int TEMPFLAG_CURRENT_TSTOP_AT_CURRV_CHANGE = 0x08;
 
+    /**
+     * Temporary flag to indicate a new {@link GeoArea} was created for this TStop.
+     * Since no other TStop uses that GeoArea yet, it can be renamed or deleted if needed
+     * before continuing travel from the stop.
+     * @since 0.9.50
+     */
+    public static final int TEMPFLAG_CREATED_GEOAREA = 0x10;
+
     /** Flag to indicate this TStop has a related {@link TStopGas} record */
     public static final int FLAG_GAS = 0x100;
 

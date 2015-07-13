@@ -374,6 +374,7 @@ public class TripTStopEntry extends Activity
 	 * @since 0.9.50
 	 * @see #GEOAREAID_OTHER_NEW
 	 * @see #areaOther_prev
+	 * @see #areaOtherCreatedHere
 	 */
 	private GeoArea areaOther;
 
@@ -384,6 +385,14 @@ public class TripTStopEntry extends Activity
 	 * @since 0.9.50
 	 */
 	private GeoArea areaOther_prev;
+
+	/**
+	 * if non-null, then {@link #currTS} {@code != null}, and
+	 * {@link #areaOther} was created for this TStop.
+	 * @see TStop#TEMPFLAG_CREATED_GEOAREA
+	 * @since 0.9.50
+	 */
+	private GeoArea areaOtherCreatedHere;
 
 	///////////////////////////////
 	// Start of calculator fields
@@ -694,10 +703,12 @@ public class TripTStopEntry extends Activity
 			if (currTS != null)
 			{
 				if (currT.isRoadtrip())
+				{
 					areaLocs_areaID = currTS.getAreaID();
-				else
+				} else {
 					// get geoarea from trip: local currTS will have 0 (unused field)
 					areaLocs_areaID = currT.getAreaID();
+				}
 			}
 			else if ((prevLocObj != null) && currT.isRoadtrip() && ! stopEndsTrip)
 			{
@@ -805,12 +816,17 @@ public class TripTStopEntry extends Activity
 				if ((areaLocs_areaID != 0) && (areaLocs_areaID != gaID_s) && (areaLocs_areaID != gaID_e))
 				{
 					for (int j = 0; j < othera.length; ++j)
+					{
 						if (othera[j].getID() == areaLocs_areaID)
 						{
 							areaOther = othera[j];
 							etRoadtripAreaOther.setText(othera[j].getName());
 							break;
 						}
+					}
+
+					if ((currTS != null) && currTS.isSingleFlagSet(TStop.TEMPFLAG_CREATED_GEOAREA))
+						areaOtherCreatedHere = areaOther;
 				}
 
 				if (etRoadtripAreaOtherListener == null)
@@ -1486,7 +1502,7 @@ public class TripTStopEntry extends Activity
 	protected void enterTStop(final boolean saveOnly)
 	{
 		String locat = null, via_route = null, comment = null;
-		boolean createdLoc = false, createdVia = false;
+		boolean createdGeoArea = false, createdLoc = false, createdVia = false;
 		boolean allOK = true;  // set to false if exception thrown, etc; if false, won't finish() the activity
 
 		/**
@@ -1658,6 +1674,42 @@ public class TripTStopEntry extends Activity
 			return;  // <--- Early return: Wrong area ID ---
 		}
 
+		// Roadtrip stop within Other area: validate a geoarea name was chosen or entered;
+		// if needed, search db for geoarea name and update areaLocs_areaID if found.
+		boolean usedAreaOther = false;
+		String areaOtherName = null;
+		if (currT.isRoadtrip() && rbRoadtripAreaOther.isChecked())
+		{
+			areaOtherName = etRoadtripAreaOther.getText().toString().trim();
+			if (areaOtherName.length() == 0)
+			{
+				etRoadtripAreaOther.requestFocus();
+				Toast.makeText
+					(this, R.string.trip_tstop_entry_choose_geoarea, Toast.LENGTH_SHORT).show();
+				return;  // <--- Early return: No geoarea text entered ---
+			}
+			else if ((areaOther == null) || ! areaOther.getName().equalsIgnoreCase(areaOtherName))
+			{
+				// Wasn't picked from dropdown:
+				// search the table, avoid creating 2 geoareas with same name.
+
+				// If an area is found here, and areaOtherCreatedHere != null
+				// and isn't that area, code later in the method will delete
+				// areaOtherCreatedHere to clean up before committing currTS.
+
+				areaOther = GeoArea.getByName(db, areaOtherName);
+				if (areaOther != null)
+					areaLocs_areaID = areaOther.getID();  // may become start or ending area id
+				// else
+				//      areaLocs_areaID will be set soon, when new GeoArea is created
+				//      or areaOtherCreatedHere is reused.
+			}
+
+			usedAreaOther = (areaOther == null)
+			     || ((areaLocs_areaID != currT.getAreaID())
+				 && (areaLocs_areaID != currT.getRoadtripEndAreaID()));
+		}
+
 		// areaID is set in onCreate, but check just in case.
 		// This is a fallback in case other checks somehow missed it,
 		// to avoid data inconsistency caused by ending a trip at null geoarea.
@@ -1699,6 +1751,32 @@ public class TripTStopEntry extends Activity
 		 * May convert a local trip into a roadtrip; see wantsConvertLocalToRoadtrip below.
 		 */
 		final int tsid;
+
+		// Roadtrip stop within other geoarea:
+		// Get or create the GeoArea db record, if we don't already have it
+		if (usedAreaOther && (areaOther == null))
+		{
+			if (areaOtherCreatedHere == null)
+			{
+				areaOther = new GeoArea(areaOtherName);
+				areaLocs_areaID = areaOther.insert(db);
+				createdGeoArea = true;
+			} else {
+				// re-use it
+				areaOther = areaOtherCreatedHere;
+				areaOther.setName(areaOtherName);
+				areaOther.commit();
+				areaLocs_areaID = areaOther.getID();
+			}
+		}
+
+		if ((areaOtherCreatedHere != null) && (areaLocs_areaID != areaOtherCreatedHere.getID()))
+		{
+			// record created at this tstop wasn't used, so remove it from db
+			areaOtherCreatedHere.delete();
+			areaOtherCreatedHere = null;
+			// code below will clearFlagSingle(TEMPFLAG_CREATED_GEOAREA)
+		}
 
 		int locID = 0;
 
@@ -1766,6 +1844,7 @@ public class TripTStopEntry extends Activity
 			// record created at this tstop wasn't used, so remove it from db
 			locObjCreatedHere.delete();
 			locObjCreatedHere = null;
+			// code below will clearFlagSingle(TEMPFLAG_CREATED_LOCATION)
 		}
 
 		// Get or create the ViaRoute db record,
@@ -1846,6 +1925,7 @@ public class TripTStopEntry extends Activity
 			// record created at this tstop wasn't used, so remove it from db
 			viaRouteObjCreatedHere.delete();
 			viaRouteObjCreatedHere = null;
+			// code below will clearFlagSingle(TEMPFLAG_CREATED_VIAROUTE)
 		}
 
 		// If we've chosen a frequent tstop's location,
@@ -2052,6 +2132,12 @@ public class TripTStopEntry extends Activity
 				// chose other preexisting ones instead of the ones created, clear those flags in currTS
 				// so that future edits won't think the preexisting ones were created for this stop, and
 				// then mistakenly delete them if their activity field is cleared.
+
+				if ((areaOtherCreatedHere == null)
+				    && currTS.isSingleFlagSet(TStop.TEMPFLAG_CREATED_GEOAREA))
+					currTS.clearFlagSingle(TStop.TEMPFLAG_CREATED_GEOAREA);
+				else if (createdGeoArea)
+					currTS.setFlagSingle(TStop.TEMPFLAG_CREATED_GEOAREA);
 
 				if ((locObjCreatedHere == null)
 				    && currTS.isSingleFlagSet(TStop.TEMPFLAG_CREATED_LOCATION))

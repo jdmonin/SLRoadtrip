@@ -128,11 +128,38 @@ public class GeoArea extends RDBRecord
     }
 
     /**
-     * Look up a GeoArea from the database.
+     * Search the table for a GeoArea with this name.
+     * @param db  db connection
+     * @param descr  Name of geoarea; case-insensitive, not null
+     * @return  GeoArea with this null, or null if none found.
+     *    If somehow the database has multiple matching rows, the one with lowest {@code _id} is returned.
+     * @throws IllegalStateException if db not open
+     * @since 0.9.50
+     * @see #GeoArea(RDBAdapter, int)
+     */
+    public static GeoArea getByName(RDBAdapter db, final String name)
+	throws IllegalStateException
+    {
+	try {
+		Vector<String[]> locs = db.getRows(TABNAME, VALFIELD_SORT, name, FIELDS_AND_ID, "_id", 0);
+			// case-insensitive search: aname COLLATE NOCASE
+		if (locs != null)
+			return new GeoArea(db, locs.firstElement());
+	}
+	catch (IllegalArgumentException e) { }
+	catch (RDBKeyNotFoundException e) { }
+	// don't catch IllegalStateException, in case db is closed
+
+	return null;
+    }
+
+    /**
+     * Look up a GeoArea from the database by id.
      * @param db  db connection
      * @param id  id field
      * @throws IllegalStateException if db not open
      * @throws RDBKeyNotFoundException if cannot retrieve this ID
+     * @see #getByName(RDBAdapter, String)
      */
     public GeoArea(RDBAdapter db, final int id)
         throws IllegalStateException, RDBKeyNotFoundException

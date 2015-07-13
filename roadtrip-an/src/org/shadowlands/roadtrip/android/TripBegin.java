@@ -754,7 +754,7 @@ public class TripBegin extends Activity
 		{
 			if (locObj == null)
 				// search the table, avoid creating 2 locations with same name
-				locObj = Location.getByDescr(db, startloc);
+				locObj = Location.getByDescr(db, currA.getID(), startloc);
 
 			if (locObj == null)
 			{

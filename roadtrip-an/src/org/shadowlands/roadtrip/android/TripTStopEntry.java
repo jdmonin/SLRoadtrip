@@ -1428,7 +1428,7 @@ public class TripTStopEntry extends Activity
 			// Probably stopping at a new location. Just in case location name is
 			// already in db, though, check that and if found update the vias.
 
-			locObj = Location.getByDescr(db, loc.getText().toString().trim());
+			locObj = Location.getByDescr(db, areaLocs_areaID, loc.getText().toString().trim());
 			if (locObj != null)
 				updateViaRouteAutocomplete(null, false);
 		}
@@ -1800,7 +1800,7 @@ public class TripTStopEntry extends Activity
 			if (locObj == null)
 			{
 				// search the table, avoid creating 2 locations with same name
-				locObj = Location.getByDescr(db, locat);
+				locObj = Location.getByDescr(db, areaLocs_areaID, locat);
 				if (locObj != null)
 					locID = locObj.getID();
 			}

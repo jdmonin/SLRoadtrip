@@ -305,7 +305,8 @@ public class LogbookShow extends Activity
 					// Typed location description, instead of picked from autocomplete
 					try
 					{
-						askLocationAndShow_locObj = Location.getByDescr(db, locText);
+						askLocationAndShow_locObj =
+							Location.getByDescr(db, askLocationAndShow_areaID, locText);
 					} catch (IllegalStateException e) {}
 				}
 

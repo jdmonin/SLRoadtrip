@@ -182,14 +182,18 @@ public abstract class RDBRecord
 	    throws NullPointerException, UnsupportedOperationException;
 
 	/**
-	 * Convenience method for your {@link #delete()} to call.
-	 * - clear dbConn
-	 * - clear id (set id to -1)
-	 * - set dirty flag
+	 * Convenience method for your subclass {@link #delete()} to call.
+	 *<UL>
+	 *  <LI> clear dbConn reference, for gc
+	 *  <LI> clear id (set id to -1)
+	 *  <LI> set dirty flag, in case a reference is kept (bug) in other code
+	 *</UL>
 	 */
 	protected void deleteCleanup()
 	{
-		
+		dbConn = null;
+		id = -1;
+		dirty = true;
 	}
 
 	/**

@@ -272,22 +272,22 @@ public class GeoArea extends RDBRecord
 	}
 
 	/**
-	 * Delete an existing record, <b>Not Currently Allowed</b>.
+	 * Delete a <B>newly created</B> existing record (already inserted and/or committed).
+	 * Use this <B>only</B> for new GeoAreas which aren't used in {@link Location}s
+	 * or other records, because this method does not clean out records in other tables
+	 * with this area ID, to avoid accidental trip data deletion in case of accidental area deletion.
+	 *<P>
+	 * Before v0.9.50, geoarea deletion was not allowed because of the concerns mentioned above.
 	 *
-     * @throws NullPointerException if dbConn was null because
-     *     this is a new record, not an existing one
-     * @throws UnsupportedOperationException because this table doesn't
-     *     currently allow deletion.
+	 * @throws NullPointerException if dbConn was null because
+	 *     this is a new record, not an existing one
+	 * @throws UnsupportedOperationException not thrown, this table allows deletion
 	 */
 	public void delete()
 	    throws NullPointerException, UnsupportedOperationException
 	{
-		// TODO check if unused in other tables
-		throw new UnsupportedOperationException();
-		/*
 		dbConn.delete(TABNAME, id);
 		deleteCleanup();
-		*/
 	}
 
 }  // public class GeoArea

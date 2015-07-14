@@ -712,15 +712,12 @@ public class TripTStopEntry extends Activity
 			}
 			else if ((prevLocObj != null) && currT.isRoadtrip() && ! stopEndsTrip)
 			{
-				final int pArea = prevLocObj.getAreaID();
-				if ((pArea == 0)
-					|| (pArea == currT.getAreaID())
-					|| (pArea == currT.getRoadtripEndAreaID()))
-					areaLocs_areaID = pArea;
+				areaLocs_areaID = prevLocObj.getAreaID();
 			}
 		}
 
-		// fallback for current area if the usual sources aren't populated (if it's a new vehicle, for example)
+		// fallback for current area if the usual sources aren't populated
+		// (a new vehicle with no previous trips, or we're not stopped and stopEndsTrip, etc)
 		if (areaLocs_areaID == -1)
 		{
 			if (! stopEndsTrip)

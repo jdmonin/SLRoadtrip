@@ -1246,6 +1246,41 @@ public class Trip extends RDBRecord
 	}
 
 	/**
+	 * Check settings to be sure this trip hasn't ended and is the current trip for the current vehicle.
+	 * @param doThrow  If true, throw {@link IllegalStateException} with text giving the reason it's not current.
+	 * @return  True if current trip for the current vehicle, false (or throws an exception) otherwise.
+	 * @throws IllegalStateException if the trip isn't the current trip ID for the current vehicle,
+	 *     or has an ending odometer (and thus has ended and isn't current).
+	 * @see #isEnded()
+	 * @since 0.9.50
+	 */
+	private boolean isCurrentTrip(final boolean doThrow)
+		throws IllegalStateException
+	{
+		if (odo_end != 0)
+			if (doThrow)
+				throw new IllegalStateException("Trip has ended: odo_end != 0");
+			else
+				return false;
+
+		final Vehicle currV = Settings.getCurrentVehicle(dbConn, false);
+		if (currV == null)
+			if (doThrow)
+				throw new IllegalStateException("Not current trip: No current vehicle");
+			else
+				return false;
+
+		Trip currT = VehSettings.getCurrentTrip(dbConn, currV, false);
+		if (this.id != currT.id)
+			if (doThrow)
+				throw new IllegalStateException("Not current trip of vehicle " + currV.getID());
+			else
+				return false;
+
+		return true;
+	}
+
+	/**
 	 * Is this trip ended?  Completed trips have a nonzero
 	 * total-odometer value in {@link #getOdo_end()}.
 	 * @return true if the trip is completed
@@ -1398,18 +1433,9 @@ public class Trip extends RDBRecord
 	public void cancelAndDeleteCurrentTrip()
 		throws IllegalStateException
 	{
-		if (odo_end != 0)
-			throw new IllegalStateException("Trip has ended");
-
-		// Ensure current trip
-		{
-			final Vehicle currV = Settings.getCurrentVehicle(dbConn, false);
-			if (currV == null)
-				throw new IllegalStateException("Not current trip: No current vehicle");
-			Trip currT = VehSettings.getCurrentTrip(dbConn, currV, false);
-			if (this.id != currT.id)
-				throw new IllegalStateException("Not current trip");
-		}
+		// Ensure current trip (odo_end == 0, Settings.getCurrentVehicle, VehSettings.getCurrentTrip).
+		// Throws IllegalStateException if not.
+		isCurrentTrip(true);
 
 		// Any intermediate stops?
 		// The same code is in hasIntermediateTStops().

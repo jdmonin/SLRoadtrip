@@ -46,6 +46,9 @@ import java.util.Vector;
  *<P>
  * To end a trip, call {@link VehSettings#endCurrentTrip(RDBAdapter, Vehicle, int, int, int, TripCategory, int)}.
  * If all of a roadtrip's TStops are in its starting GeoArea, that method will convert it to a local trip.
+ *<P>
+ * If a trip is started by mistake, that new trip can be cancelled if it doesn't have any {@link TStop}s
+ * yet; see {@link #cancelAndDeleteCurrentTrip()}.
  *
  * @author jdmonin
  */
@@ -129,7 +132,11 @@ public class Trip extends RDBRecord
     /** Area ID.  0 is empty/unused. */
     private int a_id;
 
-    /** Previous trip's last TStop; this gives the starting location (descr and locid) for this trip. */
+    /**
+     * Previous trip's last {@link TStop}, which gives the starting {@link Location} (descr and locid) for this trip.
+     * If this field is 0, this trip's first TStop (with lowest {@code TStop._id}, trip odometer 0, and total
+     * odometer == {@link #odo_start}) gives the starting location.
+     */
     private int tstopid_start;
 
     /**
@@ -1376,9 +1383,12 @@ public class Trip extends RDBRecord
 	 * Requiring the current trip simplifies the assumptions and
 	 * maintains database history and integrity.
 	 *<P>
+	 * To be cancelled, the trip must not have any {@link TStop}s yet.
+	 * Use {@link #hasIntermediateTStops()} to check before calling this method.
+	 *<P>
 	 * Checks {@link VehSettings#getCurrentTrip(RDBAdapter, Vehicle, boolean)}, but
 	 * does not clear {@link VehSettings#CURRENT_TRIP} or other settings:
-	 * Caller must do so after calling this method.
+	 * <B>Caller must do so</B> after calling this method.
 	 *
 	 * @throws IllegalStateException if the trip has intermediate stops,
 	 *   other than its start, or isn't the current trip ID,
@@ -1401,17 +1411,21 @@ public class Trip extends RDBRecord
 				throw new IllegalStateException("Not current trip");
 		}
 
-		// Any intermediate stops? / (TODO) same code as hasIntermediateTStops
-		Vector<TStop> ts = readAllTStops(true);  // TODO can we use allStops field instead?
+		// Any intermediate stops?
+		// The same code is in hasIntermediateTStops().
+		// Check both places when updating this code.
+		Vector<TStop> ts = readAllTStops(true);  // don't use cached allStops field
 		if (ts != null)
 		{
 			int nstop = ts.size();
-			if (tstopid_start == 0)
+			if ((tstopid_start == 0) && (nstop > 0))  // tstopid_start == 0 implies nstop > 0;
+			                                          // check both to avoid crash if inconsistent
 			{
 				TStop ts0 = ts.firstElement();
 				if ((ts0.getOdo_trip() == 0) && (ts0.getOdo_total() == odo_start))
 					--nstop;  // ignore the starting tstop
 			}
+
 			if (nstop > 0)
 				throw new IllegalStateException("Has intermediate stops");
 
@@ -1552,21 +1566,27 @@ public class Trip extends RDBRecord
 
 	/**
 	 * Does this trip have TStops, other than its start and end?
-	 * <b>Note:</b> Queries the database, not a cached list of stops.
+	 * Queries the database, not a cached list of stops.
 	 * @return true if any TStops exist in the middle of the trip
 	 */
 	public boolean hasIntermediateTStops()
 	{
-		Vector<TStop> ts = readAllTStops(true);  // TODO can we use allStops instead?
+		// The same code is in cancelAndDeleteCurrentTrip().
+		// Check both places when updating this code.
+
+		Vector<TStop> ts = readAllTStops(true);  // don't use cached allStops field
 		if (ts == null)
 			return false;
+
 		int nstop = ts.size();
-		if (tstopid_start == 0)
+		if ((tstopid_start == 0) && (nstop > 0))  // tstopid_start == 0 implies nstop > 0;
+		                                          // check both to avoid crash if inconsistent
 		{
 			TStop ts0 = ts.firstElement();
 			if ((ts0.getOdo_trip() == 0) && (ts0.getOdo_total() == odo_start))
 				--nstop;  // ignore the starting tstop
 		}
+
 		return (nstop > 0);
 	}
 

@@ -336,7 +336,8 @@ public class TripTStopEntry extends Activity
 	/**
 	 * When stopping during a roadtrip, buttons to pick the geoarea for
 	 * the Location textfield {@link #loc} and {@link #areaLocs_areaID}.
-	 * Null unless currT.isRoadtrip.
+	 * Null and hidden unless {@link #currT}.{@link Trip#isRoadtrip() isRoadtrip()} && ! {@link #stopEndsTrip};
+	 * if these are null, so is {@link #etRoadtripAreaOther}.
 	 * @see #rbRoadtripArea_chosen
 	 */
 	private RadioButton rbRoadtripAreaStart, rbRoadtripAreaNone,
@@ -360,6 +361,8 @@ public class TripTStopEntry extends Activity
 	 * Its radiobutton is {@link #rbRoadtripAreaOther}.
 	 * The selected GeoArea from the adapter, if any, is {@link #areaOther}.
 	 * Autocomplete selections call {@link #etRoadtripAreaOtherListener}.
+	 *<P>
+	 * Like {@link #rbRoadtripAreaOther}, this field is null if {@link #stopEndsTrip} or not roadtrip.
 	 * @since 0.9.50
 	 */
 	private AutoCompleteTextView etRoadtripAreaOther;
@@ -1148,6 +1151,9 @@ public class TripTStopEntry extends Activity
 			// canceled, staying in the previous geoarea:
 			// don't change the area, just make sure the original geoarea is the only radio button selected.
 
+			if (rbRoadtripAreaStart == null)
+				return;  // <--- Early return: None of these fields are visible ---
+
 			// rbRoadtripArea_chosen won't necessarily be the one checked right now. Un-check all.
 			rbRoadtripAreaStart.setChecked(false);
 			rbRoadtripAreaEnd.setChecked(false);
@@ -1680,7 +1686,7 @@ public class TripTStopEntry extends Activity
 		// if needed, search db for geoarea name and update areaLocs_areaID if found.
 		boolean usedAreaOther = false;
 		String areaOtherName = null;
-		if (currT.isRoadtrip() && rbRoadtripAreaOther.isChecked())
+		if (currT.isRoadtrip() && (rbRoadtripAreaOther != null) && rbRoadtripAreaOther.isChecked())
 		{
 			areaOtherName = etRoadtripAreaOther.getText().toString().trim();
 			if (areaOtherName.length() == 0)
@@ -3118,7 +3124,8 @@ public class TripTStopEntry extends Activity
 		outState.putInt("TCR", contTimeRunningHourMinute);
 		outState.putBoolean("TCRT", contTimeRunningAlreadyToasted);
 		outState.putInt("AID", areaLocs_areaID);
-		outState.putCharSequence("AIDO_TXT", etRoadtripAreaOther.getText());
+		if (etRoadtripAreaOther != null)
+			outState.putCharSequence("AIDO_TXT", etRoadtripAreaOther.getText());
 		outState.putInt("AIDO_ID", (areaOther != null) ? areaOther.getID() : -1);  // getID might be 0
 		outState.putInt("AIDO_PR", (areaOther_prev != null) ? areaOther_prev.getID() : -1);
 		outState.putInt("LOCID", (locObj != null) ? locObj.getID() : 0);
@@ -3159,7 +3166,8 @@ public class TripTStopEntry extends Activity
 		contTimeRunningAlreadyToasted = inState.getBoolean("TCRT");
 		areaLocs_areaID = inState.getInt("AID", -1);
 
-		etRoadtripAreaOther.setText(inState.getCharSequence("AIDO_TXT"));
+		if (etRoadtripAreaOther != null)
+			etRoadtripAreaOther.setText(inState.getCharSequence("AIDO_TXT"));
 		int id = inState.getInt("AIDO_ID", -1);
 		if (id == 0) {
 			areaOther = GeoArea.GEOAREA_NONE;
@@ -3313,6 +3321,7 @@ public class TripTStopEntry extends Activity
 				areaName = aNEd.toString();
 			else
 				areaName = getResources().getString(R.string.other__dots);  // "Other..."
+
 			selectRoadtripAreaButton(GEOAREAID_OTHER_NEW, areaName, true, 0);
 		}
 

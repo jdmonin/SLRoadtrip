@@ -2475,7 +2475,42 @@ public class TripTStopEntry extends Activity
 			});
 			alert.setNegativeButton(android.R.string.cancel, null);
 
-			return alert.create();
+			// When a new area is selected from the spinner, dismiss the dialog
+			// instead of needing to also hit OK.
+			SpinnerItemSelectedListener spinListener = new SpinnerItemSelectedListener(areaLocs_areaID)
+			{
+				@Override
+				public void onItemSelected(AdapterView<?> parent, View v, int pos, long pos_long)
+				{
+					if (pos == ListAdapter.NO_SELECTION)
+						return;
+
+					Object a = parent.getAdapter();
+					if ((a == null) || ! (a instanceof ListAdapter))
+						return;
+
+					try
+					{
+						Object obj = ((ListAdapter) a).getItem(pos);
+						if ((obj != null) && (obj instanceof GeoArea))
+						{
+							GeoArea area = (GeoArea) obj;
+							if (area.getID() == areaLocs_areaID)
+								return;  // no change; may be calling from spinner init
+
+							selectRoadtripAreaButton(area.getID(), area.getName(), true, 0);
+							if (dia != null)
+								dia.dismiss();
+						}
+					}
+					catch (Exception e) {}
+				}
+			};
+
+			AlertDialog aDia = alert.create();
+			spinListener.dia = aDia;
+			areas.setOnItemSelectedListener(spinListener);
+			return aDia;
 		}
 
 		if (id == R.id.trip_tstop_btn_cont_date)
@@ -3220,6 +3255,38 @@ public class TripTStopEntry extends Activity
 
 		if (contTimeRunningHourMinute != -1)
 			initContTimeRunning(null);
+	}
+
+	/**
+	 * Spinner OnItemSelectedListener with {@link #dia} field, to allow
+	 * dismissal of a dynamically built dialog from {@code onItemSelected}.
+	 * @since 0.9.50
+	 * @see {@link TripTStopEntry#onCreateDialog(int)}
+	 */
+	private abstract class SpinnerItemSelectedListener implements AdapterView.OnItemSelectedListener
+	{
+		public Dialog dia;
+
+		/**
+		 * item ID passed into the constructor, so {@code onItemSelected} can ignore calls with that ID.
+		 * Spinner initialization may call {@code onItemSelected} before the user has made any input.
+		 */
+		public final int itemID_default;
+
+		/**
+		 * Create a new {@link SpinnerItemSelectedListener}; see class javadoc.
+		 * @param itemID_default  Default item ID, so {@code onItemSelected} can ignore calls with that ID.
+		 */
+		public SpinnerItemSelectedListener(final int itemID_default)
+		{
+			super();
+			this.itemID_default = itemID_default;
+		}
+
+		/** required stub, so subclass doesn't need to declare it */
+		public void onNothingSelected(AdapterView<?> parentView) {}
+
+		// let subclass implement onItemSelected
 	}
 
 	/**

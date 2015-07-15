@@ -1666,9 +1666,9 @@ public class TripTStopEntry extends Activity
 		}
 
 		// validate area ID @ end of roadtrip: starting or ending, and not 0 (none)
+		// or can pick any other area to change the trip's ending area.
 		if (stopEndsTrip && currT.isRoadtrip()
-			&& (areaLocs_areaID != currT.getRoadtripEndAreaID())
-			&& (areaLocs_areaID != currT.getAreaID()))
+			&& (areaLocs_areaID <= 0))
 		{
 			// Scroll to top and show toast
 			final ScrollView sv = (ScrollView) findViewById(R.id.trip_tstop_scrollview);
@@ -1679,7 +1679,7 @@ public class TripTStopEntry extends Activity
 					}
 				});
 			Toast.makeText(this, R.string.trip_tstop_entry_roadtrip_end_geoarea, Toast.LENGTH_SHORT).show();
-			return;  // <--- Early return: Wrong area ID ---
+			return;  // <--- Early return: Must choose stop's geo area ---
 		}
 
 		// Roadtrip stop within Other area: validate a geoarea name was chosen or entered;
@@ -2029,8 +2029,8 @@ public class TripTStopEntry extends Activity
 			if (stopEndsTrip)
 			{
 				// For local trips, this ending TStop's areaID will be 0.
-				// For roadtrips, for now allow the ending or starting area ID;
-				// any other geoarea will be changed here to the ending area.
+				// For roadtrips, can't end in area ID 0 (no geoarea),
+				// so as a fallback change that here to the ending area.
 				// (The GUI has likely already given the user a chance to correct it.)
 				// If all the roadtrip's stops are in the starting geoarea, it will be
 				// converted into a local trip by VehSettings.endCurrentTrip.
@@ -2039,12 +2039,12 @@ public class TripTStopEntry extends Activity
 
 				if (wantsConvertLocalToRoadtrip)
 					areaID = areaLocs_areaID;  // in a non-local area. Assert: areaID > 0
-				else if (currT.isRoadtrip() && (areaLocs_areaID == currT.getAreaID()))
-					areaID = areaLocs_areaID;  // in starting area
+				else if (currT.isRoadtrip() && (areaLocs_areaID > 0))
+					areaID = areaLocs_areaID;  // in any geoarea > 0
 				else
 					areaID = currT.getRoadtripEndAreaID();  // in ending area, or 0 if local trip
 			}
-			else if ((areaLocs_areaID != -1)
+			else if ((areaLocs_areaID >= 0)
 				 && (currT.isRoadtrip() || wantsConvertLocalToRoadtrip))
 			{
 				areaID = areaLocs_areaID;
@@ -2118,21 +2118,16 @@ public class TripTStopEntry extends Activity
 				if (stopEndsTrip)
 				{
 					// For local trips, this ending TStop's areaID is already 0.
-					// For roadtrips, for now allow the ending or starting area ID;
-					// any other geoarea will be changed here to the ending area.
+					// For roadtrips, can't end in area ID 0 (no geoarea),
+					// so as a fallback change that here to the ending area.
 					// (The GUI has likely already given the user a chance to correct it.)
 					// If all the roadtrip's stops are in the starting geoarea, it will be
 					// converted into a local trip by VehSettings.endCurrentTrip.
 					// Similar code is above, used when creating a new TStop;
 					// search for "For local trips, this ending TStop's areaID".
 
-					if (currT.isRoadtrip())
-					{
-						final int tsAreaID = currTS.getAreaID();
-						final int endAreaID = currT.getRoadtripEndAreaID();
-						if ((tsAreaID != currT.getAreaID()) && (tsAreaID != endAreaID))
-							currTS.setAreaID(endAreaID);
-					}
+					if (currT.isRoadtrip() && (currTS.getAreaID() <= 0))
+						currTS.setAreaID(currT.getRoadtripEndAreaID());
 				}
 			} else {
 				// Currently stopped, not continuing yet, so this stop may be edited again:

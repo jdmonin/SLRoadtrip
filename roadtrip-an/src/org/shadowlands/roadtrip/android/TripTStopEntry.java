@@ -1718,7 +1718,8 @@ public class TripTStopEntry extends Activity
 				 && (areaLocs_areaID != currT.getRoadtripEndAreaID()));
 		}
 
-		// areaID is set in onCreate, but check just in case.
+		// areaLocs_areaID is set in onCreate, updated by radios or dialogs
+		// or dropdowns, but check again now just in case.
 		// This is a fallback in case other checks somehow missed it,
 		// to avoid data inconsistency caused by ending a trip at null geoarea.
 
@@ -2056,6 +2057,8 @@ public class TripTStopEntry extends Activity
 			int flags = 0;
 			if (! stopEndsTrip)
 			{
+				if (createdGeoArea)
+					flags |= TStop.TEMPFLAG_CREATED_GEOAREA;
 				if (createdLoc)
 					flags |= TStop.TEMPFLAG_CREATED_LOCATION;
 				if (createdVia)

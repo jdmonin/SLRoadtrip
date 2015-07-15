@@ -1138,6 +1138,8 @@ public class Trip extends RDBRecord
 	 * optionally update its {@link #getRoadtripEndAreaID()}, or convert trip to local
 	 * if all stops are in its starting area ({@link #getAreaID()}).
 	 *<P>
+	 * Does not commit the updated Trip record, only updates fields.
+	 *<P>
 	 * Does nothing if ! {@link #isRoadtrip()}, will not check a local trip's TStop GeoAreas
 	 * because that field is unused in local trip TStops.
 	 *<P>

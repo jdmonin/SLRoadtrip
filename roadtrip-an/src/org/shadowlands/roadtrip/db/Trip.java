@@ -1249,16 +1249,25 @@ public class Trip extends RDBRecord
 
 	/**
 	 * Check settings to be sure this trip hasn't ended and is the current trip for the current vehicle.
+	 * Also checks that the Trip is already a record in the database (not a newly created Trip).
 	 * @param doThrow  If true, throw {@link IllegalStateException} with text giving the reason it's not current.
 	 * @return  True if current trip for the current vehicle, false (or throws an exception) otherwise.
 	 * @throws IllegalStateException if the trip isn't the current trip ID for the current vehicle,
-	 *     or has an ending odometer (and thus has ended and isn't current).
+	 *     or has an ending odometer (and thus has ended and isn't current),
+	 *     or if {@link #dbConn} is {@code null} because {@link #insert(RDBAdapter)} hasn't been called
+	 *     for this new Trip.
 	 * @see #isEnded()
 	 * @since 0.9.50
 	 */
 	private boolean isCurrentTrip(final boolean doThrow)
 		throws IllegalStateException
 	{
+		if (dbConn == null)
+			if (doThrow)
+				throw new IllegalStateException("Trip is new, null dbConn");
+			else
+				return false;
+
 		if (odo_end != 0)
 			if (doThrow)
 				throw new IllegalStateException("Trip has ended: odo_end != 0");

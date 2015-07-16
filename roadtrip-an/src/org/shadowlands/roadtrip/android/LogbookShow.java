@@ -600,6 +600,45 @@ public class LogbookShow extends Activity
 	}
 
 	/**
+	 * Show a new {@link LogbookShow} when a vehicle and/or date are selected
+	 * from the dialog created in {@link #onCreateGoToDateVehicleDialog(boolean)}.
+	 * @param vehicleOnly  True if not also showing date ({@code dpick} == null)
+	 * @param selV  Selected vehicle from dialog's spinner
+	 * @param cal   Calendar object from dialog
+	 * @param dpick  Calendar picker, or null if {@code vehicleOnly}
+	 * @since 0.9.50
+	 */
+	private void onClickDateVehDialogOK
+		(final boolean vehicleOnly, final Vehicle selV, final Calendar cal, final DatePicker dpick)
+	{
+		final int calGoToDate;  // unix time for EXTRAS_DATE
+		if (vehicleOnly)
+		{
+			final int rcount = ltm.getRangeCount();
+			if (rcount == 0)
+				calGoToDate = goToDate;  // keep current date
+			else if (rangeEarlierClicked)
+				calGoToDate = ltm.getRange(0).timeStart;
+			else
+				calGoToDate = ltm.getRange(rcount-1).timeStart;
+		} else {
+			cal.setTimeInMillis(System.currentTimeMillis());
+			cal.set(Calendar.YEAR, dpick.getYear());
+			cal.set(Calendar.MONTH, dpick.getMonth());
+			cal.set(Calendar.DAY_OF_MONTH, dpick.getDayOfMonth());
+			cal.set(Calendar.HOUR_OF_DAY, 0);
+			cal.set(Calendar.MINUTE, 0);
+			calGoToDate = (int) (cal.getTimeInMillis() / 1000L);
+		}
+
+		// TODO consider re-use this one, instead of a new activity, if same vehicle
+		Intent i = new Intent(LogbookShow.this, LogbookShow.class);
+		i.putExtra(EXTRAS_DATE, calGoToDate);
+		i.putExtra(EXTRAS_VEHICLE_ID, selV.getID());
+		LogbookShow.this.startActivity(i);
+	}
+
+	/**
 	 * Show the DatePickerDialog and Vehicle chooser leading to "Go To Date" mode.
 	 * The vehicle spinner shows Active or Inactive vehicles (same state as {@link #showV})
 	 * with an "Other..." item at the end of the list.  Choosing Other causes the spinner contents
@@ -642,34 +681,11 @@ public class LogbookShow extends Activity
 		{
 			public void onClick(DialogInterface dialog, int whichButton)
 			{
-				final int calGoToDate;
-				if (vehicleOnly)
-				{
-					final int rcount = ltm.getRangeCount();
-					if (rcount == 0)
-						calGoToDate = goToDate;  // keep current date
-					else if (rangeEarlierClicked)
-						calGoToDate = ltm.getRange(0).timeStart;
-					else						
-						calGoToDate = ltm.getRange(rcount-1).timeStart;
-				} else {
-					cal.setTimeInMillis(System.currentTimeMillis());
-					cal.set(Calendar.YEAR, dpick.getYear());
-					cal.set(Calendar.MONTH, dpick.getMonth());
-					cal.set(Calendar.DAY_OF_MONTH, dpick.getDayOfMonth());
-					cal.set(Calendar.HOUR_OF_DAY, 0);
-					cal.set(Calendar.MINUTE, 0);
-					calGoToDate = (int) (cal.getTimeInMillis() / 1000L);
-				}
+				Vehicle v = (Vehicle) vehs.getSelectedItem();
+				if (v == null)
+					return;  // shouldn't happen
 
-	        	// TODO consider re-use this one, instead of a new activity, if same vehicle
-	    		Vehicle v = (Vehicle) vehs.getSelectedItem();
-	    		if (v == null)
-	    			return;  // shouldn't happen
-	    		Intent i = new Intent(LogbookShow.this, LogbookShow.class);
-	    		i.putExtra(EXTRAS_DATE, calGoToDate);
-	    		i.putExtra(EXTRAS_VEHICLE_ID, v.getID());
-	    		LogbookShow.this.startActivity(i);
+				onClickDateVehDialogOK(vehicleOnly, v, cal, dpick);
 			}
 		});
 		alert.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
@@ -678,27 +694,45 @@ public class LogbookShow extends Activity
 
 		final AlertDialog dia = alert.create();
 
+		// In vehicleOnly mode, when a vehicle is selected in the spinner,
+		// immediately show it (without needing to also hit OK).  Also
 		// handle "Other Vehicle..." selection:
 		// show the same dialog but switch active/inactive
-		vehs.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-
-			final long createdAt = System.currentTimeMillis();
+		SpinnerDataFactory.SpinnerItemSelectedListener vehSpinListener
+			= new SpinnerDataFactory.SpinnerItemSelectedListener(showV.getID())
+		{
+			private long createdAt = System.currentTimeMillis();
 			boolean vehsActive = showV.isActive();
 
 			public void onItemSelected
 				(AdapterView<?> ctx, View view, int pos, long id)
 			{
 				Object o = vehs.getSelectedItem();
-				if (o != Vehicle.OTHER_VEHICLE)
-					return;
-				if (System.currentTimeMillis() - createdAt < 300)
+				if ((o == null) || (System.currentTimeMillis() - createdAt < 300))
 					return;  // too early, this call is likely from initial setup
+
+				if (o != Vehicle.OTHER_VEHICLE)
+				{
+					if (vehicleOnly)
+					{
+						Vehicle v = (Vehicle) vehs.getSelectedItem();
+						if ((v == null) || (v.getID() == itemID_default))
+							return;  // shouldn't happen
+
+						// immediately show the new vehicle
+						onClickDateVehDialogOK(vehicleOnly, v, cal, dpick);
+						if (dia != null)
+							dia.dismiss();
+					}
+					return;
+				}
 
 				vehsActive = ! vehsActive;
 				SpinnerDataFactory.setupVehiclesSpinner
 					(db, Vehicle.FLAG_WITH_OTHER |
 					    ((vehsActive) ? Vehicle.FLAG_ONLY_ACTIVE : Vehicle.FLAG_ONLY_INACTIVE),
 					 LogbookShow.this, vehs, showV.getID());
+				createdAt = System.currentTimeMillis();  // ignore onItemSelected call on spinner re-setup
 
 				// open the spinner to show the new vehicles, so the user
 				// won't need to tap it open to get to where they were
@@ -706,9 +740,9 @@ public class LogbookShow extends Activity
 						public void run() { vehs.performClick(); }
 					}, 100);
 			}
-
-			public void onNothingSelected(AdapterView<?> parent) { }  // Required stub
-		});
+		};
+		vehSpinListener.dia = dia;
+		vehs.setOnItemSelectedListener(vehSpinListener);
 
 		return dia;
 	}

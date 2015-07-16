@@ -25,14 +25,18 @@ import org.shadowlands.roadtrip.db.RDBAdapter;
 import org.shadowlands.roadtrip.db.TripCategory;
 import org.shadowlands.roadtrip.db.Vehicle;
 
+import android.app.Dialog;
 import android.content.Context;
 import android.database.sqlite.SQLiteException;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Spinner;
 
 /**
  * Fill the data in spinners of data-backed object types,
  * such as {@link Vehicle} or {@link Person} (driver).
+ * Also contains helper class {@link SpinnerItemSelectedListener}
+ * for use in dialogs and activities.
  *
  * @author jdmonin
  */
@@ -276,6 +280,61 @@ public class SpinnerDataFactory
 		}
 
 		return true;
+	}
+
+	/**
+	 * Spinner {@link AdapterView.OnItemSelectedListener OnItemSelectedListener} with
+	 * {@link #dia} field, to allow dismissal of a dynamically built dialog from {@code onItemSelected}.
+	 *<P>
+	 * Sample usage with {@code AlertDialog.Builder}:
+	 * <PRE>
+	 *  SpinnerItemSelectedListener spinListener = new SpinnerItemSelectedListener(defaultID)
+	 *	{
+	 *		public void onItemSelected(AdapterView<?> parent, View v, int pos, long pos_long)
+	 *		{
+	 *			...
+	 *			if (someCondition)
+	 *			{
+	 *				doSomeAction();
+	 *				if (dia != null) dia.dismiss();
+	 *			}
+	 *		}
+	 *	};
+	 *
+	 *  AlertDialog aDia = abuilder.create();
+	 *  spinListener.dia = aDia;
+	 *  spinner.setOnItemSelectedListener(spinListener);
+	 *  return aDia;
+	 * </PRE>
+	 *
+	 * @since 0.9.50
+	 * @see {@link TripTStopEntry#onCreateDialog(int)}
+	 */
+	public static abstract class SpinnerItemSelectedListener implements AdapterView.OnItemSelectedListener
+	{
+		/** Optional reference to parent dialog for use in listener callbacks, or {@code null}. */
+		public Dialog dia;
+
+		/**
+		 * item ID passed into the constructor, so {@code onItemSelected} can ignore calls with that ID.
+		 * Spinner initialization may call {@code onItemSelected} before the user has made any input.
+		 */
+		public int itemID_default;
+
+		/**
+		 * Create a new {@link SpinnerItemSelectedListener}; see class javadoc.
+		 * @param itemID_default  Default item ID, so {@code onItemSelected} can ignore calls with that ID.
+		 */
+		public SpinnerItemSelectedListener(final int itemID_default)
+		{
+			super();
+			this.itemID_default = itemID_default;
+		}
+
+		/** required stub, so subclass doesn't need to declare it */
+		public void onNothingSelected(AdapterView<?> parentView) {}
+
+		// let subclass implement onItemSelected
 	}
 
 }

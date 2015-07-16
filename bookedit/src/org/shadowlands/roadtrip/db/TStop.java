@@ -632,7 +632,11 @@ public class TStop extends RDBRecord
 		return tripid;
 	}
 
-	/** Get the vehicle's overall total odometer at this tstop. */
+	/**
+	 * Get the vehicle's overall total odometer at this tstop, or 0 if blank.
+	 * @see #getOdo_trip()
+	 * @see #setOdos(int, int)
+	 */
 	public int getOdo_total() {
 		return odo_total;
 	}
@@ -642,7 +646,8 @@ public class TStop extends RDBRecord
 	 * Remember that the ending TStop's odometers must not be blank.
 	 * @param odoTotal new overall total-odo value, or 0 if blank/unused
 	 * @param odoTrip new trip-odo value, or 0 if blank/unused
-	 * @see #setOdo_trip(int)
+	 * @see #getOdo_trip()
+	 * @see #getOdo_total()
 	 */
 	public void setOdos(final int odoTotal, final int odoTrip) {
 		if (odo_trip != odoTrip)
@@ -654,19 +659,26 @@ public class TStop extends RDBRecord
 		dirty = true;
 	}
 
-	/** Get the distance within this trip at this tstop, or 0 if blank. */
+	/**
+	 * Get the distance within this trip at this tstop, or 0 if blank.
+	 * @see #getOdo_total()
+	 * @see #setOdos(int, int)
+	 */
 	public int getOdo_trip() {
 		return odo_trip;
 	}
 
-	/** Get the trip's stop time (when the vehicle arrived at this TStop), or 0 if none. */
+	/**
+	 * Get the TStop's optional stop time (when the vehicle arrived at this TStop), or 0 if blank.
+	 * @see #getTime_continue()
+	 */
 	public int getTime_stop() {
 		return time_stop;
 	}
 
 	/**
 	 * Set or clear the stopped-here time (when the vehicle arrived at this TStop).
-	 * @param sTime Stop time (unix format), or 0 for none
+	 * @param sTime Stop time (unix format), or 0 for blank.
 	 * @since 0.9.20
 	 */
 	public void setTime_stop(final int sTime)
@@ -677,16 +689,23 @@ public class TStop extends RDBRecord
 		dirty = true;
 	}
 
-	/** Get the trip's continue-time (when the trip resumes), or 0 if none */
+	/**
+	 * Get the TStop's optional continue-time (when travel resumes), or 0 if blank.
+	 * This field is always 0 when this stop is the vehicle's {@link VehSettings#CURRENT_TSTOP},
+	 * but may also be 0 afterwards because the field is optional.
+	 * @see #getTime_stop()
+	 * @see #setTime_continue(int, boolean)
+	 */
 	public int getTime_continue() {
 		return time_continue;
 	}
 
 	/**
-	 * Set or clear the travel-start time (ending the stop) for this TStop.
-	 * @param sTime Start time (unix format), or 0 for none
+	 * Set or clear the travel-continue time (ending the stop) for this TStop.
+	 * @param sTime Time at which travel resumes (unix format), or 0 for blank
 	 * @param commit Also commit this field change (ONLY!) to db right now;
 	 *               if false, only set {@link #isDirty()}.
+	 * @see #getTime_continue()
 	 */
 	public void setTime_continue(final int sTime, final boolean commitNow)
 	{

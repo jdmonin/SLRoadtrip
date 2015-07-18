@@ -258,7 +258,6 @@ public class Main extends Activity
 				StringBuffer title = new StringBuffer(getResources().getString(R.string.about));
 				title.append(' ');
 				title.append(getResources().getString(R.string.app_name));
-				boolean hadVersName = false;
 				try
 				{
 					PackageInfo pInfo = getPackageManager().getPackageInfo
@@ -270,7 +269,6 @@ public class Main extends Activity
 						{
 							title.append(" v");
 							title.append(versName);
-							hadVersName = true;
 						}
 					}
 				}
@@ -334,10 +332,7 @@ public class Main extends Activity
 				updateDriverVehTripTextAndButtons();
 			}
 		});
-		alert.setNegativeButton(R.string.continu, new DialogInterface.OnClickListener()
-		{
-			public void onClick(DialogInterface dialog, int whichButton) {}
-		});
+		alert.setNegativeButton(R.string.continu, null);
 
 		alert.show();
 	}
@@ -631,10 +626,7 @@ public class Main extends Activity
 					startActivity(i);
 				}
 			});
-			alert.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener()
-			{
-				public void onClick(DialogInterface dialog, int whichButton) {}
-			});
+			alert.setNegativeButton(android.R.string.cancel, null);
 
 			alert.show();
 		}

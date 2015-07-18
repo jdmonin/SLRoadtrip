@@ -47,8 +47,12 @@ import java.util.Vector;
  * To end a trip, call {@link VehSettings#endCurrentTrip(RDBAdapter, Vehicle, int, int, int, TripCategory, int)}.
  * If all of a roadtrip's TStops are in its starting GeoArea, that method will convert it to a local trip.
  *<P>
- * If a trip is started by mistake, that new trip can be cancelled if it doesn't have any {@link TStop}s
- * yet; see {@link #cancelAndDeleteCurrentTrip()}.
+ * "Undo" is available for some trip actions:
+ *<UL>
+ * <LI> If a trip is started by mistake, that new trip can be cancelled if it doesn't have any {@link TStop}s
+ *      yet - {@link #cancelAndDeleteCurrentTrip()}.
+ * <LI> Undo continuing travel from the most recent stop during the current trip - {@link #cancelContinueFromTStop()}.
+ *</UL>
  *
  * @author jdmonin
  */
@@ -1254,6 +1258,7 @@ public class Trip extends RDBRecord
 	 * @return  True if current trip for the current vehicle, false (or throws an exception) otherwise.
 	 * @throws IllegalStateException if the trip isn't the current trip ID for the current vehicle,
 	 *     or has an ending odometer (and thus has ended and isn't current),
+	 *     or if there is no {@link Settings#getCurrentVehicle(RDBAdapter, boolean)} record,
 	 *     or if {@link #dbConn} is {@code null} because {@link #insert(RDBAdapter)} hasn't been called
 	 *     for this new Trip.
 	 * @see #isEnded()
@@ -1473,6 +1478,53 @@ public class Trip extends RDBRecord
 
 		// Finally, delete the trip
 		this.delete();
+	}
+
+	/**
+	 * In this current trip, cancel continuing travel from the most recent {@link TStop},
+	 * as if the vehicle is still stopped there and the "Continue" button was never pressed.
+	 *<P>
+	 * To cancel, this trip must have these conditions:
+	 *<UL>
+	 * <LI> {@link #isCurrentTrip(boolean)} for current vehicle
+	 * <LI> No current TStop
+	 * <LI> {@link #hasIntermediateTStops()}, because the most recent will become the current TStop again
+	 *</UL>
+	 *<P>
+	 * Note that since we've already resumed travel from that stop, we've cleared any flags noting
+	 * new Locations, ViaRoutes, etc created at that stop ({@link TStop#TEMPFLAG_CREATED_LOCATION}, ...);
+	 * if they are renamed again while stopped there, new records will be created for them.
+	 *
+	 * @throws IllegalStateException if trip is missing any of the conditions listed above
+	 * @since 0.9.50
+	 */
+	public void cancelContinueFromTStop()
+		throws IllegalStateException
+	{
+		// Ensure is current trip (odo_end == 0, Settings.getCurrentVehicle, VehSettings.getCurrentTrip).
+		// Throws IllegalStateException if not.
+		isCurrentTrip(true);
+
+		final Vehicle currV = Settings.getCurrentVehicle(dbConn, false);
+			// not null, because isCurrentTrip didn't throw anything
+
+		if (VehSettings.getCurrentTStop(dbConn, currV, false) != null)
+			throw new IllegalStateException("CURRENT_TSTOP != null");
+
+		Vector<TStop> ts = readAllTStops(true);  // don't use cached allStops field
+		final TStop latestTS = (ts != null) ? ts.lastElement() : null;
+		if ((latestTS == null)
+		    || ((tstopid_start == 0) && (ts.size() == 1)
+		        && (latestTS.getOdo_trip() == 0) && (latestTS.getOdo_total() == odo_start)))
+			throw new IllegalStateException("Has no intermediate TStops");
+
+		// now we have latestTS; clear its continued-at time and commit to db, make it current again
+		latestTS.setTime_continue(0, true);
+		VehSettings.setCurrentTStop(dbConn, currV, latestTS);
+
+		// invalidate cached list of stops;
+		// that's easier than checking list's consistency rules in these conditions.
+		allStops = null;
 	}
 
 	/**

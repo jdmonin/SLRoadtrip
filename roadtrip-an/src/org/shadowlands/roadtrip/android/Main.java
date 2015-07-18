@@ -82,8 +82,7 @@ public class Main extends Activity
 	 */
 	private TextView tvCurrentSet;
 
-	private Button btnBeginTrip, btnBeginFreq,
-	    changeDriverOrVeh, endTrip, stopContinue;
+	private Button btnBeginTrip, btnBeginFreq, changeDriverOrVeh, endTrip, stopContinue;
 
 	/** Called when the activity is first created.
 	 * See {@link #onResume()} for remainder of init work,
@@ -91,11 +90,12 @@ public class Main extends Activity
 	 * and hiding/showing buttons as appropriate.
 	 */
 	@Override
-	public void onCreate(Bundle savedInstanceState) {
-	    super.onCreate(savedInstanceState);
-	    setContentView(R.layout.main);
+	public void onCreate(Bundle savedInstanceState)
+	{
+		super.onCreate(savedInstanceState);
+		setContentView(R.layout.main);
 
-	    tvCurrentSet = (TextView) findViewById(R.id.main_text_current); 
+		tvCurrentSet = (TextView) findViewById(R.id.main_text_current);
 		db = new RDBOpenHelper(this);
 
 		btnBeginTrip = (Button) findViewById(R.id.main_btn_begin_trip);
@@ -114,20 +114,23 @@ public class Main extends Activity
 	}
 
 	@Override
-    public boolean onCreateOptionsMenu(Menu menu) {
+	public boolean onCreateOptionsMenu(Menu menu)
+	{
 		getMenuInflater().inflate(R.menu.main_menu, menu);
 		return true;
 	}
 
 	/** If current trip, enable "cancel" menu item */
 	@Override
-	public boolean onPrepareOptionsMenu(Menu menu) {
+	public boolean onPrepareOptionsMenu(Menu menu)
+	{
 		super.onPrepareOptionsMenu(menu);
 		MenuItem item = menu.findItem(R.id.menu_main_canceltrip);
 		if (item != null)
 		{
 			if (currV == null)
 				currV = Settings.getCurrentVehicle(db, false);  // can happen after screen rotation
+
 			item.setEnabled(null != VehSettings.getCurrentTrip(db, currV, false));
 		}
 
@@ -135,36 +138,40 @@ public class Main extends Activity
 	}
 
 	@Override
-	public boolean onOptionsItemSelected(MenuItem item) {
-	    switch (item.getItemId()) {
-	    case R.id.menu_main_backup:
+	public boolean onOptionsItemSelected(MenuItem item)
+	{
+		switch (item.getItemId())
+		{
+		case R.id.menu_main_backup:
 			// this activity's onPause will call db.close(),
-	    	// so it's safe if we restore db from BackupsRestore.
-	    	startActivity(new Intent(Main.this, BackupsMain.class));
-	        return true;
+			// so it's safe if we restore db from BackupsRestore.
+			startActivity(new Intent(Main.this, BackupsMain.class));
+			return true;
 
-	    case R.id.menu_main_canceltrip:
-	    	confirmCancelCurrentTrip();
-	    	return true;
+		case R.id.menu_main_canceltrip:
+			confirmCancelCurrentTrip();
+			return true;
 
 		case R.id.menu_main_settings:
 			startActivity(new Intent(Main.this, SettingsActivity.class));
 			return true;
 
-	    case R.id.menu_main_about:
-        	showDialog(R.id.menu_main_about);
-	    	return true;
+		case R.id.menu_main_about:
+			showDialog(R.id.menu_main_about);
+			return true;
 
-	    default:
-	        return super.onOptionsItemSelected(item);
-	    }
+		default:
+			return super.onOptionsItemSelected(item);
+		}
 	}
 
 	/** Create long-press menu for Frequent buttons */
 	@Override
-	public void onCreateContextMenu(ContextMenu menu, View v, ContextMenuInfo menuInfo) {		
+	public void onCreateContextMenu(ContextMenu menu, View v, ContextMenuInfo menuInfo)
+	{
 		if (v == btnBeginFreq)
-			menu.add(Menu.NONE, R.id.main_btn_begin_freqtrip, Menu.NONE, R.string.main_create_freq_from_recent);
+			menu.add(Menu.NONE, R.id.main_btn_begin_freqtrip,
+				 Menu.NONE, R.string.main_create_freq_from_recent);
 		else
 			super.onCreateContextMenu(menu, v, menuInfo);
 	}
@@ -206,7 +213,8 @@ public class Main extends Activity
 
 				// Now try to append build number, from res/raw/gitversion.txt ; ignore "?"
 				InputStream s = null;
-				try {
+				try
+				{
 					final Resources res = getApplicationContext().getResources();
 					s = res.openRawResource(R.raw.gitversion);
 					DataInputStream dtxt = new DataInputStream(s);
@@ -220,8 +228,10 @@ public class Main extends Activity
 						about_str.append(res.getString(R.string.build_number__fmt, gitversion));
 							// "Build number: 66a175e"
 					}
-				} catch (Exception e) {
-				} finally {
+				}
+				catch (Exception e) {}
+				finally
+				{
 					if (s != null)
 					{
 						try { s.close(); }
@@ -234,13 +244,14 @@ public class Main extends Activity
 				tv_about_text.setMovementMethod(LinkMovementMethod.getInstance());
 
 				AlertDialog.Builder aboutBuilder = new AlertDialog.Builder(this);
-				aboutBuilder.setView(tv_about_text)   
+				aboutBuilder.setView(tv_about_text)
 				  .setCancelable(true)
-				  .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+				  .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener()
+				   {
 					public void onClick(DialogInterface dialog, int id) {
 						dialog.dismiss();
 					}
-				});
+				   });
 
 				// get our version dynamically.
 				// title format: About Shadowlands Roadtrip v0.9.07
@@ -248,8 +259,10 @@ public class Main extends Activity
 				title.append(' ');
 				title.append(getResources().getString(R.string.app_name));
 				boolean hadVersName = false;
-				try {
-					PackageInfo pInfo = getPackageManager().getPackageInfo(getPackageName(), PackageManager.GET_META_DATA);
+				try
+				{
+					PackageInfo pInfo = getPackageManager().getPackageInfo
+						(getPackageName(), PackageManager.GET_META_DATA);
 					if (pInfo != null)
 					{
 						String versName = pInfo.versionName;
@@ -260,7 +273,8 @@ public class Main extends Activity
 							hadVersName = true;
 						}
 					}
-				} catch (NameNotFoundException e) { }
+				}
+				catch (NameNotFoundException e) {}
 
 				aboutBuilder.setTitle(title);
 				dialog = aboutBuilder.create();
@@ -298,37 +312,41 @@ public class Main extends Activity
 		}
 
 		// Prompt user if wants to revert back to locObjOrig.
-    	AlertDialog.Builder alert = new AlertDialog.Builder(this);
+		AlertDialog.Builder alert = new AlertDialog.Builder(this);
 
-    	alert.setTitle(R.string.confirm);
-    	alert.setMessage(R.string.main_cancel_are_you_sure);
-    	alert.setPositiveButton(R.string.cancel_trip, new DialogInterface.OnClickListener() {
-	    	  public void onClick(DialogInterface dialog, int whichButton)
-	    	  {
-	    		  final boolean isFreq = currT.isFrequent();
-	    		  try
-	    		  {
-		    		  currT.cancelAndDeleteCurrentTrip();
-		    		  VehSettings.setCurrentTrip(db, currV, null);
-		    		  if (isFreq)
-		    			  VehSettings.setCurrentFreqTrip(db, currV, null);		    		  
-	    		  } catch (IllegalStateException e) {}
-	    		  checkCurrentDriverVehicleSettings();
-	    		  updateDriverVehTripTextAndButtons();
-	    	  }
-	    	});
-    	alert.setNegativeButton(R.string.continu, new DialogInterface.OnClickListener() {
-	    	  public void onClick(DialogInterface dialog, int whichButton)
-	    	  { }
-	    	});
-    	alert.show();
+		alert.setTitle(R.string.confirm);
+		alert.setMessage(R.string.main_cancel_are_you_sure);
+		alert.setPositiveButton(R.string.cancel_trip, new DialogInterface.OnClickListener()
+		{
+			public void onClick(DialogInterface dialog, int whichButton)
+			{
+				final boolean isFreq = currT.isFrequent();
+				try
+				{
+					currT.cancelAndDeleteCurrentTrip();
+					VehSettings.setCurrentTrip(db, currV, null);
+					if (isFreq)
+						VehSettings.setCurrentFreqTrip(db, currV, null);
+				}
+				catch (IllegalStateException e) {}
+
+				checkCurrentDriverVehicleSettings();
+				updateDriverVehTripTextAndButtons();
+			}
+		});
+		alert.setNegativeButton(R.string.continu, new DialogInterface.OnClickListener()
+		{
+			public void onClick(DialogInterface dialog, int whichButton) {}
+		});
+
+		alert.show();
 	}
 
 	/**
-	 * Check Settings table for <tt>CURRENT_DRIVER</tt>, <tt>CURRENT_VEHICLE</tt>.
-	 * Set {@link #currD} and {@link #currV}.
-	 * If there's an inconsistency between Settings and Vehicle/Person tables, delete the Settings entry.
-	 * <tt>currD</tt> and <tt>currV</tt> will be null unless they're set consistently in Settings.
+	 * Check Settings tables for {@link VehSettings#CURRENT_DRIVER}, {@link Settings#CURRENT_VEHICLE}.
+	 * Set {@link #currD} and {@link #currV}. If there's an inconsistency between
+	 * Settings/VehSettings and Vehicle/Person table keys, delete the Settings entry.
+	 * {@code currD} and {@link #currV} will be null unless they're set consistently in Settings tables.
 	 *<P>
 	 * For initial setup, if {@link VehSettings#CURRENT_AREA} is missing, set it.
 	 *
@@ -337,7 +355,8 @@ public class Main extends Activity
 	private boolean checkCurrentDriverVehicleSettings()
 	{
 		Vehicle cv = Settings.getCurrentVehicle(db, true);
-		if (cv == null) {
+		if (cv == null)
+		{
 			return false;
 		} else {
 			// check current GeoArea, update if missing
@@ -345,7 +364,7 @@ public class Main extends Activity
 
 			GeoArea currA = VehSettings.getCurrentArea(db, cv, true);
 			if (currA == null)
-		    	{
+			{
 				// No GeoArea setting, or no current vehicle: Probably initial setup
 				GeoArea[] areas = GeoArea.getAll(db, -1);
 				if (areas != null)
@@ -353,7 +372,7 @@ public class Main extends Activity
 
 				if (currA != null)
 					VehSettings.setCurrentArea(db, cv, currA);
-		    	}
+			}
 
 			// check current driver
 			return (VehSettings.getCurrentDriver(db, cv, true) != null);
@@ -377,7 +396,7 @@ public class Main extends Activity
 		TStop currTS = ((currT != null) ? VehSettings.getCurrentTStop(db, currV, false) : null);
 		FreqTrip currFT = VehSettings.getCurrentFreqTrip(db, currV, false);
 
-		final Resources res = getResources();		
+		final Resources res = getResources();
 		StringBuffer txt = new StringBuffer(res.getString(R.string.driver));
 		txt.append(": ");
 		txt.append(currD.toString());
@@ -413,7 +432,8 @@ public class Main extends Activity
 				{
 					TripCategory tc = new TripCategory(db, currT.getTripCategoryID());
 					currTCateg = " [" + tc.getName() + "]";
-				} catch (Throwable th) {}
+				}
+				catch (Throwable th) {}
 			}
 
 			txt.append("\n\n");
@@ -429,13 +449,15 @@ public class Main extends Activity
 				txt.append("\n");
 				txt.append(res.getString(R.string.main_destination_area));
 				txt.append(' ');
-				try {
+				try
+				{
 					txt.append(new GeoArea(db, destAreaID).getName());
 				} catch (IllegalStateException e) {
 					// shouldn't happen, db is open
 				} catch (RDBKeyNotFoundException e) {
 					// shouldn't happen
-					Toast.makeText(this, "L132: Internal error, area " + destAreaID + " not found in DB", Toast.LENGTH_LONG).show();
+					Toast.makeText(this, "L132: Internal error, area " + destAreaID + " not found in DB",
+						Toast.LENGTH_LONG).show();
 				}
 			}
 			if (currFT != null)
@@ -459,7 +481,7 @@ public class Main extends Activity
 		{
 			visTrip = View.VISIBLE;
 			visNotTrip = View.INVISIBLE;
-		} else {			
+		} else {
 			visTrip = View.INVISIBLE;
 			visNotTrip = View.VISIBLE;
 		}
@@ -470,8 +492,8 @@ public class Main extends Activity
 		} else {
 			btnBeginFreq.setVisibility(visNotTrip);
 		}
-	    endTrip.setVisibility(visTrip);
-	    stopContinue.setVisibility(visTrip);
+		endTrip.setVisibility(visTrip);
+		stopContinue.setVisibility(visTrip);
 	}
 
 	@Override
@@ -489,12 +511,12 @@ public class Main extends Activity
 		super.onResume();
 		if (! checkCurrentDriverVehicleSettings())
 		{
-        	Toast.makeText(getApplicationContext(),
-                "Current driver/vehicle not found in db",
-                Toast.LENGTH_SHORT).show();
-	    	startActivity(new Intent(Main.this, AndroidStartup.class));
-	    	finish();
-	    	return;
+			Toast.makeText(getApplicationContext(),
+				"Current driver/vehicle not found in db",
+				Toast.LENGTH_SHORT).show();
+			startActivity(new Intent(Main.this, AndroidStartup.class));
+			finish();
+			return;
 		}
 
 		// Give status
@@ -525,7 +547,7 @@ public class Main extends Activity
 	{
 		Intent tbi = new Intent(Main.this, TripTStopEntry.class);
 		tbi.putExtra(TripTStopEntry.EXTRAS_FLAG_ENDTRIP, true);
-		startActivity(tbi);				
+		startActivity(tbi);
 	}
 
 	/**
@@ -547,7 +569,7 @@ public class Main extends Activity
 
 	public void onClick_BtnShowLogbook(View v)
 	{
-		startActivity(new Intent(Main.this, LogbookShow.class));		
+		startActivity(new Intent(Main.this, LogbookShow.class));
 	}
 
 	public void onClick_BtnBackups(View v)
@@ -571,7 +593,7 @@ public class Main extends Activity
 		Intent tbi = new Intent(Main.this, TripBegin.class);
 		if (isFrequent)
 			tbi.putExtra(TripBegin.EXTRAS_FLAG_FREQUENT, true);
-		startActivity(tbi);		
+		startActivity(tbi);
 	}
 
 	/**
@@ -588,6 +610,7 @@ public class Main extends Activity
 			Toast.makeText(this, R.string.main_no_recent_trips_for_vehicle, Toast.LENGTH_SHORT).show();
 			return;
 		}
+
 		// TODO some listing activity for them,
 		//   instead of just most-recent
 		Intent tcfi = new Intent(Main.this, TripCreateFreq.class);
@@ -597,20 +620,23 @@ public class Main extends Activity
 			startActivity(tcfi);
 		} else {
 			final Intent i = tcfi;  // req'd for inner class use
-	    	AlertDialog.Builder alert = new AlertDialog.Builder(this);
+			AlertDialog.Builder alert = new AlertDialog.Builder(this);
 
-	    	alert.setTitle(R.string.confirm);
-	    	alert.setMessage(R.string.main_trip_based_on_frequent);
-	    	alert.setPositiveButton(R.string.continu, new DialogInterface.OnClickListener() {
-		    	  public void onClick(DialogInterface dialog, int whichButton)
-		    	  {
-		    		  startActivity(i);
-		    	  }
-		    	});
-	    	alert.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
-	    	public void onClick(DialogInterface dialog, int whichButton) { }
-		    	});
-	    	alert.show();
+			alert.setTitle(R.string.confirm);
+			alert.setMessage(R.string.main_trip_based_on_frequent);
+			alert.setPositiveButton(R.string.continu, new DialogInterface.OnClickListener()
+			{
+				public void onClick(DialogInterface dialog, int whichButton)
+				{
+					startActivity(i);
+				}
+			});
+			alert.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener()
+			{
+				public void onClick(DialogInterface dialog, int whichButton) {}
+			});
+
+			alert.show();
 		}
 	}
 

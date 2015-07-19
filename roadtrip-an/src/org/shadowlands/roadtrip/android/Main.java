@@ -24,6 +24,7 @@ import java.io.InputStream;
 
 import org.shadowlands.roadtrip.AndroidStartup;
 import org.shadowlands.roadtrip.R;
+import org.shadowlands.roadtrip.android.util.Misc;
 import org.shadowlands.roadtrip.db.FreqTrip;
 import org.shadowlands.roadtrip.db.GeoArea;
 import org.shadowlands.roadtrip.db.Person;
@@ -37,6 +38,7 @@ import org.shadowlands.roadtrip.db.VehSettings;
 import org.shadowlands.roadtrip.db.Vehicle;
 import org.shadowlands.roadtrip.db.android.RDBOpenHelper;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -48,6 +50,7 @@ import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.res.Resources;
 import android.os.Bundle;
 import android.text.SpannableStringBuilder;
+import android.text.format.DateUtils;
 import android.text.method.LinkMovementMethod;
 import android.text.util.Linkify;
 import android.view.ContextMenu;
@@ -120,18 +123,35 @@ public class Main extends Activity
 		return true;
 	}
 
-	/** If current trip, enable "cancel" menu item */
+	/**
+	 * If current trip, enable and update wording of "undo"/"cancel" menu item.
+	 * The trip conditions tested here are also checked in {@link #onUndoCancelItemSelected()}
+	 * to determine which action to take; see that method's javadoc for details.
+	 */
 	@Override
 	public boolean onPrepareOptionsMenu(Menu menu)
 	{
 		super.onPrepareOptionsMenu(menu);
-		MenuItem item = menu.findItem(R.id.menu_main_canceltrip);
+		MenuItem item = menu.findItem(R.id.menu_main_undocancel);
 		if (item != null)
 		{
 			if (currV == null)
 				currV = Settings.getCurrentVehicle(db, false);  // can happen after screen rotation
 
-			item.setEnabled(null != VehSettings.getCurrentTrip(db, currV, false));
+			final Trip currT = VehSettings.getCurrentTrip(db, currV, false);
+			final boolean hasCurrTS = (currT != null)
+				&& (VehSettings.getCurrentTStop(db, currV, false) != null);
+			final boolean enable = (currT != null) && ! hasCurrTS;
+			item.setEnabled(enable);
+			if (enable)
+			{
+				if (canUndoContinueFromTStop(currT))
+					item.setTitle(R.string.main_undo_continue);
+				else
+					item.setTitle(R.string.cancel_trip);
+			} else {
+				item.setTitle(R.string.undo);
+			}
 		}
 
 		return true;
@@ -148,8 +168,9 @@ public class Main extends Activity
 			startActivity(new Intent(Main.this, BackupsMain.class));
 			return true;
 
-		case R.id.menu_main_canceltrip:
-			confirmCancelCurrentTrip();
+		case R.id.menu_main_undocancel:
+			// several things can be undone, depending on current conditions within the trip.
+			onUndoCancelItemSelected();
 			return true;
 
 		case R.id.menu_main_settings:
@@ -287,8 +308,120 @@ public class Main extends Activity
 	}
 
 	/**
+	 * Handle the "Undo"/"Cancel" menu/actionbar item: Ask the user to confirm the undo, then do so.
+	 * To determine which trip action to undo, checks current conditions within the trip.
+	 * See list below for details. {@link #onPrepareOptionsMenu(Menu)} checks the same conditions
+	 * to enable and name the action bar / options menu item.
+	 *<P>
+	 * Current capabilities:
+	 *<UL>
+	 * <LI> No current trip: Can't undo
+	 * <LI> Trip has no {@link TStop}s yet: {@link #confirmCancelCurrentTrip()}
+	 * <LI> Stopped at a TStop: Can't undo
+	 * <LI> After continuing from a TStop: {@link #askUndoContinueFromTStop()}
+	 * <LI> After ending a trip: Can't undo
+	 *</UL>
+	 * @since 0.9.50
+	 */
+	private void onUndoCancelItemSelected()
+	{
+		final Trip currT = VehSettings.getCurrentTrip(db, currV, false);
+		if (currT == null)
+			return;  // should not happen; onPrepare disabled the menu item
+
+		if (VehSettings.getCurrentTStop(db, currV, false) != null)
+			return;  // can't undo at a TStop; onPrepare disabled the menu item
+
+		if (canUndoContinueFromTStop(currT))
+			askUndoContinueFromTStop();
+		else
+			confirmCancelCurrentTrip();
+	}
+
+	/**
+	 * Could the user undo continuing from the current trip's previous stop,
+	 * given current conditions?  Used for action bar setup.
+	 * @param currT  Current trip, if any, from {@link VehSettings#getCurrentTrip(RDBAdapter, Vehicle, boolean)}
+	 * @return  True if the conditions are met for {@link Trip#cancelContinueFromTStop()}
+	 * @see #askUndoContinueFromTStop()
+	 * @since 0.9.50
+	 */
+	private boolean canUndoContinueFromTStop(final Trip currT)
+	{
+		return (currT != null) && (VehSettings.getCurrentTStop(db, currV, false) == null)
+			&& currT.hasIntermediateTStops();
+	}
+
+	/**
+	 * Ask the user to confirm that they want to undo continuing from the previous stop.
+	 * Called from {@link #onUndoCancelItemSelected()}. Shows a dialog with location info,
+	 * how long ago travel was continued, and Undo/Continue buttons.
+	 * If user confirms, calls {@link Trip#cancelContinueFromTStop()}.
+	 * @see #canUndoContinueFromTStop(Trip)
+	 * @since 0.9.50
+	 */
+	@SuppressLint("DefaultLocale")
+	private void askUndoContinueFromTStop()
+	{
+		final Trip currT = VehSettings.getCurrentTrip(db, currV, false);
+		boolean hasCurrTS = (currT != null) && (VehSettings.getCurrentTStop(db, currV, false) != null);
+		if ((currT == null) || hasCurrTS || ! currT.hasIntermediateTStops())
+			return;  // should not occur, checking here just in case
+
+		final TStop prevTS = currT.readLatestTStop();
+		if (prevTS == null)
+			return;  // unlikely unless db inconsistency
+
+		final Resources res = getResources();
+		String locName = prevTS.readLocationText();
+		if (locName == null)
+			locName = "(null)";  // fallback if inconsistent
+		final int timeCont = prevTS.getTime_continue();  // may be 0
+
+		StringBuilder sb = new StringBuilder();
+		sb.append(res.getString(R.string.main_undo_continue__text, locName));
+		if (timeCont != 0)
+		{
+			// "5 minutes ago", "3 days ago", etc; past 1 week ago it formats timeCont's date instead.
+			CharSequence timediff = DateUtils.getRelativeTimeSpanString
+				(timeCont * 1000L, System.currentTimeMillis(), DateUtils.SECOND_IN_MILLIS);
+			// Format may place timediff in middle of sentence, so force lowercase:
+			// example Spanish "Hace 3 minutos" -> hace
+			timediff = timediff.toString().toLowerCase();
+
+			sb.append("\n\n");
+			sb.append(res.getString(R.string.main_undo_continue__left_this_stop, timediff));
+		}
+
+		// Confirm with user if wants to undo continuing.
+		AlertDialog.Builder alert = new AlertDialog.Builder(this);
+
+		alert.setMessage(sb);
+		alert.setPositiveButton(R.string.undo, new DialogInterface.OnClickListener()
+		{
+			public void onClick(DialogInterface dialog, int whichButton)
+			{
+				try
+				{
+					currT.cancelContinueFromTStop();
+				}
+				catch (IllegalStateException e)
+				{
+					Misc.showExceptionAlertDialog(Main.this, e);  // unlikely
+				}
+
+				updateDriverVehTripTextAndButtons();
+			}
+		});
+		alert.setNegativeButton(R.string.no, null);
+
+		alert.show();
+	}
+
+	/**
 	 * Prompt user if wants to cancel the current trip (if that's possible).
-	 * If they confirm, delete it and clear current-trip settings.
+	 * If they confirm, delete it and clear current-trip settings
+	 * by calling {@link Trip#cancelAndDeleteCurrentTrip()}.
 	 */
 	public void confirmCancelCurrentTrip()
 	{

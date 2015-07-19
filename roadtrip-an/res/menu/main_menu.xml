@@ -2,7 +2,7 @@
 <!--
  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
 
- This file Copyright (C) 2010-2012,2014 Jeremy D Monin (jdmonin@nand.net)
+ This file Copyright (C) 2010-2012,2014-2015 Jeremy D Monin (jdmonin@nand.net)
 
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
@@ -23,8 +23,9 @@
 	android:title="@string/backups"
 	android:icon="@android:R/drawable/ic_menu_save"
 	/>
-<item android:id="@+id/menu_main_canceltrip"
-	android:title="@string/cancel_trip"
+<!-- There are several Undo actions; onPrepareOptionsMenu updates item text if not disabled -->
+<item android:id="@+id/menu_main_undocancel"
+	android:title="@string/undo"
 	android:icon="@android:R/drawable/ic_menu_close_clear_cancel"
 	/>
 <item android:id="@+id/menu_main_settings"

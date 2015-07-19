@@ -147,6 +147,7 @@
 <string name="total">total</string>
 <string name="trip__category">Trip\ncategory</string>
 <string name="trip_odometer">Trip\nodometer</string>
+<string name="undo">Undo</string>
 <string name="using_old_date_due_to_previous">Historical Mode:\nUsing an old date because of the previous date entered for this vehicle.</string>
 <string name="validate">Validate</string>
 <string name="validation_failed">Validation failed</string>
@@ -193,6 +194,11 @@
 <string name="main_roadtrip_start_area">Roadtrip start area:</string>
 <string name="main_trip_based_on_frequent">This trip is based on another frequent trip.</string>
 <string name="main_trip_in_progress">Trip in Progress.</string>
+<string name="main_undo_continue">Undo \'Continue\'</string>
+<string name="main_undo_continue__text">Undo continuing travel from previous stop?\n\nLocation: %1$s</string>
+<!-- left_this_stop's string placeholder will get '6 seconds ago', '10 minutes ago',
+     hours ago, days ago, or a date; see DateUtils.getRelativeTimeSpanString -->
+<string name="main_undo_continue__left_this_stop">Left this stop %1$s</string>
 <string name="backups_main_cannot_backup_need_free_space__fmt">Cannot back up: The SD card must have at least %d kB free.</string>
 <string name="backups_main_cannot_browse_folder">Cannot browse this folder.</string>
 <string name="backups_main_change_folder">Change Folder</string>

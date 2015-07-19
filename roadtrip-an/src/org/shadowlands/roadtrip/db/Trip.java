@@ -1525,6 +1525,28 @@ public class Trip extends RDBRecord
 		// invalidate cached list of stops;
 		// that's easier than checking list's consistency rules in these conditions.
 		allStops = null;
+
+		// update PREV_LOCATION
+		int prevlocid = 0;
+		final int L = ts.size();
+		if (L >= 2)
+		{
+			prevlocid = ts.get(L - 2).getLocationID();
+		} else if (tstopid_start != 0) {
+			// get previous trip's ending loc, if any
+			final TStop tstopStart = readStartTStop(true);
+			if (tstopStart != null)
+				prevlocid = tstopStart.getLocationID();
+		}
+		Location loc = null;
+		if (prevlocid != 0)
+			try
+			{
+				loc = new Location(dbConn, prevlocid);
+			}
+			catch (RDBKeyNotFoundException e) {}
+
+		VehSettings.setPreviousLocation(dbConn, currV, loc);
 	}
 
 	/**

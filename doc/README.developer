@@ -250,6 +250,8 @@ e3dae2e	0.9.43	2015-06-07	First release to include a BookEdit jar; minor improve
 				- LogbookShow: When picking from 'Other Vehicle' spinner, dismiss that dialog and
 				  immediately show new vehicle
 				- LogbookShow DatePicker: To always show year spinner, hide calendar pane on narrow screens
+				- Odometer calculator dialog: To prevent changing odometer to second operand instead of
+				  result, disable Save after any op button until Equals, Reset, or Clear is pressed
 				- While validating a backup to restore it, show file size and trip date range
 				BookEdit desktop utility app:
 				- Show TStop comments without superfluous square brackets

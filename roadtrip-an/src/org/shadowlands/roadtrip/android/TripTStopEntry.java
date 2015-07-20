@@ -408,7 +408,7 @@ public class TripTStopEntry extends Activity
 	 * Non-null, for callbacks, when the odometer editor calculator is showing.
 	 * @see #onClickEditOdo(OdometerNumberPicker, boolean)
 	 */
-	private View popupCalcItems = null;
+	private AlertDialog popupCalcDia = null;
 
 	/** If displayed, is the calculator for {@link #odo_trip} and not {@link #odo_total}? */
 	private boolean calcOdoIsTrip;
@@ -2840,7 +2840,18 @@ public class TripTStopEntry extends Activity
 	// Start of calculator methods
 	///////////////////////////////
 
-	/** Bring up an odometer's editor (calculator) dialog */
+	/**
+	 * Bring up an odometer's editor (calculator) dialog.
+	 * Includes + - * / and reset, with memory register (M+ M- MC MR)
+	 * saved to activity's {@link #calcMemory} field.
+	 *<P>
+	 * To prevent changing the odometer to the second operand instead of the
+	 * calculation result, disables its Save button after any op button until
+	 * Equals, Reset, or Clear is pressed.
+	 * @param odo odometer to start from and save to
+	 * @param isOdoTrip  true if decimal button should be enabled;
+	 *    even if false, does not ignore '.' presses from soft keyboard
+	 */
 	private void onClickEditOdo(final OdometerNumberPicker odo, final boolean isOdoTrip)
 	{
 		// TODO managed dialog lifecycle: onCreateDialog etc
@@ -2848,7 +2859,6 @@ public class TripTStopEntry extends Activity
 		// TODO activity int field for memory,
 		//   TODO and load/save them with rest of fields
 		final View calcItems = getLayoutInflater().inflate(R.layout.trip_tstop_popup_odo_calc, null);
-		popupCalcItems = calcItems;
 		calcOdoIsTrip = isOdoTrip;
 		calcOperation = CALC_OP_NONE;
 		calcPrevOperand = 0;
@@ -2878,7 +2888,7 @@ public class TripTStopEntry extends Activity
 		alert.setPositiveButton(R.string.save, new DialogInterface.OnClickListener() {
 			public void onClick(DialogInterface dialog, int whichButton)
 			{
-				popupCalcItems = null;
+				popupCalcDia = null;
 				float ov;
 				try
 				{
@@ -2894,10 +2904,12 @@ public class TripTStopEntry extends Activity
 		alert.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
 			public void onClick(DialogInterface dialog, int whichButton)
 			{
-				popupCalcItems = null;
+				popupCalcDia = null;
 			}
 		});
-		alert.show();
+
+		popupCalcDia = alert.create();
+		popupCalcDia.show();
 	}
 
 	/** Load the calculator's {@link #calcValue} field from the
@@ -2968,22 +2980,29 @@ public class TripTStopEntry extends Activity
 
 	/**
 	 * The calculator Reset button loads {@link #calcValue} from the odometer's
-	 * current value.
+	 * current value. Also re-enables "Save" button.
 	 * @since 0.9.42
 	 * @see #onClick_CalcBtnClear(View)
 	 */
 	public void onClick_CalcBtnReset(View v)
 	{
 		calcLoadValueFromOdo();
+
+		if (popupCalcDia != null)
+			popupCalcDia.getButton(Dialog.BUTTON_POSITIVE).setEnabled(true);
 	}
 
 	/**
 	 * The calculator Clear button.
+	 * Also re-enables "Save" button.
 	 * @see #onClick_CalcBtnReset(View)
 	 */
 	public void onClick_CalcBtnClear(View v)
 	{
 		calcValue.setText("");
+
+		if (popupCalcDia != null)
+			popupCalcDia.getButton(Dialog.BUTTON_POSITIVE).setEnabled(true);
 	}
 
 	/** The calculator Backspace button. */
@@ -3001,6 +3020,8 @@ public class TripTStopEntry extends Activity
 	/**
 	 * Handle pressing an odometer calculator operation button:
 	 * Store {@link #calcPrevOperand} and {@link #calcOperation}.
+	 * Disable "Save" button so Equals button will be pressed first
+	 * instead of saving second operand to the odometer.
 	 * @param calcOp {@link #CALC_OP_ADD}, {@link #CALC_OP_SUB}, etc
 	 */
 	private void calcOpBtnClicked(final int calcOp)
@@ -3020,6 +3041,13 @@ public class TripTStopEntry extends Activity
 		calcOperation = calcOp;
 		calcNextPressClears = true;
 		// TODO visually indicate the op somewhere
+
+		if (popupCalcDia != null)
+		{
+			Button btnSave = popupCalcDia.getButton(Dialog.BUTTON_POSITIVE);
+			if (btnSave.isEnabled())
+				btnSave.setEnabled(false);
+		}
 	}
 
 	public void onClick_CalcBtnDiv(View v)
@@ -3042,6 +3070,10 @@ public class TripTStopEntry extends Activity
 		calcOpBtnClicked(CALC_OP_ADD);
 	}
 
+	/**
+	 * Calculate {@link #calcOperation}, show the result, re-enable the "Save" button.
+	 * @param v  ignored
+	 */
 	public void onClick_CalcBtnEquals(View v)
 	{
 		float cv;  // current value
@@ -3066,6 +3098,9 @@ public class TripTStopEntry extends Activity
 			calcPrevOperand = nv;
 		}
 
+		if (popupCalcDia != null)
+			popupCalcDia.getButton(Dialog.BUTTON_POSITIVE).setEnabled(true);
+
 		switch (calcOperation)
 		{
 		case CALC_OP_ADD:
@@ -3084,6 +3119,7 @@ public class TripTStopEntry extends Activity
 			calcPrevOperand = cv;
 			return;
 		}
+
 		calcPrevOperand = cv;
 		calcValue.setText(Float.toString(nv));
 		calcNextPressClears = true;

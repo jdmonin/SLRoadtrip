@@ -445,7 +445,6 @@ public class Main extends Activity
 		// Prompt user if wants to revert back to locObjOrig.
 		AlertDialog.Builder alert = new AlertDialog.Builder(this);
 
-		alert.setTitle(R.string.confirm);
 		alert.setMessage(R.string.main_cancel_are_you_sure);
 		alert.setPositiveButton(R.string.cancel_trip, new DialogInterface.OnClickListener()
 		{
@@ -459,7 +458,9 @@ public class Main extends Activity
 					if (isFreq)
 						VehSettings.setCurrentFreqTrip(db, currV, null);
 				}
-				catch (IllegalStateException e) {}
+				catch (IllegalStateException e) {
+					Misc.showExceptionAlertDialog(Main.this, e);  // unlikely
+				}
 
 				checkCurrentDriverVehicleSettings();
 				updateDriverVehTripTextAndButtons();

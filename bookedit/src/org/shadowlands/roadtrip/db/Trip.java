@@ -708,12 +708,13 @@ public class Trip extends RDBRecord
      *
      * @return  ordered list of stops, or null if none
      * @throws IllegalStateException if the db connection is closed
+     * @see #readAllTStops(boolean, boolean)
      * @see #isStartTStopFromPrevTrip()
      */
     public Vector<TStop> readAllTStops()
         throws IllegalStateException
     {
-    	return readAllTStops(false);
+	return readAllTStops(false, false);
     }
 
     /**
@@ -737,26 +738,32 @@ public class Trip extends RDBRecord
      *
      * @param  ignoreTripEndStop  If true, and {@link #isEnded()} is true,
      *         don't include the TStop at the destination which ends the trip.
+     * @param  bypassCache  If true, ignore the previously cached list of
+     *         the trip's TStops, and don't cache the new result.
+     *         (added in v0.9.50)
      * @return  ordered list of stops, or null if none
      * @throws IllegalStateException if the db connection is closed
      * @see #hasIntermediateTStops()
      */
-    public Vector<TStop> readAllTStops(boolean ignoreTripEndStop)
+    public Vector<TStop> readAllTStops(boolean ignoreTripEndStop, final boolean bypassCache)
 	    throws IllegalStateException
 	{
     	if (! isEnded())
     		ignoreTripEndStop = false;
 
-    	if ((allStops == null) || ignoreTripEndStop)
+    	if (bypassCache || (allStops == null) || ignoreTripEndStop)
     	{
 	    	if (dbConn == null)
 	    		throw new IllegalStateException("dbConn null");
 	    	Vector<TStop> ts = TStop.stopsForTrip(dbConn, this);
 	    	if (! ignoreTripEndStop)
 	    	{
-		    	allStops = ts;    // cache it
-		    	hasCheckedStops = true;
-		    	hasUnreadStops = false;
+			if (! bypassCache)
+			{
+				allStops = ts;    // cache it
+				hasCheckedStops = true;
+				hasUnreadStops = false;
+			}
 	    	} else {
 	    		// Remove that ending stop
 	    		if ((ts != null) && ! ts.isEmpty())
@@ -1456,7 +1463,7 @@ public class Trip extends RDBRecord
 		// Any intermediate stops?
 		// The same code is in hasIntermediateTStops().
 		// Check both places when updating this code.
-		Vector<TStop> ts = readAllTStops(true);  // don't use cached allStops field
+		Vector<TStop> ts = readAllTStops(false, true);  // don't use cached allStops field
 		if (ts != null)
 		{
 			int nstop = ts.size();
@@ -1511,7 +1518,7 @@ public class Trip extends RDBRecord
 		if (VehSettings.getCurrentTStop(dbConn, currV, false) != null)
 			throw new IllegalStateException("CURRENT_TSTOP != null");
 
-		Vector<TStop> ts = readAllTStops(true);  // don't use cached allStops field
+		Vector<TStop> ts = readAllTStops(true, true);  // don't use cached allStops field
 		final TStop latestTS = (ts != null) ? ts.lastElement() : null;
 		if ((latestTS == null)
 		    || ((tstopid_start == 0) && (ts.size() == 1)
@@ -1685,7 +1692,7 @@ public class Trip extends RDBRecord
 		// The same code is in cancelAndDeleteCurrentTrip().
 		// Check both places when updating this code.
 
-		Vector<TStop> ts = readAllTStops(true);  // don't use cached allStops field
+		Vector<TStop> ts = readAllTStops(true, true);  // don't use cached allStops field
 		if (ts == null)
 			return false;
 

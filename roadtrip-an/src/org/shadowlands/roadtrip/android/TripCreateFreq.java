@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010,2012 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010,2012,2015 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -245,7 +245,7 @@ public class TripCreateFreq extends Activity
 	 */
 	private boolean populateStopsList()
 	{		
-		stopsList = srcT.readAllTStops(false);  // include the finishing stop
+		stopsList = srcT.readAllTStops(false, false);  // include the finishing stop
 		if (stopsList == null)
 			return false;
 

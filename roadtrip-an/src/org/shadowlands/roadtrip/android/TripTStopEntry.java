@@ -416,7 +416,7 @@ public class TripTStopEntry extends Activity
 	/** Calculator's current value, for {@link #onClickEditOdo(OdometerNumberPicker, boolean)} callbacks */
 	private EditText calcValue;
 
-	/** Calculator's memory register (M+ M- MR MC buttons) */
+	/** Calculator's memory register (M+ M- {@link #calcMR MR} {@link #calcMC MC} buttons). */
 	private float calcMemory = 0.0f;
 
 	/** If true, the next button press clears {@link #calcValue} */
@@ -434,6 +434,14 @@ public class TripTStopEntry extends Activity
 	/** Digit buttons 0-9 and '.' for {@link #onClickEditOdo(OdometerNumberPicker, boolean)} callbacks */
 	private View calc0, calc1, calc2, calc3, calc4, calc5,
 		calc6, calc7, calc8, calc9, calcDeci;
+
+	/**
+	 * Calculator Memory Recall and Memory Clear buttons.  These are
+	 * enabled or not based on whether {@link #calcMemory} is occupied,
+	 * which also acts as a visual indicator for {@code calcMemory}.
+	 * @since 0.9.50
+	 */
+	private View calcMR, calcMC;
 
 	///////////////////////////////
 	// End of calculator fields
@@ -2876,6 +2884,11 @@ public class TripTStopEntry extends Activity
 		calc9 = calcItems.findViewById(R.id.trip_tstop_popup_odo_calc_9);
 		calcDeci = calcItems.findViewById(R.id.trip_tstop_popup_odo_calc_deci);
 		calcDeci.setEnabled(isOdoTrip);
+		calcMC = calcItems.findViewById(R.id.trip_tstop_popup_odo_calc_mc);
+		calcMR = calcItems.findViewById(R.id.trip_tstop_popup_odo_calc_mr);
+		calcMC.setEnabled(calcMemory != 0.0f);
+		calcMR.setEnabled(calcMemory != 0.0f);
+
 		calcLoadValueFromOdo();
 		calcNextPressClears = true;
 
@@ -3138,11 +3151,18 @@ public class TripTStopEntry extends Activity
 			// TODO error toast
 			return;
 		}
-		// TODO is there a visual indicator?
+
 		if (addNotSub)
 			calcMemory += cv;
 		else
 			calcMemory -= cv;
+
+		// enable buttons, also acts as a visual indicator
+		if (! calcMC.isEnabled())
+		{
+			calcMC.setEnabled(true);
+			calcMR.setEnabled(true);
+		}
 	}
 
 	public void onClick_CalcBtnMemPlus(View v)
@@ -3158,13 +3178,13 @@ public class TripTStopEntry extends Activity
 	public void onClick_CalcBtnMemClear(View v)
 	{
 		calcMemory = 0.0f;
-		// TODO is there a visual indicator?
+		calcMC.setEnabled(false);
+		calcMR.setEnabled(false);
 	}
 
 	public void onClick_CalcBtnMemRecall(View v)
 	{
-		if (calcMemory != 0.0f)
-			calcValue.setText(Float.toString(calcMemory));
+		calcValue.setText(Float.toString(calcMemory));
 	}
 
 	/////////////////////////////

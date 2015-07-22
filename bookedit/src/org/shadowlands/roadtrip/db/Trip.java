@@ -52,6 +52,7 @@ import java.util.Vector;
  * <LI> If a trip is started by mistake, that new trip can be cancelled if it doesn't have any {@link TStop}s
  *      yet - {@link #cancelAndDeleteCurrentTrip()}.
  * <LI> Undo continuing travel from the most recent stop during the current trip - {@link #cancelContinueFromTStop()}.
+ * <LI> Undo End Trip - {@link #cancelEndPreviousTrip(RDBAdapter)}.
  *</UL>
  *
  * @author jdmonin
@@ -547,6 +548,55 @@ public class Trip extends RDBRecord
 		ret[1] = Integer.parseInt(row[0]);  // starting time
 
 	return ret;
+    }
+
+    /**
+     * Cancel ending the previous (most recent) trip of the current vehicle.
+     * That trip will again become the vehicle's current trip, and this method
+     * will call {@link #setOdo_end(int) setOdo_end(0)} and commit the trip,
+     * then call {@link #cancelContinueFromTStop() currT.cancelContinueFromTStop()}
+     * to be stopped at the trip's final TStop and location.
+     *<P>
+     * The vehicle must not already have a current trip.
+     * The previous trip will be queried with
+     * {@link #recentTripForVehicle(RDBAdapter, Vehicle, boolean, boolean) recentTripForVehicle(db, currV, false, false)},
+     * not {@link Vehicle#getLastTripID() currV.getLastTripID()}.
+     *<P>
+     * The vehicle must already be the current vehicle, in case db contains data from an old version
+     * and some vehicles don't have {@link VehSettings} entries. Changing the current vehicle
+     * 'upgrades' that vehicle's old data into {@code VehSettings} entries.
+     * @param db  db connection
+     * @return  True if the previous trip's end was cancelled and it's the current trip again;
+     *     false if no trips were found for current vehicle or if
+     *     {@code Settings#getCurrentVehicle(RDBAdapter, boolean)} == null.
+     * @throws IllegalStateException if missing any of the conditions listed above,
+     *     or if null != {@link VehSettings#getCurrentTrip(RDBAdapter, Vehicle, boolean)},
+     *     or if {@code dbConn} is null or not open.
+     * @since 0.9.50
+     */
+    public static boolean cancelEndPreviousTrip(RDBAdapter db)
+	throws IllegalStateException
+    {
+	final Vehicle currV = Settings.getCurrentVehicle(db, false);
+	if (currV == null)
+		return false;
+
+	if (null != VehSettings.getCurrentTrip(db, currV, false))
+		throw new IllegalStateException("Vehicle " + currV.getID() + " has currT");
+
+	// query db for previous trip, in case Vehicle.getLastTripID() is somehow outdated
+	final Trip tr = recentTripForVehicle(db, currV, false, false);
+	if (tr == null)
+		return false;
+
+	tr.setOdo_end(0);
+	tr.setTime_end(0);
+	tr.commit();
+
+	VehSettings.setCurrentTrip(db, currV, tr);
+	tr.cancelContinueFromTStop();  // find and update CURRENT_TSTOP, PREV_LOCATION, etc
+
+	return true;
     }
 
     /**
@@ -1506,6 +1556,7 @@ public class Trip extends RDBRecord
 	 * if they are renamed again while stopped there, new records will be created for them.
 	 *
 	 * @throws IllegalStateException if trip is missing any of the conditions listed above
+	 *     or if {@code dbConn} is null or not open
 	 * @since 0.9.50
 	 */
 	public void cancelContinueFromTStop()

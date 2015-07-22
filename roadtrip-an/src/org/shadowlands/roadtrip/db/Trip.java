@@ -88,15 +88,16 @@ public class Trip extends RDBRecord
      * Field names/where-clause for use in {@link #recentTripForVehicle(RDBAdapter, Vehicle, boolean, boolean)}.
      * @since 0.9.50
      */
-    private static final String WHERE_VID = "vid = ?";
+    private static final String WHERE_VID =
+	"_id=(select max(_id) from trip where vid = ?)";
 
     /** Field names/where-clause for use in {@link #recentTripForVehicle(RDBAdapter, Vehicle, boolean, boolean)}. */
     private static final String WHERE_VID_AND_NOT_ROADTRIP =
-    	"vid = ? and roadtrip_end_aid is null";
+	"_id=(select max(_id) from trip where vid = ? and roadtrip_end_aid is null)";
 
     /** Field names/where-clause for use in {@link #recentTripForVehicle(RDBAdapter, Vehicle, boolean, boolean)}. */
     private static final String WHERE_VID_AND_IS_ROADTRIP =
-    	"vid = ? and roadtrip_end_aid is not null";
+	"_id=(select max(_id) from trip where vid = ? and roadtrip_end_aid is not null)";
 
     /** Where-clause for use in {@link #tripsForVehicle(RDBAdapter, Vehicle, int, int, boolean, boolean, boolean)}  */
     private static final String WHERE_TIME_START_AND_VID =
@@ -466,6 +467,8 @@ public class Trip extends RDBRecord
     	final String where =
 		(localOnly) ? WHERE_VID_AND_NOT_ROADTRIP
 			    : (roadtripOnly) ? WHERE_VID_AND_IS_ROADTRIP : WHERE_VID;
+		// "_id = (select max(_id) from trip where vid = ? and roadtrip_end_aid is null" or similar
+
     	Vector<String[]> sv = db.getRows
     		(TABNAME, where, new String[]{ Integer.toString(veh.getID()) }, FIELDS_AND_ID, "_id DESC", 1);
     		// LIMIT 1
@@ -477,7 +480,7 @@ public class Trip extends RDBRecord
     	}
     	catch (RDBKeyNotFoundException e)
     	{
-    		return null;
+		return null;  // not thrown but required by constructor
     	}
     }
 

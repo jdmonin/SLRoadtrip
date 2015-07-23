@@ -246,7 +246,7 @@ e3dae2e	0.9.43	2015-06-07	First release to include a BookEdit jar; minor improve
 				  converted back to a local trip when ended.
 				- More 'business logic' moved from app to DB methods: VehSettings.endCurrentTrip, etc
 				SLRoadtrip android app:
-				- Can undo 'continue from stop' during a trip
+				- Can undo some trip actions: Continue Travel From Stop during a trip, End Trip
 				- LogbookShow: When picking from 'Other Vehicle' spinner, dismiss that dialog and
 				  immediately show new vehicle
 				- LogbookShow DatePicker: To always show year spinner, hide calendar pane on narrow screens

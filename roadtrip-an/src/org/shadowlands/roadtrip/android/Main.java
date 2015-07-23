@@ -141,11 +141,13 @@ public class Main extends Activity
 			final Trip currT = VehSettings.getCurrentTrip(db, currV, false);
 			final boolean hasCurrTS = (currT != null)
 				&& (VehSettings.getCurrentTStop(db, currV, false) != null);
-			final boolean enable = (currT != null) && ! hasCurrTS;
+			final boolean enable = ((currT != null) || (currV.getLastTripID() != 0)) && ! hasCurrTS;
 			item.setEnabled(enable);
 			if (enable)
 			{
-				if (canUndoContinueFromTStop(currT))
+				if (currT == null)
+					item.setTitle(R.string.main_undo_end_trip);
+				else if (canUndoContinueFromTStop(currT))
 					item.setTitle(R.string.main_undo_continue);
 				else
 					item.setTitle(R.string.cancel_trip);
@@ -315,11 +317,11 @@ public class Main extends Activity
 	 *<P>
 	 * Current capabilities:
 	 *<UL>
-	 * <LI> No current trip: Can't undo
+	 * <LI> No current or previous trip: Nothing to undo ({@link Vehicle#getLastTripID()} == 0)
 	 * <LI> Trip has no {@link TStop}s yet: {@link #confirmCancelCurrentTrip()}
 	 * <LI> Stopped at a TStop: Can't undo
 	 * <LI> After continuing from a TStop: {@link #askUndoContinueFromTStop()}
-	 * <LI> After ending a trip: Can't undo
+	 * <LI> After ending a trip: {@link #askUndoEndTrip()}
 	 *</UL>
 	 * @since 0.9.50
 	 */
@@ -327,7 +329,10 @@ public class Main extends Activity
 	{
 		final Trip currT = VehSettings.getCurrentTrip(db, currV, false);
 		if (currT == null)
-			return;  // should not happen; onPrepare disabled the menu item
+		{
+			askUndoEndTrip();
+			return;
+		}
 
 		if (VehSettings.getCurrentTStop(db, currV, false) != null)
 			return;  // can't undo at a TStop; onPrepare disabled the menu item
@@ -355,12 +360,11 @@ public class Main extends Activity
 	/**
 	 * Ask the user to confirm that they want to undo continuing from the previous stop.
 	 * Called from {@link #onUndoCancelItemSelected()}. Shows a dialog with location info,
-	 * how long ago travel was continued, and Undo/Continue buttons.
+	 * how long ago travel was continued, and Undo/No buttons.
 	 * If user confirms, calls {@link Trip#cancelContinueFromTStop()}.
 	 * @see #canUndoContinueFromTStop(Trip)
 	 * @since 0.9.50
 	 */
-	@SuppressLint("DefaultLocale")
 	private void askUndoContinueFromTStop()
 	{
 		final Trip currT = VehSettings.getCurrentTrip(db, currV, false);
@@ -372,33 +376,15 @@ public class Main extends Activity
 		if (prevTS == null)
 			return;  // unlikely unless db inconsistency
 
-		final Resources res = getResources();
 		String locName = prevTS.readLocationText();
 		if (locName == null)
 			locName = "(null)";  // fallback if inconsistent
-		final int timeCont = prevTS.getTime_continue();  // may be 0
 
-		StringBuilder sb = new StringBuilder();
-		sb.append(res.getString(R.string.main_undo_continue__text, locName));
-		if (timeCont != 0)
-		{
-			// "5 minutes ago", "3 days ago", etc; past 1 week ago it formats timeCont's date instead.
-			CharSequence timediff = DateUtils.getRelativeTimeSpanString
-				(timeCont * 1000L, System.currentTimeMillis(), DateUtils.SECOND_IN_MILLIS);
-			// Format may place timediff in middle of sentence, so force lowercase:
-			// example Spanish "Hace 3 minutos" -> hace
-			timediff = timediff.toString().toLowerCase();
-
-			sb.append("\n\n");
-			sb.append(res.getString(R.string.main_undo_continue__left_this_stop, timediff));
-		}
-
-		// Confirm with user if wants to undo continuing.
-		AlertDialog.Builder alert = new AlertDialog.Builder(this);
-
-		alert.setMessage(sb);
-		alert.setPositiveButton(R.string.undo, new DialogInterface.OnClickListener()
-		{
+		_askUndoDialogWithTime
+		(getResources().getString(R.string.main_undo_continue__text, locName),
+		 prevTS.getTime_continue(), R.string.main_undo_continue__left_this_stop,
+		 new DialogInterface.OnClickListener()
+		 {
 			public void onClick(DialogInterface dialog, int whichButton)
 			{
 				try
@@ -412,10 +398,7 @@ public class Main extends Activity
 
 				updateDriverVehTripTextAndButtons();
 			}
-		});
-		alert.setNegativeButton(R.string.no, null);
-
-		alert.show();
+		 } );
 	}
 
 	/**
@@ -467,6 +450,89 @@ public class Main extends Activity
 			}
 		});
 		alert.setNegativeButton(R.string.continu, null);
+
+		alert.show();
+	}
+
+	/**
+	 * Ask the user to confirm that they want to undo ending the previous trip.
+	 * Called from {@link #onUndoCancelItemSelected()}. Shows a dialog with
+	 * how long ago the trip was ended, and Undo/No buttons.
+	 * If user confirms, calls {@link Trip#cancelEndPreviousTrip(RDBAdapter)}.
+	 * @since 0.9.50
+	 */
+	private void askUndoEndTrip()
+	{
+		if (null != VehSettings.getCurrentTrip(db, currV, false))
+			return;  // should not occur, menu item would be disabled; checking here just in case
+
+		final Trip prevTrip = Trip.recentTripForVehicle(db, currV, false, false);
+		if (prevTrip == null)
+			return;  // should not occur, item would be disabled
+
+		_askUndoDialogWithTime
+			(getResources().getString(R.string.main_undo_end_trip__text),
+			 prevTrip.getTime_end(), R.string.main_undo_end_trip__this_trip_ended,
+			 new DialogInterface.OnClickListener()
+			 {
+				public void onClick(DialogInterface dialog, int whichButton)
+				{
+					try
+					{
+						Trip.cancelEndPreviousTrip(db);
+					}
+					catch (IllegalStateException e)
+					{
+						Misc.showExceptionAlertDialog(Main.this, e);  // unlikely
+					}
+
+					updateDriverVehTripTextAndButtons();
+				}
+			 } );
+	}
+
+	/**
+	 * Utility method to show a confirmation dialog before undoing a trip action that happened some time ago.
+	 * Buttons are Undo (positive) and No (negative).
+	 *<P>
+	 * If {@code time} != 0, it will be formatted to a relative time like "3 hour ago"
+	 * using {@link DateUtils#getRelativeTimeSpanString(long, long, long)
+	 * DateUtils.getRelativeDateTimeString}(time * 1000L, {@link System#currentTimeMillis()},
+	 * {@link DateUtils#SECOND_IN_MILLIS}), placed into {@code timeTextStringRsrcId},
+	 * and appended to {@code text}.
+	 * @param text  Main text of the dialog
+	 * @param time  Time at which the undone action happened, or 0 if not known
+	 * @param timeTextStringRsrcId  String into which to place {@code time}, from {@code R.string}. Will call
+	 *        {@link Resources#getString(int, Object...) res.getString(timeTextStringRsrcId, formattedTime)}.
+	 * @param onClickUndo  If Undo button is clicked, calls this method
+	 * @since 0.9.50
+	 */
+	@SuppressLint("DefaultLocale")
+	private void _askUndoDialogWithTime
+		(CharSequence text, final int time, final int timeTextStringRsrcId,
+		 final DialogInterface.OnClickListener onClickUndo)
+	{
+		if (time != 0)
+		{
+			StringBuilder sb = new StringBuilder(text);
+
+			// "5 minutes ago", "3 days ago", etc; past 1 week ago it formats time's date instead.
+			CharSequence timediff = DateUtils.getRelativeTimeSpanString
+				(time * 1000L, System.currentTimeMillis(), DateUtils.SECOND_IN_MILLIS);
+			// Format may place timediff in middle of sentence, so force lowercase:
+			// example Spanish "Hace 3 minutos" -> hace
+			timediff = timediff.toString().toLowerCase();
+
+			sb.append("\n\n");
+			sb.append(getResources().getString(timeTextStringRsrcId, timediff));
+			text = sb;
+		}
+
+		AlertDialog.Builder alert = new AlertDialog.Builder(this);
+
+		alert.setMessage(text);
+		alert.setPositiveButton(R.string.undo, onClickUndo);
+		alert.setNegativeButton(R.string.no, null);
 
 		alert.show();
 	}

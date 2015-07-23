@@ -198,7 +198,12 @@
 <string name="main_undo_continue__text">Undo continuing travel from previous stop?\n\nLocation: %1$s</string>
 <!-- left_this_stop's string placeholder will get '6 seconds ago', '10 minutes ago',
      hours ago, days ago, or a date; see DateUtils.getRelativeTimeSpanString -->
-<string name="main_undo_continue__left_this_stop">Left this stop %1$s</string>
+<string name="main_undo_continue__left_this_stop">Left this stop %1$s.</string>
+<string name="main_undo_end_trip">Undo \'End Trip\'</string>
+<string name="main_undo_end_trip__text">Undo ending the previous trip?</string>
+<!-- this_trip_ended's string placeholder will get '6 seconds ago', '10 minutes ago',
+     hours ago, days ago, or a date; see DateUtils.getRelativeTimeSpanString -->
+<string name="main_undo_end_trip__this_trip_ended">This trip ended %1$s.</string>
 <string name="backups_main_cannot_backup_need_free_space__fmt">Cannot back up: The SD card must have at least %d kB free.</string>
 <string name="backups_main_cannot_browse_folder">Cannot browse this folder.</string>
 <string name="backups_main_change_folder">Change Folder</string>

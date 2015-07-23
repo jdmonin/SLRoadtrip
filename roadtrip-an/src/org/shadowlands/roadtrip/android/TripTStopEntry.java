@@ -3220,6 +3220,7 @@ public class TripTStopEntry extends Activity
 		outState.putInt("AIDO_PR", (areaOther_prev != null) ? areaOther_prev.getID() : -1);
 		outState.putInt("LOCID", (locObj != null) ? locObj.getID() : 0);
 		outState.putInt("VIAID", (viaRouteObj != null) ? viaRouteObj.getID() : 0);
+		outState.putFloat("CMEM", calcMemory);
 	}
 
 	/**
@@ -3298,6 +3299,8 @@ public class TripTStopEntry extends Activity
 			} catch (IllegalStateException e) {
 			} catch (RDBKeyNotFoundException e) {
 			}
+
+		calcMemory = inState.getFloat("CMEM");
 
 		if (contTimeRunningHourMinute != -1)
 			initContTimeRunning(null);

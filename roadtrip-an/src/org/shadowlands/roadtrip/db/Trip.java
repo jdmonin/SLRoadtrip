@@ -1520,8 +1520,9 @@ public class Trip extends RDBRecord
 		if (ts != null)
 		{
 			int nstop = ts.size();
-			if ((tstopid_start == 0) && (nstop > 0))  // tstopid_start == 0 implies nstop > 0;
-			                                          // check both to avoid crash if inconsistent
+			if ((tstopid_start == 0) && (nstop == 1))  // tstopid_start == 0 implies nstop > 0;
+			                                           // check both to avoid crash if inconsistent.
+				// if nstop > 1, has other stops so don't need to check whether first is intermediate.
 			{
 				TStop ts0 = ts.firstElement();
 				if ((ts0.getOdo_trip() == 0) && (ts0.getOdo_total() == odo_start))
@@ -1751,8 +1752,9 @@ public class Trip extends RDBRecord
 			return false;
 
 		int nstop = ts.size();
-		if ((tstopid_start == 0) && (nstop > 0))  // tstopid_start == 0 implies nstop > 0;
-		                                          // check both to avoid crash if inconsistent
+		if ((tstopid_start == 0) && (nstop == 1))  // tstopid_start == 0 implies nstop > 0;
+		                                           // check both to avoid crash if inconsistent.
+			// if nstop > 1, has other stops so don't need to check whether first is intermediate.
 		{
 			TStop ts0 = ts.firstElement();
 			if ((ts0.getOdo_trip() == 0) && (ts0.getOdo_total() == odo_start))

@@ -46,18 +46,22 @@ import android.widget.Toast;
  * When user has pressed "Begin Frequent Trip" button in the {@link Main} activity,
  * {@link TripBegin} initially comes here to choose a {@link FreqTrip}.
  *<P>
- * Called from {@link TripBegin} with {@link Activity#startActivityForResult(android.content.Intent, int)}.
- * When it returns to <tt>TripBegin</tt> with the result, its intent should contain
- * an int extra, with key = <tt>"_id"</tt>, that's the chosen FreqTrip.
- * If there are no available freqtrips, a Toast is presented to tell the user,
- * and {@link Activity#RESULT_CANCELED} is returned.
- *<P>
  * If the starting location is known, pass its id as a bundle extra with
- * the key {@link VehSettings#PREV_LOCATION}.  (This does not affect the actual setting.)
+ * the key {@link VehSettings#PREV_LOCATION}.  (This does not affect the actual VehSetting in the db.)
  * Otherwise, {@link VehSettings#getCurrentArea(RDBAdapter, Vehicle, boolean)} will be called.
  *<P>
- * If it's a roadtrip, start this activity with {@link TripBegin#EXTRAS_FLAG_NONLOCAL}
- * just as when starting TripBegin.
+ * If the list of freq trips should contain only roadtrips, start this activity
+ * with {@link TripBegin#EXTRAS_FLAG_NONLOCAL} just as when starting TripBegin.
+ *<P>
+ * Called from {@link TripBegin} with {@link Activity#startActivityForResult(android.content.Intent, int)}.
+ * When it returns to {@code TripBegin} with the result, its intent should contain
+ * an int extra with key {@code "_id"} for the chosen FreqTrip.
+ * See {@link TripBegin#onActivityResult(int, int, Intent)}.
+ *<P>
+ * If there are no available freqtrips, a Toast is presented to tell the user,
+ * and {@link Activity#RESULT_CANCELED} is returned.  Otherwise the list is shown,
+ * and the user will press Cancel or a FreqTrip; this is handled in
+ * {@link #onItemClick(AdapterView, View, int, long)}.
  *
  * @author jdmonin
  */
@@ -69,6 +73,7 @@ public class TripBeginChooseFreq extends Activity
 
 	private RDBAdapter db = null;
 
+	/** if true, only roadtrips should be shown in freq trip list */
 	private boolean isRoadtrip;
 	/** available freqtrips; {@link #freqTrips} contents  */
 	private ListView lvFreqTripsList;
@@ -112,7 +117,7 @@ public class TripBeginChooseFreq extends Activity
 	}
 
 	/**
-	 * Populate freq-stops list.
+	 * Populate the displayed frequent-trips list.
 	 * If there are none: Toast, set our result to {@link #RESULT_CANCELED} and finish this activity.
 	 */
 	@Override
@@ -196,7 +201,10 @@ public class TripBeginChooseFreq extends Activity
     	finish();
 	}
 
-	/** When a FreqTrip is selected in the list, finish the activity with its ID. */
+	/**
+	 * When a {@link FreqTrip} is selected in the list, finish the activity
+	 * and place its ID in our intent extras for {@link TripBegin}'s use.
+	 */
 	public void onItemClick(AdapterView<?> parent, View view, int position, long id)
 	{
 		if ((freqTrips == null) || (position >= freqTrips.size()))

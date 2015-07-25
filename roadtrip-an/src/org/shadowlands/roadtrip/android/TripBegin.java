@@ -67,17 +67,16 @@ import android.widget.TimePicker;
 import android.widget.Toast;
 
 /**
- * Confirm settings and begin a trip, from Main activity.
- * Assumes no current trip.
- * Assumes CURRENT_DRIVER, CURRENT_VEHICLE are set.
+ * Confirm settings and location and begin a trip, from {@link Main} activity.
+ * Assumes no current trip. Assumes CURRENT_VEHICLE, CURRENT_DRIVER are set.
  *<P>
  * To simplify interaction, all trips begin as local trips except
  * when the user has chosen a frequent trip that's a roadtrip.
  *<P>
- * By default the trip will not be a frequent trip. To start
- * a frequent trip or frequent roadtrip, use
- * {@link #EXTRAS_FLAG_FREQUENT} or {@link #EXTRAS_FLAG_NONLOCAL}
- * when creating the intent to start this activity.
+ * By default the trip will not be a frequent trip. To select
+ * a frequent trip or frequent roadtrip to use, set {@link #EXTRAS_FLAG_FREQUENT}
+ * and possibly {@link #EXTRAS_FLAG_NONLOCAL} when creating the intent
+ * to start this activity.  See that flag's javadoc for details.
  *<P>
  * If the "Change Driver/Vehicle" button is pressed,
  * the {@link ChangeDriverOrVehicle} activity is shown;
@@ -94,12 +93,23 @@ public class TripBegin extends Activity
 {
 	/**
 	 * Flag for non-local (roadtrip), for {@link Intent#putExtra(String, boolean)}.
-	 * Starting with v0.9.50, only frequent trips use this flag; all other trips
-	 * from {@link Main} activity begin as local trips.
+	 * In v0.9.50 and newer, only frequent trips ({@link #EXTRAS_FLAG_FREQUENT}) use this flag;
+	 * all other trips begin as local.
 	 */
 	public static final String EXTRAS_FLAG_NONLOCAL = "nonlocal";
 
-	/** Flag for frequent trip, for {@link Intent#putExtra(String, boolean)} */
+	/**
+	 * Flag for beginning a trip based on a previously defined frequent trip, for
+	 * {@link Intent#putExtra(String, boolean)}. If only frequent roadtrips should
+	 * be shown, also set {@link #EXTRAS_FLAG_NONLOCAL}.
+	 *<P>
+	 * When the activity is started with this flag, the current vehicle's current
+	 * location is found, and the {@link TripBeginChooseFreq} activity is called
+	 * to choose a frequent trip starting from that location or the current area.
+	 * When one is chosen, {@code TripBegin}.{@link #onActivityResult(int, int, Intent)}
+	 * will set {@link #isFrequent}, {@link #wantsFT}, and other activity fields
+	 * for a trip based on that frequent trip.
+	 */
 	public static final String EXTRAS_FLAG_FREQUENT = "frequent";
 
 	/** Historical Mode threshold is 21 days, in milliseconds. */
@@ -110,9 +120,14 @@ public class TripBegin extends Activity
 	private static final String TAG = "Roadtrip.TripBegin";
 
 	private RDBAdapter db = null;
-	private boolean isRoadtrip, isFrequent;
+	private boolean isRoadtrip;
+	/**
+	 * Trip will be based on frequent trip {@link #wantsFT}, probably starting from {@link #locObj}.
+	 * For more details see {@link #EXTRAS_FLAG_FREQUENT}.
+	 */
+	private boolean isFrequent;
 	private TextView tvCurrentSet;
-	/** destination geoarea textfield, or null if ! isRoadtrip */
+	/** destination {@link GeoArea} textfield, or null if ! {@link #isRoadtrip} */
 	private AutoCompleteTextView etGeoArea;
 	private GeoAreaOnItemClickListener etGeoAreaListener;
 
@@ -821,6 +836,17 @@ public class TripBegin extends Activity
 
 	/**
 	 * Callback from {@link ChangeDriverOrVehicle} or {@link TripBeginChooseFreq}.
+	 * @param requestCode  The activity request used with {@code startActivityForResult}
+	 *   when creating the activity which led to the callback:
+	 *   <UL>
+	 *     <LI> {@link R.id#main_btn_begin_freqtrip}: A {@link FreqTrip} has been selected,
+	 *       set {@link #isFrequent} and other activity fields for a new trip based on that FreqTrip.
+	 *       {@code idata} contains int {@code _id} field with the FreqTrip ID.
+	 *     <LI> {@link R.id#main_btn_change_driver_vehicle}: The current driver or vehicle
+	 *       has been changed; update activity fields to that driver, vehicle, and location.
+	 *   </UL>
+	 * @param resultCode  Result from activity; will do nothing if {@link Activity#RESULT_CANCELED}.
+	 * @param idata  Intent from activity, possibly with extra fields set
 	 */
 	@Override
 	public void onActivityResult(final int requestCode, final int resultCode, Intent idata)

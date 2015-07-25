@@ -68,7 +68,8 @@ import android.widget.Toast;
 
 /**
  * Confirm settings and location and begin a trip, from {@link Main} activity.
- * Assumes no current trip. Assumes CURRENT_VEHICLE, CURRENT_DRIVER are set.
+ * Assumes no current trip. Assumes {@link Settings#CURRENT_VEHICLE CURRENT_VEHICLE},
+ * {@link VehSettings#CURRENT_DRIVER CURRENT_DRIVER} are set.
  *<P>
  * To simplify interaction, all trips begin as local trips except
  * when the user has chosen a frequent trip that's a roadtrip.
@@ -202,7 +203,7 @@ public class TripBegin extends Activity
 		startTimeAtCreate = System.currentTimeMillis();
 		startTime.setTimeInMillis(startTimeAtCreate);
 
-		tvCurrentSet = (TextView) findViewById(R.id.trip_begin_text_current); 
+		tvCurrentSet = (TextView) findViewById(R.id.trip_begin_text_current);
 		odo = (OdometerNumberPicker) findViewById(R.id.trip_begin_odometer);
 		odo.setTenthsVisibility(false);
 		rbLocGroup = (RadioGroup) findViewById(R.id.trip_begin_radio_loc_group);
@@ -258,7 +259,8 @@ public class TripBegin extends Activity
 
 		// Update height of starting-location textview to match
 		// the radio button, once those have been drawn.
-		rbLocContinue.post(new Runnable() {
+		rbLocContinue.post(new Runnable()
+		{
 			public void run() {
 				final int rbHeight = rbLocContinue.getHeight(),
 				          tvHeight = tvLocContinue.getHeight();
@@ -279,10 +281,11 @@ public class TripBegin extends Activity
 	}
 
 	/**
-	 * Check Settings table for <tt>CURRENT_DRIVER</tt>, <tt>CURRENT_VEHICLE</tt>.
-	 * Set {@link #currD} and {@link #currV}.
-	 * If there's an inconsistency between Settings and Vehicle/Person tables, delete the Settings entry.
-	 * <tt>currD</tt> and <tt>currV</tt> will be null unless they're set consistently in Settings.
+	 * Check settings tables for {@link Settings#CURRENT_VEHICLE CURRENT_VEHICLE},
+	 * {@link VehSettings#CURRENT_DRIVER CURRENT_DRIVER}.
+	 * Set {@link #currV} and {@link #currD} activity fields.
+	 * If there's an inconsistency between settings and Vehicle/Person tables, delete the settings entry.
+	 * {@code currV} and {@code currD} will be null unless they're set consistently in db settings.
 	 *
 	 * @return true if settings exist and are OK, false otherwise.
 	 */
@@ -295,10 +298,10 @@ public class TripBegin extends Activity
 		currA = VehSettings.getCurrentArea(db, currV, false);
 		if (currA == null)
 		{
-    		final String homearea = getResources().getString(R.string.home_area);
-    		currA = new GeoArea(homearea);
-    		currA.insert(db);
-    		VehSettings.setCurrentArea(db, currV, currA);
+			final String homearea = getResources().getString(R.string.home_area);
+			currA = new GeoArea(homearea);
+			currA.insert(db);
+			VehSettings.setCurrentArea(db, currV, currA);
 		}
 		if (currA != prevA)
 		{
@@ -306,8 +309,7 @@ public class TripBegin extends Activity
 			Location[] areaLocs = Location.getAll(db, aID);
 			if (areaLocs != null)
 			{
-				ArrayAdapter<Location> adapter = new ArrayAdapter<Location>(this, R.layout.list_item, areaLocs);
-				etLocNew.setAdapter(adapter);
+				etLocNew.setAdapter(new ArrayAdapter<Location>(this, R.layout.list_item, areaLocs));
 				etLocNew.setOnItemClickListener(this);
 			} else {
 				etLocNew.setAdapter((ArrayAdapter<Location>) null);
@@ -319,8 +321,8 @@ public class TripBegin extends Activity
 				GeoArea[] othera = GeoArea.getAll(db, aID);
 				if (othera != null)
 				{
-					ArrayAdapter<GeoArea> adapter = new ArrayAdapter<GeoArea>(this, R.layout.list_item, othera);
-					etGeoArea.setAdapter(adapter);
+					etGeoArea.setAdapter
+						(new ArrayAdapter<GeoArea>(this, R.layout.list_item, othera));
 					if (etGeoAreaListener == null)
 						etGeoAreaListener = new GeoAreaOnItemClickListener();
 					etGeoArea.setOnItemClickListener(etGeoAreaListener);
@@ -408,7 +410,8 @@ public class TripBegin extends Activity
 				{
 					// Update height of starting-location textview to match
 					// the radio buttons again, once those have been un-hidden.
-					rbLocContinue.post(new Runnable() {
+					rbLocContinue.post(new Runnable()
+					{
 						public void run() {
 							final int rbHeight = rbLocContinue.getHeight(),
 							          tvHeight = tvLocContinue.getHeight();
@@ -447,33 +450,39 @@ public class TripBegin extends Activity
 	 */
 	public void askStartNowOrHistorical(final long latestVehTime)
 	{
-    	AlertDialog.Builder alert = new AlertDialog.Builder(this);
+		AlertDialog.Builder alert = new AlertDialog.Builder(this);
 
-    	alert.setTitle(R.string.confirm);
-    	alert.setMessage(R.string.set_time_now_or_historical);
-    	alert.setNegativeButton(R.string.now, new DialogInterface.OnClickListener() {
-	    	public void onClick(DialogInterface dialog, int whichButton)
-	    	{
-	    		final long now = System.currentTimeMillis();
-	    		startTime.setTimeInMillis(now);
-	    		startTimeAtCreate = now;
-	    		tpStartTime.setCurrentHour(startTime.get(Calendar.HOUR_OF_DAY));
-	    		tpStartTime.setCurrentMinute(startTime.get(Calendar.MINUTE));
-	    		updateStartDateButton();
-	    	}
-	    	});
-    	alert.setPositiveButton(R.string.historical, new DialogInterface.OnClickListener() {
-	    	public void onClick(DialogInterface dialog, int whichButton)
-	    	{
-	    		startTime.setTimeInMillis(latestVehTime);
-	    		startTimeAtCreate = latestVehTime;  // set equal, to allow further updates if veh changes again
-	    		tpStartTime.setCurrentHour(startTime.get(Calendar.HOUR_OF_DAY));
-	    		tpStartTime.setCurrentMinute(startTime.get(Calendar.MINUTE));
-	    		updateStartDateButton();
-	    	}
-	    	});
-    	alert.setCancelable(true);
-    	alert.show();
+		alert.setTitle(R.string.confirm);
+		alert.setMessage(R.string.set_time_now_or_historical);
+		alert.setNegativeButton(R.string.now, new DialogInterface.OnClickListener()
+		{
+			public void onClick(DialogInterface dialog, int whichButton)
+			{
+				final long now = System.currentTimeMillis();
+				startTime.setTimeInMillis(now);
+				startTimeAtCreate = now;
+				tpStartTime.setCurrentHour(startTime.get(Calendar.HOUR_OF_DAY));
+				tpStartTime.setCurrentMinute(startTime.get(Calendar.MINUTE));
+
+				updateStartDateButton();
+			}
+		});
+		alert.setPositiveButton(R.string.historical, new DialogInterface.OnClickListener()
+		{
+			public void onClick(DialogInterface dialog, int whichButton)
+			{
+				startTime.setTimeInMillis(latestVehTime);
+				startTimeAtCreate = latestVehTime;
+					// set equal, to allow further updates if veh changes again
+				tpStartTime.setCurrentHour(startTime.get(Calendar.HOUR_OF_DAY));
+				tpStartTime.setCurrentMinute(startTime.get(Calendar.MINUTE));
+
+				updateStartDateButton();
+			}
+		});
+		alert.setCancelable(true);
+
+		alert.show();
 	}
 
 	/** Set the start-date button text based on {@link #startTime}'s value */
@@ -502,12 +511,12 @@ public class TripBegin extends Activity
 
 		if (! checkCurrentDriverVehicleSettings())
 		{
-        	Toast.makeText(getApplicationContext(),
-                "Current driver/vehicle not found in db",
-                Toast.LENGTH_SHORT).show();
-	    	startActivity(new Intent(TripBegin.this, AndroidStartup.class));
-	    	finish();
-	    	return;
+			Toast.makeText(getApplicationContext(),
+				"Current driver/vehicle not found in db",  // TODO i18n
+				Toast.LENGTH_SHORT).show();
+			startActivity(new Intent(TripBegin.this, AndroidStartup.class));
+			finish();
+			return;
 		}
 
 		// Give status: driver, vehicle, start-date;
@@ -527,9 +536,7 @@ public class TripBegin extends Activity
 			}
 			startActivityForResult
 			    (i, R.id.main_btn_begin_freqtrip);
-			// When it returns with the result, its intent should contain
-			// an int extra "_id" that's the chosen FreqTrip.
-			// (see onActivityResult)
+			// when it returns, activity execution continues in onActivityResult().
 		}
 	}
 
@@ -571,12 +578,13 @@ public class TripBegin extends Activity
 		startTime.set(Calendar.HOUR_OF_DAY, tpStartTime.getCurrentHour());
 		startTime.set(Calendar.MINUTE, tpStartTime.getCurrentMinute());
 		final int startTimeSec;
+
 		// If start time hasn't been changed since onCreate,
 		// then update it to the current time when button was clicked.
 		{
 			long startTimeMillis = startTime.getTimeInMillis();
 			if (Math.abs(startTimeMillis - startTimeAtCreate) < 2000)
-			{				
+			{
 				startTimeAtCreate = System.currentTimeMillis();
 				startTime.setTimeInMillis(startTimeAtCreate);
 				startTimeSec = (int) (startTimeAtCreate / 1000L);
@@ -593,22 +601,20 @@ public class TripBegin extends Activity
 			startingPrevTStop = null;
 
 		String startloc = null;
-		if (startingPrevTStop == null) 
+		if (startingPrevTStop == null)
 		{
 			startloc = etLocNew.getText().toString().trim();
 			if (startloc.length() == 0)
 			{
 				etLocNew.requestFocus();
-	        	Toast.makeText(getApplicationContext(),
-	    			getResources().getString(R.string.trip_tstart_loc_prompt),
-	                Toast.LENGTH_SHORT).show();
+				Toast.makeText(getApplicationContext(),
+					getResources().getString(R.string.trip_tstart_loc_prompt),
+					Toast.LENGTH_SHORT).show();
 				return;  // <--- Early return: etLocNew contents ---
 			}
-			if (locObj != null)
-			{
-				if (! locObj.getLocation().equalsIgnoreCase(startloc))
-					locObj = null;  // locObj outdated: text doesn't match
-			}
+
+			if ((locObj != null) && ! locObj.getLocation().equalsIgnoreCase(startloc))
+				locObj = null;  // locObj outdated: text doesn't match
 		}
 
 		// check location vs frequent trip:
@@ -621,31 +627,34 @@ public class TripBegin extends Activity
 				wantsFT = null;  // shouldn't happen, it's here just in case
 			} else {
 				// Prompt user if wants to revert back to locObjOrig.
-		    	AlertDialog.Builder alert = new AlertDialog.Builder(this);
+				AlertDialog.Builder alert = new AlertDialog.Builder(this);
 
-		    	alert.setTitle(R.string.confirm);
-		    	alert.setMessage(R.string.trip_tstart_loc_not_freq);
-		    	alert.setPositiveButton(R.string.keep_this, new DialogInterface.OnClickListener() {
-			    	  public void onClick(DialogInterface dialog, int whichButton)
-			    	  {
-			    		  wantsFT = null;
-			    	  }
-			    	});
-		    	alert.setNegativeButton(R.string.revert, new DialogInterface.OnClickListener() {
-			    	public void onClick(DialogInterface dialog, int whichButton)
-			    	{
-			    		locObj = locObjOrig;
-						if (startingPrevOrig != null)
-						{
-				    		startingPrevTStop = startingPrevOrig;
-							rbLocGroup.check(R.id.trip_begin_radio_loc_cont);
-							etLocNew.setText("");
-						} else {
-							etLocNew.setText(locObj.getLocation());
-						}
-			    	}
-			    	});
-		    	alert.show();
+				alert.setTitle(R.string.confirm);
+				alert.setMessage(R.string.trip_tstart_loc_not_freq);
+				alert.setPositiveButton(R.string.keep_this, new DialogInterface.OnClickListener()
+				{
+				  public void onClick(DialogInterface dialog, int whichButton)
+				  {
+					wantsFT = null;
+				  }
+				});
+				alert.setNegativeButton(R.string.revert, new DialogInterface.OnClickListener()
+				{
+				  public void onClick(DialogInterface dialog, int whichButton)
+				  {
+					locObj = locObjOrig;
+					if (startingPrevOrig != null)
+					{
+						startingPrevTStop = startingPrevOrig;
+						rbLocGroup.check(R.id.trip_begin_radio_loc_cont);
+						etLocNew.setText("");
+					} else {
+						etLocNew.setText(locObj.getLocation());
+					}
+				  }
+				});
+
+				alert.show();
 				return;  // <-- after alert, user will hit Begin button again ---
 			}
 		}
@@ -688,7 +697,7 @@ public class TripBegin extends Activity
 						} catch (RDBKeyNotFoundException e)
 						{
 							locObj = null;
-						}						
+						}
 					}
 					startingPrevTStop = null;
 				}
@@ -713,9 +722,9 @@ public class TripBegin extends Activity
 			if (destarea.equalsIgnoreCase(currA.getName()))
 			{
 				etGeoArea.requestFocus();
-	        	Toast.makeText(getApplicationContext(),
-	    			getResources().getString(R.string.trip_tstart_geoarea_different),
-	                Toast.LENGTH_SHORT).show();
+				Toast.makeText(getApplicationContext(),
+					getResources().getString(R.string.trip_tstart_geoarea_different),
+					Toast.LENGTH_SHORT).show();
 				return;  // <--- Early return: same src,dest geoarea ---
 			}
 			if ((destAreaObj == null) || ! destAreaObj.toString().equalsIgnoreCase(destarea))
@@ -723,9 +732,9 @@ public class TripBegin extends Activity
 				if (destarea.length() == 0)
 				{
 					etGeoArea.requestFocus();
-		        	Toast.makeText(getApplicationContext(),
-		    			getResources().getString(R.string.trip_tstart_geoarea_prompt),
-		                Toast.LENGTH_SHORT).show();
+					Toast.makeText(getApplicationContext(),
+						getResources().getString(R.string.trip_tstart_geoarea_prompt),
+						Toast.LENGTH_SHORT).show();
 					return;  // <--- Early return: etArea empty ---
 				}
 				destAreaObj = new GeoArea(destarea);
@@ -735,10 +744,10 @@ public class TripBegin extends Activity
 
 		Trip t = new Trip(currV, currD, startOdo, 0, currA.getID(),
 			startingPrevTStop, startTimeSec, 0,
-    		(String) null, (String) null, (String) null, (String) null,
-    		wantsFT, null,
-    		(isRoadtrip ? destAreaObj.getID() : 0),
-    		false);
+			(String) null, (String) null, (String) null, (String) null,
+			wantsFT, null,
+			(isRoadtrip ? destAreaObj.getID() : 0),
+			false);
 		if (tripCat > 0)
 			t.setTripCategoryID(tripCat);
 		if (Settings.getBoolean(db, Settings.SHOW_TRIP_PAX, false))
@@ -761,7 +770,7 @@ public class TripBegin extends Activity
 		if (wantsFT != null)
 			VehSettings.setCurrentFreqTrip(db, currV, wantsFT);
 
-		// set CURRENT_TRIP, clear CURRENT_TSTOP, set PREV_LOCATION 
+		// set CURRENT_TRIP, clear CURRENT_TSTOP, set PREV_LOCATION
 		VehSettings.setCurrentTrip(db, currV, t);
 		VehSettings.setCurrentTStop(db, currV, null);
 
@@ -811,11 +820,11 @@ public class TripBegin extends Activity
 	@Override
 	protected Dialog onCreateDialog(final int id)
 	{
-        return new DatePickerDialog
-        	(this, this,
-            startTime.get(Calendar.YEAR),
-            startTime.get(Calendar.MONTH),
-            startTime.get(Calendar.DAY_OF_MONTH));
+		return new DatePickerDialog
+			(this, this,
+			 startTime.get(Calendar.YEAR),
+			 startTime.get(Calendar.MONTH),
+			 startTime.get(Calendar.DAY_OF_MONTH));
 	}
 
 	/** Callback from {@link DatePickerDialog} for trip start-date. */
@@ -894,14 +903,14 @@ public class TripBegin extends Activity
 			return;
 
 		if (requestCode == R.id.main_btn_change_driver_vehicle)
-			updateDriverVehTripTextAndButtons();			
+			updateDriverVehTripTextAndButtons();
 
 	}
 
 	/**
 	 * If new-location text is typed into {@link #etLocNew}, ensure the related radiobutton
 	 * {@code R.id.trip_begin_radio_loc_new} is marked, not {@link #rbLocContinue}.
-	 * (for addTextChangedListener / {@link TextWatcher}) 
+	 * (for addTextChangedListener / {@link TextWatcher})
 	 */
 	public void afterTextChanged(Editable arg0)
 	{
@@ -910,12 +919,10 @@ public class TripBegin extends Activity
 	}
 
 	/** required stub for {@link TextWatcher} */
-	public void beforeTextChanged(CharSequence arg0, int arg1, int arg2, int arg3)
-	{ }
+	public void beforeTextChanged(CharSequence arg0, int arg1, int arg2, int arg3) {}
 
 	/** required stub for {@link TextWatcher} */
-	public void onTextChanged(CharSequence arg0, int arg1, int arg2, int arg3)
-	{ }
+	public void onTextChanged(CharSequence arg0, int arg1, int arg2, int arg3) {}
 
 	/** For Location autocomplete, the callback for {@link OnItemClickListener} */
 	public void onItemClick(AdapterView<?> parent, View clickedOn, int position, long rowID)
@@ -936,7 +943,7 @@ public class TripBegin extends Activity
 			if (la == null)
 				return;
 			destAreaObj = (GeoArea) la.getItem(position);
-		}		
+		}
 	}
 
 }

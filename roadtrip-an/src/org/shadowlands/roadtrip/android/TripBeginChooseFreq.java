@@ -77,7 +77,10 @@ public class TripBeginChooseFreq extends Activity
 	private boolean isRoadtrip;
 	/** available freqtrips; {@link #freqTrips} contents  */
 	private ListView lvFreqTripsList;
-	/** available freqtrips; contents of {@link #lvFreqTripsList}, once {@link #populateTripsList(RDBAdapter)} is called */
+	/**
+	 * available freqtrips; contents of {@link #lvFreqTripsList},
+	 * once {@link #populateTripsList(RDBAdapter)} is called
+	 */
 	private Vector<FreqTrip> freqTrips;
 	/** if known, location ID passed into our bundle at create time; 0 otherwise. */
 	private int locID = 0;
@@ -89,14 +92,14 @@ public class TripBeginChooseFreq extends Activity
 	@Override
 	public void onCreate(Bundle savedInstanceState)
 	{
-	    super.onCreate(savedInstanceState);
-	    setContentView(R.layout.trip_begin_choose_freq);
+		super.onCreate(savedInstanceState);
+		setContentView(R.layout.trip_begin_choose_freq);
 
-	    db = new RDBOpenHelper(this);
+		db = new RDBOpenHelper(this);
 
-	    lvFreqTripsList = (ListView) findViewById(R.id.trip_begin_choosefreq_list);
-	    lvFreqTripsList.setOnItemClickListener(this);
-	    freqTrips = null;
+		lvFreqTripsList = (ListView) findViewById(R.id.trip_begin_choosefreq_list);
+		lvFreqTripsList.setOnItemClickListener(this);
+		freqTrips = null;
 
 		Intent i = getIntent();
 		if (i != null)
@@ -135,20 +138,21 @@ public class TripBeginChooseFreq extends Activity
 				{
 					Location lo = new Location(db, locID);
 					locText = lo.getLocation();
-				} catch (Throwable t) { }
+				} catch (Throwable t) {}
 			}
 
 			if (locText == null)
 			{
-				Toast.makeText(this, R.string.no_frequent_trips_found, Toast.LENGTH_SHORT).show();				
+				Toast.makeText(this, R.string.no_frequent_trips_found, Toast.LENGTH_SHORT).show();
 			} else {
 				StringBuffer sb = new StringBuffer();
 				sb.append(getResources().getString(R.string.no_frequent_trips_found_from));
 				sb.append(' ');
 				sb.append(locText);
-				Toast.makeText(this, sb, Toast.LENGTH_SHORT).show();				
+				Toast.makeText(this, sb, Toast.LENGTH_SHORT).show();
 			}
-	    	setResult(RESULT_CANCELED);
+
+			setResult(RESULT_CANCELED);
 			finish();
 		}
 	}
@@ -191,14 +195,15 @@ public class TripBeginChooseFreq extends Activity
 		}
 		freqTrips = fts;
 		lvFreqTripsList.setAdapter(new ArrayAdapter<FreqTrip>(this, R.layout.list_item, fts));
+
 		return true;
 	}
 
 	/** 'Cancel' button was clicked: setResult({@link #RESULT_CANCELED}), finish this activity. */
 	public void onClick_BtnCancel(View v)
 	{
-    	setResult(RESULT_CANCELED);
-    	finish();
+		setResult(RESULT_CANCELED);
+		finish();
 	}
 
 	/**
@@ -214,8 +219,9 @@ public class TripBeginChooseFreq extends Activity
 		Toast.makeText(this, "got freqtrip id " + ft.getID(),
 			Toast.LENGTH_SHORT).show();
 		Intent i = getIntent();
-    	i.putExtra("_id", ft.getID());
-    	setResult(RESULT_OK, i);
+		i.putExtra("_id", ft.getID());
+
+		setResult(RESULT_OK, i);
 		finish();
 	}
 

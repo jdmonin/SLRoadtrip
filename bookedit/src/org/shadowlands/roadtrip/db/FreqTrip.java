@@ -31,446 +31,462 @@ import java.util.Vector;
  */
 public class FreqTrip extends RDBRecord
 {
-    private static final String TABNAME = "freqtrip";
+	private static final String TABNAME = "freqtrip";
 
-    /** db table fields.
-     * @see #buildInsertUpdate()
-     */
-    private static final String[] FIELDS =
-        { "a_id", "start_locid", "end_locid",
-      	  "end_odo_trip", "roadtrip_end_aid", "descr", "end_via_id",
-      	  "typ_timeofday", "flag_weekends", "flag_weekdays", "is_roundtrip", "catid" };
-
-    private static final String[] FIELDS_AND_ID =
-	    { "a_id", "start_locid", "end_locid",
-    	  "end_odo_trip", "roadtrip_end_aid", "descr", "end_via_id",
-	  	  "typ_timeofday", "flag_weekends", "flag_weekdays", "is_roundtrip", "catid", "_id" };
-
-    /** GeoArea ID.  -1 is empty/unused. */
-    private int a_id;
-    /** Optional {@link TripCategory} ID.  0 is empty/unused (null in db). */
-    private int catid;
-    /** For roadtrips, ending GeoArea ID.  0 is empty/unused. */
-    private int roadtrip_end_aid;
-    /** Starting/ending {@link Location} IDs. See {@link #start_loc}. */
-    private int start_locid, end_locid;
-
-    private int end_odo_trip;
-
-    /** typical time of day (60*hours + minutes). -1 is empty/unused. */
-    private int typ_timeofday;
-
-    /** typical time of week */
-    private boolean flag_weekends, flag_weekdays;
-
-    /** Does this trip end at {@link #start_locid} after stopping at {@link #end_locid}? */
-    private boolean is_roundtrip;
-
-    /** may be null */
-    private String descr;
-    /** trip-ending via_id into via_route table; 0 if unused */
-    private int end_via_id;
-
-    /**
-     * null unless {@link #readAllTStops()} called, or
-     * unless {@link #createFromTrip(Trip, Vector, String, int, boolean, boolean)}
-     * was called (in that case, they aren't inserted into the db yet).
-     */
-    private transient Vector<FreqTripTStop> allStops;
-    private transient Location start_loc, end_loc;
-    /**
-     * null unless {@link #toString()} was called.
-     * See toString javadoc for contents.
-     */
-    private transient String toString_descr;
-
-    /**
-     * Get the FreqTrips currently in the database.
-     * @param db  database connection
-     * @param alsoTStops  If true, call {@link FreqTrip#readAllTStops()} for each freqtrip found
-     * @return FreqTrips, unsorted, or null if none
-     * @throws IllegalStateException if db not open
-     * @see #tripsForArea(RDBAdapter, int, boolean, boolean)
-     */
-    public static Vector<FreqTrip> getAll(RDBAdapter db, final boolean alsoTStops)
-        throws IllegalStateException
-    {
-    	if (db == null)
-    		throw new IllegalStateException("db null");
-    	Vector<String[]> sv = db.getRows(TABNAME, (String) null, (String[]) null, FIELDS_AND_ID, null, 0);  // TODO sorting
-
-    	Vector<FreqTrip> vv = objVectorFromStrings(db, alsoTStops, sv);
-    	return vv;
-    }
-
-    /**
-     * Retrieve all FreqTrips for a starting location.
-     * @param db  db connection
-     * @param locID   Location ID; should not be 0.
-     * @param nonLocal  Roadtrips, not local trips (roadtrip_end_aid != 0)
-     * @param alsoTStops  If true, call {@link FreqTrip#readAllTStops()} for each freqtrip found
-     * @return FreqTrips for this location, unsorted, or null if none
-     * @throws IllegalStateException if db not open
-     * @see #tripsForArea(RDBAdapter, int, boolean, boolean)
-     */
-    public static Vector<FreqTrip> tripsForLocation(RDBAdapter db, final int locID, final boolean nonLocal, final boolean alsoTStops)
-        throws IllegalStateException
-    {
-    	if (db == null)
-    		throw new IllegalStateException("db null");
-    	Vector<String[]> sv = db.getRows
-    	    (TABNAME, "start_locid", Integer.toString(locID), FIELDS_AND_ID, "_id", 0);  // TODO sorting
-    	// TODO nonLocal
-
-    	Vector<FreqTrip> vv = objVectorFromStrings(db, alsoTStops, sv);
-    	return vv;
-    }
-
-    /**
-     * Retrieve all local FreqTrips for an area.
-     * @param db  db connection
-     * @param areaID   GeoArea ID; should not be 0.
-     * @param nonLocal  Roadtrips, not local trips (roadtrip_end_aid != 0)
-     * @param alsoTStops  If true, call {@link FreqTrip#readAllTStops()} for each freqtrip found
-     * @return FreqTrips for this location, unsorted, or null if none
-     * @throws IllegalStateException if db not open
-     * @see #getAll(RDBAdapter, boolean)
-     * @see #tripsForLocation(RDBAdapter, int, boolean, boolean)
-     */
-    public static Vector<FreqTrip> tripsForArea(RDBAdapter db, final int areaID, final boolean nonLocal, final boolean alsoTStops)
-        throws IllegalStateException
-    {
-    	if (db == null)
-    		throw new IllegalStateException("db null");
-    	Vector<String[]> sv = db.getRows
-    	    (TABNAME, "a_id", Integer.toString(areaID), FIELDS_AND_ID, "_id", 0);  // TODO sorting
-    	// TODO nonLocal
-
-    	Vector<FreqTrip> vv = objVectorFromStrings(db, alsoTStops, sv);
-    	return vv;
-    }
-
-    /**
-     * Parse and return a vector of FreqTrip objects from db.getRows strings.
-     * @param db  db connection
-     * @param alsoTStops  If true, call {@link FreqTrip#readAllTStops()} for each freqtrip found
-     * @param sv  The string values returned by db.getRows, or null if none
-     * @return Vector of FreqTrips, or null if <tt>sv</tt> is null
-     */
-	private static Vector<FreqTrip> objVectorFromStrings
-		(RDBAdapter db, final boolean alsoTStops, final Vector<String[]> sv)
+	/** db table fields.
+	 * @see #buildInsertUpdate()
+	 */
+	private static final String[] FIELDS =
 	{
-    	if (sv == null)
-    		return null;
+		"a_id", "start_locid", "end_locid",
+		"end_odo_trip", "roadtrip_end_aid", "descr", "end_via_id",
+		"typ_timeofday", "flag_weekends", "flag_weekdays", "is_roundtrip", "catid"
+	};
 
-    	Vector<FreqTrip> vv = new Vector<FreqTrip>(sv.size());
-		try
-		{
-			FreqTrip t;
-	    	for (int i = 0; i < sv.size(); ++i)
-	    	{
-	    		t = new FreqTrip(db, sv.elementAt(i));
-	    		if (alsoTStops)
-	    			t.readAllTStops();
-	    		vv.addElement(t);
-	    	}
-		} catch (RDBKeyNotFoundException e) { }
+	private static final String[] FIELDS_AND_ID =
+	{
+		"a_id", "start_locid", "end_locid",
+		"end_odo_trip", "roadtrip_end_aid", "descr", "end_via_id",
+		"typ_timeofday", "flag_weekends", "flag_weekdays", "is_roundtrip", "catid", "_id"
+	};
+
+	/** GeoArea ID.  -1 is empty/unused. */
+	private int a_id;
+	/** Optional {@link TripCategory} ID.  0 is empty/unused (null in db). */
+	private int catid;
+	/** For roadtrips, ending GeoArea ID.  0 is empty/unused. */
+	private int roadtrip_end_aid;
+	/** Starting/ending {@link Location} IDs. See {@link #start_loc}. */
+	private int start_locid, end_locid;
+
+	private int end_odo_trip;
+
+	/** typical time of day (60*hours + minutes). -1 is empty/unused. */
+	private int typ_timeofday;
+
+	/** typical time of week */
+	private boolean flag_weekends, flag_weekdays;
+
+	/** Does this trip end at {@link #start_locid} after stopping at {@link #end_locid}? */
+	private boolean is_roundtrip;
+
+	/** may be null */
+	private String descr;
+	/** trip-ending via_id into via_route table; 0 if unused */
+	private int end_via_id;
+
+	/**
+	 * null unless {@link #readAllTStops()} called, or
+	 * unless {@link #createFromTrip(Trip, Vector, String, int, boolean, boolean)}
+	 * was called (in that case, they aren't inserted into the db yet).
+	 */
+	private transient Vector<FreqTripTStop> allStops;
+	private transient Location start_loc, end_loc;
+	/**
+	 * null unless {@link #toString()} was called.
+	 * See toString javadoc for contents.
+	 */
+	private transient String toString_descr;
+
+	/**
+	 * Get the FreqTrips currently in the database.
+	 * @param db  database connection
+	 * @param alsoTStops  If true, call {@link FreqTrip#readAllTStops()} for each freqtrip found
+	 * @return All frequent trips, unsorted, or null if none
+	 * @throws IllegalStateException if db not open
+	 * @see #tripsForArea(RDBAdapter, int, boolean, boolean)
+	 */
+	public static Vector<FreqTrip> getAll(RDBAdapter db, final boolean alsoTStops)
+		throws IllegalStateException
+	{
+		if (db == null)
+			throw new IllegalStateException("db null");
+		Vector<String[]> sv = db.getRows(TABNAME, (String) null, (String[]) null, FIELDS_AND_ID, null, 0);  // TODO sorting?
+
+		Vector<FreqTrip> vv = objVectorFromStrings(db, alsoTStops, sv);
 		return vv;
 	}
 
-    /**
-     * Create a new, uncommitted FreqTrip from this Trip.
-     *<P>
-     * If <tt>keepStops</tt> != null, and its last entry is a "trip-ending" TStop
-     * (same odo_total as the trip's ending odo, null time_continue), use that
-     * tstop's <tt>via_id</tt>, <tt>odo_trip</tt> and <tt>locID</tt> to end the trip,
-     * instead of calling {@link Trip#readLatestTStop()}.
-     *
-     * @param t  The trip which will be copied to the new FreqTrip.  Its start and end location,
-     *            and ending trip odometer, must be set.
-     *           If this trip's {@link Trip#getTripCategoryID()} is set, it will be copied to the new FreqTrip. 
-     * @param keepStops  Any intermediate stops from the trip which should be part of the FreqTrip;
-     *            can be 0-length or null.
-     *            The new FreqTrip will have uncommitted {@link FreqTripTStop}s
-     *            based on these {@link TStop}s.  When {@link #insert(RDBAdapter)}
-     *            is called on the new trip, the FreqTripTStops will also
-     *            be inserted into the database.
-     *<P>
-     * When ready to write (after any changes you make to this object),
-     * call {@link #insert(RDBAdapter)}.
-     *
-     * @param descr  Optional freqtrip description, or null
-     * @param typ_timeofday  24-hour typical time, or -1; format is hours * 60 + minutes. 
-     * @param flag_weekends  Is this typically only on weekends?  Use false if unknown.
-     * @param flag_weekdays  Is this typically only on weekdays?  Use false if unknown.
-     * @throws IllegalArgumentException if the trip isn't ended, or isn't in the database (_id == -1),
-     *     or if <tt>keepStops</tt>'s "ending TStop" has an empty <tt>odo_trip</tt> or empty <tt>locID</tt>.
-     */
-    public static FreqTrip createFromTrip(Trip t, Vector<TStop> keepStops, String descr,
-    	final int typ_timeofday, final boolean flag_weekends, final boolean flag_weekdays)
-    	throws IllegalArgumentException
-    {
-    	// TODO is_roundtrip
+	/**
+	 * Retrieve all FreqTrips for a starting location.
+	 * @param db  db connection
+	 * @param locID   Location ID; should not be 0.
+	 * @param nonLocal  Roadtrips, not local trips (roadtrip_end_aid != 0)
+	 * @param alsoTStops  If true, call {@link FreqTrip#readAllTStops()} for each freqtrip found
+	 * @return FreqTrips for this location, unsorted, or null if none
+	 * @throws IllegalStateException if db not open
+	 * @see #tripsForArea(RDBAdapter, int, boolean, boolean)
+	 */
+	public static Vector<FreqTrip> tripsForLocation
+		(RDBAdapter db, final int locID, final boolean nonLocal, final boolean alsoTStops)
+		throws IllegalStateException
+	{
+		if (db == null)
+			throw new IllegalStateException("db null");
+		Vector<String[]> sv = db.getRows
+			(TABNAME, "start_locid", Integer.toString(locID), FIELDS_AND_ID, "_id", 0);  // TODO sorting
+			// TODO nonLocal
 
-    	if (t.getID() == -1)
-    		throw new IllegalArgumentException("trip not in db");
-    	if (! t.isEnded())
-    		throw new IllegalArgumentException("trip not ended");
+		return objVectorFromStrings(db, alsoTStops, sv);
+	}
 
-    	// Get starting and ending location:
-    	TStop tsStart = t.readStartTStop(true);
-    	Location startLoc = tsStart.readLocation();
-    	TStop tsEnd = null;
-    	if ((keepStops != null) && ! keepStops.isEmpty())
-    	{
-    		tsEnd = keepStops.lastElement();  // re-use the var, but it might not be the ending TStop
-    		if ((tsEnd.getOdo_total() != t.getOdo_end())
-    			|| (tsEnd.getTime_continue() != 0))
-    		{
-    			tsEnd = null;
-    		} else {
-    			if (tsEnd.getOdo_trip() == 0)
-    				throw new IllegalArgumentException("keepStops ending TStop has empty odo_trip");
-    			if (tsEnd.getLocationID() == 0)
-    				throw new IllegalArgumentException("keepStops ending TStop has empty locID");
-    			// Remove it from the list of intermediate stops
-    			keepStops.removeElementAt(keepStops.size() - 1);
-    		}
-    	}
-    	if (tsEnd == null)
-    		tsEnd = t.readLatestTStop();
+	/**
+	 * Retrieve all local FreqTrips for an area.
+	 * @param db  db connection
+	 * @param areaID   GeoArea ID; should not be 0.
+	 * @param nonLocal  Roadtrips, not local trips (roadtrip_end_aid != 0)
+	 * @param alsoTStops  If true, call {@link FreqTrip#readAllTStops()} for each freqtrip found
+	 * @return FreqTrips for this location, unsorted, or null if none
+	 * @throws IllegalStateException if db not open
+	 * @see #getAll(RDBAdapter, boolean)
+	 * @see #tripsForLocation(RDBAdapter, int, boolean, boolean)
+	 */
+	public static Vector<FreqTrip> tripsForArea
+		(RDBAdapter db, final int areaID, final boolean nonLocal, final boolean alsoTStops)
+		throws IllegalStateException
+	{
+		if (db == null)
+			throw new IllegalStateException("db null");
+		Vector<String[]> sv = db.getRows
+			(TABNAME, "a_id", Integer.toString(areaID), FIELDS_AND_ID, "_id", 0);  // TODO sorting
+		// TODO nonLocal
 
-    	// Make the FreqTrip:
-    	FreqTrip ft = new FreqTrip(startLoc, tsEnd.readLocation(), tsEnd.getOdo_trip(), descr, tsEnd.getVia_id(), typ_timeofday, flag_weekends, flag_weekdays);
-    	ft.catid = t.getTripCategoryID();
+		return objVectorFromStrings(db, alsoTStops, sv);
+	}
 
-    	// Make the stops:
-    	if ((keepStops != null) && (keepStops.size() > 0))
-    	{
-    		Vector<FreqTripTStop> fts = new Vector<FreqTripTStop>(keepStops.size());
-    		int prevLocID = startLoc.getID();
-    		int viaID, locID;
-    		for (int i = 0; i < keepStops.size(); ++i)
-    		{
-    			TStop ts = keepStops.elementAt(i);
-    			ViaRoute v = ts.readVia();
-    			// Validate the via: If some of the original
-    			// trip's tstops weren't included,
-    			// the via from-locations will differ.
-    			if ((v == null) || (v.getLocID_From() != prevLocID))
-    				viaID = 0;
-    			else
-    				viaID = v.getID();
-    			locID = ts.getLocationID();
-    			fts.addElement(new FreqTripTStop(ft, locID, viaID, ts.getOdo_trip()));
-    			// Prepare for next iteration:
-    			prevLocID = locID;
-    		}
-    		ft.allStops = fts;  // Will add to db during FreqTrip.insert
-    	}
-    	return ft;
-    }
+	/**
+	 * Parse and return a vector of FreqTrip objects from db.getRows strings.
+	 * @param db  db connection
+	 * @param alsoTStops  If true, call {@link FreqTrip#readAllTStops()} for each freqtrip found
+	 * @param sv  The string values returned by db.getRows, or null if none
+	 * @return Vector of FreqTrips, or null if {@code sv} is null
+	 */
+	private static Vector<FreqTrip> objVectorFromStrings
+		(RDBAdapter db, final boolean alsoTStops, final Vector<String[]> sv)
+	{
+		if (sv == null)
+			return null;
 
-    /**
-     * Retrieve an existing freqtrip, by id, from the database.
-     *
-     * @param db  db connection
-     * @param id  id field
-     * @throws IllegalStateException if db not open
-     * @throws RDBKeyNotFoundException if cannot retrieve this ID
-     */
-    public FreqTrip(RDBAdapter db, final int id)
-        throws IllegalStateException, RDBKeyNotFoundException
-    {
-    	super(db, id);
-    	String[] rec = db.getRow(TABNAME, id, FIELDS);
-    	if (rec == null)
-    		throw new RDBKeyNotFoundException(id);
+		Vector<FreqTrip> vv = new Vector<FreqTrip>(sv.size());
+		try
+		{
+			FreqTrip t;
+			for (int i = 0; i < sv.size(); ++i)
+			{
+				t = new FreqTrip(db, sv.elementAt(i));
+				if (alsoTStops)
+					t.readAllTStops();
+				vv.addElement(t);
+			}
+		} catch (RDBKeyNotFoundException e) {}
 
-    	initFields(rec);
-    }
+		return vv;
+	}
 
-    /**
-     * Existing record: Fill our obj fields from db-record string contents.
-     * @param db  connection
-     * @param rec  Record's field contents, as returned by db.getRows({@link #FIELDS_AND_ID}); last element is _id
-     * @throws RDBKeyNotFoundException not thrown, but required due to super call
-     */
-    private FreqTrip(RDBAdapter db, final String[] rec) throws RDBKeyNotFoundException
-    {
-    	super(db, Integer.parseInt(rec[FIELDS.length]));
-    	initFields(rec);
-    }
+	/**
+	 * Create a new, uncommitted FreqTrip from this Trip.
+	 *<P>
+	 * If {@code keepStops} != null, and its last entry is a "trip-ending" TStop
+	 * (same odo_total as the trip's ending odo, null time_continue), use that
+	 * tstop's {@code via_id}, {@code odo_trip} and {@code locID} to end the trip,
+	 * instead of calling {@link Trip#readLatestTStop()}.
+	 *
+	 * @param t  The trip which will be copied to the new FreqTrip.  Its start and end location,
+	 *            and ending trip odometer, must be set.
+	 *           If this trip's {@link Trip#getTripCategoryID()} is set, it will be copied to the new FreqTrip.
+	 * @param keepStops  Any intermediate stops from the trip which should be part of the FreqTrip;
+	 *            can be 0-length or null.
+	 *            The new FreqTrip will have uncommitted {@link FreqTripTStop}s
+	 *            based on these {@link TStop}s.  When {@link #insert(RDBAdapter)}
+	 *            is called on the new trip, the FreqTripTStops will also
+	 *            be inserted into the database.
+	 *<P>
+	 * When ready to write (after any changes you make to this object),
+	 * call {@link #insert(RDBAdapter)}.
+	 *
+	 * @param descr  Optional freqtrip description, or null
+	 * @param typ_timeofday  24-hour typical time, or -1; format is hours * 60 + minutes.
+	 * @param flag_weekends  Is this typically only on weekends?  Use false if unknown.
+	 * @param flag_weekdays  Is this typically only on weekdays?  Use false if unknown.
+	 * @throws IllegalArgumentException if the trip isn't ended, or isn't in the database ({@code _id} == -1),
+	 *     or if {@code keepStops}'s "ending TStop" has an empty {@code odo_trip} or empty {@code locID}.
+	 */
+	public static FreqTrip createFromTrip
+		(Trip t, Vector<TStop> keepStops, String descr,
+		 final int typ_timeofday, final boolean flag_weekends, final boolean flag_weekdays)
+		throws IllegalArgumentException
+	{
+		// TODO is_roundtrip
 
-    /**
-     * Fill our obj fields from db-record string contents.
-     * <tt>id</tt> is not filled; the constructor has filled it already.
-     * @param rec  Record's field contents, as returned by db.getRow({@link #FIELDS}) or db.getRows({@link #FIELDS_AND_ID})
-     */
+		if (t.getID() == -1)
+			throw new IllegalArgumentException("trip not in db");
+		if (! t.isEnded())
+			throw new IllegalArgumentException("trip not ended");
+
+		// Get starting and ending location:
+		TStop tsStart = t.readStartTStop(true);
+		Location startLoc = tsStart.readLocation();
+		TStop tsEnd = null;
+		if ((keepStops != null) && ! keepStops.isEmpty())
+		{
+			tsEnd = keepStops.lastElement();  // re-use the var, but it might not be the ending TStop
+			if ((tsEnd.getOdo_total() != t.getOdo_end())
+			    || (tsEnd.getTime_continue() != 0))
+			{
+				tsEnd = null;
+			} else {
+				if (tsEnd.getOdo_trip() == 0)
+					throw new IllegalArgumentException("keepStops ending TStop has empty odo_trip");
+				if (tsEnd.getLocationID() == 0)
+					throw new IllegalArgumentException("keepStops ending TStop has empty locID");
+				// Remove it from the list of intermediate stops
+				keepStops.removeElementAt(keepStops.size() - 1);
+			}
+		}
+		if (tsEnd == null)
+			tsEnd = t.readLatestTStop();
+
+		// Make the FreqTrip:
+		FreqTrip ft = new FreqTrip
+			(startLoc, tsEnd.readLocation(), tsEnd.getOdo_trip(), descr, tsEnd.getVia_id(),
+			 typ_timeofday, flag_weekends, flag_weekdays);
+		ft.catid = t.getTripCategoryID();
+
+		// Make the stops:
+		if ((keepStops != null) && (keepStops.size() > 0))
+		{
+			Vector<FreqTripTStop> fts = new Vector<FreqTripTStop>(keepStops.size());
+			int prevLocID = startLoc.getID();
+			int viaID, locID;
+			for (int i = 0; i < keepStops.size(); ++i)
+			{
+				TStop ts = keepStops.elementAt(i);
+				ViaRoute v = ts.readVia();
+				// Validate the via: If some of the original
+				// trip's tstops weren't included,
+				// the via from-locations will differ.
+				if ((v == null) || (v.getLocID_From() != prevLocID))
+					viaID = 0;
+				else
+					viaID = v.getID();
+				locID = ts.getLocationID();
+				fts.addElement(new FreqTripTStop(ft, locID, viaID, ts.getOdo_trip()));
+
+				// Prepare for next iteration:
+				prevLocID = locID;
+			}
+
+			ft.allStops = fts;  // Will add to db during FreqTrip.insert
+		}
+
+		return ft;
+	}
+
+	/**
+	 * Retrieve an existing freqtrip, by id, from the database.
+	 *
+	 * @param db  db connection
+	 * @param id  id field
+	 * @throws IllegalStateException if db not open
+	 * @throws RDBKeyNotFoundException if cannot retrieve this ID
+	 */
+	public FreqTrip(RDBAdapter db, final int id)
+		throws IllegalStateException, RDBKeyNotFoundException
+	{
+		super(db, id);
+		String[] rec = db.getRow(TABNAME, id, FIELDS);
+		if (rec == null)
+			throw new RDBKeyNotFoundException(id);
+
+		initFields(rec);
+	}
+
+	/**
+	 * Existing record: Fill our obj fields from db-record string contents.
+	 * @param db  connection
+	 * @param rec  Record's field contents, as returned by db.getRows({@link #FIELDS_AND_ID}); last element is _id
+	 * @throws RDBKeyNotFoundException not thrown, but required due to super call
+	 */
+	private FreqTrip(RDBAdapter db, final String[] rec) throws RDBKeyNotFoundException
+	{
+		super(db, Integer.parseInt(rec[FIELDS.length]));
+		initFields(rec);
+	}
+
+	/**
+	 * Fill our obj fields from db-record string contents.
+	 * {@code id} is not filled; the constructor has filled it already.
+	 * @param rec  Record's field contents, as returned by db.getRow({@link #FIELDS})
+	 *    or db.getRows({@link #FIELDS_AND_ID})
+	 */
 	private void initFields(String[] rec)
 	{
 		/*
-    private static final String[] FIELDS =
-        { "a_id", "start_locid", "end_locid",
-      	  "end_odo_trip", "roadtrip_end_aid", "descr", "end_via_id",
-      	  "typ_timeofday", "flag_weekends", "flag_weekdays", "is_roundtrip", "catid" };
+		private static final String[] FIELDS =
+		{ "a_id", "start_locid", "end_locid",
+		  "end_odo_trip", "roadtrip_end_aid", "descr", "end_via_id",
+		  "typ_timeofday", "flag_weekends", "flag_weekdays", "is_roundtrip", "catid" };
 		 */
+
 		if (rec[0] != null)
 			a_id = Integer.parseInt(rec[0]);  // FK
 		else
 			a_id = -1;
 		start_locid = Integer.parseInt(rec[1]);  // FK
 		end_locid = Integer.parseInt(rec[2]);  // FK
-    	end_odo_trip = Integer.parseInt(rec[3]);
-    	if (rec[4] != null)
-    		roadtrip_end_aid = Integer.parseInt(rec[4]);  // FK
-    	descr = rec[5];
-    	if (rec[6] != null)
-    		end_via_id = Integer.parseInt(rec[6]);  // FK
-    	if (rec[7] != null)
-    		typ_timeofday = Integer.parseInt(rec[7]);
-    	else
-    		typ_timeofday = -1;
-    	flag_weekends = ("1".equals(rec[8]));
-    	flag_weekdays = ("1".equals(rec[9]));
-    	is_roundtrip = ("1".equals(rec[10]));
-    	if (rec[11] != null)
-    		catid = Integer.parseInt(rec[11]);  // FK
+		end_odo_trip = Integer.parseInt(rec[3]);
+		if (rec[4] != null)
+			roadtrip_end_aid = Integer.parseInt(rec[4]);  // FK
+		descr = rec[5];
+		if (rec[6] != null)
+			end_via_id = Integer.parseInt(rec[6]);  // FK
+		if (rec[7] != null)
+			typ_timeofday = Integer.parseInt(rec[7]);
+		else
+			typ_timeofday = -1;
+		flag_weekends = ("1".equals(rec[8]));
+		flag_weekdays = ("1".equals(rec[9]));
+		is_roundtrip = ("1".equals(rec[10]));
+		if (rec[11] != null)
+			catid = Integer.parseInt(rec[11]);  // FK
 	}
 
-    /**
-     * Create a new freqtrip, but don't yet write to the database.
-     * The areas (a_id, roadtrip_end_aid) will be taken from those of
-     * <tt>start_loc</tt>, <tt>end_loc</tt>.
-     *<P>
-     * To set the optional trip category, call {@link #setTripCategoryID()} before <tt>insert</tt>.
-     *<P>
-     * When ready to write (after any changes you make to this object),
-     * call {@link #insert(RDBAdapter)}.
-     *
-     * @param start_loc  Starting location, not null
-     * @param end_loc    Ending location, not null
-     * @param start_lat  Starting latitude, or null
-     * @param start_lon  Starting longitude, or null
-     * @param end_lat    Ending latitude, or null
-     * @param end_lon    Ending longitude, or null
-     * @param end_odo_trip    Ending trip odometer
-     * @param descr      Description, or null
-     * @param end_via_id     Route to ending location (via_route id), or 0
-     * @param typ_timeofday  24-hour typical time, or -1; format is hours * 60 + minutes.
-     * @param flag_weekends  Is this typically only on weekends?  Use false if unknown.
-     * @param flag_weekdays  Is this typically only on weekdays?  Use false if unknown.
-     */
-    public FreqTrip(Location start_loc, Location end_loc,
-    		final int end_odo_trip, final String descr,
-    		final int end_via_id, final int typ_timeofday,
-    		final boolean flag_weekends, final boolean flag_weekdays)
-    {
-    	super();
+	/**
+	 * Create a new freqtrip, but don't yet write to the database.
+	 * The geoareas (a_id, roadtrip_end_aid) will be taken from those of
+	 * {@code start_loc}, {@code end_loc}.
+	 *<P>
+	 * To set the optional trip category, call {@link #setTripCategoryID()} before {@code insert}.
+	 *<P>
+	 * When ready to write (after any changes you make to this object),
+	 * call {@link #insert(RDBAdapter)}.
+	 *
+	 * @param start_loc  Starting location, not null
+	 * @param end_loc    Ending location, not null
+	 * @param start_lat  Starting latitude, or null
+	 * @param start_lon  Starting longitude, or null
+	 * @param end_lat    Ending latitude, or null
+	 * @param end_lon    Ending longitude, or null
+	 * @param end_odo_trip    Ending trip odometer
+	 * @param descr      Description, or null
+	 * @param end_via_id     Route to ending location (via_route id), or 0
+	 * @param typ_timeofday  24-hour typical time, or -1; format is hours * 60 + minutes.
+	 * @param flag_weekends  Is this typically only on weekends?  Use false if unknown.
+	 * @param flag_weekdays  Is this typically only on weekdays?  Use false if unknown.
+	 */
+	public FreqTrip
+		(Location start_loc, Location end_loc, final int end_odo_trip, final String descr, final int end_via_id,
+		 final int typ_timeofday, final boolean flag_weekends, final boolean flag_weekdays)
+	{
+		super();
 
-    	this.a_id = start_loc.getAreaID();
-    	start_locid = start_loc.getID();
-    	end_locid = end_loc.getID();
-    	final int end_aID = end_loc.getAreaID();
-    	if (a_id != end_aID)
-    		roadtrip_end_aid = end_aID;
-    	else
-    		roadtrip_end_aid = 0;
-        this.end_odo_trip = end_odo_trip;
-        this.descr = descr;
-    	this.end_via_id = end_via_id;
-    	this.typ_timeofday = typ_timeofday;
-        this.flag_weekends = flag_weekends;
-        this.flag_weekdays = flag_weekdays;
-        // TODO is_roundtrip
-        catid = 0;
-    }
+		this.a_id = start_loc.getAreaID();
+		start_locid = start_loc.getID();
+		end_locid = end_loc.getID();
+		final int end_aID = end_loc.getAreaID();
+		if (a_id != end_aID)
+			roadtrip_end_aid = end_aID;
+		else
+			roadtrip_end_aid = 0;
+		this.end_odo_trip = end_odo_trip;
+		this.descr = descr;
+		this.end_via_id = end_via_id;
+		this.typ_timeofday = typ_timeofday;
+		this.flag_weekends = flag_weekends;
+		this.flag_weekdays = flag_weekdays;
+		// TODO is_roundtrip
+		catid = 0;
+	}
 
-    /**
-     * Retrieve all stops for this FreqTrip.
-     * Cached after the first read.
-     *
-     * @return  ordered list of stops, or null if none
-     * @throws IllegalStateException if the db connection is closed
-     */
-    public Vector<FreqTripTStop> readAllTStops()
-        throws IllegalStateException
-    {
-    	if (allStops == null)
-    	{
-	    	if (dbConn == null)
-	    		throw new IllegalStateException("dbConn null");
-	    	allStops = FreqTripTStop.stopsForTrip(dbConn, this);
-	    	readLocations();  // sets the field
-    	}
-    	return allStops;
-    }
+	/**
+	 * Retrieve all stops for this FreqTrip.
+	 * Cached after the first read.
+	 *
+	 * @return  ordered list of stops, or null if none
+	 * @throws IllegalStateException if the db connection is closed
+	 */
+	public Vector<FreqTripTStop> readAllTStops()
+		throws IllegalStateException
+	{
+		if (allStops == null)
+		{
+			if (dbConn == null)
+				throw new IllegalStateException("dbConn null");
+			allStops = FreqTripTStop.stopsForTrip(dbConn, this);
+			readLocations();  // sets the field
+		}
 
-    /**
-     * Retrieve this FreqTrip's starting and ending {@link Location}s.
-     * Cached after the first read.
-     *
-     * @throws IllegalStateException if the db connection is closed
-     * @see #readAllTStops()
-     */
-    private void readLocations()
-        throws IllegalStateException
-    {
-    	if ((start_loc != null) && (end_loc != null))
-    		return;
-    	if (dbConn == null)
-    		throw new IllegalStateException("dbConn null");
-    	try {
-    		start_loc = new Location(dbConn, start_locid);
-    		end_loc = new Location(dbConn, end_locid);
+		return allStops;
+	}
+
+	/**
+	 * Retrieve this FreqTrip's starting and ending {@link Location}s.
+	 * Cached after the first read.
+	 *
+	 * @throws IllegalStateException if the db connection is closed
+	 * @see #readAllTStops()
+	 */
+	private void readLocations()
+		throws IllegalStateException
+	{
+		if ((start_loc != null) && (end_loc != null))
+			return;
+		if (dbConn == null)
+			throw new IllegalStateException("dbConn null");
+
+		try
+		{
+			start_loc = new Location(dbConn, start_locid);
+			end_loc = new Location(dbConn, end_locid);
 		} catch (RDBKeyNotFoundException e) {
-			// (TODO) bad key; shouldn't happen
+			// bad key; shouldn't happen
 			start_loc = null;
 			end_loc = null;
 			dirty = true;
 		}
-    }
+	}
 
-    /**
-     * Insert a new record based on field and value.
+	/**
+	 * Insert a new record based on field and value.
 	 * Clears dirty field; sets id and dbConn fields.
 	 * If this FreqTrip was created by calling
 	 * {@link #createFromTrip(Trip, Vector, String, int, boolean, boolean)},
 	 * its {@link FreqTripTStop}s will be inserted at this time.
 	 *
-     * @return new record's primary key (_id)
-     * @throws IllegalStateException if the insert fails
-     */
-    public int insert(RDBAdapter db)
-        throws IllegalStateException
-    {
-    	id = db.insert(TABNAME, FIELDS, buildInsertUpdate(), true);
+	 * @return new record's primary key (_id)
+	 * @throws IllegalStateException if the insert fails
+	 */
+	public int insert(RDBAdapter db)
+		throws IllegalStateException
+	{
+		id = db.insert(TABNAME, FIELDS, buildInsertUpdate(), true);
 		dirty = false;
-    	dbConn = db;
-    	if (allStops != null)
-    	{
-    		for (int i = 0; i < allStops.size(); ++i)
-    		{
-    			FreqTripTStop fts = allStops.elementAt(i);
-    			fts.setFreqTripID(this);
-    			fts.insert(db);
-    		}
-    	}
-    	return id;
-    }
+		dbConn = db;
+		if (allStops != null)
+		{
+			for (int i = 0; i < allStops.size(); ++i)
+			{
+				FreqTripTStop fts = allStops.elementAt(i);
+				fts.setFreqTripID(this);
+				fts.insert(db);
+			}
+		}
 
-    /**
+		return id;
+	}
+
+	/**
 	 * Commit changes to an existing record.
 	 * Commits to the database; clears dirty field.
 	 *<P>
 	 * For new records, <b>do not call commit</b>:
 	 * use {@link #insert(RDBAdapter)} instead.
-     * @throws IllegalStateException if the update fails
-     * @throws NullPointerException if dbConn was null because
-     *     this is a new record, not an existing one
+	 * @throws IllegalStateException if the update fails
+	 * @throws NullPointerException if dbConn was null because
+	 *     this is a new record, not an existing one
 	 */
 	public void commit()
-        throws IllegalStateException, NullPointerException
+		throws IllegalStateException, NullPointerException
 	{
 		dbConn.update(TABNAME, id, FIELDS, buildInsertUpdate());
 		dirty = false;
@@ -479,18 +495,19 @@ public class FreqTrip extends RDBRecord
 	/**
 	 * Fill the db fields into an array with same
 	 * contents/order as {@link #FIELDS}.
-	 * @return field contents, ready for db update via insert() or commit() 
+	 * @return field contents, ready for db update via insert() or commit()
 	 */
 	private String[] buildInsertUpdate()
 	{
 		/*
-    private static final String[] FIELDS =
-        { "a_id", "start_locid", "end_locid",
-      	  "end_odo_trip", "roadtrip_end_aid", "descr", "end_via_id",
-      	  "typ_timeofday", "flag_weekends", "flag_weekdays", "is_roundtrip", "catid" };
-    	  */
+		private static final String[] FIELDS =
+		{ "a_id", "start_locid", "end_locid",
+		  "end_odo_trip", "roadtrip_end_aid", "descr", "end_via_id",
+		  "typ_timeofday", "flag_weekends", "flag_weekdays", "is_roundtrip", "catid" };
+		  */
+
 		String[] fv =
-		    {
+		{
 			(a_id != -1 ? Integer.toString(a_id) : null),
 			Integer.toString(start_locid), Integer.toString(end_locid),
 			Integer.toString(end_odo_trip),
@@ -502,7 +519,8 @@ public class FreqTrip extends RDBRecord
 			(flag_weekdays ? "1" : "0"),
 			(is_roundtrip ? "1" : "0"),
 			(catid != 0 ? Integer.toString(catid) : null)
-		    };
+		};
+
 		return fv;
 	}
 
@@ -519,31 +537,37 @@ public class FreqTrip extends RDBRecord
 		return end_odo_trip;
 	}
 
-	public int getStart_locID() {
+	public int getStart_locID()
+	{
 		return start_locid;
 	}
 
-	public int getEnd_locID() {
+	public int getEnd_locID()
+	{
 		return end_locid;
 	}
 
 	/** Get the starting area ID, or the only area ID if a local trip */
-	public int getStart_aID() {
+	public int getStart_aID()
+	{
 		return a_id;
 	}
 
 	/** Get the ending area ID for a roadtrip, or 0 if a local trip */
-	public int getEnd_aID_roadtrip() {
+	public int getEnd_aID_roadtrip()
+	{
 		return roadtrip_end_aid;
 	}
 
 	/** Get the freqtrip's description, or null */
-	public String getDescription() {
+	public String getDescription()
+	{
 		return descr;
 	}
 
 	/** Get the freqtrip's ending via_route, or 0 if not set */
-	public int getEnd_ViaRouteID() {
+	public int getEnd_ViaRouteID()
+	{
 		return end_via_id;
 	}
 
@@ -551,22 +575,26 @@ public class FreqTrip extends RDBRecord
 	 * Get the typical time of day (24-hr format), or -1 if not set.
 	 * @return Typical time of day; format is hours * 60 + minutes; or -1 if this field is not set.
 	 */
-	public int getTypicalTimeOfDay() {
+	public int getTypicalTimeOfDay()
+	{
 		return typ_timeofday;
 	}
 
 	/** Is this freqtrip typically made on weekends? */
-	public boolean isWeekends() {
+	public boolean isWeekends()
+	{
 		return flag_weekends;
 	}
 
 	/** Is this freqtrip typically made on weekdays? */
-	public boolean isWeekdays() {
+	public boolean isWeekdays()
+	{
 		return flag_weekdays;
 	}
 
 	/** Does this trip end at {@link #getStart_locID()} after stopping at {@link #getEnd_locID()}? */
-	public boolean isRoundTrip() {
+	public boolean isRoundTrip()
+	{
 		return is_roundtrip;
 	}
 
@@ -586,6 +614,7 @@ public class FreqTrip extends RDBRecord
 			toString_descr = descr;
 			return descr;
 		}
+
 		StringBuffer sb = new StringBuffer();
 		if (dbConn != null)
 		{
@@ -606,7 +635,7 @@ public class FreqTrip extends RDBRecord
 				ViaRoute vr = null;
 				try {
 					vr = new ViaRoute(dbConn, end_via_id);
-				} catch (Throwable e) { } // RDBKeyNotFoundException
+				} catch (Throwable e) {} // RDBKeyNotFoundException
 				if (vr != null)
 					sb.append(vr.getDescr());
 				else
@@ -623,6 +652,7 @@ public class FreqTrip extends RDBRecord
 				sb.append(end_via_id);
 			}
 		}
+
 		toString_descr = sb.toString();
 		return toString_descr;
 	}
@@ -630,17 +660,18 @@ public class FreqTrip extends RDBRecord
 	/**
 	 * Delete an existing record, <b>Not Currently Allowed</b>.
 	 *
-     * @throws NullPointerException if dbConn was null because
-     *     this is a new record, not an existing one
-     * @throws UnsupportedOperationException because this table doesn't
-     *     currently allow deletion.
+	 * @throws NullPointerException if dbConn was null because
+	 *     this is a new record, not an existing one
+	 * @throws UnsupportedOperationException because this table doesn't
+	 *     currently allow deletion.
 	 */
 	public void delete()
-	    throws NullPointerException, UnsupportedOperationException
+		throws NullPointerException, UnsupportedOperationException
 	{
-		// TODO check if unused in other tables
 		throw new UnsupportedOperationException();
+
 		/*
+		// TODO check if unused in other tables
 		dbConn.delete(TABNAME, id);
 		deleteCleanup();
 		*/

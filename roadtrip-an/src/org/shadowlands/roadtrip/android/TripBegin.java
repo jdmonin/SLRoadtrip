@@ -74,10 +74,9 @@ import android.widget.Toast;
  * To simplify interaction, all trips begin as local trips except
  * when the user has chosen a frequent trip that's a roadtrip.
  *<P>
- * By default the trip will not be a frequent trip. To select
- * a frequent trip or frequent roadtrip to use, set {@link #EXTRAS_FLAG_FREQUENT}
- * and possibly {@link #EXTRAS_FLAG_NONLOCAL} when creating the intent
- * to start this activity.  See that flag's javadoc for details.
+ * By default the trip will not be based on a frequent trip. To have the user select
+ * a frequent trip to use, set {@link #EXTRAS_FLAG_FREQUENT} when creating the intent
+ * starting this activity.  See that flag's javadoc for details.
  *<P>
  * If the "Change Driver/Vehicle" button is pressed,
  * the {@link ChangeDriverOrVehicle} activity is shown;
@@ -93,23 +92,15 @@ public class TripBegin extends Activity
 	implements TextWatcher, OnDateSetListener, OnItemClickListener
 {
 	/**
-	 * Flag for non-local (roadtrip), for {@link Intent#putExtra(String, boolean)}.
-	 * In v0.9.50 and newer, only frequent trips ({@link #EXTRAS_FLAG_FREQUENT}) use this flag;
-	 * all other trips begin as local.
-	 */
-	public static final String EXTRAS_FLAG_NONLOCAL = "nonlocal";
-
-	/**
 	 * Flag for beginning a trip based on a previously defined frequent trip, for
-	 * {@link Intent#putExtra(String, boolean)}. If only frequent roadtrips should
-	 * be shown, also set {@link #EXTRAS_FLAG_NONLOCAL}.
+	 * {@link Intent#putExtra(String, boolean)}.
 	 *<P>
 	 * When the activity is started with this flag, the current vehicle's current
 	 * location is found, and the {@link TripBeginChooseFreq} activity is called
 	 * to choose a frequent trip starting from that location or the current area.
 	 * When one is chosen, {@code TripBegin}.{@link #onActivityResult(int, int, Intent)}
-	 * will set {@link #isFrequent}, {@link #wantsFT}, and other activity fields
-	 * for a trip based on that frequent trip.
+	 * will set {@link #isFrequent}, {@link #wantsFT}, {@link #isRoadtrip}, and
+	 * other activity fields for a trip based on that frequent trip.
 	 */
 	public static final String EXTRAS_FLAG_FREQUENT = "frequent";
 
@@ -121,12 +112,19 @@ public class TripBegin extends Activity
 	private static final String TAG = "Roadtrip.TripBegin";
 
 	private RDBAdapter db = null;
+
+	/**
+	 * Trip is beginning as a roadtrip.  In v0.9.50 and newer, only frequent trips can begin as roadtrips,
+	 * so this will be set in {@link #onActivityResult(int, int, Intent)}; see {@link #isFrequent}.
+	 */
 	private boolean isRoadtrip;
+
 	/**
 	 * Trip will be based on frequent trip {@link #wantsFT}, probably starting from {@link #locObj}.
-	 * For more details see {@link #EXTRAS_FLAG_FREQUENT}.
+	 * Might also set {@link #isRoadtrip}. For more details see {@link #EXTRAS_FLAG_FREQUENT}.
 	 */
 	private boolean isFrequent;
+
 	private TextView tvCurrentSet;
 	/** destination {@link GeoArea} textfield, or null if ! {@link #isRoadtrip} */
 	private AutoCompleteTextView etGeoArea;
@@ -194,9 +192,8 @@ public class TripBegin extends Activity
 		Intent i = getIntent();
 		if (i != null)
 		{
-			isRoadtrip = i.getBooleanExtra(EXTRAS_FLAG_NONLOCAL, false);
 			isFrequent = i.getBooleanExtra(EXTRAS_FLAG_FREQUENT, false);
-		} // else, they're false
+		} // else, is false
 
 		db = new RDBOpenHelper(this);
 		startTime = Calendar.getInstance();
@@ -527,8 +524,6 @@ public class TripBegin extends Activity
 		{
 			// ask user to choose their frequent trip
 			Intent i = new Intent(TripBegin.this, TripBeginChooseFreq.class);
-			if (isRoadtrip)
-				i.putExtra(EXTRAS_FLAG_NONLOCAL, true);
 			if (locObj != null)
 			{
 				locObjOrig = locObj;  // since using with freqtrip
@@ -875,6 +870,8 @@ public class TripBegin extends Activity
 				return;
 			}
 
+			isRoadtrip = (wantsFT.getEnd_aID_roadtrip() != 0);
+
 			final int ftCat = wantsFT.getTripCategoryID();
 			if (ftCat != 0)
 			{
@@ -895,7 +892,9 @@ public class TripBegin extends Activity
 			{
 				int destArea = wantsFT.getEnd_aID_roadtrip();
 				// TODO set destArea in dropdown, etc
+				// TODO un-hide other items, since activity started as local not roadtrip
 			}
+
 			return;
 		}
 

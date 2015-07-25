@@ -50,9 +50,6 @@ import android.widget.Toast;
  * the key {@link VehSettings#PREV_LOCATION}.  (This does not affect the actual VehSetting in the db.)
  * Otherwise, {@link VehSettings#getCurrentArea(RDBAdapter, Vehicle, boolean)} will be called.
  *<P>
- * If the list of freq trips should contain only roadtrips, start this activity
- * with {@link TripBegin#EXTRAS_FLAG_NONLOCAL} just as when starting TripBegin.
- *<P>
  * Called from {@link TripBegin} with {@link Activity#startActivityForResult(android.content.Intent, int)}.
  * When it returns to {@code TripBegin} with the result, its intent should contain
  * an int extra with key {@code "_id"} for the chosen FreqTrip.
@@ -73,8 +70,6 @@ public class TripBeginChooseFreq extends Activity
 
 	private RDBAdapter db = null;
 
-	/** if true, only roadtrips should be shown in freq trip list */
-	private boolean isRoadtrip;
 	/** available freqtrips; {@link #freqTrips} contents  */
 	private ListView lvFreqTripsList;
 	/**
@@ -104,7 +99,6 @@ public class TripBeginChooseFreq extends Activity
 		Intent i = getIntent();
 		if (i != null)
 		{
-			isRoadtrip = i.getBooleanExtra(TripBegin.EXTRAS_FLAG_NONLOCAL, false);
 			locID = i.getIntExtra(VehSettings.PREV_LOCATION, 0);
 		}
 
@@ -174,7 +168,7 @@ public class TripBeginChooseFreq extends Activity
 		Vector<FreqTrip> fts;
 		if (locID != 0)
 		{
-			fts = FreqTrip.tripsForLocation(db, locID, false, false);  // TODO isLocal / isRoadtrip
+			fts = FreqTrip.tripsForLocation(db, locID, false, false);
 		} else {
 			final Vehicle currV = Settings.getCurrentVehicle(db, false);
 			if (currV == null) {
@@ -184,7 +178,7 @@ public class TripBeginChooseFreq extends Activity
 			GeoArea currA = VehSettings.getCurrentArea(db, currV, false);
 			Log.d(TAG, "no locID, Checking freqtrips for area " + currA);
 			if (currA != null)
-				fts = FreqTrip.tripsForArea(db, currA.getID(), false, false);  // TODO isLocal / isRoadtrip
+				fts = FreqTrip.tripsForArea(db, currA.getID(), false, false);
 			else
 				fts = null;
 		}
@@ -216,8 +210,6 @@ public class TripBeginChooseFreq extends Activity
 			return;  // unlikely, but just in case
 
 		FreqTrip ft = freqTrips.elementAt(position);
-		Toast.makeText(this, "got freqtrip id " + ft.getID(),
-			Toast.LENGTH_SHORT).show();
 		Intent i = getIntent();
 		i.putExtra("_id", ft.getID());
 

@@ -50,11 +50,25 @@ public class FreqTrip extends RDBRecord
 		"typ_timeofday", "flag_weekends", "flag_weekdays", "is_roundtrip", "catid", "_id"
 	};
 
+	/**
+	 * Where Clause to select roadtrips ({@code roadtrip_end_aid} not null) starting in an area ID.
+	 * @since 0.9.50
+	 */
+	private static final String WHERE_AREAID_AND_IS_ROADTRIP
+		= "a_id = ? and roadtrip_end_aid is not null";
+
+	/**
+	 * Where Clause to select roadtrips ({@code roadtrip_end_aid} not null) starting at a location ID.
+	 * @since 0.9.50
+	 */
+	private static final String WHERE_START_LOCID_AND_IS_ROADTRIP
+		= "start_locid = ? and roadtrip_end_aid is not null";
+
 	/** GeoArea ID.  -1 is empty/unused. */
 	private int a_id;
 	/** Optional {@link TripCategory} ID.  0 is empty/unused (null in db). */
 	private int catid;
-	/** For roadtrips, ending GeoArea ID.  0 is empty/unused. */
+	/** For roadtrips, ending GeoArea ID.  0 is empty/unused (null in db). */
 	private int roadtrip_end_aid;
 	/** Starting/ending {@link Location} IDs. See {@link #start_loc}. */
 	private int start_locid, end_locid;
@@ -108,10 +122,10 @@ public class FreqTrip extends RDBRecord
 	}
 
 	/**
-	 * Retrieve all FreqTrips for a starting location.
+	 * Retrieve all FreqTrips for a starting location, or only frequent roadtrips from that location.
 	 * @param db  db connection
 	 * @param locID   Location ID; should not be 0.
-	 * @param nonLocal  Roadtrips, not local trips (roadtrip_end_aid != 0)
+	 * @param nonLocal  Roadtrips only, not all trips ({@code roadtrip_end_aid} not null)
 	 * @param alsoTStops  If true, call {@link FreqTrip#readAllTStops()} for each freqtrip found
 	 * @return FreqTrips for this location, unsorted, or null if none
 	 * @throws IllegalStateException if db not open
@@ -123,18 +137,25 @@ public class FreqTrip extends RDBRecord
 	{
 		if (db == null)
 			throw new IllegalStateException("db null");
-		Vector<String[]> sv = db.getRows
-			(TABNAME, "start_locid", Integer.toString(locID), FIELDS_AND_ID, "_id", 0);  // TODO sorting
-			// TODO nonLocal
+
+		final Vector<String[]> sv;
+		if (nonLocal)
+		{
+			final String[] whereArgs = { Integer.toString(locID) };
+			sv = db.getRows(TABNAME, WHERE_START_LOCID_AND_IS_ROADTRIP, whereArgs, FIELDS_AND_ID, "_id", 0);
+		} else {
+			sv = db.getRows(TABNAME, "start_locid", Integer.toString(locID), FIELDS_AND_ID, "_id", 0);
+		}
+		// TODO sorting; currently by _id (chronological date-created)
 
 		return objVectorFromStrings(db, alsoTStops, sv);
 	}
 
 	/**
-	 * Retrieve all local FreqTrips for an area.
+	 * Retrieve all FreqTrips for an area, or only frequent roadtrips from that area.
 	 * @param db  db connection
 	 * @param areaID   GeoArea ID; should not be 0.
-	 * @param nonLocal  Roadtrips, not local trips (roadtrip_end_aid != 0)
+	 * @param nonLocal  Roadtrips only, not all trips ({@code roadtrip_end_aid} not null)
 	 * @param alsoTStops  If true, call {@link FreqTrip#readAllTStops()} for each freqtrip found
 	 * @return FreqTrips for this location, unsorted, or null if none
 	 * @throws IllegalStateException if db not open
@@ -147,9 +168,16 @@ public class FreqTrip extends RDBRecord
 	{
 		if (db == null)
 			throw new IllegalStateException("db null");
-		Vector<String[]> sv = db.getRows
-			(TABNAME, "a_id", Integer.toString(areaID), FIELDS_AND_ID, "_id", 0);  // TODO sorting
-		// TODO nonLocal
+
+		final Vector<String[]> sv;
+		if (nonLocal)
+		{
+			final String[] whereArgs = { Integer.toString(areaID) };
+			sv = db.getRows(TABNAME, WHERE_AREAID_AND_IS_ROADTRIP, whereArgs, FIELDS_AND_ID, "_id", 0);
+		} else {
+			sv = db.getRows(TABNAME, "a_id", Integer.toString(areaID), FIELDS_AND_ID, "_id", 0);
+		}
+		// TODO sorting; currently by _id (chronological date-created)
 
 		return objVectorFromStrings(db, alsoTStops, sv);
 	}

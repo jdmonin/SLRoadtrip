@@ -31,6 +31,7 @@ import java.util.Vector;
  * To indicate this TStop has related side tables such as {@link TStopGas},
  * there is a <tt>flag_sides</tt> field where flag bits such as
  * {@link #FLAG_GAS} can be set.  See {@link #getFlags()}.
+ * Side table entries always have the same {@code _id} as the TStop.
  *<P>
  * To temporarily note things about the TStop while stopped there,
  * there are temporary flags such as {@link #TEMPFLAG_CREATED_LOCATION}.
@@ -111,14 +112,24 @@ public class TStop extends RDBRecord
     // So, these flags may be set only on the TStop which is CURRENT_TSTOP (vehicle is currently stopped here)
     // or on the TStop that was current for another vehicle (marked with TEMPFLAG_CURRENT_TSTOP_AT_CURRV_CHANGE).
 
-    /** Temporary flag to indicate a new Location was created for this TStop */
+    /**
+     * Temporary flag to indicate a new {@link Location} was created for this TStop.
+     * Since no other TStop uses that Location yet, it can be renamed or deleted if needed
+     * before continuing travel from the stop.
+     */
     public static final int TEMPFLAG_CREATED_LOCATION = 0x01;
 
-    /** Temporary flag to indicate a new ViaRoute was created for this TStop */
+    /**
+     * Temporary flag to indicate a new {@link ViaRoute} was created for this TStop.
+     * Since no other TStop uses that ViaRoute yet, it can be renamed or deleted if needed
+     * before continuing travel from the stop.
+     */
     public static final int TEMPFLAG_CREATED_VIAROUTE = 0x02;
 
     /**
      * Temporary flag to indicate a new {@link GasBrandGrade} was created for this TStop.
+     * Since no other TStop uses that GBG yet, it can be renamed or deleted if needed
+     * before continuing travel from the stop.
      * @since 0.9.06
      */
     public static final int TEMPFLAG_CREATED_GASBRANDGRADE = 0x04;

@@ -126,8 +126,14 @@ public class TripBegin extends Activity
 	private boolean isFrequent;
 
 	private TextView tvCurrentSet;
-	/** destination {@link GeoArea} textfield, or null if ! {@link #isRoadtrip} */
+
+	/**
+	 * Destination {@link GeoArea} textfield, or null if ! {@link #isRoadtrip}.
+	 * Selected item (if any) is {@link #destAreaObj}.  Listener is {@link #etGeoAreaListener}.
+	 */
 	private AutoCompleteTextView etGeoArea;
+
+	/** Listener for {@link #etGeoArea} to update {@link #destAreaObj}. */
 	private GeoAreaOnItemClickListener etGeoAreaListener;
 
 	/** continue from prev, or enter a new, location. This and {@link #tvLocContinue} are shown/hidden together. */
@@ -164,7 +170,10 @@ public class TripBegin extends Activity
 	private Location locObjOrig;
 	/** Location to start from, possibly null or selected from dropdown */
 	private Location locObj;
-	/** Roadtrip destination geoarea */
+	/**
+	 * Roadtrip destination geoarea.
+	 * Set in {@link #updateETGeoArea(int, int)} and {@link GeoAreaOnItemClickListener}.
+	 */
 	private GeoArea destAreaObj;
 	/** If freqtrip, the chosen freqtrip, or null */
 	private FreqTrip wantsFT;
@@ -314,23 +323,46 @@ public class TripBegin extends Activity
 			prevA = currA;
 
 			if (isRoadtrip)
-			{
-				GeoArea[] othera = GeoArea.getAll(db, aID);
-				if (othera != null)
-				{
-					etGeoArea.setAdapter
-						(new ArrayAdapter<GeoArea>(this, R.layout.list_item, othera));
-					if (etGeoAreaListener == null)
-						etGeoAreaListener = new GeoAreaOnItemClickListener();
-					etGeoArea.setOnItemClickListener(etGeoAreaListener);
-				} else {
-					etGeoArea.setAdapter((ArrayAdapter<GeoArea>) null);
-				}
-			}
+				updateETGeoArea(-1, aID);
 		}
 
 		currD = VehSettings.getCurrentDriver(db, currV, true);
 		return (currD != null);
+	}
+
+	/**
+	 * Update adapter for {@link #etGeoArea}, and optionally set {@link #destAreaObj}.
+	 * @param setAreaID  Set {@link #destAreaObj} to this AreaID, show its text in {@code etGeoArea},
+	 *     or 0 or -1 to leave {@code destAreaObj} unchanged.
+	 * @param exceptAreaID  Exclude this area; -1 to include all areas
+	 * @throws NullPointerException if {@link #etGeoArea} == null
+	 * @since 0.9.50
+	 */
+	private void updateETGeoArea(final int selectAreaID, final int exceptAreaID)
+		throws NullPointerException
+	{
+		final GeoArea[] geos = GeoArea.getAll(db, exceptAreaID);
+		if (geos != null)
+		{
+			etGeoArea.setAdapter
+				(new ArrayAdapter<GeoArea>(this, R.layout.list_item, geos));
+			if (etGeoAreaListener == null)
+				etGeoAreaListener = new GeoAreaOnItemClickListener();
+			etGeoArea.setOnItemClickListener(etGeoAreaListener);
+		} else {
+			etGeoArea.setAdapter((ArrayAdapter<GeoArea>) null);
+		}
+
+		if (selectAreaID > 0)
+		{
+			destAreaObj = null;
+			try
+			{
+				destAreaObj = new GeoArea(db, selectAreaID);
+				etGeoArea.setText(destAreaObj.getName());
+			}
+			catch (Exception e) {}
+		}
 	}
 
 	/**
@@ -890,9 +922,15 @@ public class TripBegin extends Activity
 			// like updateDriverVehTripTextAndButtons
 			if (isRoadtrip)
 			{
-				int destArea = wantsFT.getEnd_aID_roadtrip();
-				// TODO set destArea in dropdown, etc
-				// TODO un-hide other items, since activity started as local not roadtrip
+				// un-hide roadtrip items (activity starts as local trip)
+				View rtr_row = findViewById(R.id.trip_begin_roadtrip_desti_row);
+				rtr_row.setVisibility(View.VISIBLE);
+
+				// set destAreaObj and text field
+				if (etGeoArea == null)
+					etGeoArea = (AutoCompleteTextView) findViewById(R.id.trip_begin_roadtrip_desti);
+				if (etGeoArea != null)
+					updateETGeoArea(wantsFT.getEnd_aID_roadtrip(), -1);
 			}
 
 			return;

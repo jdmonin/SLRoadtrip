@@ -114,6 +114,7 @@
 	    android:onClick="onClick_BtnRoadtripDestiDropdown"
 		/>
 </LinearLayout>
+<!-- End of Roadtrip (Frequent Trip) options. -->
 <LinearLayout
     android:orientation="horizontal"
     android:layout_width="fill_parent"

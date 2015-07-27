@@ -57,7 +57,7 @@ import android.widget.Toast;
 /**
  * Activity listing recent gas stops for the current vehicle (up to 40).
  * Another vehicle's gas stops can be displayed by adding {@link #EXTRAS_VEHICLE_ID}
- * to the intent, or calling {@link #populateRecentGasList(RDBAdapter, Vehicle, int)}.
+ * to the intent, or calling {@link #populateRecentGasList(Vehicle, int)}.
  *
  * @author jdmonin
  */
@@ -118,7 +118,7 @@ public class LogbookRecentGas extends Activity
 	/**
 	 * Get data for up to 40 recent gas stops.
 	 * Called when the activity is first created.
-	 * Calls {@link #populateRecentGasList(RDBAdapter, Vehicle, int)}.
+	 * Calls {@link #populateRecentGasList(Vehicle, int)}.
 	 */
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -148,18 +148,17 @@ public class LogbookRecentGas extends Activity
 		showV = Settings.getCurrentVehicle(db, false);
 
 	    isAllVActive = showV.isActive();
-	    populateRecentGasList(db, showV, 40);  // LIMIT 40
+	    populateRecentGasList(showV, 40);  // LIMIT 40
 	}
 
 	/**
-	 * List the recent gas stops for a vehicle.
+	 * List the recent gas stops for a vehicle. Sets {@link #v_id} from {@code ve}.
+	 * @throws NullPointerException if {@code ve} == null
 	 */
-	private void populateRecentGasList(RDBAdapter db, Vehicle ve, final int limit)
+	private void populateRecentGasList(Vehicle ve, final int limit)
+		throws NullPointerException
 	{
-		if (v_id != -1)
-	        setTitle(getResources().getString(R.string.logbook_show__recent_gas) + ": " + ve.toString());
-		else
-			setTitle(getTitle() + ": " + ve.toString());  // first call
+		setTitle(getResources().getString(R.string.logbook_show__recent_gas) + ": " + ve.toString());
 
 		v_id = ve.getID();
 		isCurrVActive = ve.isActive();
@@ -253,9 +252,8 @@ _id|quant|price_per|price_total|fillup|station|vid|gas_brandgrade_id|odo_total|t
 					sb.delete(0, sb.length());  // clear for next row
 				}
 			}
-		} else {
-			gasRows = null;
 		}
+
 		if (gasRows == null)
 		{
 			gaslist = new String[1];
@@ -328,7 +326,7 @@ _id|quant|price_per|price_total|fillup|station|vid|gas_brandgrade_id|odo_total|t
 
 	/**
 	 * Pop up an AlertDialog to select the vehicle to display.
-	 * If one is chosen, call {@link #populateRecentGasList(RDBAdapter, Vehicle, int)} on it.
+	 * If one is chosen, call {@link #populateRecentGasList(Vehicle, int)} on it.
 	 * @param isActive  Should the dialog show all active vehicles, or all inactive ones?
 	 */
 	public final void askVehicleChange(final boolean isActive)
@@ -361,7 +359,7 @@ _id|quant|price_per|price_total|fillup|station|vid|gas_brandgrade_id|odo_total|t
     	        if (ve == Vehicle.OTHER_VEHICLE)
     	        	askVehicleChange(! isActive);
     	        else if (v_id != ve.getID())
-	    	        populateRecentGasList(db, ve, 40);  // LIMIT 40
+			populateRecentGasList(ve, 40);  // LIMIT 40
     	        dialog.dismiss();
     	    }
     	});

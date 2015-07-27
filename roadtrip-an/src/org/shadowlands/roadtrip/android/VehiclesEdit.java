@@ -62,6 +62,7 @@ public class VehiclesEdit extends Activity
 	implements OnItemClickListener
 {
 	/** tag for debug logging */
+	@SuppressWarnings("unused")
 	private static final String TAG = "RTR.VehiclesEdit";
 
 	private RDBAdapter db = null;

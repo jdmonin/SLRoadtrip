@@ -121,34 +121,35 @@ public class LogbookRecentGas extends Activity
 	 * Calls {@link #populateRecentGasList(Vehicle, int)}.
 	 */
 	@Override
-	public void onCreate(Bundle savedInstanceState) {
-	    super.onCreate(savedInstanceState);
-	    db = new RDBOpenHelper(this);
-	    setContentView(R.layout.logbook_recent_gas);
+	public void onCreate(Bundle savedInstanceState)
+	{
+		super.onCreate(savedInstanceState);
+		db = new RDBOpenHelper(this);
+		setContentView(R.layout.logbook_recent_gas);
 
-	    tvTopText = (TextView) findViewById(R.id.logbook_recent_gas_toptext);
-	    lvGasStopsList = (ListView) findViewById(R.id.logbook_recent_gas_list);
-	    lvGasStopsList.setOnItemClickListener(this);
+		tvTopText = (TextView) findViewById(R.id.logbook_recent_gas_toptext);
+		lvGasStopsList = (ListView) findViewById(R.id.logbook_recent_gas_list);
+		lvGasStopsList.setOnItemClickListener(this);
 
-	    Vehicle showV = null;
-	    Intent i = getIntent();
-	    if (i != null)
-	    {
-		final int vid = i.getIntExtra(EXTRAS_VEHICLE_ID, 0);
-		if (vid != 0)
+		Vehicle showV = null;
+		Intent i = getIntent();
+		if (i != null)
 		{
-			try
+			final int vid = i.getIntExtra(EXTRAS_VEHICLE_ID, 0);
+			if (vid != 0)
 			{
-				showV = new Vehicle(db, vid);
+				try
+				{
+					showV = new Vehicle(db, vid);
+				}
+				catch (Throwable e) {}
 			}
-			catch (Throwable e) { }
 		}
-	    }
-	    if (showV == null)
-		showV = Settings.getCurrentVehicle(db, false);
+		if (showV == null)
+			showV = Settings.getCurrentVehicle(db, false);
 
-	    isAllVActive = showV.isActive();
-	    populateRecentGasList(showV, 40);  // LIMIT 40
+		isAllVActive = showV.isActive();
+		populateRecentGasList(showV, 40);  // LIMIT 40
 	}
 
 	/**
@@ -167,14 +168,14 @@ public class LogbookRecentGas extends Activity
 
 		String[] gaslist;
 		/**
-		 * 
-sqlite> select g.*, ts.odo_total,ts.time_stop,ts.locid from tstop_gas g, tstop ts where g.vid=2 and g._id=ts._id order by g._id desc limit 5;
-_id|quant|price_per|price_total|fillup|station|vid|gas_brandgrade_id|odo_total|time_stop|locid
-731|8444|3559|3005|1||2|1|382201|1299345330|78
-712|11639|3439|4003|1||2|2|379645|1299044297|131
-707|3005|3479|1045|0||2|1|378730|1299027122|1
-697|6006|3429|2059|0||2|1|377406|1298894179|1
-657|12845|3269|4199|1||2|1|373170|1298142953|1
+	sqlite> select g.*, ts.odo_total,ts.time_stop,ts.locid from tstop_gas g, tstop ts
+	    where g.vid=2 and g._id=ts._id order by g._id desc limit 5;
+	_id|quant|price_per|price_total|fillup|station|vid|gas_brandgrade_id|odo_total|time_stop|locid
+	731|8444|3559|3005|1||2|1|382201|1299345330|78
+	712|11639|3439|4003|1||2|2|379645|1299044297|131
+	707|3005|3479|1045|0||2|1|378730|1299027122|1
+	697|6006|3429|2059|0||2|1|377406|1298894179|1
+	657|12845|3269|4199|1||2|1|373170|1298142953|1
 		 */
 		ArrayList<String> gasRows = null;
 		if (ve != null)
@@ -292,7 +293,7 @@ _id|quant|price_per|price_total|fillup|station|vid|gas_brandgrade_id|odo_total|t
 					{
 						lo = new Location(conn, locID);
 						locCache.put(locID, lo);
-					} catch (Throwable e) { }  // RDBKeyNotFoundException
+					} catch (Throwable e) {}  // RDBKeyNotFoundException
 				}
 				if (lo != null)
 					locDescr = lo.getLocation();
@@ -307,21 +308,24 @@ _id|quant|price_per|price_total|fillup|station|vid|gas_brandgrade_id|odo_total|t
 	}
 
 	@Override
-    public boolean onCreateOptionsMenu(Menu menu) {
+	public boolean onCreateOptionsMenu(Menu menu)
+	{
 		getMenuInflater().inflate(R.menu.logbook_gas_menu, menu);
 		return true;
 	}
 
 	@Override
-	public boolean onOptionsItemSelected(MenuItem item) {
-	    switch (item.getItemId()) {
-	    case R.id.menu_logbook_gas_otherv:
-	    	askVehicleChange(isCurrVActive);
-	        return true;
+	public boolean onOptionsItemSelected(MenuItem item)
+	{
+		switch (item.getItemId())
+		{
+		case R.id.menu_logbook_gas_otherv:
+			askVehicleChange(isCurrVActive);
+			return true;
 
-	    default:
-	        return super.onOptionsItemSelected(item);
-	    }
+		default:
+			return super.onOptionsItemSelected(item);
+		}
 	}
 
 	/**
@@ -349,27 +353,30 @@ _id|quant|price_per|price_total|fillup|station|vid|gas_brandgrade_id|odo_total|t
 				idx = i;
 		}
 
-    	AlertDialog.Builder alert = new AlertDialog.Builder(this);
-    	alert.setTitle((isActive) ? R.string.choose_an_active_vehicle : R.string.choose_an_inactive_vehicle);
-    	alert.setSingleChoiceItems(vNames, idx, new DialogInterface.OnClickListener() {
-    	    public void onClick(DialogInterface dialog, int item) {
-    	        if ((item < 0) || (item >= allV.length))
-    	        	return;
-    	        Vehicle ve = allV[item];
-    	        if (ve == Vehicle.OTHER_VEHICLE)
-    	        	askVehicleChange(! isActive);
-    	        else if (v_id != ve.getID())
-			populateRecentGasList(ve, 40);  // LIMIT 40
-    	        dialog.dismiss();
-    	    }
-    	});
-    	alert.show();
+		AlertDialog.Builder alert = new AlertDialog.Builder(this);
+		alert.setTitle((isActive) ? R.string.choose_an_active_vehicle : R.string.choose_an_inactive_vehicle);
+		alert.setSingleChoiceItems(vNames, idx, new DialogInterface.OnClickListener() {
+			public void onClick(DialogInterface dialog, int item)
+			{
+				if ((item < 0) || (item >= allV.length))
+					return;
+				Vehicle ve = allV[item];
+				if (ve == Vehicle.OTHER_VEHICLE)
+					askVehicleChange(! isActive);
+				else if (v_id != ve.getID())
+					populateRecentGasList(ve, 40);  // LIMIT 40
+					dialog.dismiss();
+			}
+		});
+
+		alert.show();
 	}
 
 	@Override
 	public void onPause()
 	{
 		super.onPause();
+
 		if (db != null)
 			db.close();
 	}
@@ -378,6 +385,7 @@ _id|quant|price_per|price_total|fillup|station|vid|gas_brandgrade_id|odo_total|t
 	public void onDestroy()
 	{
 		super.onDestroy();
+
 		if (db != null)
 			db.close();
 	}

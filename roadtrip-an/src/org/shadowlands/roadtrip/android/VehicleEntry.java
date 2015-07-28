@@ -164,39 +164,40 @@ public class VehicleEntry
 
 	/** Called when the activity is first created. */
 	@Override
-	public void onCreate(Bundle savedInstanceState) {
-	    super.onCreate(savedInstanceState);
-        setContentView(R.layout.vehicle_entry);
- 
-        int cameFromEdit_id;
+	public void onCreate(Bundle savedInstanceState)
+	{
+		super.onCreate(savedInstanceState);
+		setContentView(R.layout.vehicle_entry);
+
+		int cameFromEdit_id;
 		Intent i = getIntent();
 		if (i != null)
 		{
 			cameFromAskNew = i.getBooleanExtra(EXTRAS_FLAG_ASKED_NEW, false);
 			cameFromEdit_id = i.getIntExtra(EXTRAS_INT_EDIT_ID, 0);
 		} else {
-	        cameFromAskNew = false;
-	        cameFromEdit_id = 0;
+			cameFromAskNew = false;
+			cameFromEdit_id = 0;
 		}
 
 		nickname = (EditText) findViewById(R.id.vehicle_entry_name);
-	    vmodel = (EditText) findViewById(R.id.vehicle_entry_model);
-	    vin = (EditText) findViewById(R.id.vehicle_entry_vin);
-	    plate = (EditText) findViewById(R.id.vehicle_entry_plate);
-	    comment = (EditText) findViewById(R.id.vehicle_entry_comment);
-	    year = (EditText) findViewById(R.id.vehicle_entry_year);
-	    driver = (Spinner) findViewById(R.id.vehicle_entry_driver);
-	    vmake = (Spinner) findViewById(R.id.vehicle_entry_vmake);
-	    odo_orig = (OdometerNumberPicker) findViewById(R.id.vehicle_entry_odo_orig);
-	    odo_curr = (OdometerNumberPicker) findViewById(R.id.vehicle_entry_odo_curr);
-	    odo_orig.setTenthsVisibility(false);
-	    odo_curr.setTenthsVisibility(false);
-	    if (cameFromEdit_id == 0)
-	    	odo_orig.setRelatedUncheckedOdoOnChanges(odo_curr, null);
-	    btnDateFrom = (Button) findViewById(R.id.vehicle_entry_btn_date_from);
-	    cbActive = (CheckBox) findViewById(R.id.vehicle_entry_active_cb);
+		vmodel = (EditText) findViewById(R.id.vehicle_entry_model);
+		vin = (EditText) findViewById(R.id.vehicle_entry_vin);
+		plate = (EditText) findViewById(R.id.vehicle_entry_plate);
+		comment = (EditText) findViewById(R.id.vehicle_entry_comment);
+		year = (EditText) findViewById(R.id.vehicle_entry_year);
+		driver = (Spinner) findViewById(R.id.vehicle_entry_driver);
+		vmake = (Spinner) findViewById(R.id.vehicle_entry_vmake);
+		odo_orig = (OdometerNumberPicker) findViewById(R.id.vehicle_entry_odo_orig);
+		odo_curr = (OdometerNumberPicker) findViewById(R.id.vehicle_entry_odo_curr);
+		odo_orig.setTenthsVisibility(false);
+		odo_curr.setTenthsVisibility(false);
+		if (cameFromEdit_id == 0)
+			odo_orig.setRelatedUncheckedOdoOnChanges(odo_curr, null);
+		btnDateFrom = (Button) findViewById(R.id.vehicle_entry_btn_date_from);
+		cbActive = (CheckBox) findViewById(R.id.vehicle_entry_active_cb);
 
-	    db = new RDBOpenHelper(this);
+		db = new RDBOpenHelper(this);
 
 		final Vehicle currV = Settings.getCurrentVehicle(db, false);
 		if (currV != null)
@@ -219,18 +220,19 @@ public class VehicleEntry
 			findViewById(R.id.vehicle_entry_active_txt).setVisibility(View.GONE);
 		}
 
-	    populateVehMakesList();
-	    if (VEHICLEMAKES != null)
-	    {
-	    	ArrayAdapter<VehicleMake> vaa = new ArrayAdapter<VehicleMake>(this, android.R.layout.simple_spinner_item, VEHICLEMAKES);
-	    	vaa.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-	    	vmake.setAdapter(vaa);
-	    }
+		populateVehMakesList();
+		if (VEHICLEMAKES != null)
+		{
+			ArrayAdapter<VehicleMake> vaa =
+				new ArrayAdapter<VehicleMake>(this, android.R.layout.simple_spinner_item, VEHICLEMAKES);
+			vaa.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+			vmake.setAdapter(vaa);
+		}
 
-        cameFromEdit_veh = null;
-	    if (cameFromEdit_id != 0)
-	    {
-	    	try {
+		cameFromEdit_veh = null;
+		if (cameFromEdit_id != 0)
+		{
+			try {
 				cameFromEdit_veh = new Vehicle(db, cameFromEdit_id);
 				updateScreenFieldsFromVehicle();
 			} catch (Throwable e) {
@@ -240,78 +242,79 @@ public class VehicleEntry
 				finish();
 				return;   // <--- Early return: Could not load from db to view fields ---
 			}
-	    } else {
-	    	cbActive.setChecked(true);
-	    }
-
-	    int currentDriverID = -1;
-	    if (cameFromAskNew)
-	    {
-		Vehicle v = Settings.getCurrentVehicle(db, false);
-	    	Person dr = (v != null) ? VehSettings.getCurrentDriver(db, v, false) : null;
-	    	if (dr != null)
-	    		currentDriverID = dr.getID();
-
-		View vv = findViewById(R.id.vehicle_entry_geoarea_text);  // not editing: hide GeoArea display field
-		if (vv != null)
-			vv.setVisibility(View.GONE);
-		vv = findViewById(R.id.vehicle_entry_added_on_row);
-		if (vv != null)
-			vv.setVisibility(View.GONE);
-
-		etGeoArea = (AutoCompleteTextView) findViewById(R.id.vehicle_entry_geoarea);
-		GeoArea[] areas = GeoArea.getAll(db, -1);
-		if (areas != null)
-		{
-			ArrayAdapter<GeoArea> adapter = new ArrayAdapter<GeoArea>(this, R.layout.list_item, areas);
-			etGeoArea.setAdapter(adapter);
-			geoAreaObj = findCurrentGeoArea();
-			if (geoAreaObj != null)
-			{
-				geoAreaObj_orig = geoAreaObj;
-				etGeoArea.setText(geoAreaObj.toString());
-			}
-			etGeoArea.setOnItemClickListener(new GeoAreaOnItemClickListener());
 		} else {
-			etGeoArea.setAdapter((ArrayAdapter<GeoArea>) null);
+			cbActive.setChecked(true);
 		}
-	    } else {
-		// editing an existing vehicle, or initial setup
 
-		View v = findViewById(R.id.vehicle_entry_geoarea);  // not new, or only 1 area: hide GeoArea dropdown
-		if (v != null)
-			v.setVisibility(View.GONE);
-		v = findViewById(R.id.vehicle_entry_geoarea_arrow);
-		if (v != null)
-			v.setVisibility(View.GONE);
-
-		if (cameFromEdit_veh != null)
+		int currentDriverID = -1;
+		if (cameFromAskNew)
 		{
-			currentDriverID = cameFromEdit_veh.getDriverID();
+			Vehicle v = Settings.getCurrentVehicle(db, false);
+			Person dr = (v != null) ? VehSettings.getCurrentDriver(db, v, false) : null;
+			if (dr != null)
+				currentDriverID = dr.getID();
 
-			TextView tvG = (TextView) findViewById(R.id.vehicle_entry_geoarea_text);
-			if (tvG != null)
-			{
-				GeoArea geoa = VehSettings.getCurrentArea(db, cameFromEdit_veh, false);
-				if (geoa != null)
-					tvG.setText(geoa.getName());
-			}
-		} else {
-			// initial setup: hide entire GeoArea row and "Added on" row
-
-			View vv = findViewById(R.id.vehicle_entry_geo_area_row);
+			View vv = findViewById(R.id.vehicle_entry_geoarea_text);  // not editing: hide GeoArea display field
 			if (vv != null)
 				vv.setVisibility(View.GONE);
 			vv = findViewById(R.id.vehicle_entry_added_on_row);
 			if (vv != null)
 				vv.setVisibility(View.GONE);
-		}
-	    }
 
-	    SpinnerDataFactory.setupDriversSpinner
-	    	(db, this, driver, currentDriverID);
-	    if (hasCurrentTrip)
-	    	driver.setEnabled(false);
+			etGeoArea = (AutoCompleteTextView) findViewById(R.id.vehicle_entry_geoarea);
+			GeoArea[] areas = GeoArea.getAll(db, -1);
+			if (areas != null)
+			{
+				ArrayAdapter<GeoArea> adapter =
+					new ArrayAdapter<GeoArea>(this, R.layout.list_item, areas);
+				etGeoArea.setAdapter(adapter);
+				geoAreaObj = findCurrentGeoArea();
+				if (geoAreaObj != null)
+				{
+					geoAreaObj_orig = geoAreaObj;
+					etGeoArea.setText(geoAreaObj.toString());
+				}
+				etGeoArea.setOnItemClickListener(new GeoAreaOnItemClickListener());
+			} else {
+				etGeoArea.setAdapter((ArrayAdapter<GeoArea>) null);
+			}
+		} else {
+			// editing an existing vehicle, or initial setup
+
+			// not new, or only 1 area: hide GeoArea dropdown:
+			View v = findViewById(R.id.vehicle_entry_geoarea);
+			if (v != null)
+				v.setVisibility(View.GONE);
+			v = findViewById(R.id.vehicle_entry_geoarea_arrow);
+			if (v != null)
+				v.setVisibility(View.GONE);
+
+			if (cameFromEdit_veh != null)
+			{
+				currentDriverID = cameFromEdit_veh.getDriverID();
+
+				TextView tvG = (TextView) findViewById(R.id.vehicle_entry_geoarea_text);
+				if (tvG != null)
+				{
+					GeoArea geoa = VehSettings.getCurrentArea(db, cameFromEdit_veh, false);
+					if (geoa != null)
+						tvG.setText(geoa.getName());
+				}
+			} else {
+				// initial setup: hide entire GeoArea row and "Added on" row
+
+				View vv = findViewById(R.id.vehicle_entry_geo_area_row);
+				if (vv != null)
+					vv.setVisibility(View.GONE);
+				vv = findViewById(R.id.vehicle_entry_added_on_row);
+				if (vv != null)
+					vv.setVisibility(View.GONE);
+			}
+		}
+
+		SpinnerDataFactory.setupDriversSpinner(db, this, driver, currentDriverID);
+		if (hasCurrentTrip)
+			driver.setEnabled(false);
 	}
 
 	/**
@@ -389,13 +392,13 @@ public class VehicleEntry
 			cbActive.setEnabled(false);
 		}
 
-    	cbActive.setChecked(veh.isActive());
-    	if (isCurrentV)
-    	{
-    		// Current Vehicle must stay active
-    		cbActive.setText(R.string.current_vehicle);
-    		cbActive.setEnabled(false);
-    	}
+		cbActive.setChecked(veh.isActive());
+		if (isCurrentV)
+		{
+			// Current Vehicle must stay active
+			cbActive.setText(R.string.current_vehicle);
+			cbActive.setEnabled(false);
+		}
 	}
 
 	/** Update the date shown on {@link #btnDateFrom} from {@link #dateFrom} */
@@ -436,7 +439,7 @@ public class VehicleEntry
 		{
 			etGeoArea.dismissDropDown();
 
-			// if text field is empty, fill in from initial value 
+			// if text field is empty, fill in from initial value
 			if ((geoAreaObj_orig != null) && (etGeoArea.getText().toString().trim().length() == 0))
 			{
 				geoAreaObj = geoAreaObj_orig;
@@ -468,11 +471,11 @@ public class VehicleEntry
 		if (dateFrom == null)
 			dateFrom = Calendar.getInstance();  // will be today's date
 
-        return new DatePickerDialog
-        	(this, this,
-        	 dateFrom.get(Calendar.YEAR),
-        	 dateFrom.get(Calendar.MONTH),
-        	 dateFrom.get(Calendar.DAY_OF_MONTH));
+		return new DatePickerDialog
+			(this, this,
+			 dateFrom.get(Calendar.YEAR),
+			 dateFrom.get(Calendar.MONTH),
+			 dateFrom.get(Calendar.DAY_OF_MONTH));
 	}
 
 	/**
@@ -518,7 +521,7 @@ public class VehicleEntry
 
 		if (odo_curr.getCurrent10d() < odo_orig.getCurrent10d())
 		{
-			odo_curr.requestFocus();			
+			odo_curr.requestFocus();
 			Toast.makeText(this, R.string.vehicle_entry_odo_curr_low, Toast.LENGTH_SHORT).show();
 			return;
 		}
@@ -568,8 +571,8 @@ public class VehicleEntry
 				{
 					etGeoArea.requestFocus();
 					Toast.makeText(getApplicationContext(),
-					    getResources().getString(R.string.vehicle_entry_geoarea_prompt),
-					    Toast.LENGTH_SHORT).show();
+						getResources().getString(R.string.vehicle_entry_geoarea_prompt),
+						Toast.LENGTH_SHORT).show();
 					return;  // <--- Early return: getGeoArea empty ---
 				}
 
@@ -583,13 +586,10 @@ public class VehicleEntry
 		if (cameFromEdit_veh == null)
 		{
 			nv = new Vehicle
-			  (nicknameText,
-			   nvDriv, ((VehicleMake) vmake.getSelectedItem()).getID(),
-			   modelText,
-			   yr,
-			   datefrom_int, 0, vin.getText().toString(), plateText,
-			   odo_orig.getCurrent10d(), odo_curr.getCurrent10d(),
-			   comment.getText().toString());
+				(nicknameText, nvDriv, ((VehicleMake) vmake.getSelectedItem()).getID(),
+				modelText, yr, datefrom_int, 0, vin.getText().toString(), plateText,
+				odo_orig.getCurrent10d(), odo_curr.getCurrent10d(),
+				comment.getText().toString());
 			nv.setActive(cbActive.isChecked());
 			nv.insert(db);
 		} else {
@@ -611,40 +611,40 @@ public class VehicleEntry
 
 		// Set new vehicle's CURRENT_AREA from geoarea dropdown or current vehicle's.
 		if ((geoAreaObj != null) || ! VehSettings.exists(db, VehSettings.CURRENT_AREA, nv))
-	    	{
+		{
 			GeoArea currA = geoAreaObj;
 			if (currA == null)
 				currA = findCurrentGeoArea();
 
 			if (currA != null)
 				VehSettings.setCurrentArea(db, nv, currA);
-	    	}
-
-    	if (! Settings.exists(db, Settings.CURRENT_VEHICLE))
-    	{
-    		Settings.setCurrentVehicle(db, nv);
-    		VehSettings.setPreviousLocation(db, nv, null);
-    	}
-
-    	if (! VehSettings.exists(db, VehSettings.CURRENT_DRIVER, nv))
-    	{
-    		VehSettings.setCurrentDriver(db, nv, nvDriv);
-    	}
-
-    	if ((cameFromEdit_veh == null) && ! cameFromAskNew)
-		{
-	    	startActivity(new Intent(VehicleEntry.this, Main.class));
-		} else {
-    		Intent i = getIntent();
-	    	i.putExtra("_id", nv.getID());
-	    	setResult(((cameFromAskNew) ? ChangeDriverOrVehicle.RESULT_ADDED_NEW : RESULT_OK), i);
 		}
 
-    	finish();
+		if (! Settings.exists(db, Settings.CURRENT_VEHICLE))
+		{
+			Settings.setCurrentVehicle(db, nv);
+			VehSettings.setPreviousLocation(db, nv, null);
+		}
+
+		if (! VehSettings.exists(db, VehSettings.CURRENT_DRIVER, nv))
+		{
+			VehSettings.setCurrentDriver(db, nv, nvDriv);
+		}
+
+		if ((cameFromEdit_veh == null) && ! cameFromAskNew)
+		{
+			startActivity(new Intent(VehicleEntry.this, Main.class));
+		} else {
+			Intent i = getIntent();
+			i.putExtra("_id", nv.getID());
+			setResult(((cameFromAskNew) ? ChangeDriverOrVehicle.RESULT_ADDED_NEW : RESULT_OK), i);
+		}
+
+		finish();
 	}
 
 	/**
-	 * Find the {@code CURRENT_AREA} to use for a new vehicle.
+	 * Find the {@link VehSettings#CURRENT_AREA} to use for a new vehicle.
 	 * Check the current vehicle's GeoArea, or if none use the first geoarea in the db.
 	 * @return A GeoArea if possible, or null
 	 * @since 0.9.41
@@ -657,7 +657,8 @@ public class VehicleEntry
 		if (cv != null)
 			currA = VehSettings.getCurrentArea(db, cv, false);
 
-		if (currA == null) {
+		if (currA == null)
+		{
 			// No GeoArea setting, or no current vehicle: Probably initial setup
 			GeoArea[] areas = GeoArea.getAll(db, -1);
 			if (areas != null)
@@ -672,19 +673,18 @@ public class VehicleEntry
 		if (VEHICLEMAKES != null)
 			return;
 
-    	try
-    	{
-    		Vector<VehicleMake> names = VehicleMake.getAll(db);
-        	if (names != null)
-        	{
-        		final int L = names.size();
-        		VEHICLEMAKES = new VehicleMake[L];
-        		for (int i = 0; i < L; ++i)
-        			VEHICLEMAKES[i] = names.elementAt(i);
-        	}
-    	}
-    	catch (SQLiteException e)
-    	{}
+		try
+		{
+			Vector<VehicleMake> names = VehicleMake.getAll(db);
+			if (names != null)
+			{
+				final int L = names.size();
+				VEHICLEMAKES = new VehicleMake[L];
+				for (int i = 0; i < L; ++i)
+					VEHICLEMAKES[i] = names.elementAt(i);
+			}
+		}
+		catch (SQLiteException e) {}
 	}
 
 	/**
@@ -700,6 +700,7 @@ public class VehicleEntry
 			ListAdapter la = etGeoArea.getAdapter();
 			if (la == null)
 				return;
+
 			geoAreaObj = (GeoArea) la.getItem(position);
 		}
 	}

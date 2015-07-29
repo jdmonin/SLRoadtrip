@@ -741,7 +741,7 @@ public class TripBegin extends Activity
 			return;  // <--- Early return: missing required ---
 		}
 
-		// Check other fields:
+		// Check other fields; if roadtrip, create destAreaObj in db if needed
 
 		if (isRoadtrip)
 		{
@@ -754,6 +754,7 @@ public class TripBegin extends Activity
 					Toast.LENGTH_SHORT).show();
 				return;  // <--- Early return: same src,dest geoarea ---
 			}
+
 			if ((destAreaObj == null) || ! destAreaObj.toString().equalsIgnoreCase(destarea))
 			{
 				if (destarea.length() == 0)
@@ -764,8 +765,13 @@ public class TripBegin extends Activity
 						Toast.LENGTH_SHORT).show();
 					return;  // <--- Early return: etArea empty ---
 				}
-				destAreaObj = new GeoArea(destarea);
-				destAreaObj.insert(db);
+
+				destAreaObj = GeoArea.getByName(db, destarea);  // try db lookup before creating new one
+				if (destAreaObj == null)
+				{
+					destAreaObj = new GeoArea(destarea);
+					destAreaObj.insert(db);
+				}
 			}
 		}
 

@@ -970,6 +970,9 @@ public class TripTStopEntry extends Activity
 	 * Stops during a roadtrip have several GeoArea radios to select the starting area, no area, or ending area.
 	 * For a local trip, updates the current GeoArea textview; does not show the roadtrip GeoArea radio buttons.
 	 *<P>
+	 * When calling for the "Other Geoarea"'s radio button, textfield content changes, or autocomplete items,
+	 * ({@code areaID} == {@link #GEOAREAID_OTHER_NEW}), update {@link #areaOther} before calling this method.
+	 *<P>
 	 * Before changing the currently selected button, this method confirms with the user
 	 * if they've already picked a location there. This method is also used because the radios
 	 * are laid out 2 columns and 2 rows, so a RadioGroup won't simply work.
@@ -1003,13 +1006,32 @@ public class TripTStopEntry extends Activity
 		final boolean btnWasOther = (areaID == GEOAREAID_OTHER_NEW);
 		if (btnWasOther)
 		{
+			String areaOtherName;
+			Editable etOtherText = etRoadtripAreaOther.getText();
+			if ((etOtherText != null) && (etOtherText.length() > 0))
+				areaOtherName = etOtherText.toString().trim();
+			else
+				areaOtherName = "";
+
 			if (areaOther != null)
+				// validate area name too, in case text was changed since selection
+				if ((areaOtherName.length() == 0) || areaOtherName.equalsIgnoreCase(areaOther.getName()))
+					areaID = areaOther.getID();
+
+			if (areaID == GEOAREAID_OTHER_NEW)
 			{
-				areaID = areaOther.getID();
-				// TODO validate area name too, in case text was changed since selection
-			} else {
-				// TODO try to query from text; may want to create a new area
+				// Wasn't picked from dropdown: search the table from text
+
+				// TODO may want to create a new area
+				//     (currently, new area is created in enterTStop; why anywhere else?)
 				// If it's new, check if new geoarea obj created at this tstop
+
+				GeoArea geo = GeoArea.getByName(db, areaOtherName);
+				if (geo != null)
+				{
+					areaOther = geo;
+					areaID = areaOther.getID();
+				}
 			}
 		}
 
@@ -2478,6 +2500,7 @@ public class TripTStopEntry extends Activity
 					final GeoArea newArea = (GeoArea) areas.getSelectedItem();
 					if (newArea == null)
 						return;  // unlikely
+
 					selectRoadtripAreaButton(newArea.getID(), newArea.getName(), true, 0);
 				}
 			});

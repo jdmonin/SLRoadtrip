@@ -140,9 +140,16 @@ public class TripBegin extends Activity
 	private RadioGroup rbLocGroup;
 	/** continue from prev location. Part of {@link #rbLocGroup}. */
 	private RadioButton rbLocContinue;
-	/** previous-location textview. If no previous trip, this and {@link #rbLocGroup} are hidden. */
+	/**
+	 * previous-location textview. If no previous trip, this and {@link #rbLocGroup} are hidden.
+	 * Call {@link #realignTVLocContinueHeight()} to update this field's height if other layout elements change,
+	 * to keep location radios and text fields in visual alignment.
+	 */
 	private TextView tvLocContinue;
-	/** new-location textfield. Typing here calls {@link #afterTextChanged(Editable)}. */
+	/**
+	 * new-location textfield. Typing here calls {@link #afterTextChanged(Editable)}.
+	 * Call {@link #realignTVLocContinueHeight()} to update related field alignment if other layout elements change.
+	 */
 	private AutoCompleteTextView etLocNew;
 	/** starting date-time */
 	private Calendar startTime;
@@ -264,16 +271,8 @@ public class TripBegin extends Activity
 		}
 
 		// Update height of starting-location textview to match
-		// the radio button, once those have been drawn.
-		rbLocContinue.post(new Runnable()
-		{
-			public void run() {
-				final int rbHeight = rbLocContinue.getHeight(),
-				          tvHeight = tvLocContinue.getHeight();
-				if (tvHeight < rbHeight)
-					tvLocContinue.setHeight(rbHeight);
-			}
-		});
+		// the radio buttons, once those have been drawn.
+		realignLocTextsHeight();
 
 		// all this will be set, checked in updateDriverVehTripTextAndButtons():
 		prevVId = 0;
@@ -436,19 +435,7 @@ public class TripBegin extends Activity
 					(getResources().getString(R.string.continue_from_colon)
 					 + " " + startingPrevTStop.readLocationText());
 				if (isRBHidden)
-				{
-					// Update height of starting-location textview to match
-					// the radio buttons again, once those have been un-hidden.
-					rbLocContinue.post(new Runnable()
-					{
-						public void run() {
-							final int rbHeight = rbLocContinue.getHeight(),
-							          tvHeight = tvLocContinue.getHeight();
-							if (tvHeight < rbHeight)
-								tvLocContinue.setHeight(rbHeight);
-						}
-					});
-				}
+					realignLocTextsHeight();
 			}
 
 			// How recent was that vehicle's most recent trip? (Historical Mode)
@@ -468,6 +455,28 @@ public class TripBegin extends Activity
 		prevDId = dID;
 
 		updateStartDateButton();
+	}
+
+	/**
+	 * Update height of starting-location textview to match the radio buttons again
+	 * after a change to layout contents/element visibility.  Required in order to
+	 * prevent {@link #tvLocContinue} shrinking smaller which causes {@link #etLocNew}
+	 * to slide up, losing alignment next to its radio button.
+	 *<P>
+	 * Update is queued using {@link #rbLocContinue}.{@link View#post(Runnable) post(Runnable)}
+	 * so it will occur after other pending changes take effect.
+	 */
+	private void realignLocTextsHeight()
+	{
+		rbLocContinue.post(new Runnable()
+		{
+			public void run() {
+				final int rbHeight = rbLocContinue.getHeight(),
+				          tvHeight = tvLocContinue.getHeight();
+				if (tvHeight < rbHeight)
+					tvLocContinue.setHeight(rbHeight);
+			}
+		});
 	}
 
 	/**
@@ -937,6 +946,9 @@ public class TripBegin extends Activity
 					etGeoArea = (AutoCompleteTextView) findViewById(R.id.trip_begin_roadtrip_desti);
 				if (etGeoArea != null)
 					updateETGeoArea(wantsFT.getEnd_aID_roadtrip(), -1);
+
+				// realign required after layout visibility change
+				realignLocTextsHeight();
 			}
 
 			return;

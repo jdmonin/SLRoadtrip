@@ -116,6 +116,8 @@ public class TripTStopEntry extends Activity
 	 * in {@link #etRoadtripAreaOther} and its record not yet created.
 	 * Also used when calling {@link #selectRoadtripAreaButton(int, String, boolean, int)}
 	 * when the "Other" radio button should be checked, regardless of the Area ID selected in "Other".
+	 *<P>
+	 * This value is not -1 because {@link GeoArea#getAll(RDBAdapter, int)} and other places use -1.
 	 * @see #areaOther
 	 * @see #areaLocs_areaID
 	 * @since 0.9.50
@@ -138,6 +140,7 @@ public class TripTStopEntry extends Activity
 
 	/**
 	 * All locations within the {@link GeoArea} having ID {@link #areaLocs_areaID}, or null;
+	 * used in {@link #loc} adapter to set {@link #locObj};
 	 * filled in {@link #onCreate(Bundle)} when {@link #areaLocs_areaID} is calculated,
 	 * updated when the selected area changes in {@link #selectRoadtripAreaButton(int, String, boolean, int)}.
 	 */
@@ -154,6 +157,12 @@ public class TripTStopEntry extends Activity
 	 * During a roadtrip, is taken from {@link #currTS}.{@link TStop#getAreaID() getAreaID()}
 	 * if currently stopped, otherwise from {@link #prevLocObj}.{@link Location#getAreaID() getAreaID()}
 	 * if available, or {@link #currA}. See {@link #onCreate(Bundle)} code for details.
+	 *<P>
+	 * The exception to the rule "current selected area ID of {@link #rbRoadtripArea_chosen}" is when
+	 * text is currently being typed into {@link #etRoadtripAreaOther}: Its radio button will be chosen
+	 * for responsiveness, but {@link #areaLocs_areaID}, {@link #loc}, and related fields aren't updated
+	 * from the previous area until {@code etRoadtripAreaOther} loses focus or {@link #enterTStop(boolean)}
+	 * is called from a button press.
 	 */
 	private int areaLocs_areaID;
 
@@ -367,7 +376,7 @@ public class TripTStopEntry extends Activity
 	 */
 	private AutoCompleteTextView etRoadtripAreaOther;
 
-	/** For roadtrips, The listener for autocompete selections in {@link #etRoadtripAreaOther}. */
+	/** For roadtrips, the listener for autocomplete selections in {@link #etRoadtripAreaOther}. */
 	private GeoAreaListenerWatcher etRoadtripAreaOtherListener;
 
 	/**
@@ -846,6 +855,7 @@ public class TripTStopEntry extends Activity
 			}
 
 			etRoadtripAreaOther.addTextChangedListener(etRoadtripAreaOtherListener);
+			etRoadtripAreaOther.setOnFocusChangeListener(etRoadtripAreaOtherListener);
 
 		} else {
 			View v = findViewById(R.id.trip_tstop_areas_row1);
@@ -971,7 +981,10 @@ public class TripTStopEntry extends Activity
 	 * For a local trip, updates the current GeoArea textview; does not show the roadtrip GeoArea radio buttons.
 	 *<P>
 	 * When calling for the "Other Geoarea"'s radio button, textfield content changes, or autocomplete items,
-	 * ({@code areaID} == {@link #GEOAREAID_OTHER_NEW}), update {@link #areaOther} before calling this method.
+	 * ({@code areaID} == {@link #GEOAREAID_OTHER_NEW}), either update {@link #areaOther} before calling this method,
+	 * or set it to {@code null} to have this method determine it using
+	 * {@link GeoArea#getByName(RDBAdapter, String) GeoArea.getByName}<tt>(db,
+	 * {@link #etRoadtripAreaOther}.getText().trim())</tt>.
 	 *<P>
 	 * Before changing the currently selected button, this method confirms with the user
 	 * if they've already picked a location there. This method is also used because the radios
@@ -1004,6 +1017,7 @@ public class TripTStopEntry extends Activity
 		(int areaID, String newAreaText, final boolean alsoUpdateData, final int confirmChange)
 	{
 		final boolean btnWasOther = (areaID == GEOAREAID_OTHER_NEW);
+
 		if (btnWasOther)
 		{
 			String areaOtherName;
@@ -1746,6 +1760,8 @@ public class TripTStopEntry extends Activity
 			usedAreaOther = (areaOther == null)
 			     || ((areaLocs_areaID != currT.getAreaID())
 				 && (areaLocs_areaID != currT.getRoadtripEndAreaID()));
+
+			// TODO check locobj areaid vs chosen areaid, like selectRoadtripAreaButton does
 		}
 
 		// areaLocs_areaID is set in onCreate, updated by radios or dialogs
@@ -3412,7 +3428,7 @@ public class TripTStopEntry extends Activity
 	 * {@link TripTStopEntry#selectRoadtripAreaButton(int, String, boolean, int) selectRoadtripAreaButton}
 	 * ({@link TripTStopEntry#GEOAREAID_OTHER_NEW GEOAREAID_OTHER_NEW}, {@code areaName, true, 0)}.
 	 */
-	private class GeoAreaListenerWatcher implements OnItemClickListener, TextWatcher
+	private class GeoAreaListenerWatcher implements OnItemClickListener, TextWatcher, View.OnFocusChangeListener
 	{
 		/** For Other GeoArea autocomplete, the callback for {@link OnItemClickListener} */
 		public void onItemClick(AdapterView<?> parent, View clickedOn, int position, long rowID)
@@ -3434,7 +3450,7 @@ public class TripTStopEntry extends Activity
 			String areaName;
 			Editable aNEd = etRoadtripAreaOther.getText();
 			if ((aNEd != null) && (aNEd.length() > 0))
-				areaName = aNEd.toString();
+				areaName = aNEd.toString().trim();
 			else
 				areaName = getResources().getString(R.string.other__dots);  // "Other..."
 
@@ -3442,29 +3458,73 @@ public class TripTStopEntry extends Activity
 		}
 
 		/**
-		 * If new geoarea text is typed into {@link TripTStopEntry#etRoadtripAreaOther etRoadtripAreaOther},
-		 * and {@link TripTStopEntry#areaOther areaOther} no longer matches that text, clear {@code areaOther}.
-		 * (for addTextChangedListener / {@link TextWatcher})
+		 * When focus is lost, check {@link TripTStopEntry#areaOther areaOther} name against Other Geoarea
+		 * textfield contents ({@link TripTStopEntry#etRoadtripAreaOther etRoadtripAreaOther}).
+		 * If new text typed into {@code etRoadtripAreaOther} no longer matches {@code areaOther},
+		 * update it and related activity data fields.
+		 *<P>
+		 * {@link TripTStopEntry#enterTStop(boolean)} must perform the same checks, because button clicks
+		 * don't result in focus loss which will call this method.
+		 *
+		 * @see #afterTextChanged(Editable)
 		 */
-		public void afterTextChanged(Editable et)
+		public void onFocusChange(View unused, final boolean gainedFocus)
 		{
-			final String newText = et.toString().trim();
-			final boolean newTextEmpty = (newText.length() == 0);
+			if (gainedFocus)
+				return;
 
-			boolean wantCheckRadio = ! newTextEmpty;  // check it unless newly empty
+			final String areaName = etRoadtripAreaOther.getText().toString().trim();
+			if (areaName.length() == 0)
+			{
+				areaOther_prev = areaOther;
+				areaOther = null;
 
-			if ((areaOther != null) && (newTextEmpty || ! areaOther.getName().equalsIgnoreCase(newText)))
+				return;
+			}
+
+			if ((areaOther == null) || (! areaOther.getName().equalsIgnoreCase(areaName))
+			    || (areaLocs_areaID != areaOther.getID()))
 			{
 				// Mismatch: object no longer matches typed GeoArea description
 
 				areaOther_prev = areaOther;
-				areaOther = null;
-			}
+				areaOther = null;  // selectRoadtripAreaButton will set it using GeoArea.getByName
 
-			// update radios, ask for confirmation if loc entered, etc
-			if (wantCheckRadio && ! rbRoadtripAreaOther.isChecked())
-				selectRoadtripAreaButton(GEOAREAID_OTHER_NEW, newText, true, 0);
-				// TODO even if already checked, maybe remove location adapter if changed areaOther
+				// update radios, ask for confirmation if loc already entered, etc
+				selectRoadtripAreaButton(GEOAREAID_OTHER_NEW, areaName, true, 0);
+				    // TODO even if already checked, maybe remove location adapter if changed areaOther
+			}
+		}
+
+		/**
+		 * If new geoarea text is typed into {@link TripTStopEntry#etRoadtripAreaOther etRoadtripAreaOther},
+		 * for responsiveness be sure the radio button is checked.
+		 *<P>
+		 * Because this can be called after eack character entered, further data checks
+		 * ({@link TripTStopEntry#areaOther areaOther} against that text field, etc) will
+		 * wait until {@link #onFocusChange(View, boolean)}.
+		 *<P>
+		 * Also doesn't update {@link TripTStopEntry#areaLocs_areaID areaLocs_areaID}
+		 * or the {@link TripTStopEntry#loc loc} autocomplete adapter; they aren't needed yet
+		 * because {@code loc} doesn't have focus. When {@code etRoadtripAreaOther} loses focus,
+		 * they will be updated at that time by {@link #onFocusChange(View, boolean)}.
+		 *<P>
+		 * (callback method for addTextChangedListener / {@link TextWatcher})
+		 * @param et  {@link TripTStopEntry#etRoadtripAreaOther etRoadtripAreaOther}
+		 */
+		public void afterTextChanged(Editable et)
+		{
+			if (rbRoadtripAreaOther.isChecked())
+				return;
+
+			if (et.toString().trim().length() > 0)
+			{
+				if (rbRoadtripArea_chosen != null)
+					rbRoadtripArea_chosen.setChecked(false);
+
+				rbRoadtripAreaOther.setChecked(true);
+				rbRoadtripArea_chosen = rbRoadtripAreaOther;
+			}
 		}
 
 		/** required stub for {@link TextWatcher} */

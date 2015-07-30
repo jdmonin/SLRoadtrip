@@ -112,7 +112,7 @@ public class TripTStopEntry extends Activity
 	private static final long TIMEDIFF_HISTORICAL_MILLIS = 24 * 60 * 60 * 1000L;
 
 	/**
-	 * Placeholder for GeoArea ID when the geoarea name is newly entered text
+	 * Placeholder (-2) for GeoArea ID when the geoarea name is newly entered text
 	 * in {@link #etRoadtripAreaOther} and its record not yet created.
 	 * Also used when calling {@link #selectRoadtripAreaButton(int, String, boolean, int)}
 	 * when the "Other" radio button should be checked, regardless of the Area ID selected in "Other".
@@ -157,6 +157,10 @@ public class TripTStopEntry extends Activity
 	 * During a roadtrip, is taken from {@link #currTS}.{@link TStop#getAreaID() getAreaID()}
 	 * if currently stopped, otherwise from {@link #prevLocObj}.{@link Location#getAreaID() getAreaID()}
 	 * if available, or {@link #currA}. See {@link #onCreate(Bundle)} code for details.
+	 *<P>
+	 * During a roadtrip, may become {@link #GEOAREAID_OTHER_NEW} in
+	 * {@link #selectRoadtripAreaButton(int, String, boolean, int)}.
+	 * Code using this field must handle -1 or {@link #GEOAREAID_OTHER_NEW} gracefully.
 	 *<P>
 	 * The exception to the rule "current selected area ID of {@link #rbRoadtripArea_chosen}" is when
 	 * text is currently being typed into {@link #etRoadtripAreaOther}: Its radio button will be chosen
@@ -1036,8 +1040,6 @@ public class TripTStopEntry extends Activity
 			{
 				// Wasn't picked from dropdown: search the table from text
 
-				// TODO may want to create a new area
-				//     (currently, new area is created in enterTStop; why anywhere else?)
 				// If it's new, check if new geoarea obj created at this tstop
 
 				GeoArea geo = GeoArea.getByName(db, areaOtherName);
@@ -1763,7 +1765,9 @@ public class TripTStopEntry extends Activity
 			     || ((areaLocs_areaID != currT.getAreaID())
 				 && (areaLocs_areaID != currT.getRoadtripEndAreaID()));
 
-			// TODO check locobj areaid vs chosen areaid, like selectRoadtripAreaButton does
+			// TODO ask about locObj areaid vs chosen areaid, like selectRoadtripAreaButton does?
+			// See comment and code at "Get or create the Location db record" below,
+			// which ignores existing locObj if areaid differs.
 		}
 
 		// areaLocs_areaID is set in onCreate, updated by radios or dialogs
@@ -1838,7 +1842,7 @@ public class TripTStopEntry extends Activity
 		int locID = 0;
 
 		// Get or create the Location db record,
-		// if we don't already have it
+		// if we don't already have it or its area ID != areaLocs_areaID
 		if ((locObj == null)
 			|| (! locObj.getLocation().equalsIgnoreCase(locat))
 			|| ((areaLocs_areaID != locObj.getAreaID())

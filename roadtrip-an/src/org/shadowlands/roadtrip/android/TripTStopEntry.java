@@ -1198,6 +1198,13 @@ public class TripTStopEntry extends Activity
 			if (rbRoadtripAreaStart == null)
 				return;  // <--- Early return: None of these fields are visible ---
 
+			// set this text now before changing radios,
+			// because its textwatcher may want to pick its own radio.
+			if (areaOther == null)
+				etRoadtripAreaOther.setText("");
+			else
+				etRoadtripAreaOther.setText(areaOther.getName());
+
 			// rbRoadtripArea_chosen won't necessarily be the one checked right now. Un-check all.
 			rbRoadtripAreaStart.setChecked(false);
 			rbRoadtripAreaEnd.setChecked(false);
@@ -1215,16 +1222,11 @@ public class TripTStopEntry extends Activity
 			else
 				toChg = rbRoadtripAreaOther;
 
-			rbRoadtripArea_chosen = toChg;
-			toChg.setChecked(true);
-
 			if (toChg == rbRoadtripAreaOther)
 				areaOther = areaOther_prev;
 
-			if (areaOther == null)
-				etRoadtripAreaOther.setText("");
-			else
-				etRoadtripAreaOther.setText(areaOther.getName());
+			rbRoadtripArea_chosen = toChg;
+			toChg.setChecked(true);
 		  }
 		});
 

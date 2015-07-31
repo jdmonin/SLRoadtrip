@@ -3,13 +3,18 @@
 # svn2git conversion script for SLRoadtrip: J. Monin 2015-05-03
 #   Downloads the remote svn repo, converts it to a new local git repo
 #   in the current directory.  Run it from an empty directory only.
-#   Appends svn commit numbers to the git comments, such as [svn r398]
+#   Appends svn commit numbers to the git comments in this format: [svn r398]
 #   Uses ruby gem svn2git from https://github.com/nirvdrum/svn2git
 #
-# This file Copyright (C) 2015 Jeremy D Monin <jdmonin@nand.net>
+# This file Copyright (C) 2015 Jeremy D Monin <jdmonin@nand.net>,
+#   licensed GPLv3 for use with anyone's projects; see license-GPLv3.txt
 
-# Process and prereqs:
+# Prereqs and process:
 # - ruby and the svn2git gem are installed
+#	$ ruby --version
+#	$ sudo gem install svn2git
+#	The gem install creates the svn2git script which will be run, possibly in /usr/bin
+#	Make sure svn2git is in your path
 # - svn status shows no uncommitted local changes
 # - the repo contents' svn properties have been checked for svn:ignore and others:
 #	$ svn proplist -Rv
@@ -22,14 +27,32 @@
 #	If you have many authors, you can get a list of them with:
 #	$ svn log -q | grep -e '^r' | awk 'BEGIN { FS = "|" } ; { print $2 }' | sort | uniq
 #	(adapted from https://jaibeermalik.wordpress.com/2013/10/23/svn2git-migrating-repository-from-subversion-to-git/)
+#	In this script, set AUTHOR_FILE to the full path of your authors.txt
 # - This script assumes the repo isn't using branches or tags: if yours is, then in
 #	the svn2git command in this script, remove --notags and/or --nobranches
-# - For the commit message rewrites, a temp directory on a fast disk has been created
-# - Run this script from an empty directory (`pwd` contains no files)
+# - In this script, set SVN_REPO_URL to the remote svn URL of the repo to be converted
+#	All access from the script is read-only, no changes will be made to the svn remote repo.
+# - For the commit message rewrites, create an empty temporary directory on a fast disk or ramdisk
+#	In this script, set MSG_REWRITE_TEMPDIR to that new directory
+# - Run this script from some _other_ empty directory (`pwd` contains no files)
+#	The new .git repo will be generated in pwd
 
 # After running this script successfully:
 # - Use gitk or GitX to review the conversion
 # - Check out a fresh copy of master from .git, and diff -ur against the svn working directory
+# - If ran in a temp directory, copy the new .git repo to its permanent location
+#	Be sure to change to that permanent directory to run the rest of the commands shown here.
+# - Check your git config settings for user.name and user.email, for new commits:
+#	$ git config -l | grep ^user
+#	Update if missing or incorrect for the converted project.
+# - Search this script for "Project-specific settings cleanup after svn2git"
+#	and adjust the new project's git config as needed.  Since the script has already run,
+#	adjust that config on the command line and also in the script to document and in case
+#	you run it again.
+# - Look for unneeded svn-tracking git branches created by svn2git:
+#	$ git branch -r
+#	This script automatically removes the trunk tracking branch using: git branch -rd svn/trunk
+#	If your project has other branches, you will need to run a similar command for them.
 # - You can tag past releases, if not already tagged by svn2git, using their commit hash:
 #	$ GIT_COMMITTER_DATE="2015-04-27 08:07" git tag -a -f release-0.9.41 -m 'Version 0.9.41 is r428 - tested Apr 27 til May 2' 06a4508
 #	In GIT_COMMITTER_DATE the time is HH:MM in your computer's local timezone.
@@ -42,11 +65,14 @@
 
 # Observations:
 # - OSX 10.9's built-in ruby 2.0.0 and its gems are adequate to run the conversion
+# - gem install fetched version svn2git-2.3.2
+
 
 # Adjustable parameters:
 SVN_REPO_URL=http://shadowlands-roadtrip.googlecode.com/svn/
 AUTHOR_FILE=`dirname $0`/../../proj/git2svn-authors.txt
 MSG_REWRITE_TEMPDIR=/Volumes/RAMDisk
+
 
 # Script begins.  No need to change variables below this line.
 

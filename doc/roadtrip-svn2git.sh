@@ -31,8 +31,8 @@
 #	$ svn log -q | grep -e '^r' | awk 'BEGIN { FS = "|" } ; { print $2 }' | sort | uniq
 #	(adapted from https://jaibeermalik.wordpress.com/2013/10/23/svn2git-migrating-repository-from-subversion-to-git/)
 #	In this script, set AUTHOR_FILE to the full path of your authors.txt
-# - This script assumes the repo isn't using branches or tags: if yours is, then in
-#	the svn2git command in this script, remove --notags and/or --nobranches
+# - This script assumes the repo uses tags and/or branches: if yours doesn't, then in
+#	the svn2git command in this script, add --notags and/or --nobranches
 # - In this script, set SVN_REPO_URL to the remote svn URL of the repo to be converted
 #	Use the base url         http://shadowlands-roadtrip.googlecode.com/svn/
 #	and not a branch such as http://shadowlands-roadtrip.googlecode.com/svn/trunk
@@ -45,10 +45,11 @@
 
 # After running this script successfully:
 # - Use gitk or GitX to review the conversion
-# - Check out a fresh copy of master from .git; you may need to force it:
+# - Check out a fresh copy of master from .git; you may need to use force:
 #	$ git checkout --force master
 # - Compare that against the svn working directory:
 #	diff -ur -x .svn -x .git /path/to/your/svn/working/  /Volumes/RAMDisk/SLRoadtrip/
+# - If you have other important branches, check out and compare them too
 # - If ran in a temp directory, copy the new .git repo to its permanent location
 #	Be sure to change to that permanent directory to run the rest of the commands shown here.
 # - Check your git config settings for user.name and user.email, for new commits:
@@ -58,6 +59,7 @@
 #	and adjust the new project's git config as needed.  Since the script has already run,
 #	adjust that config on the command line and also in the script to document and in case
 #	you run it again.
+#	Afterwards verify everything looks good: $ git config -l
 # - Look for unneeded svn-tracking git branches created by svn2git:
 #	$ git branch -r
 #	This script automatically removes the trunk tracking branch using: git branch -rd svn/trunk
@@ -69,7 +71,7 @@
 # - When you are satisified that everything validates, create a new repo on github
 # - Finally, add a remote and push to github:
 #	$ git remote add origin git@github.com:jdmonin/SLRoadtrip.git
-#	$ git push --force origin
+#	$ git push --force --all origin
 #	$ git push --force --tags origin
 
 # Observations:
@@ -87,7 +89,7 @@ MSG_REWRITE_TEMPDIR=/Volumes/RAMDisk
 
 # Script begins.  No need to change variables below this line.
 
-MSG_REWRITE_SUBDIR=$MSG_REWRITE_TEMPDIR/slroadtrip-gitrewrite
+MSG_REWRITE_SUBDIR=$MSG_REWRITE_TEMPDIR/proj-gitrewrite
 
 if [ "$(ls -A .)" ]; then
   echo "Stopping: Current directory must be empty."
@@ -118,10 +120,10 @@ date
 echo "Beginning conversion into new git repo in current directory."
 echo ""
 
-# Note: The simple SLRoadtrip svn repo didn't use tags or branches;
-# if you're using this for another project and it does use those, then
-# remove --notags and/or --nobranches as appropriate.
-svn2git $SVN_REPO_URL --metadata --notags --nobranches --verbose  --authors $AUTHOR_FILE
+# Note: If you're using this for a simple project repo which doesn't use
+# tags or branches, then add --notags and/or --nobranches as appropriate
+# before --verbose
+svn2git $SVN_REPO_URL --metadata --verbose  --authors $AUTHOR_FILE
 
 SVN2GIT_RC=$?
 
@@ -144,7 +146,8 @@ fi
 # logbook_menu.xml: Move Validate/Export out of submenu; mark for ActionBar [svn r398]
 
 git filter-branch -d $MSG_REWRITE_SUBDIR \
-  --msg-filter 'perl -p -0777 -e '"'"' s/(.+?)\s+git-svn-id: [^@]*@([0-9]*)(\s.*)$/$1 [svn r$2]/m '"'"' ' \
+  --tag-name-filter cat \
+  --msg-filter 'perl -p -0777 -e '"'"' s/((.+?)\s+)?git-svn-id: [^@]*@([0-9]*)(\s.*)$/$2 [svn r$3]/m '"'"' ' \
   -- --all
 
 REWRITE_RC=$?
@@ -166,6 +169,9 @@ git branch -rd svn/trunk
 git config --unset svn-remote.svn.url
 git config --unset svn-remote.svn.fetch
 git config --unset svn.authorsfile
+# these unsets will still work even if config key wasn't set, although their $? != 0
+git config --unset svn-remote.svn.branches
+git config --unset svn-remote.svn.tags
 
 # Project-specific settings cleanup after svn2git:
 git config core.ignorecase false

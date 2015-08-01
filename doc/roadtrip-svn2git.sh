@@ -10,11 +10,14 @@
 #   licensed GPLv3 for use with anyone's projects; see license-GPLv3.txt
 
 # Prereqs and process:
-# - ruby and the svn2git gem are installed
+# - git, perl, and ruby are installed and in your path
+# - the svn2git gem is installed and in your path
 #	$ ruby --version
 #	$ sudo gem install svn2git
 #	The gem install creates the svn2git script which will be run, possibly in /usr/bin
 #	Make sure svn2git is in your path
+# - the next several steps will check your repo's status and properties,
+#	and help you to set config variables declared below under "# Configuration"
 # - svn status shows no uncommitted local changes
 # - the repo contents' svn properties have been checked for svn:ignore and others:
 #	$ svn proplist -Rv
@@ -31,15 +34,21 @@
 # - This script assumes the repo isn't using branches or tags: if yours is, then in
 #	the svn2git command in this script, remove --notags and/or --nobranches
 # - In this script, set SVN_REPO_URL to the remote svn URL of the repo to be converted
+#	Use the base url         http://shadowlands-roadtrip.googlecode.com/svn/
+#	and not a branch such as http://shadowlands-roadtrip.googlecode.com/svn/trunk
 #	All access from the script is read-only, no changes will be made to the svn remote repo.
 # - For the commit message rewrites, create an empty temporary directory on a fast disk or ramdisk
 #	In this script, set MSG_REWRITE_TEMPDIR to that new directory
+#	The script will create and use a subdirectory within it
 # - Run this script from some _other_ empty directory (`pwd` contains no files)
 #	The new .git repo will be generated in pwd
 
 # After running this script successfully:
 # - Use gitk or GitX to review the conversion
-# - Check out a fresh copy of master from .git, and diff -ur against the svn working directory
+# - Check out a fresh copy of master from .git; you may need to force it:
+#	$ git checkout --force master
+# - Compare that against the svn working directory:
+#	diff -ur -x .svn -x .git /path/to/your/svn/working/  /Volumes/RAMDisk/SLRoadtrip/
 # - If ran in a temp directory, copy the new .git repo to its permanent location
 #	Be sure to change to that permanent directory to run the rest of the commands shown here.
 # - Check your git config settings for user.name and user.email, for new commits:
@@ -66,9 +75,11 @@
 # Observations:
 # - OSX 10.9's built-in ruby 2.0.0 and its gems are adequate to run the conversion
 # - gem install fetched version svn2git-2.3.2
+#	rubygems page https://rubygems.org/gems/svn2git/
+#	has link to homepage https://github.com/nirvdrum/svn2git
 
 
-# Adjustable parameters:
+# Configuration - Adjustable parameters:
 SVN_REPO_URL=http://shadowlands-roadtrip.googlecode.com/svn/
 AUTHOR_FILE=`dirname $0`/../../proj/git2svn-authors.txt
 MSG_REWRITE_TEMPDIR=/Volumes/RAMDisk

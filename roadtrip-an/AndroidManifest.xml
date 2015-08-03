@@ -47,7 +47,7 @@
 		<activity android:name=".android.LogbookRecentGas" android:label="@string/logbook_show__recent_gas" />
 		<activity android:name=".android.SettingsActivity"  android:label="@string/settings" />
 		<activity android:name=".android.TripTStopEntry"  android:label="@string/stop_during_a_trip"
-		    android:windowSoftInputMode="adjustPan" />
+		    android:windowSoftInputMode="adjustResize" />
 		<activity android:name=".android.TripTStopGas"  android:label="@string/trip_tstop_gas__title" />
 		<activity android:name=".android.TripTStopChooseFreq"  android:label="@string/choose_a_stop" />
 		<activity android:name=".android.VehiclesEdit"  android:label="@string/edit_vehicles" />

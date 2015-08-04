@@ -130,7 +130,7 @@ public class GeoArea extends RDBRecord
     /**
      * Search the table for a GeoArea with this name.
      * @param db  db connection
-     * @param descr  Name of geoarea; case-insensitive, not null
+     * @param name  Name of geoarea; case-insensitive, not null
      * @return  GeoArea with this null, or null if none found.
      *    If somehow the database has multiple matching rows, the one with lowest {@code _id} is returned.
      * @throws IllegalStateException if db not open
@@ -178,6 +178,7 @@ public class GeoArea extends RDBRecord
      * {@link #getDateAdded()}'s field will be set to the current time using {@link System#currentTimeMillis()}.
      * @param areaname  name; not null
      * @throws IllegalArgumentException if areaname is null
+     * @see #getByName(RDBAdapter, String)
      */
     public GeoArea(String areaname)
     	throws NullPointerException 

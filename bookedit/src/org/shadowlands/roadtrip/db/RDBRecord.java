@@ -21,21 +21,28 @@ package org.shadowlands.roadtrip.db;
 
 /**
  * Parent for specific object types backed by db records.
- *<P>
- * If your records will appear in output to the user (GUI or text),
- * don't forget to override <tt>toString()</tt>.
- *<P>
- * For queries, most subclasses support one or more
- * static methods which return several objects, or <tt>null</tt> if none match.
+ *<H5>Typical usage:</H5>
+ *<UL>
+ * <LI> To get an existing record by its id, call the subclass object's constructor
+ *      that has an {@code id} field.
+ * <LI> To create a new record, call the constructor that has data fields, call methods
+ *      to make any other changes needed, then call {@link #insert(RDBAdapter)}.
+ * <LI> To change an existing record, call methods to make any changes needed,
+ *      then call {@link #commit()}.
+ * <LI> For searches and queries, most subclasses support one or more
+ *      static methods which return several objects, or {@code null} if none match.
  * An example might be: <BR> 
  * <tt>static Vector&lt;ClassName> getAll({@link RDBAdapter}, <em>criteria</em>)</tt>
  * <BR>
  *  or: <BR>
- * <tt>static Vector&lt;TStop> stopsForTrip(RDBAdapter db, Trip trip)</tt>
- *<P>
+ * <tt>static Vector&lt;{@link TStop}> {@link TStop#stopsForTrip stopsForTrip}(RDBAdapter, {@link Trip})</tt>
+ *</UL>
  * <B>I18N:</B> Some classes' objects or methods have static text for UI elements,
  * such as the "Other..." placeholder {@link Vehicle#OTHER_VEHICLE}.  To localize all
  * static text, call {@link #localizeStatics(String, String)} during app startup.
+ *<H5>When subclassing:</H5>
+ * If your records will appear in output to the user (GUI or text),
+ * don't forget to override <tt>toString()</tt>.
  *
  * @author JM 
  */

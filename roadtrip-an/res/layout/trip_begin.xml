@@ -24,8 +24,9 @@
 <LinearLayout
     android:orientation="vertical"
     android:layout_width="fill_parent"
-    android:layout_height="fill_parent"
+    android:layout_height="wrap_content"
     >
+<!-- current driver and vehicle -->
 <TextView
     android:id="@+id/trip_begin_text_current"
     android:layout_width="fill_parent" 
@@ -102,7 +103,7 @@
 	    android:id="@+id/trip_begin_roadtrip_desti"
 	    android:completionThreshold="1"
 	    android:layout_weight="1"
-	    android:layout_width="fill_parent"
+	    android:layout_width="0dp"
 	    android:layout_height="wrap_content"
 	    android:singleLine="true"
 	    />
@@ -128,7 +129,7 @@
 	<org.shadowlands.roadtrip.android.OdometerNumberPicker
 	    android:id="@+id/trip_begin_odometer"
 	    android:layout_weight="1"
-		android:layout_width="fill_parent"
+		android:layout_width="0dp"
 		android:layout_height="wrap_content" />
 </LinearLayout>
 <!-- starting date,time -->
@@ -192,7 +193,7 @@
 	    android:id="@+id/trip_begin_category"
 	    android:layout_weight="1"
 		android:layout_gravity="top"
-		android:layout_width="fill_parent"
+		android:layout_width="0dp"
 		android:layout_height="wrap_content"
 		android:paddingTop="2dp"
 		android:paddingBottom="2dp"

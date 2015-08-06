@@ -125,6 +125,7 @@ public class TripBegin extends Activity
 	 */
 	private boolean isFrequent;
 
+	/** Current driver and vehicle. Updated in {@link #updateDriverVehTripTextAndButtons()}. */
 	private TextView tvCurrentSet;
 
 	/**
@@ -933,8 +934,6 @@ public class TripBegin extends Activity
 
 			}
 
-			// TODO update the based-on-freqtrip display row?
-			// like updateDriverVehTripTextAndButtons
 			if (isRoadtrip)
 			{
 				// un-hide roadtrip items (activity starts as local trip)

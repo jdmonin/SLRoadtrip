@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010,2014 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010,2014-2015 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -38,16 +38,15 @@ import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
-import android.widget.Toast;
 
 /**
  * During a {@link FreqTrip frequent trip}, choose a {@link FreqTripTStop}
  * (or another stop specific to this current trip).
  *<P>
  * Called from {@link TripTStopEntry} with {@link Activity#startActivityForResult(android.content.Intent, int)}.
- * When it returns to <tt>TripTStopEntry</tt> with the result, its intent should contain
- * an int extra, with key = "_id", that's the chosen
- * FreqTripTStop ID, or 0 for a new non-freq TStop.
+ * When it returns to {@code TripTStopEntry} with the result, its intent should contain
+ * an int extra with key {@code "_id"} for the chosen FreqTripTStop ID, or 0 if the 'Other Stop...' button
+ * was pressed and {@link TripTStopEntry} will be used to pick a non-frequent {@link TStop}.
  *
  * @author jdmonin
  */
@@ -69,14 +68,14 @@ public class TripTStopChooseFreq extends Activity
 	@Override
 	public void onCreate(Bundle savedInstanceState)
 	{
-	    super.onCreate(savedInstanceState);
-	    setContentView(R.layout.trip_tstop_choose_freq);
+		super.onCreate(savedInstanceState);
+		setContentView(R.layout.trip_tstop_choose_freq);
 
-	    db = new RDBOpenHelper(this);
+		db = new RDBOpenHelper(this);
 
-	    lvFreqStopsList = (ListView) findViewById(R.id.trip_tstop_choosefreq_list);
-	    lvFreqStopsList.setOnItemClickListener(this);
-	    freqStops = null;
+		lvFreqStopsList = (ListView) findViewById(R.id.trip_tstop_choosefreq_list);
+		lvFreqStopsList.setOnItemClickListener(this);
+		freqStops = null;
 
 		// see onResume for rest of initialization.
 	}
@@ -101,7 +100,7 @@ public class TripTStopChooseFreq extends Activity
 		final boolean hadAny = populateStopsList(db);
 		if (! hadAny)
 		{
-	    	setResult(RESULT_CANCELED);
+			setResult(RESULT_CANCELED);
 			finish();
 		}
 	}
@@ -128,6 +127,7 @@ public class TripTStopChooseFreq extends Activity
 		if (freqStops == null)
 			return false;
 		lvFreqStopsList.setAdapter(new ArrayAdapter<FreqTripTStop>(this, R.layout.list_item, freqStops));
+
 		return true;
 	}
 
@@ -148,21 +148,20 @@ public class TripTStopChooseFreq extends Activity
 			return;  // unlikely, but just in case
 
 		FreqTripTStop stop = freqStops.get(position);
-		Toast.makeText(this, "got stop id " + stop.getID(),
-			Toast.LENGTH_SHORT).show();
 		finish(stop.getID());
 	}
 
 	/**
-	 * Finish the activity with this freq tstop ID:
-	 * call putExtra("_id"), setResult(RESULT_OK), and {@link #finish()}.
-	 * @param freqtsID  The id, or 0
+	 * Finish the activity with this {@link FreqTripTStop} ID:
+	 * call putExtra({@code "_id"}), setResult({@link Activity#RESULT_OK RESULT_OK}), and {@link #finish()}.
+	 * @param freqtsID  The {@code FreqTripTStop} id, or 0 for 'other stop'
 	 */
 	private void finish(final int freqtsID)
 	{
 		Intent i = getIntent();
-    	i.putExtra("_id", freqtsID);
-    	setResult(RESULT_OK, i);
+		i.putExtra("_id", freqtsID);
+		setResult(RESULT_OK, i);
+
 		finish();
 	}
 

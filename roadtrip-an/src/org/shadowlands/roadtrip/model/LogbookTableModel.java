@@ -22,6 +22,7 @@ package org.shadowlands.roadtrip.model;
 import gnu.trove.TIntObjectHashMap;
 
 import java.util.Date;
+import java.util.List;
 import java.util.Vector;
 
 import org.shadowlands.roadtrip.db.GasBrandGrade;
@@ -496,7 +497,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 			nAdded = addRowsFromDBTrips(loadToTime, weekIncr, true, false, conn);
 		} else {
 			// Location Mode
-			final int laterTripID = tData.firstElement().tr.firstElement().getID();
+			final int laterTripID = tData.firstElement().tr.get(0).getID();
 			nAdded = addRowsFromDBTrips(laterTripID, false, tripIncr, conn);
 		}
 		if ((nAdded != 0) && (listener != null))
@@ -534,7 +535,8 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 			nAdded = addRowsFromDBTrips(loadToTime, weekIncr, true, true, conn);
 		} else {
 			// Location Mode
-			final int earlierTripID = tData.lastElement().tr.lastElement().getID();
+			final List<Trip> lastTrips = tData.lastElement().tr;
+			final int earlierTripID = lastTrips.get(lastTrips.size() - 1).getID();
 			nAdded = addRowsFromDBTrips(earlierTripID, true, tripIncr, conn);
 		}
 		// TODO Week mode: ensure previously-newest trip doesn't appear twice now
@@ -653,11 +655,11 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	/** For Week Mode, add all trip data for this vehicle. */
 	private void addRowsFromDBTrips(RDBAdapter conn)
 	{
-		Vector<Trip> td = veh.readAllTrips(true);
+		List<Trip> td = veh.readAllTrips(true);
 		if (td == null)
 			return;  // <--- nothing found ---
 		TripListTimeRange ttr = new TripListTimeRange
-			(td.firstElement().getTime_start(), td.lastElement().getTime_start(), td);
+			(td.get(0).getTime_start(), td.get(td.size() - 1).getTime_start(), td);
 		ttr.noneEarlier = true;
 		ttr.noneLater = true;
 		tData.add(ttr);
@@ -673,7 +675,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	 */
 	private void addRowsFromTrips(TripListTimeRange ttr, RDBAdapter conn)
 	{
-		Vector<Trip> td = ttr.tr;
+		List<Trip> td = ttr.tr;
 		if (td == null)
 		{
 			return;  // <--- no trips found in ttr ---
@@ -707,7 +709,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	 * @param conn  Add from this connection
 	 */
 	public void addRowsFromTrips_formatTripsStops
-		(final Vector<Trip> td, Vector<String[]> tText, RDBAdapter conn)
+		(final List<Trip> td, Vector<String[]> tText, RDBAdapter conn)
 	{
 		Date prevTripStart = null;  // time of trip start
 
@@ -723,7 +725,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 		// Loop for each trip in td
 		for (int i = 0; i < L; ++i)  // towards end of trip, must look at next trip
 		{
-			Trip t = td.elementAt(i);
+			Trip t = td.get(i);
 			int odo_total;  // used only with trip_odo_delta_mode
 			if (trip_odo_delta_mode != 0)
 				odo_total = t.getOdo_start();
@@ -1002,7 +1004,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 				// does next trip continue from the same tstop and odometer?
 				if ((i < (L-1)) && (lastStop != null))
 				{
-					Trip nt = td.elementAt(i+1);
+					Trip nt = td.get(i+1);
 					nextTripUsesSameStop =
 						(t.getOdo_end() == nt.getOdo_start())
 						 && nt.isStartTStopFromPrevTrip();
@@ -1045,14 +1047,14 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	 * @param conn  Add from this connection
 	 */
 	public void addRowsFromTrips_formatTripsSimple
-		(final Vector<Trip> td, Vector<String[]> tText, RDBAdapter conn)
+		(final List<Trip> td, Vector<String[]> tText, RDBAdapter conn)
 	{
 		final int L = td.size();
 
 		// Loop for each trip in td
 		for (int i = 0; i < L; ++i)  // towards end of trip, must look at next trip
 		{
-			Trip t = td.elementAt(i);
+			Trip t = td.get(i);
 
 			String[] tr = new String[COL_HEADINGS_SIMPLE.length];
 

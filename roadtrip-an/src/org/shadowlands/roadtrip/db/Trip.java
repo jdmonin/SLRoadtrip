@@ -18,6 +18,8 @@
 
 package org.shadowlands.roadtrip.db;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Vector;
 
 /**
@@ -186,7 +188,7 @@ public class Trip extends RDBRecord
      * @throws IllegalStateException if db not open
      * @see #tripsForVehicle(RDBAdapter, Vehicle, int, int, boolean, boolean, boolean)
      */
-    public static Vector<Trip> tripsForVehicle(RDBAdapter db, Vehicle veh, final boolean alsoTStops)
+    public static List<Trip> tripsForVehicle(RDBAdapter db, Vehicle veh, final boolean alsoTStops)
         throws IllegalStateException
     {
     	if (db == null)
@@ -201,7 +203,7 @@ public class Trip extends RDBRecord
     	if (sv == null)
     		return null;
 
-		return parseStringsToTrips(db, alsoTStops, sv);
+	return parseStringsToTrips(db, alsoTStops, sv);
     }
 
     /**
@@ -266,7 +268,7 @@ public class Trip extends RDBRecord
     		return null;
     	}
 
-    	Vector<Trip> tv = parseStringsToTrips(db, alsoTStops, sv);
+	List<Trip> tv = parseStringsToTrips(db, alsoTStops, sv);
     	if (tv == null)
     	{
     		return null;
@@ -275,9 +277,9 @@ public class Trip extends RDBRecord
     		{
     			// Make sure the range covers the actual trip times
     			if (towardsNewer)
-    				t1 = tv.lastElement().readLatestTime();
+				t1 = tv.get(tv.size() - 1).readLatestTime();
     			else
-    				t0 = tv.firstElement().getTime_start();
+				t0 = tv.get(0).getTime_start();
     		}
     		return new TripListTimeRange(t0, t1, tv);
     	}
@@ -417,19 +419,19 @@ public class Trip extends RDBRecord
     		return null;
     	}
 
-    	Vector<Trip> tv = parseStringsToTrips(db, alsoTStops, sv);
+	List<Trip> tv = parseStringsToTrips(db, alsoTStops, sv);
     	if (tv == null)
     		return null;
     	else
     		return new TripListTimeRange
-    			(tv.firstElement().getTime_start(), tv.lastElement().getTime_start(), tv);
+			(tv.get(0).getTime_start(), tv.get(tv.size() - 1).getTime_start(), tv);
     }
 
     /** parse String[] to Trips, optionally also call {@link #readAllTStops()} */
-	private static final Vector<Trip> parseStringsToTrips
+	private static final List<Trip> parseStringsToTrips
 		(RDBAdapter db, final boolean alsoTStops, Vector<String[]> sv)
 	{
-		Vector<Trip> vv = new Vector<Trip>(sv.size());
+		List<Trip> vv = new ArrayList<Trip>(sv.size());
 		try
 		{
 			Trip t;
@@ -438,7 +440,7 @@ public class Trip extends RDBRecord
 	    		t = new Trip(db, sv.elementAt(i));
 	    		if (alsoTStops)
 	    			t.readAllTStops();
-	    		vv.addElement(t);
+			vv.add(t);
 	    	}
 		} catch (RDBKeyNotFoundException e) { }
 		return vv;
@@ -1775,7 +1777,7 @@ public class Trip extends RDBRecord
 		public final int timeStart, timeEnd;
 
 		/** Trips found within this range of time */
-		public Vector<Trip> tr;
+		public List<Trip> tr;
 
 		/**
 		 * Holds each rendered data row, not including the 1 empty-string row at the end.
@@ -1793,7 +1795,7 @@ public class Trip extends RDBRecord
 		/** Are there no trips beyond this range? False if unknown. */
 		public boolean noneEarlier, noneLater;
 
-		public TripListTimeRange(int time_start, int time_end, Vector<Trip> t)
+		public TripListTimeRange(int time_start, int time_end, List<Trip> t)
 		{
 			timeStart = time_start;
 			timeEnd = time_end;

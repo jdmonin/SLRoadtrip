@@ -19,6 +19,7 @@
 
 package org.shadowlands.roadtrip.db;
 
+import java.util.List;
 import java.util.Vector;
 
 /**
@@ -179,7 +180,7 @@ public class Vehicle extends RDBRecord
 	private transient String makeidName;
 
 	/** null unless {@link #readAllTrips(boolean)} called */
-    private transient Vector<Trip> allTrips;
+    private transient List<Trip> allTrips;
 
     /**
      * Get the Vehicles currently in the database.
@@ -399,7 +400,7 @@ public class Vehicle extends RDBRecord
      * @throws IllegalStateException if the db connection is closed
      * @see Trip#tripsForVehicle(RDBAdapter, Vehicle, int, int, boolean, boolean, boolean)
      */
-    public Vector<Trip> readAllTrips(final boolean alsoTStops)
+    public List<Trip> readAllTrips(final boolean alsoTStops)
         throws IllegalStateException
     {
     	if (allTrips == null)
@@ -699,10 +700,10 @@ public class Vehicle extends RDBRecord
 
 		odo_curr = newValue10ths;
 		last_tripid = tr.getID();
-		if ((allTrips != null) && (allTrips.size() > 0))
+		if ((allTrips != null) && ! allTrips.isEmpty())
 		{
-			if (allTrips.lastElement() != tr)
-				allTrips.addElement(tr);
+			if (allTrips.get(allTrips.size() - 1) != tr)
+				allTrips.add(tr);
 		}
 		if (! commitNow)
 		{

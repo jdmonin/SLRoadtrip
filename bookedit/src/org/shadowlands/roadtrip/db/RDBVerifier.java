@@ -19,6 +19,7 @@
 
 package org.shadowlands.roadtrip.db;
 
+import java.util.List;
 import java.util.Vector;
 
 import gnu.trove.TIntObjectHashMap;
@@ -513,12 +514,12 @@ public class RDBVerifier
 	 */
 	private boolean verify_tdata_trip()
 	{
-		final Vector<Trip> all = Trip.tripsForVehicle(db, null, true);
+		final List<Trip> all = Trip.tripsForVehicle(db, null, true);
 		if (all == null)
 			return true;
 		for (int i = all.size() - 1; i >= 0; --i)
 		{
-			Trip tr = all.elementAt(i);
+			final Trip tr = all.get(i);
 			trCache.put(tr.id, tr);
 
 			if (null == getVehicle(tr.getVehicleID()))

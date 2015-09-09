@@ -655,11 +655,12 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	/** For Week Mode, add all trip data for this vehicle. */
 	private void addRowsFromDBTrips(RDBAdapter conn)
 	{
-		List<Trip> td = veh.readAllTrips(true);
-		if (td == null)
+		final List<Trip> vtrips = veh.readAllTrips(true);
+		if (vtrips == null)
 			return;  // <--- nothing found ---
+
 		TripListTimeRange ttr = new TripListTimeRange
-			(td.get(0).getTime_start(), td.get(td.size() - 1).getTime_start(), td);
+			(vtrips.get(0).getTime_start(), vtrips.get(vtrips.size() - 1).getTime_start(), vtrips);
 		ttr.noneEarlier = true;
 		ttr.noneLater = true;
 		tData.add(ttr);
@@ -675,8 +676,8 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	 */
 	private void addRowsFromTrips(TripListTimeRange ttr, RDBAdapter conn)
 	{
-		List<Trip> td = ttr.tr;
-		if (td == null)
+		final List<Trip> trips = ttr.tr;
+		if (trips == null)
 		{
 			return;  // <--- no trips found in ttr ---
 		}
@@ -694,9 +695,9 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 		Vector<String[]> tText = ttr.tText;
 
 		if (trip_simple_mode)
-			addRowsFromTrips_formatTripsSimple(td, tText, conn);
+			addRowsFromTrips_formatTripsSimple(trips, tText, conn);
 		else
-			addRowsFromTrips_formatTripsStops(td, tText, conn);
+			addRowsFromTrips_formatTripsStops(trips, tText, conn);
 
 		tDataTextRowCount += (tText.size() - tRowCount);
 	}
@@ -704,28 +705,28 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	/**
 	 * Add rows to strings from a list of {@link Trip}s and their {@link TStop}s.
 	 * Columns of added rows line up with {@link #COL_HEADINGS}.
-	 * @param td    Trip data to add to <tt>tText</tt>
-	 * @param tText Append rows here from <tt>td</tt>
+	 * @param trips Trips data to add to {@code tText}
+	 * @param tText Append rows here from {@code trips}
 	 * @param conn  Add from this connection
 	 */
 	public void addRowsFromTrips_formatTripsStops
-		(final List<Trip> td, Vector<String[]> tText, RDBAdapter conn)
+		(final List<Trip> trips, Vector<String[]> tText, RDBAdapter conn)
 	{
 		Date prevTripStart = null;  // time of trip start
 
 		// track and format month and day, show date only when day changes
 		RTRDateTimeFormatter.DateAndTime prevShownDT = new RTRDateTimeFormatter.DateAndTime();
 
-		final int L = td.size();
+		final int L = trips.size();
 		final boolean doCommentBrackets = render_comments_brackets;  // shorter name, cache value
 
 		// Does next trip continue from the same tstop and odometer?
 		boolean nextTripUsesSameStop = false;  // Updated at bottom of loop.
 
-		// Loop for each trip in td
+		// Loop for each trip in trips
 		for (int i = 0; i < L; ++i)  // towards end of trip, must look at next trip
 		{
-			Trip t = td.get(i);
+			final Trip t = trips.get(i);
 			int odo_total;  // used only with trip_odo_delta_mode
 			if (trip_odo_delta_mode != 0)
 				odo_total = t.getOdo_start();
@@ -1004,7 +1005,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 				// does next trip continue from the same tstop and odometer?
 				if ((i < (L-1)) && (lastStop != null))
 				{
-					Trip nt = td.get(i+1);
+					Trip nt = trips.get(i+1);
 					nextTripUsesSameStop =
 						(t.getOdo_end() == nt.getOdo_start())
 						 && nt.isStartTStopFromPrevTrip();
@@ -1042,19 +1043,19 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	/**
 	 * Add rows (simple mode) to strings from a list of {@link Trip}s and their {@link TStop}s.
 	 * Columns of added rows line up with {@link #COL_HEADINGS_SIMPLE}.
-	 * @param td    Trip data to add to <tt>tText</tt>
-	 * @param tText Append rows here from <tt>td</tt>
+	 * @param trips Trips data to add to {@code tText}
+	 * @param tText Append rows here from {@code trips}
 	 * @param conn  Add from this connection
 	 */
 	public void addRowsFromTrips_formatTripsSimple
-		(final List<Trip> td, Vector<String[]> tText, RDBAdapter conn)
+		(final List<Trip> trips, Vector<String[]> tText, RDBAdapter conn)
 	{
-		final int L = td.size();
+		final int L = trips.size();
 
-		// Loop for each trip in td
+		// Loop for each trip in trips
 		for (int i = 0; i < L; ++i)  // towards end of trip, must look at next trip
 		{
-			Trip t = td.get(i);
+			final Trip t = trips.get(i);
 
 			String[] tr = new String[COL_HEADINGS_SIMPLE.length];
 

@@ -268,8 +268,8 @@ public class Trip extends RDBRecord
     		return null;
     	}
 
-	List<Trip> tv = parseStringsToTrips(db, alsoTStops, sv);
-    	if (tv == null)
+	final List<Trip> trips = parseStringsToTrips(db, alsoTStops, sv);
+	if (trips == null)
     	{
     		return null;
     	} else {
@@ -277,11 +277,12 @@ public class Trip extends RDBRecord
     		{
     			// Make sure the range covers the actual trip times
     			if (towardsNewer)
-				t1 = tv.get(tv.size() - 1).readLatestTime();
+				t1 = trips.get(trips.size() - 1).readLatestTime();
     			else
-				t0 = tv.get(0).getTime_start();
+				t0 = trips.get(0).getTime_start();
     		}
-    		return new TripListTimeRange(t0, t1, tv);
+
+		return new TripListTimeRange(t0, t1, trips);
     	}
     }
 
@@ -419,19 +420,19 @@ public class Trip extends RDBRecord
     		return null;
     	}
 
-	List<Trip> tv = parseStringsToTrips(db, alsoTStops, sv);
-    	if (tv == null)
+	final List<Trip> trips = parseStringsToTrips(db, alsoTStops, sv);
+	if (trips == null)
     		return null;
     	else
     		return new TripListTimeRange
-			(tv.get(0).getTime_start(), tv.get(tv.size() - 1).getTime_start(), tv);
+			(trips.get(0).getTime_start(), trips.get(trips.size() - 1).getTime_start(), trips);
     }
 
     /** parse String[] to Trips, optionally also call {@link #readAllTStops()} */
 	private static final List<Trip> parseStringsToTrips
 		(RDBAdapter db, final boolean alsoTStops, Vector<String[]> sv)
 	{
-		List<Trip> vv = new ArrayList<Trip>(sv.size());
+		final List<Trip> trips = new ArrayList<Trip>(sv.size());
 		try
 		{
 			Trip t;
@@ -440,10 +441,11 @@ public class Trip extends RDBRecord
 	    		t = new Trip(db, sv.elementAt(i));
 	    		if (alsoTStops)
 	    			t.readAllTStops();
-			vv.add(t);
+			trips.add(t);
 	    	}
 		} catch (RDBKeyNotFoundException e) { }
-		return vv;
+
+		return trips;
 	}
 
     /**

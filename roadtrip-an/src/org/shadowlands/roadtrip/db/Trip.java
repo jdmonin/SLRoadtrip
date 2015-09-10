@@ -424,8 +424,7 @@ public class Trip extends RDBRecord
 	if (trips == null)
     		return null;
     	else
-    		return new TripListTimeRange
-			(trips.get(0).getTime_start(), trips.get(trips.size() - 1).getTime_start(), trips);
+    		return new TripListTimeRange(trips);
     }
 
     /** parse String[] to Trips, optionally also call {@link #readAllTStops()} */
@@ -1803,6 +1802,17 @@ public class Trip extends RDBRecord
 			timeEnd = time_end;
 			tr = t;
 			tText = null;
+		}
+
+		/**
+		 * Constructor from a list of trips; {@code time_start} will be first trip's start time,
+		 * {@code time_end} will be last trip's <b>start</b> time (not end time).
+		 * @param trips  List of trips
+		 * @since 0.9.50
+		 */
+		public TripListTimeRange(List<Trip> trips)
+		{
+			this(trips.get(0).getTime_start(), trips.get(trips.size() - 1).getTime_start(), trips);
 		}
 
 		/**

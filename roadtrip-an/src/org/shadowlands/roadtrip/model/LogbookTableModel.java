@@ -659,8 +659,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 		if (vtrips == null)
 			return;  // <--- nothing found ---
 
-		TripListTimeRange ttr = new TripListTimeRange
-			(vtrips.get(0).getTime_start(), vtrips.get(vtrips.size() - 1).getTime_start(), vtrips);
+		TripListTimeRange ttr = new TripListTimeRange(vtrips);
 		ttr.noneEarlier = true;
 		ttr.noneLater = true;
 		tData.add(ttr);

@@ -1,6 +1,11 @@
 -- org.shadowlands.roadtrip
 -- version 0.9.43 schema (2015-05-26) for SQLite 3.4 or higher
 --
+-- Updated 2015-10-20: Increase declared tstop.comment length to 2000;
+-- this max length is not enforced by sqlite.
+-- The filename will be changed from v0943 before v0.9.50 release;
+-- holding off for now in case of multiple schema changes before then.
+--
 -- The db schema version is sometimes lower than the app version, never higher.
 --
 -- Remember: When you upgrade the schema version, be sure to
@@ -189,7 +194,7 @@ create table freqtrip ( _id integer PRIMARY KEY AUTOINCREMENT not null, a_id int
 
 create index "freqtrip~l" ON freqtrip(start_locid);
 
-create table tstop ( _id integer PRIMARY KEY AUTOINCREMENT not null, tripid int not null, odo_total int, odo_trip int, time_stop int, time_continue int, locid int, a_id int, geo_lat float, geo_lon float, flag_sides int not null default 0, descr varchar(255), via_id int, via_route varchar(255), comment varchar(255));
+create table tstop ( _id integer PRIMARY KEY AUTOINCREMENT not null, tripid int not null, odo_total int, odo_trip int, time_stop int, time_continue int, locid int, a_id int, geo_lat float, geo_lon float, flag_sides int not null default 0, descr varchar(255), via_id int, via_route varchar(255), comment varchar(2000));
 	-- For convention for chronological order of stops within a trip,
 	--    and for seeing which is the "starting TStop" and "ending TStop",
 	--    see trip table's comments.

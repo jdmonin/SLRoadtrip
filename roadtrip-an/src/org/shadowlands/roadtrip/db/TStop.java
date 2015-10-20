@@ -103,8 +103,8 @@ public class TStop extends RDBRecord
     /** Field array with only the GeoArea ID field: { {@code "a_id"} } */
     private final static String[] FIELD_AREA_ID_ARR = { "a_id" };
 
-    /** Maximum length (255) of comment field. */
-    public static final int MAXLEN = 255;  // The value 255 is also hardcoded into trip_tstop_entry.xml
+    /** Maximum length (2000) of comment field. {@code MAXLEN} was 255 before v0.9.50. */
+    public static final int COMMENT_MAXLEN = 2000;  // The value 2000 is also hardcoded into trip_tstop_entry.xml
 
     // All temporary flags have values 0x80 or lower,
     // and are cleared before continuing the trip from the stop
@@ -505,7 +505,7 @@ public class TStop extends RDBRecord
      * @param via_id     Street via_route ID from previous tstop's location, or 0
      * @param comment    Comment/description, or null
      * @throws IllegalArgumentException if <tt>trip</tt> or <tt>locid</tt> or <tt>locat</tt> or <tt>areaid</tt> is bad
-     *     or if comment.length > {@link #MAXLEN}
+     *     or if comment.length > {@link #COMMENT_MAXLEN}
      */
     public TStop(Trip trip, final int odo_total, final int odo_trip,
 		final int time_stop, final int time_continue, final int locid, final int areaid,
@@ -514,7 +514,7 @@ public class TStop extends RDBRecord
     	throws IllegalArgumentException
     {
     	super();
-    	if ((comment != null) && (comment.length() > MAXLEN))
+    	if ((comment != null) && (comment.length() > COMMENT_MAXLEN))
     		throw new IllegalArgumentException("comment length");
 
     	tripid = trip.getID();
@@ -1017,14 +1017,14 @@ public class TStop extends RDBRecord
 	/**
 	 * Set the description/comment field.
 	 * @param comment new value, or null
-	 * @throws IllegalArgumentException if comment.length > {@link #MAXLEN}
+	 * @throws IllegalArgumentException if comment.length > {@link #COMMENT_MAXLEN}
 	 */
 	public void setComment(final String comment)
 		throws IllegalArgumentException
 	{
 		if (comment != null)
 		{
-			if (comment.length() > MAXLEN)
+			if (comment.length() > COMMENT_MAXLEN)
 				throw new IllegalArgumentException("comment length");
 			if (comment.equals(this.comment))
 				return;

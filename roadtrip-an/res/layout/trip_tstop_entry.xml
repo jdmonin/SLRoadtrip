@@ -301,6 +301,8 @@
 			android:text="@string/comment"
 			android:layout_width="wrap_content"
 			android:layout_height="fill_parent" />
+		<!-- Limit comment to TStop.COMMENT_MAXLEN (2000). Anything below 9000 should be okay per Aug 2011 -->
+		<!-- post http://stackoverflow.com/questions/6997078/max-9000-characters-in-android-textview . -->
 		<EditText android:id="@+id/trip_tstop_comment"
 			android:layout_width="fill_parent"
 			android:layout_height="wrap_content"

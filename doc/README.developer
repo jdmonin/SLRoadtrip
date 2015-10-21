@@ -244,6 +244,7 @@ e3dae2e	0.9.43	2015-06-07	First release to include a BookEdit jar; minor improve
 				  the starting and ending area. The roadtrip's ending area can be changed if needed
 				  when ending the trip. If all of a roadtrip's stops are in the starting area, it's
 				  converted back to a local trip when ended.
+				- Trip stop comment max length increased to 2000 characters from 255
 				- More 'business logic' moved from app to DB methods: VehSettings.endCurrentTrip, etc
 				SLRoadtrip android app:
 				- Can undo some trip actions: Continue Travel From Stop during a trip, End Trip

@@ -424,13 +424,15 @@ public class ChangeDriverOrVehicle
 		}
 
 		String msg = getResources().getString(R.string.change_driver_vehicle_ask_chg_driv, vDriv);
-			// "Change current driver to this vehicle\'s driver %1s?"
-		String btnTextKeep = getResources().getString(R.string.change_driver_vehicle_ask_chg_driv_btn_keep, selDriv);
-			// "Keep %1s"
+			// "Also change current driver to this vehicle\'s driver %1s?"
+		String btnTextChange = getResources().getString
+			(R.string.change_driver_vehicle_ask_chg_driv_btn_change, vDriv);  // "Change to %1s"
+		String btnTextKeep = getResources().getString
+			(R.string.change_driver_vehicle_ask_chg_driv_btn_keep, selDriv);  // "Keep %1s"
 
 		AlertDialog.Builder alert = new AlertDialog.Builder(this);
 		alert.setMessage(msg);
-		alert.setPositiveButton(R.string.change, new DialogInterface.OnClickListener() {
+		alert.setPositiveButton(btnTextChange, new DialogInterface.OnClickListener() {
 			public void onClick(DialogInterface dialog, int whichButton) {
 				SpinnerDataFactory.selectDriver(driver, dID);
 			}

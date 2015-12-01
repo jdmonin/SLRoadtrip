@@ -233,7 +233,8 @@
 <string name="settings_hide_trip_pax">Hide trip "Passengers" entry field</string>
 <string name="settings_hide_via">Hide "Via Route" entry field</string>
 <string name="settings_require_tripcat">Require trip category</string>
-<string name="change_driver_vehicle_ask_chg_driv">Change current driver to this vehicle\'s driver %1s?</string>
+<string name="change_driver_vehicle_ask_chg_driv">Also change current driver to this vehicle\'s driver %1s?</string>
+<string name="change_driver_vehicle_ask_chg_driv_btn_change">Change to %1s</string>
 <string name="change_driver_vehicle_ask_chg_driv_btn_keep">Keep %1s</string>
 <string name="change_vehicle_driver_ask_chg_title">Change current setting?</string>
 <string name="change_vehicle_driver_ask_chg_new_d">Change current driver to the new one?</string>

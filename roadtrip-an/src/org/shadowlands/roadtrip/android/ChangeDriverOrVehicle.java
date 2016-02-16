@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010-2015 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2016 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -38,6 +38,7 @@ import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemSelectedListener;
 import android.widget.Button;
 import android.widget.Spinner;
+import android.widget.Toast;
 
 /**
  * Change the current driver or the current vehicle
@@ -389,6 +390,7 @@ public class ChangeDriverOrVehicle
 	/**
 	 * When a vehicle is selected, update {@link #hasCurrentTrip} and ask whether to
 	 * select its current driver in the {@link #driver} spinner.
+	 * If the new vehicle has a current trip, select its driver and show a Toast instead of asking.
 	 * @since 0.9.40
 	 */
 	public void onItemSelected(AdapterView<?> parent, View itemv, final int pos, final long idOrPos)
@@ -407,7 +409,7 @@ public class ChangeDriverOrVehicle
 			if (tr == null)
 				tr = selV.getTripInProgress();
 
-			updateAtTripStatus((tr != null));
+			updateAtTripStatus((tr != null));  // updates fields, sets hasCurrentTrip
 		}
 
 		// Check current driver
@@ -421,6 +423,19 @@ public class ChangeDriverOrVehicle
 		    && (((Person) selDriv).getID() == dID))
 		{
 			return;  // driver already selected
+		}
+
+		if (hasCurrentTrip)
+		{
+			// must change selected driver to new vehicle's
+
+			SpinnerDataFactory.selectDriver(driver, dID);
+			final String msg =
+				getResources().getString(R.string.change_driver_vehicle_curr_trip_driv, vDriv);
+				// "New vehicle is on a trip; its current driver is %1s."
+			Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
+
+			return;
 		}
 
 		String msg = getResources().getString(R.string.change_driver_vehicle_ask_chg_driv, vDriv);

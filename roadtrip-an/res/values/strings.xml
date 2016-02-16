@@ -2,7 +2,7 @@
 <!--
  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
 
- This file Copyright (C) 2010-2015 Jeremy D Monin (jdmonin@nand.net)
+ This file Copyright (C) 2010-2016 Jeremy D Monin (jdmonin@nand.net)
 
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
@@ -236,6 +236,7 @@
 <string name="change_driver_vehicle_ask_chg_driv">Also change current driver to this vehicle\'s driver %1s?</string>
 <string name="change_driver_vehicle_ask_chg_driv_btn_change">Change to %1s</string>
 <string name="change_driver_vehicle_ask_chg_driv_btn_keep">Keep %1s</string>
+<string name="change_driver_vehicle_curr_trip_driv">New vehicle is on a trip; its current driver is %1s.</string>
 <string name="change_vehicle_driver_ask_chg_title">Change current setting?</string>
 <string name="change_vehicle_driver_ask_chg_new_d">Change current driver to the new one?</string>
 <string name="change_vehicle_driver_ask_chg_new_v">Change current vehicle to the new one?</string>

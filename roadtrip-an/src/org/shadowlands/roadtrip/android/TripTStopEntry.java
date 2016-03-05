@@ -189,7 +189,8 @@ public class TripTStopEntry extends Activity
 	/**
 	 * If the {@link #tp_time_cont Continue Time} is the current time, and
 	 * we're updating it as the time changes, the hour and minute of
-	 * the last update. <BR>
+	 * the last update.
+	 *<BR>
 	 * Format is -1 if unused, or (Hour << 8) | Minute.
 	 * @see #contTimeRunningHandler
 	 * @see #initContTimeRunning(Calendar, long)
@@ -653,6 +654,8 @@ public class TripTStopEntry extends Activity
 			contTime.setTimeInMillis(timeNow);
 			tp_time_cont_chk.setChecked(true);
 			contTimeIsNow = true;
+
+			// Note that stop-time code may adjust contTime if Historical Mode.
 		}
 
 		// Stop Time:
@@ -675,9 +678,35 @@ public class TripTStopEntry extends Activity
 				}
 
 			} else {
+				// Stop time is unknown:
+				// If the trip's most recent time is older than the historical threshold,
+				// fill in that time as a "guessed" stop & continue time.
+
+				long latestVehTime = 1000L * currV.readLatestTime(currT);
+				if ((latestVehTime != 0L)
+				    && (Math.abs(latestVehTime - timeNow) >= TIMEDIFF_HISTORICAL_MILLIS))
+				{
+					Toast.makeText
+						(this,
+						 R.string.using_old_date_due_to_previous,
+						 Toast.LENGTH_SHORT).show();
+
+					if (contTime != null)
+					{
+						// Historical Mode: continue from that date & time, not from today
+						contTime.setTimeInMillis(latestVehTime + 60000L);  // 1 minute later
+						contTimeIsNow = false;
+					}
+				} else {
+					latestVehTime = timeNow;
+				}
+
 				setTimeStopCheckbox = false;
-				stopTime.setTimeInMillis(timeNow);
+				stopTime.setTimeInMillis(latestVehTime);  // might be timeNow
 			}
+
+			if (! contTimeIsNow)
+				tp_time_cont_chk.setChecked(false);
 
 			// Focus on continue-time, to scroll the screen down
 			tp_time_cont.requestFocus();
@@ -2856,6 +2885,7 @@ public class TripTStopEntry extends Activity
 		{
 			return;  // The rest of this method is for tp_time_cont only
 		}
+
 		if (contTimeRunningHourMinute == -1)
 		{
 			return;  // Not active

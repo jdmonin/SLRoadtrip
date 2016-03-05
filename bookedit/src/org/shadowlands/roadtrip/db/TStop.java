@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010-2015 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2016 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -280,7 +280,7 @@ public class TStop extends RDBRecord
     }
 
     /**
-     * Retrieve this Trip's latest stop, if any.
+     * Retrieve a Trip's latest stop, if any.
      * If the trip has no intermediate stops yet:
      *<UL>
      *<LI> If the trip started at the previous trip's final TStop, null is returned.
@@ -289,7 +289,9 @@ public class TStop extends RDBRecord
      * If the trip is completed, it will have an ending TStop,
      * and that will be the one returned.
      *
-     * @param ignoreIfnoTime  Ignore stops which don't have a continue time nor a stopping time
+     * @param  db  db connection
+     * @param  tripID  trip ID to find the TStop for
+     * @param ignoreIfNoTime  Ignore stops which don't have a continue time nor a stopping time
      * @return that stop, or null if none yet on this trip
      * @throws IllegalStateException if the db connection is closed
      * @see #readAllTStops()

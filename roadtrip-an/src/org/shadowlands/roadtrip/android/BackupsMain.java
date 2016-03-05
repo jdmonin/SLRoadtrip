@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010-2011,2013-2015 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2011,2013-2016 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -98,6 +98,7 @@ public class BackupsMain extends Activity
 	/** If true, we've already checked {@link AppInfo#KEY_DB_BACKUP_THISDIR} for {@link #restoreFromDirectory} during our first onResume. */
 	private boolean checkedDBBackupDir = false;
 
+	/** Backup Now button; handled in {@link #onClick_BtnBackupNow(View)} */
 	private Button btnBackupNow;
 	private TextView tvTimeOfLastBkup, tvTimeOfLastTrip;
 	private ListView lvBackupsList;
@@ -469,6 +470,7 @@ public class BackupsMain extends Activity
 	}
 
 	/**
+	 * Handle clicks/presses of {@link #btnBackupNow}.
 	 * Check disk space, do a quick validation of db structure by calling {@link #doDBValidationAskIfFailed()},
 	 * and if OK, call {@link #backupNow()}.
 	 * @param v  ignored
@@ -552,7 +554,7 @@ public class BackupsMain extends Activity
 			DBBackup.backupCurrentDB(this, restoreFromDirectory);
 			Toast.makeText(this, "Backup successful.", Toast.LENGTH_SHORT).show();
 			readDBLastBackupTime(null, bktime);
-			// TODO how to refresh the list of backups?
+			populateBackupsList(true);  // refresh the list of backups
 		} catch (IOException e)
 		{
 			Toast.makeText(this, "IOException while saving:\n" + e.getMessage(), Toast.LENGTH_LONG).show();

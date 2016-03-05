@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010-2015 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2016 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -499,8 +499,7 @@ public class TripTStopEntry extends Activity
 			tp_time_stop.setIs24HourView(pref24hr);
 			tp_time_cont.setIs24HourView(pref24hr);
 		}
-		tp_time_stop.setOnTimeChangedListener(this);  // onTimeChanged - to set checkbox if user sets time
-		tp_time_cont.setOnTimeChangedListener(this);  // onTimeChanged - to cancel auto-update of time if user sets time
+		// will add tp_time_stop,tp_time_cont TimeChangedListener after setting them here.
 
 		btnStopTimeDate = (Button) findViewById(R.id.trip_tstop_btn_stop_date);
 		btnContTimeDate = (Button) findViewById(R.id.trip_tstop_btn_cont_date);
@@ -607,6 +606,10 @@ public class TripTStopEntry extends Activity
 					eb.setText(R.string.continu);
 			}
 		}
+
+		// Add TimeChangedListeners, now that we're done setting things
+		tp_time_stop.setOnTimeChangedListener(this);  // onTimeChanged - to set checkbox if user sets time
+		tp_time_cont.setOnTimeChangedListener(this);  // onTimeChanged - to cancel auto-update of time if user sets time
 
 		// Change title if needed; default title label is stop_during_a_trip
 		if (stopEndsTrip)
@@ -2888,7 +2891,10 @@ public class TripTStopEntry extends Activity
 
 		if (contTimeRunningHourMinute == -1)
 		{
-			return;  // Not active
+			if (! tp_time_cont_chk.isChecked())
+				tp_time_cont_chk.setChecked(true);
+
+			return;  // Running Count auto-update not active
 		}
 
 		final int contTimeMinute = contTimeRunningHourMinute & 0xFF,
@@ -2917,6 +2923,8 @@ public class TripTStopEntry extends Activity
 		contTimeRunningHourMinute = -1;
 		if ((contTimeRunningHandler != null) && (contTimeRunningRunnable != null))
 			contTimeRunningHandler.removeCallbacks(contTimeRunningRunnable);
+		if (! tp_time_cont_chk.isChecked())
+			tp_time_cont_chk.setChecked(true);
 	}
 
 	///////////////////////////////

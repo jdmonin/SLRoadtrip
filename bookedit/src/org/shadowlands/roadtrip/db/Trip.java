@@ -1,6 +1,6 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
- *  This file Copyright (C) 2010-2015 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2016 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -1034,8 +1034,8 @@ public class Trip extends RDBRecord
      * Look in this order of availability:
      *<UL>
      *<LI> Trip's ending time
-     *<LI> Trip's latest stop's continue time
-     *<LI> Latest stop's stop time
+     *<LI> Trip's latest stop having a continue time
+     *     or (if missing continue time) a stop time
      *<LI> Trip's starting time
      *</UL>
      * @return that time
@@ -1045,20 +1045,25 @@ public class Trip extends RDBRecord
         throws IllegalStateException
     {
     	if (time_end != 0)
-    		return time_end;  // ending time
-    	TStop latest = null;
-    	if ((allStops != null) && (allStops.size() > 0))
+    		return time_end;  // trip's ending time
+
+    	final Vector<TStop> stops = readAllTStops(false, true);  // ignore allStops cache & don't cache this query
+    	if (stops == null)
+    		return time_start;  // no stops yet: trip's starting time
+
+    	for (int i = stops.size() - 1; i >= 0; --i)
     	{
-    		latest = allStops.lastElement();
-    	} else {
-    		latest = TStop.latestStopForTrip(dbConn, id, true);
+    		final TStop ts = stops.elementAt(i);
+    		int t = ts.getTime_continue();
+    		if (t == 0)
+    			t = ts.getTime_stop();
+
+    		if (t != 0)
+    			return t;
     	}
-		if ((latest == null) || (latest.getTime_stop() == 0))  // no stops yet: starting time
-			return time_start;
-    	int t = latest.getTime_continue();  // continue time
-    	if (t == 0)
-    		t = latest.getTime_stop();  // stop time
-    	return t;
+
+    	// no stops with times yet: trip's starting time
+    	return time_start;
     }
 
     /**

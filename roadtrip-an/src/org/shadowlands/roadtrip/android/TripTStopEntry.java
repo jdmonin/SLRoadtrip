@@ -607,9 +607,18 @@ public class TripTStopEntry extends Activity
 			}
 		}
 
-		// Add TimeChangedListeners, now that we're done setting things
-		tp_time_stop.setOnTimeChangedListener(this);  // onTimeChanged - to set checkbox if user sets time
-		tp_time_cont.setOnTimeChangedListener(this);  // onTimeChanged - to cancel auto-update of time if user sets time
+		// Add TimeChangedListeners soon, after UI thread is done refreshing hour/minute values
+		tp_time_stop.postDelayed(new Runnable()
+		{
+			@Override
+			public void run()
+			{
+				tp_time_stop.setOnTimeChangedListener(TripTStopEntry.this);
+					// onTimeChanged - to set checkbox if user sets time
+				tp_time_cont.setOnTimeChangedListener(TripTStopEntry.this);
+					// onTimeChanged - to cancel auto-update of time if user sets time
+			}
+		}, 750);
 
 		// Change title if needed; default title label is stop_during_a_trip
 		if (stopEndsTrip)

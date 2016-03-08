@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010-2015 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2016 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -381,11 +381,14 @@ public class TripBegin extends Activity
 		if ((prevVId == vID) && (prevDId == dID))
 			return;
 
-		// TODO I18N: string resources, not hardcoded
+		final Resources res = getResources();
 
-		StringBuffer txt = new StringBuffer("Current driver: ");
+		StringBuffer txt = new StringBuffer(res.getString(R.string.current_driver));  // "Current driver"
+		txt.append(": ");
 		txt.append(currD.toString());
-		txt.append("\nCurrent vehicle: ");
+		txt.append('\n');
+		txt.append(res.getString(R.string.current_vehicle));  // "Current vehicle"
+		txt.append(": ");
 		txt.append(currV.toString());
 		tvCurrentSet.setText(txt);
 
@@ -551,10 +554,13 @@ public class TripBegin extends Activity
 		if (! checkCurrentDriverVehicleSettings())
 		{
 			Toast.makeText(getApplicationContext(),
-				"Current driver/vehicle not found in db",  // TODO i18n
+				getResources().getString(R.string.current_driver_veh_not_found),
+					// "Current driver/vehicle not found in db"
 				Toast.LENGTH_SHORT).show();
+
 			startActivity(new Intent(TripBegin.this, AndroidStartup.class));
 			finish();
+
 			return;
 		}
 

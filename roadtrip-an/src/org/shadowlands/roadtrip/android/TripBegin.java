@@ -383,11 +383,11 @@ public class TripBegin extends Activity
 
 		final Resources res = getResources();
 
-		StringBuffer txt = new StringBuffer(res.getString(R.string.current_driver));  // "Current driver"
+		StringBuffer txt = new StringBuffer(res.getString(R.string.driver));
 		txt.append(": ");
 		txt.append(currD.toString());
 		txt.append('\n');
-		txt.append(res.getString(R.string.current_vehicle));  // "Current vehicle"
+		txt.append(res.getString(R.string.vehicle));
 		txt.append(": ");
 		txt.append(currV.toString());
 		tvCurrentSet.setText(txt);

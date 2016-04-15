@@ -248,6 +248,9 @@ e3dae2e	0.9.43	2015-06-07	First release to include a BookEdit jar; minor improve
 				- More 'business logic' moved from app to DB methods: VehSettings.endCurrentTrip, etc
 				SLRoadtrip android app:
 				- Can undo some trip actions: Continue Travel From Stop during a trip, End Trip
+				- TripBegin Recent Historical Mode: To more easily enter a series of trips occurring in the past,
+				  recognize when the previous trip was 'historical' when entered, and if it was entered recently
+				  ask if the current trip should also be historical or should start at the current time.
 				- LogbookShow: When picking from 'Other Vehicle' spinner, dismiss that dialog and
 				  immediately show new vehicle
 				- LogbookShow DatePicker: To always show year spinner, hide calendar pane on narrow screens

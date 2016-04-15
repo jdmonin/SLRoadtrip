@@ -45,8 +45,10 @@ import android.app.DatePickerDialog.OnDateSetListener;
 import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.text.format.DateFormat;
@@ -85,6 +87,17 @@ import android.widget.Toast;
  *<P>
  * The method handling the Begin Trip button that finishes
  * this Activity is {@link #onClick_BtnBeginTrip(View)}.
+ *<P>
+ *<H5>Historical Mode:</H5>
+ * To make it easier to add trips which occurred in the past, if either of the
+ * following conditions are true, when this activity starts it will ask if the
+ * Trip Start Time widget should be set to <em>now</em>, or to the <em>most recent time
+ * recorded</em> for the vehicle (typically the previous trip's ending time):
+ *<UL>
+ * <LI> The vehicle's previous trip ended at least 21 days ago
+ * <LI> The previous trip was at least 1 day old when it was added,
+ *      and it was added within the last 2 days
+ *</UL>
  *
  * @author jdmonin
  */
@@ -104,8 +117,53 @@ public class TripBegin extends Activity
 	 */
 	public static final String EXTRAS_FLAG_FREQUENT = "frequent";
 
-	/** Historical Mode threshold is 21 days, in milliseconds. */
+	/**
+	 * For asking about historical mode, the current time when the previous historical trip was created.
+	 * When this key is present in shared prefs, the associated vehicle's most recent trip was historical when created.
+	 * Creating a trip which starts at the current time, not 'historical', will remove this key from shared prefs.
+	 *<P>
+	 * A trip is considered 'historical' if, when created, its starting time was more than
+	 * {@link TripTStopEntry#TIMEDIFF_HISTORICAL_MILLIS} ago from the current time.
+	 * See class javadoc for details.
+	 * @see #PREF_PREV_HISTORICAL_V_ID
+	 * @see #TIMEDIFF_HISTORICAL_RECENT_MILLIS
+	 * @since 0.9.50
+	 */
+	private static final String PREF_PREV_HISTORICAL_TIME_CREATED = "slroadtrip.tripbegin.hist.time_created";
+
+	/**
+	 * For asking about historical mode, the vehicle ID for which the previous historical trip was created.
+	 * @see #PREF_PREV_HISTORICAL_TIME_CREATED
+	 * @since 0.9.50
+	 */
+	private static final String PREF_PREV_HISTORICAL_V_ID = "slroadtrip.tripbegin.hist.v_id";
+
+	/**
+	 * Historical Mode threshold is 21 days, in milliseconds.
+	 *<P>
+	 * Must be larger than the other Historical Mode threshold {@link #TIMEDIFF_HISTORICAL_RECENT_MILLIS}.
+	 */
 	private static final long TIMEDIFF_HISTORICAL_MILLIS = 21 * 24 * 60 * 60 * 1000L;
+		// if this is changed, update class javadoc & keep it larger than TIMEDIFF_HISTORICAL_RECENT_MILLIS
+
+	/**
+	 * 'Recent' Historical Mode threshold is 2 days, in milliseconds.
+	 * This is used to determine in {@code onCreate} whether the vehicle's previous historical trip
+	 * was created recently (that is, the user is entering a series of historical trips).
+	 *<P>
+	 * When a new trip is saved to the DB at the end of this activity:
+	 * To determine whether the just-created trip is 'historical' or not,
+	 * for consistency the activity uses {@link TripTStopEntry#TIMEDIFF_HISTORICAL_MILLIS}.
+	 *<P>
+	 * See class javadoc for details.
+	 *<P>
+	 * Must be significantly smaller than the other Historical Mode threshold
+	 * {@link #TIMEDIFF_HISTORICAL_MILLIS}.
+	 * @see #PREF_PREV_HISTORICAL_TIME_CREATED
+	 * @since 0.9.50
+	 */
+	private static final long TIMEDIFF_HISTORICAL_RECENT_MILLIS = 2 * 24 * 60 * 60 * 1000L;
+		// if this is changed, update class javadoc & keep it much smaller than TIMEDIFF_HISTORICAL_MILLIS
 
 	/** tag for Log debugs */
 	@SuppressWarnings("unused")
@@ -444,13 +502,37 @@ public class TripBegin extends Activity
 
 			// How recent was that vehicle's most recent trip? (Historical Mode)
 			{
+				boolean willAskHistorical;
+
 				long currStartTime = startTime.getTimeInMillis();
 				if (currStartTime != startTimeAtCreate)
 					return;  // it's been changed by the user already
 
 				long latestVehTime = 1000L * currV.readLatestTime(null);
-				if ((latestVehTime != 0L)
-					&& (Math.abs(latestVehTime - currStartTime) >= TIMEDIFF_HISTORICAL_MILLIS))
+				willAskHistorical = (latestVehTime != 0L)
+					&& (Math.abs(latestVehTime - currStartTime) >= TIMEDIFF_HISTORICAL_MILLIS);
+
+				if (! willAskHistorical)
+				{
+					// check for "recent historical" entry mode
+
+					final SharedPreferences sp
+						= PreferenceManager.getDefaultSharedPreferences
+						    (getApplicationContext());
+					final int v_id = currV.getID();
+
+					if (sp.contains(PREF_PREV_HISTORICAL_TIME_CREATED)
+					    && (v_id == sp.getInt(PREF_PREV_HISTORICAL_V_ID, -1)))
+					{
+						final long prevCreatedTime =
+							sp.getLong(PREF_PREV_HISTORICAL_TIME_CREATED, 0L);
+						willAskHistorical =
+							(Math.abs(System.currentTimeMillis() - prevCreatedTime)
+							 <= TIMEDIFF_HISTORICAL_RECENT_MILLIS);
+					}
+				}
+
+				if (willAskHistorical)
 				{
 					askStartNowOrHistorical(latestVehTime);
 				}
@@ -617,6 +699,8 @@ public class TripBegin extends Activity
 	 */
 	public void onClick_BtnBeginTrip(View v)
 	{
+		final long now = System.currentTimeMillis();
+
 		// Check the time first:
 		startTime.set(Calendar.HOUR_OF_DAY, tpStartTime.getCurrentHour());
 		startTime.set(Calendar.MINUTE, tpStartTime.getCurrentMinute());
@@ -628,7 +712,7 @@ public class TripBegin extends Activity
 			long startTimeMillis = startTime.getTimeInMillis();
 			if (Math.abs(startTimeMillis - startTimeAtCreate) < 2000)
 			{
-				startTimeAtCreate = System.currentTimeMillis();
+				startTimeAtCreate = now;
 				startTime.setTimeInMillis(startTimeAtCreate);
 				startTimeSec = (int) (startTimeAtCreate / 1000L);
 			} else {
@@ -849,6 +933,36 @@ public class TripBegin extends Activity
 		}
 
 		VehSettings.setPreviousLocation(db, currV, locObj);  // PREV_LOCATION
+
+		// If this is a historical trip, note its time of creation (current time, not its start time)
+		// so next TripBegin.onCreate can ask if should use Historical Mode; see class javadoc.
+		{
+			final SharedPreferences sp
+				= PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+			SharedPreferences.Editor spe = null;
+			final long startTimeLong = startTimeSec * 1000L;
+			final int v_id = currV.getID();
+
+			if ((startTimeLong < now) && (now - startTimeLong > TripTStopEntry.TIMEDIFF_HISTORICAL_MILLIS))
+			{
+				// this trip is historical: set the prefs
+				spe = sp.edit();
+				spe.putInt(PREF_PREV_HISTORICAL_V_ID, v_id);
+				spe.putLong(PREF_PREV_HISTORICAL_TIME_CREATED, now);
+			}
+			else if (sp.contains(PREF_PREV_HISTORICAL_TIME_CREATED))
+			{
+				// not historical: clear pref if same vehicle
+				if (v_id == sp.getInt(PREF_PREV_HISTORICAL_V_ID, -1))
+				{
+					spe = sp.edit();
+					spe.remove(PREF_PREV_HISTORICAL_TIME_CREATED);
+				}
+			}
+
+			if (spe != null)
+				spe.commit();
+		}
 
 		finish();
 	}

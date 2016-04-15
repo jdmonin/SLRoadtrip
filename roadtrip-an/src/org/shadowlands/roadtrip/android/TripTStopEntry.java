@@ -108,8 +108,11 @@ public class TripTStopEntry extends Activity
 	/** Flag for ending the entire trip (not just stopping), for {@link Intent#putExtra(String, boolean)} */
 	public static final String EXTRAS_FLAG_ENDTRIP = "endtrip";
 
-	/** Historical Mode threshold is 24 hours, in milliseconds. */
-	private static final long TIMEDIFF_HISTORICAL_MILLIS = 24 * 60 * 60 * 1000L;
+	/**
+	 * Historical Mode threshold is 24 hours, in milliseconds.
+	 * Used by {@link TripTStopEntry} and {@link TripBegin}.
+	 */
+	static final long TIMEDIFF_HISTORICAL_MILLIS = 24 * 60 * 60 * 1000L;
 
 	/**
 	 * Placeholder (-2) for GeoArea ID when the geoarea name is newly entered text

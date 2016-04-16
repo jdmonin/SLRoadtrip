@@ -130,7 +130,7 @@
 <string name="save_changes">Save Changes</string>
 <string name="sdcard_not_mounted">The SD card is not mounted.</string>
 <string name="sdcard_read_only">The SD card is read-only.</string>
-<string name="set_time_now_or_historical">Historical Mode:\nShould the time be set to now, or to the previous date entered for this vehicle?</string>
+<string name="set_time_now_or_historical">Historical Mode:\nShould the time be set to now, or to the previous date %1$s entered for this vehicle?</string>
 <string name="settings">Settings</string>
 <string name="show_dropdown">Show Dropdown</string>
 <string name="show_logbook">Show Logbook</string>

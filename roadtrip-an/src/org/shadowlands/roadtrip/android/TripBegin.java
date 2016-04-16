@@ -20,6 +20,7 @@
 package org.shadowlands.roadtrip.android;
 
 import java.util.Calendar;
+import java.util.Date;
 
 import org.shadowlands.roadtrip.AndroidStartup;
 import org.shadowlands.roadtrip.R;
@@ -118,7 +119,7 @@ public class TripBegin extends Activity
 	public static final String EXTRAS_FLAG_FREQUENT = "frequent";
 
 	/**
-	 * For asking about historical mode, the current time when the previous historical trip was created.
+	 * For asking about historical mode, the current time when the historical previous trip was created.
 	 * When this key is present in shared prefs, the associated vehicle's most recent trip was historical when created.
 	 * Creating a trip which starts at the current time, not 'historical', will remove this key from shared prefs.
 	 *<P>
@@ -577,7 +578,10 @@ public class TripBegin extends Activity
 		AlertDialog.Builder alert = new AlertDialog.Builder(this);
 
 		alert.setTitle(R.string.confirm);
-		alert.setMessage(R.string.set_time_now_or_historical);
+		alert.setMessage(getResources().getString
+			(R.string.set_time_now_or_historical,
+			 android.text.format.DateFormat.getDateFormat
+				(getApplicationContext()).format(new Date(latestVehTime))));
 		alert.setNegativeButton(R.string.now, new DialogInterface.OnClickListener()
 		{
 			public void onClick(DialogInterface dialog, int whichButton)

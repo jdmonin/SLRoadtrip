@@ -20,7 +20,10 @@ package org.shadowlands.roadtrip.db;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.Vector;
+
+import org.shadowlands.roadtrip.model.LogbookTableModel;  // strictly for COL_TSTOP_DESC
 
 /**
  * In-memory representation, and database access for, a Trip.
@@ -423,8 +426,8 @@ public class Trip extends RDBRecord
 	final List<Trip> trips = parseStringsToTrips(db, alsoTStops, sv);
 	if (trips == null)
     		return null;
-    	else
-    		return new TripListTimeRange(trips);
+	else
+    		return new TripListTimeRange(trips, locID);
     }
 
     /** parse String[] to Trips, optionally also call {@link #readAllTStops()} */
@@ -1782,6 +1785,13 @@ public class Trip extends RDBRecord
 		/** Starting/ending date/time of trip range, in Unix format */
 		public final int timeStart, timeEnd;
 
+		/** For {@link LogbookTableModel}'s Location Mode, the matching Location object's ID;
+		 *  otherwise -1.
+		 *  @see #tMatchedRows
+		 *  @since 0.9.50
+		 */
+		public final int matchLocID;
+
 		/** Trips found within this range of time */
 		public List<Trip> tr;
 
@@ -1795,39 +1805,63 @@ public class Trip extends RDBRecord
 		 * {@link org.shadowlands.roadtrip.model.LogbookTableModel LogbookTableModel}
 		 * constructor or
 		 * {@link org.shadowlands.roadtrip.model.LogbookTableModel#addEarlierTrips(RDBAdapter) LogbookTableModel.addEarlierTrips(RDBAdapter)}.
+		 * @see #tMatchedRows
 		 */
 		public Vector<String[]> tText;
+
+		/**
+		 * For {@link LogbookTableModel}'s Location Mode, the optional set of row numbers of {@link TStop}s
+		 * matching the Location within {@link #tText}; {@code null} in other modes or when no matches found.
+		 * @see #matchLocID
+		 * @since 0.9.50
+		 */
+		public Set<Integer> tMatchedRows;
 
 		/** Are there no trips beyond this range? False if unknown. */
 		public boolean noneEarlier, noneLater;
 
 		public TripListTimeRange(int time_start, int time_end, List<Trip> t)
 		{
-			timeStart = time_start;
-			timeEnd = time_end;
-			tr = t;
-			tText = null;
+			this(time_start, time_end, t, -1);
 		}
 
 		/**
 		 * Constructor from a list of trips; {@code time_start} will be first trip's start time,
 		 * {@code time_end} will be last trip's <b>start</b> time (not end time).
 		 * @param trips  List of trips
+		 * @param matchLoc  Optional Location ID (for results of searching by location), or -1;
+		 *     if used, the range will track which {@link TStop}s are at this Location ID.
 		 * @since 0.9.50
 		 */
-		public TripListTimeRange(List<Trip> trips)
+		public TripListTimeRange(List<Trip> trips, final int matchLocID)
 		{
-			this(trips.get(0).getTime_start(), trips.get(trips.size() - 1).getTime_start(), trips);
+			this(trips.get(0).getTime_start(), trips.get(trips.size() - 1).getTime_start(),
+			     trips, matchLocID);
+		}
+
+		private TripListTimeRange(int time_start, int time_end, List<Trip> t, final int matchLocID)
+		{
+			timeStart = time_start;
+			timeEnd = time_end;
+			tr = t;
+			tText = null;
+			this.matchLocID = matchLocID;
 		}
 
 		/**
 		 * For StringBuffer output, append \n and then tab-delimited (\t)
 		 * contents of each text row to the stringbuffer.
+		 *<P>
+		 * In Location Mode, as a temporary measure until more subtle match hilighting can be done,
+		 * TStop location matches in {@link #tMatchedRows} are shown in ALL CAPS.
 		 */
 		public void appendRowsAsTabbedString(StringBuffer sb)
 		{
 			if (tText == null)
 				return;
+
+			final boolean chkMatches = (matchLocID != -1)
+				&& (tMatchedRows != null) && ! tMatchedRows.isEmpty();
 
 			final int S = tText.size();
 			for (int r = 0; r < S; ++r)
@@ -1840,7 +1874,14 @@ public class Trip extends RDBRecord
 				{
 					sb.append('\t');
 					if (rstr[c] != null)
-						sb.append(rstr[c]);
+					{
+						String str = rstr[c];
+						if (chkMatches && (c == LogbookTableModel.COL_TSTOP_DESC)
+						    && tMatchedRows.contains(Integer.valueOf(r)))
+							str = str.toUpperCase();
+
+						sb.append(str);
+					}
 				}
 			}
 		}

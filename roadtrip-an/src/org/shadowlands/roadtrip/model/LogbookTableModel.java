@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010-2015 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2016 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -22,7 +22,9 @@ package org.shadowlands.roadtrip.model;
 import gnu.trove.TIntObjectHashMap;
 
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.Vector;
 
 import org.shadowlands.roadtrip.db.GasBrandGrade;
@@ -77,6 +79,12 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	 */
 	public static final String[] COL_HEADINGS
 	    = { "Date", "Time", "", "Odometer", "Trip-O", "Description", "Via", "Comment" };
+	/**
+	 * For columns in standard mode, the TStop Description column number
+	 * and index within {@link #COL_HEADINGS}.
+	 * @since 0.9.50
+	 */
+	public static final int COL_TSTOP_DESC = 5;
 
 	/**
 	 * Column headings for simple mode (no TStops).  The length of this array determines the number of columns.
@@ -659,7 +667,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 		if (vtrips == null)
 			return;  // <--- nothing found ---
 
-		TripListTimeRange ttr = new TripListTimeRange(vtrips);
+		TripListTimeRange ttr = new TripListTimeRange(vtrips, -1);
 		ttr.noneEarlier = true;
 		ttr.noneLater = true;
 		tData.add(ttr);
@@ -670,6 +678,8 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	/**
 	 * Add trip data as text to ttr.tText, looking up from the database as needed.
 	 * Updates {@link #tDataTextRowCount} to include the new text rows.
+	 * Updates {@link TripListTimeRange#tText} and if {@link TripListTimeRange#matchLocID} != -1
+	 * also updates {@link TripListTimeRange#tMatchedRows}.
 	 * @param ttr  Query and add text of this TripTimeRange's contents
 	 * @param conn  Add from this connection
 	 */
@@ -694,9 +704,25 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 		Vector<String[]> tText = ttr.tText;
 
 		if (trip_simple_mode)
+		{
 			addRowsFromTrips_formatTripsSimple(trips, tText, conn);
-		else
-			addRowsFromTrips_formatTripsStops(trips, tText, conn);
+		} else {
+			Set<Integer> matchSet;
+			if (ttr.matchLocID != -1)
+			{
+				if (ttr.tMatchedRows != null)
+					matchSet = ttr.tMatchedRows;
+				else
+					matchSet = new HashSet<Integer>();
+			} else {
+				matchSet = null;
+			}
+
+			addRowsFromTrips_formatTripsStops(trips, ttr.matchLocID, tText, matchSet, conn);
+
+			if ((matchSet != null) && (ttr.tMatchedRows == null) && ! matchSet.isEmpty())
+				ttr.tMatchedRows = matchSet;
+		}
 
 		tDataTextRowCount += (tText.size() - tRowCount);
 	}
@@ -705,11 +731,15 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	 * Add rows to strings from a list of {@link Trip}s and their {@link TStop}s.
 	 * Columns of added rows line up with {@link #COL_HEADINGS}.
 	 * @param trips Trips data to add to {@code tText}
+	 * @param matchLocID  For Location Mode, the optional location ID being searched for, otherwise -1
 	 * @param tText Append rows here from {@code trips}
+	 * @param matchSet  For Location Mode, if not {@code null} set elements in this set for {@code tText}
+	 *      index numbers of TStops matching {@code matchLocID}.
 	 * @param conn  Add from this connection
 	 */
 	public void addRowsFromTrips_formatTripsStops
-		(final List<Trip> trips, Vector<String[]> tText, RDBAdapter conn)
+		(final List<Trip> trips, final int matchLocID,
+		 Vector<String[]> tText, Set<Integer> matchSet, RDBAdapter conn)
 	{
 		Date prevTripStart = null;  // time of trip start
 
@@ -976,12 +1006,20 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 					if ((ts == lastStop) && (desc.length() > 0)
 						&& (odo_end != 0))
 						desc.insert(0, "-> ");  // Very last stop: "-> location"
-					tr[5] = desc.toString();
+
+					tr[COL_TSTOP_DESC] = desc.toString();  // tr[5] is COL_TSTOP_DESC
 
 					// Comment, if any
 					String stopc = ts.getComment();
 					if (stopc != null)
 						tr[7] = (doCommentBrackets) ? ("[" + stopc + "]") : stopc;
+
+					// In Location Mode, check tstop's location and update matchSet if needed
+					if ((matchSet != null) && (matchLocID != -1)
+					    && (ts.getLocationID() == matchLocID))
+					{
+						matchSet.add(Integer.valueOf(tText.size()));
+					}
 
 					// Done with this row
 					tText.addElement(tr);

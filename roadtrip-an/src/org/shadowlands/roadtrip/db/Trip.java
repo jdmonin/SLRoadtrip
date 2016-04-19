@@ -1779,13 +1779,16 @@ public class Trip extends RDBRecord
 	 * Trips within a range of time; used by
 	 * {@link org.shadowlands.model.LogbookTableModel LogbookTableModel} and by
 	 * {@link #tripsForVehicle(RDBAdapter, Vehicle, int, int, boolean, boolean, boolean)}.
+	 *<P>
+	 * Trips added to this Range are available as text through {@link #tText}
+	 * or by calling {@link #appendRowsAsTabbedString(StringBuffer)}.
 	 */
 	public static class TripListTimeRange
 	{
 		/** Starting/ending date/time of trip range, in Unix format */
 		public final int timeStart, timeEnd;
 
-		/** For {@link LogbookTableModel}'s Location Mode, the matching Location object's ID;
+		/** For {@link LogbookTableModel}'s Location Mode, the matching Location ID;
 		 *  otherwise -1.
 		 *  @see #tMatchedRows
 		 *  @since 0.9.50
@@ -1811,8 +1814,10 @@ public class Trip extends RDBRecord
 
 		/**
 		 * For {@link LogbookTableModel}'s Location Mode, the optional set of row numbers of {@link TStop}s
-		 * matching the Location within {@link #tText}; {@code null} in other modes or when no matches found.
-		 * @see #matchLocID
+		 * matching the Location {@link #matchLocID} within {@link #tText}; {@code null} in other modes
+		 * or when no matches found.
+		 *<P>
+		 * Used by {@link #appendRowsAsTabbedString(StringBuffer)} to highlight matching TStops.
 		 * @since 0.9.50
 		 */
 		public Set<Integer> tMatchedRows;
@@ -1829,8 +1834,8 @@ public class Trip extends RDBRecord
 		 * Constructor from a list of trips; {@code time_start} will be first trip's start time,
 		 * {@code time_end} will be last trip's <b>start</b> time (not end time).
 		 * @param trips  List of trips
-		 * @param matchLoc  Optional Location ID (for results of searching by location), or -1;
-		 *     if used, the range will track which {@link TStop}s are at this Location ID.
+		 * @param matchLocID  Optional Location ID (for results of searching by location), or -1;
+		 *     if provided, this range will track which {@link TStop}s use this Location ID.
 		 * @since 0.9.50
 		 */
 		public TripListTimeRange(List<Trip> trips, final int matchLocID)
@@ -1852,8 +1857,8 @@ public class Trip extends RDBRecord
 		 * For StringBuffer output, append \n and then tab-delimited (\t)
 		 * contents of each text row to the stringbuffer.
 		 *<P>
-		 * In Location Mode, as a temporary measure until more subtle match hilighting can be done,
-		 * TStop location matches in {@link #tMatchedRows} are shown in ALL CAPS.
+		 * In Location Mode, as a temporary measure until more subtle match highlighting can be done,
+		 * {@link TStop}s at a Location matched in {@link #tMatchedRows} are shown in ALL CAPS.
 		 */
 		public void appendRowsAsTabbedString(StringBuffer sb)
 		{

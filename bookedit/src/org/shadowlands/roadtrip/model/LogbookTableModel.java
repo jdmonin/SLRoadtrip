@@ -79,6 +79,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	 */
 	public static final String[] COL_HEADINGS
 	    = { "Date", "Time", "", "Odometer", "Trip-O", "Description", "Via", "Comment" };
+
 	/**
 	 * For columns in standard mode, the TStop Description column number
 	 * and index within {@link #COL_HEADINGS}.
@@ -731,10 +732,10 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	 * Add rows to strings from a list of {@link Trip}s and their {@link TStop}s.
 	 * Columns of added rows line up with {@link #COL_HEADINGS}.
 	 * @param trips Trips data to add to {@code tText}
-	 * @param matchLocID  For Location Mode, the optional location ID being searched for, otherwise -1
+	 * @param matchLocID  For Location Mode, the optional location ID being searched for; otherwise -1
 	 * @param tText Append rows here from {@code trips}
-	 * @param matchSet  For Location Mode, if not {@code null} set elements in this set for {@code tText}
-	 *      index numbers of TStops matching {@code matchLocID}.
+	 * @param matchSet  For Location Mode, if not {@code null} will add elements to this set for {@code tText}
+	 *      index numbers (row numbers in text) of {@link TStop}s matching {@code matchLocID}.
 	 * @param conn  Add from this connection
 	 */
 	public void addRowsFromTrips_formatTripsStops

@@ -260,6 +260,8 @@ e3dae2e	0.9.43	2015-06-07	First release to include a BookEdit jar; minor improve
 				- Odometer calculator dialog: To prevent changing odometer to second operand instead of
 				  result, disable Save after any op button until Equals, Reset, or Clear is pressed
 				- While validating a backup to restore it, show file size and trip date range
+				- VehicleEntry: Fix bug where some fields were read-only when entering new vehicle while previously-
+				  current vehicle is on a trip
 				BookEdit desktop utility app:
 				- Show TStop comments without superfluous square brackets
 

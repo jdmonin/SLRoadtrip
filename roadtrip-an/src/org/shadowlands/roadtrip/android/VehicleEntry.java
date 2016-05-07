@@ -106,7 +106,8 @@ public class VehicleEntry
 	private boolean cameFromAskNew;
 
 	/**
-	 * Are we on a trip? Is {@link VehSettings#getCurrentTrip(RDBAdapter, Vehicle, boolean)} != null?
+	 * Are we on a trip? That is, editing a vehicle (not adding) and
+	 * {@link VehSettings#getCurrentTrip(RDBAdapter, Vehicle, boolean)} != null?
 	 */
 	private boolean hasCurrentTrip;
 
@@ -114,6 +115,7 @@ public class VehicleEntry
 	 * If not null, {@link #EXTRAS_INT_EDIT_ID} was set to this vehicle's ID,
 	 * it was in the database, and we're editing that vehicle.
 	 * @see #isCurrentV
+	 * @see #hasCurrentTrip
 	 */
 	private Vehicle cameFromEdit_veh;
 
@@ -199,19 +201,6 @@ public class VehicleEntry
 
 		db = new RDBOpenHelper(this);
 
-		final Vehicle currV = Settings.getCurrentVehicle(db, false);
-		if (currV != null)
-		{
-			hasCurrentTrip = (null != VehSettings.getCurrentTrip(db, currV, false));
-			if (hasCurrentTrip)
-			{
-				setTitle(R.string.view_vehicles);
-				// most fields will be made read-only in updateScreenFieldsFromVehicle().
-			}
-		} else {
-			hasCurrentTrip = false;
-		}
-
 		if ((cameFromEdit_id == 0) && (Vehicle.getMostRecent(db) == null))
 		{
 			// initial setup
@@ -234,6 +223,12 @@ public class VehicleEntry
 		{
 			try {
 				cameFromEdit_veh = new Vehicle(db, cameFromEdit_id);
+				hasCurrentTrip = (null != VehSettings.getCurrentTrip(db, cameFromEdit_veh, false));
+				if (hasCurrentTrip)
+				{
+					setTitle(R.string.view_vehicles);
+					// most fields will be made read-only in updateScreenFieldsFromVehicle().
+				}
 				updateScreenFieldsFromVehicle();
 			} catch (Throwable e) {
 				// should not happen
@@ -243,6 +238,7 @@ public class VehicleEntry
 				return;   // <--- Early return: Could not load from db to view fields ---
 			}
 		} else {
+			hasCurrentTrip = false;
 			cbActive.setChecked(true);
 		}
 

@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010-2015 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2016 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -58,7 +58,7 @@ import android.widget.AdapterView.OnItemClickListener;
 
 /**
  * Enter a new vehicle, or edit a vehicle.
- * Read-only if current trip.
+ * Read-only if editing current vehicle during current trip.
  *<P>
  * <b>When no intent extras are used:</b><BR>
  * will next go to Main.
@@ -83,8 +83,8 @@ import android.widget.AdapterView.OnItemClickListener;
 public class VehicleEntry
 	extends Activity implements OnDateSetListener
 {
-	/** Flag to show we already have a driver entered,
-	 *  but the user asked to enter a new driver;
+	/** Flag to show we already have a vehicle entered in the db,
+	 *  but the user asked to enter a new vehicle;
 	 *  for {@link Intent#putExtra(String, boolean)}.
 	 */
 	public static final String EXTRAS_FLAG_ASKED_NEW = "new";

@@ -418,6 +418,8 @@ public class TripTStopEntry extends Activity
 	// Start of calculator fields
 	///////////////////////////////
 
+	// Operations for calcOperation.
+	// If any are added, also update calcUpdateStatusView().
 	private static final int CALC_OP_NONE = 0, CALC_OP_ADD = 1,
 	  CALC_OP_SUB = 2, CALC_OP_MUL = 3, CALC_OP_DIV = 4;
 
@@ -433,7 +435,17 @@ public class TripTStopEntry extends Activity
 	/** Calculator's current value, for {@link #onClickEditOdo(OdometerNumberPicker, boolean)} callbacks */
 	private EditText calcValue;
 
-	/** Calculator's memory register (M+ M- {@link #calcMR MR} {@link #calcMC MC} buttons). */
+	/**
+	 * Calculator's status display: {@link #calcOperation} and {@link #calcMemory} indicator ("M" or nothing).
+	 * Updated in {@link #calcUpdateStatusView()}.
+	 * @since 0.9.50
+	 */
+	private TextView calcStatusView;
+
+	/**
+	 * Calculator's memory register (M+ M- {@link #calcMR MR} {@link #calcMC MC} buttons).
+	 * @see #calcStatusView
+	 */
 	private float calcMemory = 0.0f;
 
 	/** If true, the next button press clears {@link #calcValue} */
@@ -445,6 +457,7 @@ public class TripTStopEntry extends Activity
 	/**
 	 * Calculator's operation: {@link #CALC_OP_ADD}, {@link #CALC_OP_SUB},
 	 * {@link #CALC_OP_MUL}, {@link #CALC_OP_DIV} or {@link #CALC_OP_NONE}.
+	 * @see #calcStatusView
 	 */
 	private int calcOperation;
 
@@ -2967,6 +2980,7 @@ public class TripTStopEntry extends Activity
 		calcPrevOperand = 0;
 
 		calcValue = (EditText) calcItems.findViewById(R.id.trip_tstop_popup_odo_calc_value);
+		calcStatusView = (TextView) calcItems.findViewById(R.id.trip_tstop_popup_odo_calc_status);
 		calc0 = calcItems.findViewById(R.id.trip_tstop_popup_odo_calc_0);
 		calc1 = calcItems.findViewById(R.id.trip_tstop_popup_odo_calc_1);
 		calc2 = calcItems.findViewById(R.id.trip_tstop_popup_odo_calc_2);
@@ -2985,6 +2999,7 @@ public class TripTStopEntry extends Activity
 		calcMR.setEnabled(calcMemory != 0.0f);
 
 		calcLoadValueFromOdo();
+		calcUpdateStatusView();
 		calcNextPressClears = true;
 
 		AlertDialog.Builder alert = new AlertDialog.Builder(this);
@@ -3020,6 +3035,29 @@ public class TripTStopEntry extends Activity
 
 		popupCalcDia = alert.create();
 		popupCalcDia.show();
+	}
+
+	/**
+	 * Update {@link #calcStatusView} with the current {@link #calcOperation}
+	 * and whether {@link #calcMemory} is occupied.
+	 * @since 0.9.50
+	 */
+	private void calcUpdateStatusView()
+	{
+		StringBuilder sb = new StringBuilder();
+
+		if (calcMemory != 0.0f)
+			sb.append("M ");
+
+		switch (calcOperation)
+		{
+		case CALC_OP_ADD:  sb.append("+");  break;
+		case CALC_OP_SUB:  sb.append("-");  break;
+		case CALC_OP_MUL:  sb.append("*");  break;
+		case CALC_OP_DIV:  sb.append("/");  break;
+		}
+
+		calcStatusView.setText(sb);
 	}
 
 	/** Load the calculator's {@link #calcValue} field from the
@@ -3150,7 +3188,7 @@ public class TripTStopEntry extends Activity
 		calcPrevOperand = cv;
 		calcOperation = calcOp;
 		calcNextPressClears = true;
-		// TODO visually indicate the op somewhere
+		calcUpdateStatusView();
 
 		if (popupCalcDia != null)
 		{
@@ -3232,6 +3270,7 @@ public class TripTStopEntry extends Activity
 
 		calcPrevOperand = cv;
 		calcValue.setText(Float.toString(nv));
+		calcUpdateStatusView();
 		calcNextPressClears = true;
 	}
 
@@ -3260,6 +3299,7 @@ public class TripTStopEntry extends Activity
 			calcMC.setEnabled(true);
 			calcMR.setEnabled(true);
 		}
+		calcUpdateStatusView();
 	}
 
 	public void onClick_CalcBtnMemPlus(View v)
@@ -3277,6 +3317,7 @@ public class TripTStopEntry extends Activity
 		calcMemory = 0.0f;
 		calcMC.setEnabled(false);
 		calcMR.setEnabled(false);
+		calcUpdateStatusView();
 	}
 
 	public void onClick_CalcBtnMemRecall(View v)

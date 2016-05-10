@@ -3001,6 +3001,8 @@ public class TripTStopEntry extends Activity
 				try
 				{
 					ov = Float.parseFloat(calcValue.getText().toString());
+					if (ov < 0)
+						ov = -ov;  // ignore negative sign
 				}
 				catch (NumberFormatException e)
 				{

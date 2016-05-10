@@ -256,10 +256,11 @@ e3dae2e	0.9.43	2015-06-07	First release to include a BookEdit jar; minor improve
 				- LogbookShow: When picking from 'Other Vehicle' spinner, dismiss that dialog and
 				  immediately show new vehicle
 				- LogbookShow DatePicker: To always show year spinner, hide calendar pane on narrow screens
-				- Odometer calculator dialog: Enable MR, MC buttons only if something is saved to memory
-				- Odometer calculator dialog: To prevent changing odometer to second operand instead of
-				  result, disable Save after any op button until Equals, Reset, or Clear is pressed
-				- Odometer calculator dialog: When saving to odometer, ignore negative sign
+				- Odometer calculator dialog:
+					- Enable MR, MC buttons only if something is saved to memory
+					- To prevent changing odometer to second operand instead of result,
+					  disable Save after any op button until Equals, Reset, or Clear is pressed
+					- When saving to odometer, ignore negative sign
 				- While validating a backup to restore it, show file size and trip date range
 				- VehicleEntry: Fix bug where some fields were read-only when entering new vehicle while previously-
 				  current vehicle is on a trip

@@ -3053,8 +3053,8 @@ public class TripTStopEntry extends Activity
 		{
 		case CALC_OP_ADD:  sb.append("+");  break;
 		case CALC_OP_SUB:  sb.append("-");  break;
-		case CALC_OP_MUL:  sb.append("*");  break;
-		case CALC_OP_DIV:  sb.append("/");  break;
+		case CALC_OP_MUL:  sb.append("×");  break;
+		case CALC_OP_DIV:  sb.append("÷");  break;
 		}
 
 		calcStatusView.setText(sb);

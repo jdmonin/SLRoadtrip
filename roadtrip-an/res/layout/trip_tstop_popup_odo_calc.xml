@@ -62,7 +62,8 @@
 				android:layout_weight="0" android:layout_width="wrap_content"  />
 			<Button android:text="8" android:onClick="onClick_CalcBtnDigit" android:id="@+id/trip_tstop_popup_odo_calc_8" />
 			<Button android:text="9" android:onClick="onClick_CalcBtnDigit" android:id="@+id/trip_tstop_popup_odo_calc_9" />
-			<Button android:text="/" android:onClick="onClick_CalcBtnDiv" android:id="@+id/trip_tstop_popup_odo_calc_div" />			
+			<Button android:text="÷" android:onClick="onClick_CalcBtnDiv" android:id="@+id/trip_tstop_popup_odo_calc_div" />
+			   <!--  division is unicode obelus (U+00F7) -->
 			<Button android:text="←" android:onClick="onClick_CalcBtnBackspace" android:id="@+id/trip_tstop_popup_odo_calc_bs" />
 			   <!--  the backspace is unicode left arrow (U+2190 / decimal 8592) -->			
 		</TableRow>
@@ -71,7 +72,8 @@
 				android:layout_weight="0" android:layout_width="wrap_content"  />
 			<Button android:text="5" android:onClick="onClick_CalcBtnDigit" android:id="@+id/trip_tstop_popup_odo_calc_5" />
 			<Button android:text="6" android:onClick="onClick_CalcBtnDigit" android:id="@+id/trip_tstop_popup_odo_calc_6" />
-			<Button android:text="*" android:onClick="onClick_CalcBtnMul" android:id="@+id/trip_tstop_popup_odo_calc_mul" />			
+			<Button android:text="×" android:onClick="onClick_CalcBtnMul" android:id="@+id/trip_tstop_popup_odo_calc_mul" />
+			   <!--  multiplication is unicode U+00D7 -->
 			<Button android:text="C" android:onClick="onClick_CalcBtnClear" android:id="@+id/trip_tstop_popup_odo_calc_clr" />			
 		</TableRow>
 		<TableRow>

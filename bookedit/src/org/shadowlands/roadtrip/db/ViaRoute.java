@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010-2011,2014-2015 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2011,2014-2016 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -77,6 +77,7 @@ public class ViaRoute extends RDBRecord
     {
     	if (db == null)
     		throw new IllegalStateException("db null");
+
     	Vector<String[]> sv;
     	if (locID_from != -1)
     	{
@@ -87,16 +88,34 @@ public class ViaRoute extends RDBRecord
     	    sv = db.getRows
     	    (TABNAME, (String) null, (String[]) null, FIELDS_AND_ID, DESCFIELD_SORT, 0);
     	}
-    	if (sv == null)
-    		return null;
 
-    	ViaRoute[] aa = new ViaRoute[sv.size()];
-		try
-		{
-	    	for (int i = 0; i < aa.length; ++i)
-	    		aa[i] = new ViaRoute(db, sv.elementAt(i));
-		} catch (RDBKeyNotFoundException e) { }  // not thrown, but required
-    	return aa;
+	return toArray(db, sv);
+    }
+
+    /**
+     * Given ViaRoute db record results from
+     * {@link RDBAdapter#getRows(String, String, String, String[], String, int) db.getRows(..)},
+     * return an array of objects.
+     * @param db  DB adapter to pass to constructor
+     * @param sv  String vector results from db.getRows(..), or null
+     * @return  Array of ViaRoute objects created with {@link #ViaRoute(RDBAdapter, String[])},
+     *     or null if {@code sv == null}
+     * @since 0.9.51
+     */
+    private static ViaRoute[] toArray(final RDBAdapter db, final Vector<String[]> sv)
+    {
+	if (sv == null)
+		return null;
+
+	ViaRoute[] aa = new ViaRoute[sv.size()];
+	try
+	{
+	    for (int i = 0; i < aa.length; ++i)
+		aa[i] = new ViaRoute(db, sv.elementAt(i));
+	}
+	catch (RDBKeyNotFoundException e) { }  // not thrown, but required
+
+	return aa;
     }
 
     /**

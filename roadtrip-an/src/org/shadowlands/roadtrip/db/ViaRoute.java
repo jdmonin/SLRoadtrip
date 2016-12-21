@@ -65,7 +65,8 @@ public class ViaRoute extends RDBRecord
     }
 
     /**
-     * Retrieve all ViaRoutes between 2 location IDs.
+     * Retrieve all ViaRoutes from a given location ID to another location.
+     * This method is not bidirectional; see {@link #getAll(RDBAdapter, int, int, boolean)}.
      * @param db  db connection
      * @param locID_from  Location to start from, or -1 for all ViaRoutes in the database
      * @param locID_to  Location to go to
@@ -88,6 +89,37 @@ public class ViaRoute extends RDBRecord
     	    sv = db.getRows
     	    (TABNAME, (String) null, (String[]) null, FIELDS_AND_ID, DESCFIELD_SORT, 0);
     	}
+
+	return toArray(db, sv);
+    }
+
+    /**
+     * Retrieve all ViaRoutes between 2 location IDs. Optionally bidirectional.
+     * @param db  db connection
+     * @param locID_A  First location ID
+     * @param locID_B  Second location ID
+     * @param bidirectional  If true return all ViaRoutes which are either from A to B, or from B to A.
+     *     If false return only those from A to B, same as calling {@link #getAll(RDBAdapter, int, int)}.
+     * @return ViaRoutes between these locations, ordered by description, or null if none
+     * @throws IllegalStateException if db not open
+     * @see #getAll(RDBAdapter, int, int)
+     * @since 0.9.51
+     */
+    public static ViaRoute[] getAll
+	(RDBAdapter db, final int locID_A, final int locID_B, final boolean bidirectional)
+	throws IllegalStateException
+    {
+	if (! bidirectional)
+	    return getAll(db, locID_A, locID_B);
+
+	if (db == null)
+		throw new IllegalStateException("db null");
+
+	final String locStr_A = Integer.toString(locID_A), locStr_B = Integer.toString(locID_B);
+	final String[] locIDStrs = new String[] { locStr_A, locStr_B, locStr_B, locStr_A };
+	Vector<String[]> sv = db.getRows
+	    (TABNAME, "(locid_from=? and locid_to=?) or (locid_from=? and locid_to=?)",
+	     locIDStrs, FIELDS_AND_ID, DESCFIELD_SORT, 0);
 
 	return toArray(db, sv);
     }

@@ -30,6 +30,8 @@ public class ViaRoute extends RDBRecord
     private static final String TABNAME = "via_route";
     private static final String DESCFIELD = "via_descr";
     private static final String DESCFIELD_SORT = "via_descr COLLATE NOCASE";  // syntax may be sqlite-specific
+    /** Order by {@code locid_from}, then by {@code via_descr} sorted case-insensitive */
+    private static final String DESCFIELD_SORT_AFTER_FROM = "locid_from, via_descr COLLATE NOCASE";
 
     /** db table fields.
      * @see #buildInsertUpdate()
@@ -100,7 +102,7 @@ public class ViaRoute extends RDBRecord
      * @param locID_B  Second location ID
      * @param bidirectional  If true return all ViaRoutes which are either from A to B, or from B to A.
      *     If false return only those from A to B, same as calling {@link #getAll(RDBAdapter, int, int)}.
-     * @return ViaRoutes between these locations, ordered by description, or null if none
+     * @return ViaRoutes between these locations, ordered by locid_from and then description, or null if none
      * @throws IllegalStateException if db not open
      * @see #getAll(RDBAdapter, int, int)
      * @since 0.9.51
@@ -119,7 +121,7 @@ public class ViaRoute extends RDBRecord
 	final String[] locIDStrs = new String[] { locStr_A, locStr_B, locStr_B, locStr_A };
 	Vector<String[]> sv = db.getRows
 	    (TABNAME, "(locid_from=? and locid_to=?) or (locid_from=? and locid_to=?)",
-	     locIDStrs, FIELDS_AND_ID, DESCFIELD_SORT, 0);
+	     locIDStrs, FIELDS_AND_ID, DESCFIELD_SORT_AFTER_FROM, 0);
 
 	return toArray(db, sv);
     }

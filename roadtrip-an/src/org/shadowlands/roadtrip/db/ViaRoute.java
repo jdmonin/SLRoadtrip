@@ -32,6 +32,8 @@ public class ViaRoute extends RDBRecord
     private static final String DESCFIELD_SORT = "via_descr COLLATE NOCASE";  // syntax may be sqlite-specific
     /** Order by {@code locid_from}, then by {@code via_descr} sorted case-insensitive */
     private static final String DESCFIELD_SORT_AFTER_FROM = "locid_from, via_descr COLLATE NOCASE";
+    /** Order by {@code locid_from} descending, then by {@code via_descr} sorted case-insensitive */
+    private static final String DESCFIELD_SORT_AFTER_FROM_DESC = "locid_from DESC, via_descr COLLATE NOCASE";
 
     /** db table fields.
      * @see #buildInsertUpdate()
@@ -119,9 +121,11 @@ public class ViaRoute extends RDBRecord
 
 	final String locStr_A = Integer.toString(locID_A), locStr_B = Integer.toString(locID_B);
 	final String[] locIDStrs = new String[] { locStr_A, locStr_B, locStr_B, locStr_A };
+	final String orderBy =
+	    (locID_A <= locID_B) ? DESCFIELD_SORT_AFTER_FROM : DESCFIELD_SORT_AFTER_FROM_DESC;
 	Vector<String[]> sv = db.getRows
 	    (TABNAME, "(locid_from=? and locid_to=?) or (locid_from=? and locid_to=?)",
-	     locIDStrs, FIELDS_AND_ID, DESCFIELD_SORT_AFTER_FROM, 0);
+	     locIDStrs, FIELDS_AND_ID, orderBy, 0);
 
 	return toArray(db, sv);
     }

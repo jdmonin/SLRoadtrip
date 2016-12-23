@@ -595,6 +595,9 @@ public class LogbookShow extends Activity
 		    case R.id.menu_logbook_other_veh:
 				return onCreateGoToDateVehicleDialog(true);
 
+		case R.id.menu_logbook_search_vias:
+			return new SearchViasPopup(((showV != null) ? showV.getID() : 0), this, db).createDialog();
+
 		    case R.id.menu_logbook_export:
 		    	return onCreateExportDialog();
 	    }
@@ -828,7 +831,7 @@ public class LogbookShow extends Activity
 			return true;
 
 		case R.id.menu_logbook_search_vias:
-			new SearchViasPopup(((showV != null) ? showV.getID() : 0), this, db).show();
+			showDialog(R.id.menu_logbook_search_vias);
 			return true;
 
 		case R.id.menu_logbook_validate:
@@ -1018,7 +1021,7 @@ public class LogbookShow extends Activity
 	 * A popup where two locations can be chosen by the user from the current
 	 * or other GeoAreas, then search and show a list of ViaRoutes between them.
 	 * Call the {@link #SearchViasPopup(int, Activity, RDBAdapter) constructor}
-	 * and then {@link #show()}.
+	 * and then either {@link #createDialog()} or {@link #show()}.
 	 * @see LogbookShow#askLocationAndShow(int, Activity, RDBAdapter)
 	 * @since 0.9.51
 	 */
@@ -1034,7 +1037,7 @@ public class LogbookShow extends Activity
 
 		/**
 		 * Create a new {@link SearchViasPopup}, ready to {@link #show()}.
-		 * Remember to call {@link #show()} from the UI thread.
+		 * Remember to call {@link #show()} or {@link #createDialog()} from the UI thread.
 		 * If this constructor fails to find a required item in the database,
 		 * it will show a Toast and {@code show()} will return false when called.
 		 * @param vID  To get current area, a specific vehicle ID or 0 for current vehicle
@@ -1228,6 +1231,7 @@ public class LogbookShow extends Activity
 								if ((! didDirSwitch) && (via.getLocID_From() != locID_FromFirst))
 								{
 									didDirSwitch = true;
+									sb.append('\n');
 									if (locID_FromFirst == locID_B)  // now show the other
 										sb.append("From " + locObj_A.getLocation()
 											  + " to " + locObj_B.getLocation() + ":\n");
@@ -1273,8 +1277,23 @@ public class LogbookShow extends Activity
 		}
 
 		/**
+		 * Create the search dialog. Call this method from {@code onCreateDialog(..)}
+		 * instead of calling {@link #show()}.
+		 * @return the AlertDialog, or {@code null} if it couldn't be initialized in the constructor
+		 * @see #show()
+		 */
+		public AlertDialog createDialog()
+		{
+			if (alert == null)
+				return null;
+			else
+				return alert.create();
+		}
+
+		/**
 		 * Show this search dialog. Call this method from the UI thread.
-		 * @return true if alert was shown, false if it couldn't be initialized
+		 * @return true if alert was shown, false if it couldn't be initialized in the constructor
+		 * @see #createDialog()
 		 */
 		public boolean show()
 		{

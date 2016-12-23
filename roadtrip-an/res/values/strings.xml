@@ -178,6 +178,10 @@
 <string name="logbook_show__recent_gas">Recent Gas</string>
 <string name="logbook_show__go_to_date">Go to Date</string>
 <string name="logbook_show__enter_location_to_search_trips">Enter the location to search trips for.</string>
+<string name="logbook_show__search_via_routes">Search Via Routes</string>
+<string name="logbook_show__search_via_routes__desc">Search for Via Routes entered between locations:</string>
+<string name="logbook_show__search_via_routes__loc_A">Location A:</string>
+<string name="logbook_show__search_via_routes__loc_B">Location B:</string>
 <string name="logbook_show__trips_to_location">Trips to Location</string>
 <string name="logbook_show__validating_db">Validating DB</string>
 <string name="logbook_show__validation_failed">Validation failed</string>

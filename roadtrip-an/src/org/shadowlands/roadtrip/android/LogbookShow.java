@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010-2015 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2016 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -31,6 +31,7 @@ import org.shadowlands.roadtrip.db.RDBVerifier;
 import org.shadowlands.roadtrip.db.Settings;
 import org.shadowlands.roadtrip.db.VehSettings;
 import org.shadowlands.roadtrip.db.Vehicle;
+import org.shadowlands.roadtrip.db.ViaRoute;
 import org.shadowlands.roadtrip.db.android.RDBOpenHelper;
 import org.shadowlands.roadtrip.model.LogbookTableModel;
 import org.shadowlands.roadtrip.util.RTRDateTimeFormatter;
@@ -187,6 +188,7 @@ public class LogbookShow extends Activity
 	 * @param fromActivity  Current activity; will call {@link Activity#startActivity(Intent)} on it
 	 * @param db  Connection to use
 	 * @see #showTripsForLocation(int, boolean, int, Activity)
+	 * @see SearchViasPopup
 	 */
 	public static final void askLocationAndShow(final int vID, final Activity fromActivity, final RDBAdapter db)
 	{
@@ -825,6 +827,10 @@ public class LogbookShow extends Activity
 			showDialog(R.id.menu_logbook_other_veh);
 			return true;
 
+		case R.id.menu_logbook_search_vias:
+			new SearchViasPopup(((showV != null) ? showV.getID() : 0), this, db).show();
+			return true;
+
 		case R.id.menu_logbook_validate:
 			doDBValidation();
 			return true;
@@ -1004,6 +1010,279 @@ public class LogbookShow extends Activity
 					: R.string.logbook_show__validation_failed )
 				.setNeutralButton(android.R.string.ok, null)
 				.show();
+		}
+	}
+
+	/**
+	 * Show {@link ViaRoute}s between two locations:
+	 * A popup where two locations can be chosen by the user from the current
+	 * or other GeoAreas, then search and show a list of ViaRoutes between them.
+	 * Call the {@link #SearchViasPopup(int, Activity, RDBAdapter) constructor}
+	 * and then {@link #show()}.
+	 * @see LogbookShow#askLocationAndShow(int, Activity, RDBAdapter)
+	 * @since 0.9.51
+	 */
+	public static final class SearchViasPopup
+	{
+		private AlertDialog.Builder alert;
+
+		/** Location selected in text field A or B; null if no location selected. */
+		private Location locObj_A = null, locObj_B = null;
+
+		/** {@link GeoArea} ID of {@link #locObj_A} or {@link #locObj_B}. */
+		private int areaID_A, areaID_B;
+
+		/**
+		 * Create a new {@link SearchViasPopup}, ready to {@link #show()}.
+		 * Remember to call {@link #show()} from the UI thread.
+		 * If this constructor fails to find a required item in the database,
+		 * it will show a Toast and {@code show()} will return false when called.
+		 * @param vID  To get current area, a specific vehicle ID or 0 for current vehicle
+		 * @param fromActivity  Current activity, for resources
+		 * @param db  Connection to use
+		 * @see LogbookShow#askLocationAndShow(int, Activity, RDBAdapter)
+		 */
+		public SearchViasPopup
+			(final int vID, final Activity fromActivity, final RDBAdapter db)
+		{
+			final Vehicle av;
+			if (vID == 0) {
+				av = Settings.getCurrentVehicle(db, false);
+			} else {
+				try {
+					av = new Vehicle(db, vID);
+				} catch (RDBKeyNotFoundException e) {
+					return;
+				}
+			}
+			if (av == null)
+				return;
+
+			final GeoArea currA = VehSettings.getCurrentArea(db, av, false);
+			if (currA == null)
+				return;
+
+			final int aID = currA.getID();
+			areaID_A = aID;
+			areaID_B = aID;
+
+			/** Find all locations in the current area, or null */
+			Location[] areaLocs = Location.getAll(db, aID);
+			if (areaLocs == null)
+			{
+				Toast.makeText(fromActivity, R.string.logbook_show__no_locs_in_area, Toast.LENGTH_SHORT).show();
+				return;
+			}
+
+			final View askItems = fromActivity.getLayoutInflater().inflate(R.layout.logbook_loc_vias_search, null);
+
+			final AutoCompleteTextView locA =
+				(AutoCompleteTextView) askItems.findViewById(R.id.logbook_loc_vias_locA);
+			final AutoCompleteTextView locB =
+				(AutoCompleteTextView) askItems.findViewById(R.id.logbook_loc_vias_locB);
+
+			if (locObj_A != null)
+				if (locObj_A.getAreaID() == areaID_A)
+					locA.setText(locObj_A.toString());
+				else
+					locObj_A = null;
+
+			if (locObj_B != null)
+				if (locObj_B.getAreaID() == areaID_B)
+					locA.setText(locObj_B.toString());
+				else
+					locObj_B = null;
+
+			ArrayAdapter<Location> adapter = new ArrayAdapter<Location>(fromActivity, R.layout.list_item, areaLocs);
+			locA.setAdapter(adapter);
+			locB.setAdapter(adapter);
+			locA.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+				public void onItemClick(AdapterView<?> parent, View clickedOn, int position, long rowID)
+				{
+					ListAdapter la = locA.getAdapter();
+					if (la == null)
+						return;
+
+					locObj_A = (position != -1) ? (Location) la.getItem(position) : null;
+				}
+				});
+			locB.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+				public void onItemClick(AdapterView<?> parent, View clickedOn, int position, long rowID)
+				{
+					ListAdapter la = locB.getAdapter();
+					if (la == null)
+						return;
+
+					locObj_B = (position != -1) ? (Location) la.getItem(position) : null;
+				}
+				});
+
+			/** When GeoArea spinner selection changes, query for locations in that area: */
+			final Spinner areasA = (Spinner) askItems.findViewById(R.id.logbook_loc_vias_locA_areas),
+			              areasB = (Spinner) askItems.findViewById(R.id.logbook_loc_vias_locB_areas);
+			SpinnerDataFactory.setupGeoAreasSpinner(db, fromActivity, areasA, areaID_A, true, -1);
+			SpinnerDataFactory.setupGeoAreasSpinner(db, fromActivity, areasB, areaID_B, true, -1);
+			areasA.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+				public void onItemSelected
+					(AdapterView<?> ctx, View view, int pos, long id)
+				{
+					final int newAreaID = ((GeoArea) areasA.getSelectedItem()).getID();
+					if (newAreaID == areaID_A)
+						return;
+
+					areaID_A = newAreaID;
+					if ((locObj_A != null) && (newAreaID != locObj_A.getAreaID()))
+					{
+						locA.setText("");
+						locObj_A = null;
+					}
+					Location[] areaLocs = Location.getAll(db, newAreaID);
+					if (areaLocs == null)
+					{
+						Toast.makeText
+							(fromActivity, R.string.logbook_show__no_locs_in_area, Toast.LENGTH_SHORT).show();
+						locA.setAdapter((ArrayAdapter<Location>) null);
+						return;
+					}
+
+					locA.setAdapter(new ArrayAdapter<Location>(fromActivity, R.layout.list_item, areaLocs));
+				}
+
+				public void onNothingSelected(AdapterView<?> parent) { } // Required stub
+			});
+			areasB.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+				public void onItemSelected
+					(AdapterView<?> ctx, View view, int pos, long id)
+				{
+					final int newAreaID = ((GeoArea) areasB.getSelectedItem()).getID();
+					if (newAreaID == areaID_B)
+						return;
+
+					areaID_B = newAreaID;
+					if ((locObj_B != null) && (newAreaID != locObj_B.getAreaID()))
+					{
+						locB.setText("");
+						locObj_B = null;
+					}
+					Location[] areaLocs = Location.getAll(db, newAreaID);
+					if (areaLocs == null)
+					{
+						Toast.makeText
+							(fromActivity, R.string.logbook_show__no_locs_in_area, Toast.LENGTH_SHORT).show();
+						locB.setAdapter((ArrayAdapter<Location>) null);
+						return;
+					}
+
+					locB.setAdapter(new ArrayAdapter<Location>(fromActivity, R.layout.list_item, areaLocs));
+				}
+
+				public void onNothingSelected(AdapterView<?> parent) { } // Required stub
+			});
+
+			alert = new AlertDialog.Builder(fromActivity);
+			alert.setMessage(R.string.logbook_show__search_via_routes__desc);
+			alert.setView(askItems);
+			alert.setPositiveButton(android.R.string.search_go, new DialogInterface.OnClickListener() {
+				public void onClick(DialogInterface dialog, int whichButton)
+				{
+					String locText = locA.getText().toString().trim();
+					if ((locObj_A == null) && (locText.length() > 0))
+						// Typed location description, instead of picked from autocomplete
+						try
+						{
+							locObj_A = Location.getByDescr(db, areaID_A, locText);
+						} catch (IllegalStateException e) {}
+					if (locObj_A != null)
+					{
+						locText = locB.getText().toString().trim();
+						if ((locObj_B == null) && (locText.length() > 0))
+							try
+							{
+								locObj_B = Location.getByDescr(db, areaID_B, locText);
+							} catch (IllegalStateException e) {}
+					}
+
+					if ((locObj_A != null) && (locObj_B != null))
+					{
+						// TODO encapsulate this and make it look better than an alertdialog
+						// TODO i18n
+
+						final int locID_A = locObj_A.getID(), locID_B = locObj_B.getID();
+						final ViaRoute[] vias = ViaRoute.getAll(db, locID_A, locID_B, true);
+						StringBuilder sb = new StringBuilder();
+						if (vias == null)
+							sb.append("None found");
+						else
+						{
+							final int locID_FromFirst = vias[0].getLocID_From();
+							boolean didDirSwitch = false;
+							if (locID_FromFirst == locID_A)
+								sb.append("From " + locObj_A.getLocation()
+									  + " to " + locObj_B.getLocation() + ":\n");
+							else
+								sb.append("From " + locObj_B.getLocation()
+									  + " to " + locObj_A.getLocation() + ":\n");
+							for (final ViaRoute via : vias)
+							{
+								Log.d(TAG, "from " + via.getLocID_From() + " to " + via.getLocID_To() + ": " + via.getDescr());
+								if ((! didDirSwitch) && (via.getLocID_From() != locID_FromFirst))
+								{
+									didDirSwitch = true;
+									if (locID_FromFirst == locID_B)  // now show the other
+										sb.append("From " + locObj_A.getLocation()
+											  + " to " + locObj_B.getLocation() + ":\n");
+									else
+										sb.append("From " + locObj_B.getLocation()
+											  + " to " + locObj_A.getLocation() + ":\n");
+								}
+
+								final int dist = via.getOdoDist();
+								if (dist != 0)
+								{
+									sb.append(Integer.toString(dist / 10));
+									sb.append('.');
+									sb.append(Integer.toString(dist % 10));
+									// TODO unit name from prefs? convert?
+									sb.append(" mi ");
+								}
+								sb.append("via ");
+								sb.append(via.getDescr());
+								sb.append("\n");
+							}
+						}
+						new AlertDialog.Builder(fromActivity)
+							.setMessage(sb)
+							.setNeutralButton(android.R.string.ok, null)
+							.show();
+					} else {
+						if (locObj_A == null)
+							locA.requestFocus();
+						else
+							locB.requestFocus();
+						final int msg = (locText.length() == 0)
+							? R.string.please_enter_the_location
+							: R.string.please_choose_existing_location;
+
+						Toast.makeText(fromActivity, msg, Toast.LENGTH_SHORT).show();
+					}
+				}
+			});
+			alert.setNegativeButton(android.R.string.cancel, null);
+
+			areaLocs = null;  // free the reference
+		}
+
+		/**
+		 * Show this search dialog. Call this method from the UI thread.
+		 * @return true if alert was shown, false if it couldn't be initialized
+		 */
+		public boolean show()
+		{
+			if (alert == null)
+				return false;
+
+			alert.show();
+			return true;
 		}
 	}
 

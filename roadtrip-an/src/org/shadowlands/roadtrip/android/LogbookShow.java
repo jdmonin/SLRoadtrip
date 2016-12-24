@@ -222,13 +222,13 @@ public class LogbookShow extends Activity
 		}
 		catch (Throwable th)
 		{
-	    	AlertDialog.Builder alert = new AlertDialog.Builder(this);
-	    	alert.setTitle(R.string.error);
-	    	alert.setMessage("Error during export: " + th);
-	    	alert.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
-		    	  public void onClick(DialogInterface dialog, int whichButton) { }
-		    	});
-	    	alert.show();
+			AlertDialog.Builder alert = new AlertDialog.Builder(this);
+			alert.setTitle(R.string.error);
+			alert.setMessage("Error during export: " + th);
+			alert.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+			    public void onClick(DialogInterface dialog, int whichButton) { }
+			    });
+			alert.show();
 		}
 	}
 
@@ -295,20 +295,20 @@ public class LogbookShow extends Activity
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
-	    super.onCreate(savedInstanceState);
-	    setContentView(R.layout.logbook_show);
+		super.onCreate(savedInstanceState);
+		setContentView(R.layout.logbook_show);
 
-	    tvHeader = (TextView) findViewById(R.id.logbook_show_header);  // TODO show date range or location
-	    TextView tvContent = (TextView) findViewById(R.id.logbook_show_textview);
+		tvHeader = (TextView) findViewById(R.id.logbook_show_header);  // TODO show date range or location
+		TextView tvContent = (TextView) findViewById(R.id.logbook_show_textview);
 		db = new RDBOpenHelper(this);
 
 		if ( ! checkCurrentVehicleSetting())
 		{
-        	Toast.makeText(getApplicationContext(),
-                "Current vehicle not found in db",
-                Toast.LENGTH_SHORT).show();
-	    	finish();
-	    	return;  // <--- early ret: no vehicle ---
+			Toast.makeText
+				(getApplicationContext(), "Current vehicle not found in db",
+				 Toast.LENGTH_SHORT).show();
+			finish();
+			return;  // <--- early ret: no vehicle ---
 		}
 
 		// Read and semi-format the trips for this vehicle.
@@ -427,21 +427,22 @@ public class LogbookShow extends Activity
 	protected Dialog onCreateDialog(int id)
 	{
 	    switch (id) {
-		    case R.id.menu_logbook_go_to_date:
-				return onCreateGoToDateVehicleDialog(false);
+		case R.id.menu_logbook_go_to_date:
+			return onCreateGoToDateVehicleDialog(false);
 
 		case R.id.menu_logbook_filter_location:
 			return new SearchLocationPopup(((showV != null) ? showV.getID() : 0), this, db).getDialog();
 
-		    case R.id.menu_logbook_other_veh:
-				return onCreateGoToDateVehicleDialog(true);
+		case R.id.menu_logbook_other_veh:
+			return onCreateGoToDateVehicleDialog(true);
 
 		case R.id.menu_logbook_search_vias:
 			return new SearchViasPopup(((showV != null) ? showV.getID() : 0), this, db).getDialog();
 
-		    case R.id.menu_logbook_export:
-		    	return onCreateExportDialog();
+		case R.id.menu_logbook_export:
+			return onCreateExportDialog();
 	    }
+
 	    return null;
 	}
 
@@ -642,7 +643,7 @@ public class LogbookShow extends Activity
 	}
 
 	@Override
-    public boolean onCreateOptionsMenu(Menu menu) {
+	public boolean onCreateOptionsMenu(Menu menu) {
 		getMenuInflater().inflate(R.menu.logbook_menu, menu);
 		return true;
 	}
@@ -650,14 +651,14 @@ public class LogbookShow extends Activity
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 	    switch (item.getItemId()) {
-	    case R.id.menu_logbook_recent_gas:
-	    	{
-	    		Intent i = new Intent(this, LogbookRecentGas.class);
-	    		if (showV != null)
-				i.putExtra(LogbookRecentGas.EXTRAS_VEHICLE_ID, showV.getID());
-	    		startActivity(i);
-	    	}
-	        return true;
+		case R.id.menu_logbook_recent_gas:
+			{
+				Intent i = new Intent(this, LogbookRecentGas.class);
+				if (showV != null)
+					i.putExtra(LogbookRecentGas.EXTRAS_VEHICLE_ID, showV.getID());
+				startActivity(i);
+			}
+			return true;
 
 		case R.id.menu_logbook_filter_location:
 			showDialog(R.id.menu_logbook_filter_location);
@@ -684,7 +685,7 @@ public class LogbookShow extends Activity
 			return true;
 
 		default:
-	        return super.onOptionsItemSelected(item);
+			return super.onOptionsItemSelected(item);
 	    }
 	}
 
@@ -704,6 +705,7 @@ public class LogbookShow extends Activity
 				(this, R.string.no_earlier_trips_found, Toast.LENGTH_SHORT).show();
 			return;
 		}
+
 		rangeEarlierClicked = true;
 		StringBuffer sbTrips = new StringBuffer();
 		ltm.getRange(0).appendRowsAsTabbedString(sbTrips);
@@ -718,7 +720,8 @@ public class LogbookShow extends Activity
 		} else {
 			// create a new textview
 			if (TS_ROW_LP == null)
-				TS_ROW_LP = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.FILL_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+				TS_ROW_LP = new ViewGroup.LayoutParams
+					(ViewGroup.LayoutParams.FILL_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
 			tv = new TextView(this);
 			tv.setLayoutParams(TS_ROW_LP);
 			tv.setText(sbTrips);
@@ -756,7 +759,8 @@ public class LogbookShow extends Activity
 		ltm.getRange(ltm.getRangeCount()-1).appendRowsAsTabbedString(sbTrips);
 
 		if (TS_ROW_LP == null)
-			TS_ROW_LP = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.FILL_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+			TS_ROW_LP = new ViewGroup.LayoutParams
+				(ViewGroup.LayoutParams.FILL_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
 		final TextView tv = new TextView(this);
 		tv.setLayoutParams(TS_ROW_LP);
 		tv.setText(sbTrips);
@@ -789,6 +793,7 @@ public class LogbookShow extends Activity
 	public void onDestroy()
 	{
 		super.onDestroy();
+
 		if (verifCache != null)
 		{
 			verifCache.release();
@@ -920,7 +925,8 @@ public class LogbookShow extends Activity
 				return;
 			}
 
-			final View askItems = fromActivity.getLayoutInflater().inflate(R.layout.logbook_show_popup_locsearch, null);
+			final View askItems =
+				fromActivity.getLayoutInflater().inflate(R.layout.logbook_show_popup_locsearch, null);
 			final AutoCompleteTextView loc =
 				(AutoCompleteTextView) askItems.findViewById(R.id.logbook_show_popup_locs_loc);
 
@@ -938,7 +944,8 @@ public class LogbookShow extends Activity
 					cb.setChecked(true);
 			}
 
-			ArrayAdapter<Location> adapter = new ArrayAdapter<Location>(fromActivity, R.layout.list_item, areaLocs);
+			ArrayAdapter<Location> adapter
+				= new ArrayAdapter<Location>(fromActivity, R.layout.list_item, areaLocs);
 			loc.setAdapter(adapter);
 			loc.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 				public void onItemClick(AdapterView<?> parent, View clickedOn, int position, long rowID)
@@ -978,7 +985,9 @@ public class LogbookShow extends Activity
 					Location[] areaLocs = Location.getAll(db, newAreaID);
 					if (areaLocs == null)
 					{
-						Toast.makeText(fromActivity, R.string.logbook_show__no_locs_in_area, Toast.LENGTH_SHORT).show();
+						Toast.makeText
+							(fromActivity, R.string.logbook_show__no_locs_in_area,
+							 Toast.LENGTH_SHORT).show();
 						loc.setAdapter((ArrayAdapter<Location>) null);
 						return;
 					}
@@ -1173,7 +1182,8 @@ public class LogbookShow extends Activity
 					if (areaLocs == null)
 					{
 						Toast.makeText
-							(fromActivity, R.string.logbook_show__no_locs_in_area, Toast.LENGTH_SHORT).show();
+							(fromActivity, R.string.logbook_show__no_locs_in_area,
+							 Toast.LENGTH_SHORT).show();
 						locA.setAdapter((ArrayAdapter<Location>) null);
 						return;
 					}
@@ -1201,7 +1211,8 @@ public class LogbookShow extends Activity
 					if (areaLocs == null)
 					{
 						Toast.makeText
-							(fromActivity, R.string.logbook_show__no_locs_in_area, Toast.LENGTH_SHORT).show();
+							(fromActivity, R.string.logbook_show__no_locs_in_area,
+							 Toast.LENGTH_SHORT).show();
 						locB.setAdapter((ArrayAdapter<Location>) null);
 						return;
 					}

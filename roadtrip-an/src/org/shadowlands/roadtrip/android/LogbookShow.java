@@ -173,169 +173,6 @@ public class LogbookShow extends Activity
 	/** Used by {@link #onClick_BtnLater(View)} */
 	private int tripListBtnLaterPosition = -1;
 
-	/** Used by {@link #askLocationAndShow(int, Activity, RDBAdapter)}; null if no location selected. */
-	private static Location askLocationAndShow_locObj = null;
-
-	/** Used by {@link #askLocationAndShow(int, Activity, RDBAdapter)}; show trips for all vehicles? */
-	private static boolean askLocationAndShow_allV = false;
-
-	/** Used by {@link #askLocationAndShow(int, Activity, RDBAdapter)}; geoarea */
-	private static int askLocationAndShow_areaID = -1;
-
-	/**
-	 * Logbook in Location Mode: Show a popup with the current GeoArea's locations, the user picks
-	 * one and the LogbookShow activity is launched for it.
-	 * @param vID  A specific vehicle ID to show, or 0 for current vehicle
-	 * @param fromActivity  Current activity; will call {@link Activity#startActivity(Intent)} on it
-	 * @param db  Connection to use
-	 * @see #showTripsForLocation(int, boolean, int, Activity)
-	 * @see SearchViasPopup
-	 */
-	public static final void askLocationAndShow(final int vID, final Activity fromActivity, final RDBAdapter db)
-	{
-		if (askLocationAndShow_areaID == -1)
-		{
-			final Vehicle av;
-			if (vID == 0) {
-				av = Settings.getCurrentVehicle(db, false);
-			} else {
-				try {
-					av = new Vehicle(db, vID);
-				} catch (RDBKeyNotFoundException e) {
-					return;
-				}
-			}
-			if (av == null)
-				return;
-
-			final GeoArea currA = VehSettings.getCurrentArea(db, av, false);
-			if (currA == null)
-				return;
-
-			askLocationAndShow_areaID = currA.getID();
-		}
-
-		/** Find all locations in the current area, or null */
-		Location[] areaLocs = Location.getAll(db, askLocationAndShow_areaID);
-		if (areaLocs == null)
-		{
-			Toast.makeText(fromActivity, R.string.logbook_show__no_locs_in_area, Toast.LENGTH_SHORT).show();
-			return;
-		}
-
-		final View askItems = fromActivity.getLayoutInflater().inflate(R.layout.logbook_show_popup_locsearch, null);
-		final AutoCompleteTextView loc =
-			(AutoCompleteTextView) askItems.findViewById(R.id.logbook_show_popup_locs_loc);
-
-		if (askLocationAndShow_locObj != null)
-		{
-			if (askLocationAndShow_locObj.getAreaID() == askLocationAndShow_areaID)
-				loc.setText(askLocationAndShow_locObj.toString());
-			else
-				askLocationAndShow_locObj = null;
-		}
-		if (askLocationAndShow_allV)
-		{
-			CheckBox cb = (CheckBox) askItems.findViewById(R.id.logbook_show_popup_locs_allv);
-			if (cb != null)
-				cb.setChecked(true);
-		}
-
-		ArrayAdapter<Location> adapter = new ArrayAdapter<Location>(fromActivity, R.layout.list_item, areaLocs);
-		loc.setAdapter(adapter);
-		loc.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-			public void onItemClick(AdapterView<?> parent, View clickedOn, int position, long rowID)
-			{
-				ListAdapter la = loc.getAdapter();
-				if (la == null)
-					return;
-
-				askLocationAndShow_locObj = (position != -1) ? (Location) la.getItem(position) : null;
-			}
-			});
-
-		if (askLocationAndShow_allV)
-		{
-			CheckBox cb = (CheckBox) askItems.findViewById(R.id.logbook_show_popup_locs_allv);
-			if (cb != null)
-				cb.setChecked(askLocationAndShow_allV);
-		}
-
-		/** When GeoArea spinner selection changes, query for locations in that area: */
-		final Spinner areas = (Spinner) askItems.findViewById(R.id.logbook_show_popup_locs_areas);
-		SpinnerDataFactory.setupGeoAreasSpinner(db, fromActivity, areas, askLocationAndShow_areaID, true, -1);
-		areas.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-			public void onItemSelected
-				(AdapterView<?> ctx, View view, int pos, long id)
-			{
-				final int newAreaID = ((GeoArea) areas.getSelectedItem()).getID();
-				if (newAreaID == askLocationAndShow_areaID)
-					return;
-				askLocationAndShow_areaID = newAreaID;
-				if ((askLocationAndShow_locObj != null)
-					&& (newAreaID != askLocationAndShow_locObj.getAreaID()))
-				{
-					loc.setText("");
-					askLocationAndShow_locObj = null;
-				}
-				Location[] areaLocs = Location.getAll(db, newAreaID);
-				if (areaLocs == null)
-				{
-					Toast.makeText(fromActivity, R.string.logbook_show__no_locs_in_area, Toast.LENGTH_SHORT).show();
-					loc.setAdapter((ArrayAdapter<Location>) null);
-					return;
-				}
-				loc.setAdapter(new ArrayAdapter<Location>(fromActivity, R.layout.list_item, areaLocs));
-			}
-
-			public void onNothingSelected(AdapterView<?> parent) { } // Required stub
-		});
-
-		AlertDialog.Builder alert = new AlertDialog.Builder(fromActivity);
-		alert.setTitle(R.string.logbook_show__trips_to_location);
-		alert.setMessage(R.string.logbook_show__enter_location_to_search_trips);
-		alert.setView(askItems);
-		alert.setPositiveButton(android.R.string.search_go, new DialogInterface.OnClickListener() {
-			public void onClick(DialogInterface dialog, int whichButton)
-			{
-				final String locText = loc.getText().toString().trim();
-				CheckBox cb = (CheckBox) askItems.findViewById(R.id.logbook_show_popup_locs_allv);
-				if (cb != null)
-					askLocationAndShow_allV = cb.isChecked();
-
-				if ((askLocationAndShow_locObj == null) && (locText.length() > 0))
-				{
-					// Typed location description, instead of picked from autocomplete
-					try
-					{
-						askLocationAndShow_locObj =
-							Location.getByDescr(db, askLocationAndShow_areaID, locText);
-					} catch (IllegalStateException e) {}
-				}
-
-				if (askLocationAndShow_locObj != null)
-				{
-					showTripsForLocation
-						(askLocationAndShow_locObj.getID(), askLocationAndShow_allV, vID, fromActivity);
-				} else {
-					final int msg = (locText.length() == 0)
-						? R.string.please_enter_the_location
-						: R.string.please_choose_existing_location;
-
-					Toast.makeText(fromActivity, msg, Toast.LENGTH_SHORT).show();
-				}
-			}
-		});
-		alert.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
-			public void onClick(DialogInterface dialog, int whichButton)
-			{
-				askLocationAndShow_locObj = null;
-			}
-		});
-		areaLocs = null;  // free the reference
-		alert.show();
-	}
-
 	/**
 	 * Start this activity in Location Mode: Only show trips including a given location.
 	 * @param locID  Location ID
@@ -585,13 +422,16 @@ public class LogbookShow extends Activity
 		}
 	}
 
-	/** Show the DatePickerDialog or "Other Vehicle" dialog, leading to "Go To Date" mode. Or, show Export dialog. */
+	/** Show a logbook-related dialog. */
 	@Override
 	protected Dialog onCreateDialog(int id)
 	{
 	    switch (id) {
 		    case R.id.menu_logbook_go_to_date:
 				return onCreateGoToDateVehicleDialog(false);
+
+		case R.id.menu_logbook_filter_location:
+			return new SearchLocationPopup(((showV != null) ? showV.getID() : 0), this, db).getDialog();
 
 		    case R.id.menu_logbook_other_veh:
 				return onCreateGoToDateVehicleDialog(true);
@@ -820,7 +660,7 @@ public class LogbookShow extends Activity
 	        return true;
 
 		case R.id.menu_logbook_filter_location:
-			askLocationAndShow(((showV != null) ? showV.getID() : 0), this, db);
+			showDialog(R.id.menu_logbook_filter_location);
 			return true;
 
 		case R.id.menu_logbook_go_to_date:
@@ -1018,12 +858,201 @@ public class LogbookShow extends Activity
 	}
 
 	/**
+	 * Logbook in Location Mode: Show a popup with the current GeoArea's locations.
+	 * The user will pick one and a new LogbookShow activity is launched for it.
+	 *<P>
+	 * Before v0.9.51 this was {@code LogbookShow.askLocationAndShow(..)}.
+	 * @since 0.9.51
+	 */
+	public static final class SearchLocationPopup
+	{
+		private AlertDialog aDia;
+
+		/** Location to search for; null if no location selected. */
+		private static Location locObj = null;
+
+		/** Show trips for all vehicles? */
+		private static boolean allV = false;
+
+		/** ID of {@link GeoArea} selected in spinner. */
+		private static int areaID = -1;
+
+		/**
+		 * Create a new {@link SearchLocationPopup}, ready to show.
+		 * Remember to call {@link #getDialog()} from the UI thread.
+		 * If this constructor fails to find a required item in the database,
+		 * it will show a Toast and {@code getDialog()} will do nothing when called.
+		 * @param vID  To get current area, a specific vehicle ID or 0 for current vehicle
+		 * @param fromActivity  Current activity; will call {@link Activity#startActivity(Intent)} on it
+		 * @param db  Connection to use
+		 * @see #showTripsForLocation(int, boolean, int, Activity)
+		 * @see SearchViasPopup
+		 */
+		public SearchLocationPopup(final int vID, final Activity fromActivity, final RDBAdapter db)
+		{
+			if (areaID == -1)
+			{
+				final Vehicle av;
+				if (vID == 0) {
+					av = Settings.getCurrentVehicle(db, false);
+				} else {
+					try {
+						av = new Vehicle(db, vID);
+					} catch (RDBKeyNotFoundException e) {
+						return;
+					}
+				}
+				if (av == null)
+					return;
+
+				final GeoArea currA = VehSettings.getCurrentArea(db, av, false);
+				if (currA == null)
+					return;
+
+				areaID = currA.getID();
+			}
+
+			/** Find all locations in the current area, or null */
+			Location[] areaLocs = Location.getAll(db, areaID);
+			if (areaLocs == null)
+			{
+				Toast.makeText(fromActivity, R.string.logbook_show__no_locs_in_area, Toast.LENGTH_SHORT).show();
+				return;
+			}
+
+			final View askItems = fromActivity.getLayoutInflater().inflate(R.layout.logbook_show_popup_locsearch, null);
+			final AutoCompleteTextView loc =
+				(AutoCompleteTextView) askItems.findViewById(R.id.logbook_show_popup_locs_loc);
+
+			if (locObj != null)
+			{
+				if (locObj.getAreaID() == areaID)
+					loc.setText(locObj.toString());
+				else
+					locObj = null;
+			}
+			if (allV)
+			{
+				CheckBox cb = (CheckBox) askItems.findViewById(R.id.logbook_show_popup_locs_allv);
+				if (cb != null)
+					cb.setChecked(true);
+			}
+
+			ArrayAdapter<Location> adapter = new ArrayAdapter<Location>(fromActivity, R.layout.list_item, areaLocs);
+			loc.setAdapter(adapter);
+			loc.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+				public void onItemClick(AdapterView<?> parent, View clickedOn, int position, long rowID)
+				{
+					ListAdapter la = loc.getAdapter();
+					if (la == null)
+						return;
+
+					locObj = (position != -1) ? (Location) la.getItem(position) : null;
+				}
+				});
+
+			if (allV)
+			{
+				CheckBox cb = (CheckBox) askItems.findViewById(R.id.logbook_show_popup_locs_allv);
+				if (cb != null)
+					cb.setChecked(allV);
+			}
+
+			/** When GeoArea spinner selection changes, query for locations in that area: */
+			final Spinner areas = (Spinner) askItems.findViewById(R.id.logbook_show_popup_locs_areas);
+			SpinnerDataFactory.setupGeoAreasSpinner(db, fromActivity, areas, areaID, true, -1);
+			areas.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+				public void onItemSelected
+					(AdapterView<?> ctx, View view, int pos, long id)
+				{
+					final int newAreaID = ((GeoArea) areas.getSelectedItem()).getID();
+					if (newAreaID == areaID)
+						return;
+					areaID = newAreaID;
+					if ((locObj != null)
+						&& (newAreaID != locObj.getAreaID()))
+					{
+						loc.setText("");
+						locObj = null;
+					}
+					Location[] areaLocs = Location.getAll(db, newAreaID);
+					if (areaLocs == null)
+					{
+						Toast.makeText(fromActivity, R.string.logbook_show__no_locs_in_area, Toast.LENGTH_SHORT).show();
+						loc.setAdapter((ArrayAdapter<Location>) null);
+						return;
+					}
+					loc.setAdapter(new ArrayAdapter<Location>(fromActivity, R.layout.list_item, areaLocs));
+				}
+
+				public void onNothingSelected(AdapterView<?> parent) { } // Required stub
+			});
+
+			AlertDialog.Builder alert = new AlertDialog.Builder(fromActivity);
+			alert.setTitle(R.string.logbook_show__trips_to_location);
+			alert.setMessage(R.string.logbook_show__enter_location_to_search_trips);
+			alert.setView(askItems);
+			alert.setPositiveButton(android.R.string.search_go, new DialogInterface.OnClickListener() {
+				public void onClick(DialogInterface dialog, int whichButton)
+				{
+					final String locText = loc.getText().toString().trim();
+					CheckBox cb = (CheckBox) askItems.findViewById(R.id.logbook_show_popup_locs_allv);
+					if (cb != null)
+						allV = cb.isChecked();
+
+					if ((locObj != null) && ! locText.equalsIgnoreCase(locObj.getLocation()))
+						locObj = null;  // picked from autocomplete, then changed text
+					if ((locObj == null) && (locText.length() > 0))
+					{
+						// Typed location description, instead of picked from autocomplete
+						try
+						{
+							locObj = Location.getByDescr(db, areaID, locText);
+						} catch (IllegalStateException e) {}
+					}
+
+					if (locObj != null)
+					{
+						showTripsForLocation
+							(locObj.getID(), allV, vID, fromActivity);
+					} else {
+						final int msg = (locText.length() == 0)
+							? R.string.please_enter_the_location
+							: R.string.please_choose_existing_location;
+
+						Toast.makeText(fromActivity, msg, Toast.LENGTH_SHORT).show();
+					}
+				}
+			});
+			alert.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+				public void onClick(DialogInterface dialog, int whichButton)
+				{
+					locObj = null;
+				}
+			});
+
+			aDia = alert.create();
+		}
+
+		/**
+		 * Get the built search dialog. Call this method from {@code onCreateDialog(..)}
+		 * instead of calling {@link #show()}.
+		 * @return the AlertDialog, or {@code null} if it couldn't be initialized in the constructor
+		 * @see #show()
+		 */
+		public AlertDialog getDialog()
+		{
+			return aDia;
+		}
+	}
+
+	/**
 	 * Show {@link ViaRoute}s between two locations:
 	 * A popup where two locations can be chosen by the user from the current
 	 * or other GeoAreas, then search and show a list of ViaRoutes between them.
 	 * Call the {@link #SearchViasPopup(int, Activity, RDBAdapter) constructor}
 	 * and then either {@link #getDialog()} or {@link #show()}.
-	 * @see LogbookShow#askLocationAndShow(int, Activity, RDBAdapter)
+	 * @see SearchLocationPopup
 	 * @since 0.9.51
 	 */
 	public static final class SearchViasPopup
@@ -1037,14 +1066,14 @@ public class LogbookShow extends Activity
 		private int areaID_A, areaID_B;
 
 		/**
-		 * Create a new {@link SearchViasPopup}, ready to {@link #show()}.
+		 * Create a new {@link SearchViasPopup}, ready to show.
 		 * Remember to call {@link #getDialog()} or {@link #show()} from the UI thread.
 		 * If this constructor fails to find a required item in the database,
 		 * it will show a Toast and {@code show()} will return false when called.
 		 * @param vID  To get current area, a specific vehicle ID or 0 for current vehicle
 		 * @param fromActivity  Current activity, for resources
 		 * @param db  Connection to use
-		 * @see LogbookShow#askLocationAndShow(int, Activity, RDBAdapter)
+		 * @see SearchLocationPopup
 		 */
 		public SearchViasPopup
 			(final int vID, final Activity fromActivity, final RDBAdapter db)

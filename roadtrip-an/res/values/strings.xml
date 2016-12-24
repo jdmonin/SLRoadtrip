@@ -105,6 +105,7 @@
 <string name="no_trips_found">No trips were found.</string>
 <string name="none">none</string>
 <string name="none__parens">(none)</string>
+<string name="none_found">None found.</string>
 <string name="not_found">Not found.</string>
 <string name="now">Now</string>
 <string name="original_odometer">Original\nodometer</string>
@@ -180,8 +181,11 @@
 <string name="logbook_show__enter_location_to_search_trips">Enter the location to search trips for.</string>
 <string name="logbook_show__search_via_routes">Search Via Routes</string>
 <string name="logbook_show__search_via_routes__desc">Search for Via Routes entered between locations:</string>
+<string name="logbook_show__search_via_routes__from_to__newline">From %1$s to %2$s:\n</string>
 <string name="logbook_show__search_via_routes__loc_A">Location A:</string>
 <string name="logbook_show__search_via_routes__loc_B">Location B:</string>
+<string name="logbook_show__search_via_routes__via">Via %1$s</string>
+<string name="logbook_show__search_via_routes__via_after_mileage">%1$.1f %2$s via %3$s</string>
 <string name="logbook_show__trips_to_location">Trips to Location</string>
 <string name="logbook_show__validating_db">Validating DB</string>
 <string name="logbook_show__validation_failed">Validation failed</string>

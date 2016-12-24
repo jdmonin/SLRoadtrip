@@ -43,6 +43,7 @@ import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.res.Resources;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
@@ -1271,23 +1272,27 @@ public class LogbookShow extends Activity
 						aDia.dismiss();
 
 						// TODO encapsulate this and make it look better than an alertdialog
-						// TODO i18n
 
 						final int locID_A = locObj_A.getID(), locID_B = locObj_B.getID();
 						final ViaRoute[] vias = ViaRoute.getAll(db, locID_A, locID_B, true);
+						final Resources res = fromActivity.getResources();
 						StringBuilder sb = new StringBuilder();
 						if (vias == null)
-							sb.append("None found");
+							sb.append(res.getString(R.string.none_found));  // "None found."
 						else
 						{
 							final int locID_FromFirst = vias[0].getLocID_From();
 							boolean didDirSwitch = false;
 							if (locID_FromFirst == locID_A)
-								sb.append("From " + locObj_A.getLocation()
-									  + " to " + locObj_B.getLocation() + ":\n");
+								// "From locObj_A to locObj_B:\n"
+								sb.append(res.getString
+								    (R.string.logbook_show__search_via_routes__from_to__newline,
+								     locObj_A.getLocation(), locObj_B.getLocation()));
 							else
-								sb.append("From " + locObj_B.getLocation()
-									  + " to " + locObj_A.getLocation() + ":\n");
+								// "From locObj_B to locObj_A:\n"
+								sb.append(res.getString
+								    (R.string.logbook_show__search_via_routes__from_to__newline,
+								     locObj_B.getLocation(), locObj_A.getLocation()));
 							for (final ViaRoute via : vias)
 							{
 								Log.d(TAG, "from " + via.getLocID_From() + " to " + via.getLocID_To() + ": " + via.getDescr());
@@ -1296,24 +1301,32 @@ public class LogbookShow extends Activity
 									didDirSwitch = true;
 									sb.append('\n');
 									if (locID_FromFirst == locID_B)  // now show the other
-										sb.append("From " + locObj_A.getLocation()
-											  + " to " + locObj_B.getLocation() + ":\n");
+										sb.append(res.getString
+										    (R.string.logbook_show__search_via_routes__from_to__newline,
+										     locObj_A.getLocation(),
+										     locObj_B.getLocation()));
 									else
-										sb.append("From " + locObj_B.getLocation()
-											  + " to " + locObj_A.getLocation() + ":\n");
+										sb.append(res.getString
+										    (R.string.logbook_show__search_via_routes__from_to__newline,
+										     locObj_B.getLocation(),
+										     locObj_A.getLocation()));
 								}
 
 								final int dist = via.getOdoDist();
 								if (dist != 0)
 								{
-									sb.append(Integer.toString(dist / 10));
-									sb.append('.');
-									sb.append(Integer.toString(dist % 10));
-									// TODO unit name from prefs? convert?
-									sb.append(" mi ");
+									// ##.# mi via ___
+									sb.append(res.getString
+									    (R.string.logbook_show__search_via_routes__via_after_mileage,
+									     dist / 10f,
+									     "mi",  // TODO unit name from prefs? convert?
+									     via.getDescr()));
+								} else {
+									// Via ___
+									sb.append(res.getString
+									    (R.string.logbook_show__search_via_routes__via,
+									     via.getDescr()));
 								}
-								sb.append("via ");
-								sb.append(via.getDescr());
 								sb.append("\n");
 							}
 						}

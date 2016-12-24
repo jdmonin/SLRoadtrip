@@ -53,6 +53,7 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
+import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.DatePicker;
 import android.widget.EditText;
@@ -596,7 +597,7 @@ public class LogbookShow extends Activity
 				return onCreateGoToDateVehicleDialog(true);
 
 		case R.id.menu_logbook_search_vias:
-			return new SearchViasPopup(((showV != null) ? showV.getID() : 0), this, db).createDialog();
+			return new SearchViasPopup(((showV != null) ? showV.getID() : 0), this, db).getDialog();
 
 		    case R.id.menu_logbook_export:
 		    	return onCreateExportDialog();
@@ -1021,13 +1022,13 @@ public class LogbookShow extends Activity
 	 * A popup where two locations can be chosen by the user from the current
 	 * or other GeoAreas, then search and show a list of ViaRoutes between them.
 	 * Call the {@link #SearchViasPopup(int, Activity, RDBAdapter) constructor}
-	 * and then either {@link #createDialog()} or {@link #show()}.
+	 * and then either {@link #getDialog()} or {@link #show()}.
 	 * @see LogbookShow#askLocationAndShow(int, Activity, RDBAdapter)
 	 * @since 0.9.51
 	 */
 	public static final class SearchViasPopup
 	{
-		private AlertDialog.Builder alert;
+		private AlertDialog aDia;
 
 		/** Location selected in text field A or B; null if no location selected. */
 		private Location locObj_A = null, locObj_B = null;
@@ -1037,7 +1038,7 @@ public class LogbookShow extends Activity
 
 		/**
 		 * Create a new {@link SearchViasPopup}, ready to {@link #show()}.
-		 * Remember to call {@link #show()} or {@link #createDialog()} from the UI thread.
+		 * Remember to call {@link #getDialog()} or {@link #show()} from the UI thread.
 		 * If this constructor fails to find a required item in the database,
 		 * it will show a Toast and {@code show()} will return false when called.
 		 * @param vID  To get current area, a specific vehicle ID or 0 for current vehicle
@@ -1182,11 +1183,25 @@ public class LogbookShow extends Activity
 				public void onNothingSelected(AdapterView<?> parent) { } // Required stub
 			});
 
-			alert = new AlertDialog.Builder(fromActivity);
+			AlertDialog.Builder alert = new AlertDialog.Builder(fromActivity);
 			alert.setMessage(R.string.logbook_show__search_via_routes__desc);
 			alert.setView(askItems);
-			alert.setPositiveButton(android.R.string.search_go, new DialogInterface.OnClickListener() {
-				public void onClick(DialogInterface dialog, int whichButton)
+			alert.setPositiveButton(android.R.string.search_go, null);  // will override to prevent auto-close
+			alert.setNegativeButton(android.R.string.cancel, null);
+
+			aDia = alert.create();
+
+			// To prevent auto-close when button is clicked, and allow the user to re-enter
+			// any missing data if validation fails, override the positive button's listener:
+			aDia.setOnShowListener(new DialogInterface.OnShowListener()
+			{
+				@Override
+				public void onShow(DialogInterface dialog)
+				{
+					final Button bSearch = ((AlertDialog) dialog).getButton(AlertDialog.BUTTON_POSITIVE);
+					bSearch.setOnClickListener(new View.OnClickListener()
+					{
+				public void onClick(final View unused)
 				{
 					String locText = locA.getText().toString().trim();
 					if ((locObj_A == null) && (locText.length() > 0))
@@ -1207,6 +1222,8 @@ public class LogbookShow extends Activity
 
 					if ((locObj_A != null) && (locObj_B != null))
 					{
+						aDia.dismiss();
+
 						// TODO encapsulate this and make it look better than an alertdialog
 						// TODO i18n
 
@@ -1271,36 +1288,32 @@ public class LogbookShow extends Activity
 					}
 				}
 			});
-			alert.setNegativeButton(android.R.string.cancel, null);
-
-			areaLocs = null;  // free the reference
+				}
+			});
 		}
 
 		/**
-		 * Create the search dialog. Call this method from {@code onCreateDialog(..)}
+		 * Get the built search dialog. Call this method from {@code onCreateDialog(..)}
 		 * instead of calling {@link #show()}.
 		 * @return the AlertDialog, or {@code null} if it couldn't be initialized in the constructor
 		 * @see #show()
 		 */
-		public AlertDialog createDialog()
+		public AlertDialog getDialog()
 		{
-			if (alert == null)
-				return null;
-			else
-				return alert.create();
+			return aDia;
 		}
 
 		/**
 		 * Show this search dialog. Call this method from the UI thread.
 		 * @return true if alert was shown, false if it couldn't be initialized in the constructor
-		 * @see #createDialog()
+		 * @see #getDialog()
 		 */
 		public boolean show()
 		{
-			if (alert == null)
+			if (aDia == null)
 				return false;
 
-			alert.show();
+			aDia.show();
 			return true;
 		}
 	}

@@ -1204,6 +1204,9 @@ public class LogbookShow extends Activity
 				public void onClick(final View unused)
 				{
 					String locText = locA.getText().toString().trim();
+					if (locObj_A != null)
+						if (! locText.equalsIgnoreCase(locObj_A.getLocation()))
+							locObj_A = null;  // tapped loc in dropdown, then changed it
 					if ((locObj_A == null) && (locText.length() > 0))
 						// Typed location description, instead of picked from autocomplete
 						try
@@ -1213,6 +1216,9 @@ public class LogbookShow extends Activity
 					if (locObj_A != null)
 					{
 						locText = locB.getText().toString().trim();
+						if (locObj_B != null)
+							if (! locText.equalsIgnoreCase(locObj_B.getLocation()))
+								locObj_B = null;
 						if ((locObj_B == null) && (locText.length() > 0))
 							try
 							{

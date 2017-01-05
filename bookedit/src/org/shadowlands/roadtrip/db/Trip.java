@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.Vector;
 
-import org.shadowlands.roadtrip.model.LogbookTableModel;  // strictly for COL_TSTOP_DESC
+import org.shadowlands.roadtrip.model.LogbookTableModel;  // strictly for COL_TSTOP_DESC and javadocs
 
 /**
  * In-memory representation, and database access for, a Trip.
@@ -1797,9 +1797,17 @@ public class Trip extends RDBRecord
 
 		/**
 		 * Trips found within this range of time.
-		 * Public for access from roadtrip.model; please treat as read-only.
+		 * Public for read-only access from {@link LogbookTableModel}; please always treat as read-only.
+		 * If trip data is rendered to strings, those are held in {@link #tText} and {@link #trBeginTextIdx}.
 		 */
 		public final List<Trip> tr;
+
+		/**
+		 * Holds beginning index within {@link #tText} of each trip in {@link #tr}, or {@code null}.
+		 * Public for access and update from {@link LogbookTableModel}; please treat as read-only otherwise.
+		 * @since 0.9.51
+		 */
+		public int[] trBeginTextIdx;
 
 		/**
 		 * Holds each rendered data row, not including the 1 empty-string row at the end.
@@ -1812,6 +1820,7 @@ public class Trip extends RDBRecord
 		 * constructor or
 		 * {@link org.shadowlands.roadtrip.model.LogbookTableModel#addEarlierTrips(RDBAdapter) LogbookTableModel.addEarlierTrips(RDBAdapter)}.
 		 * @see #tMatchedRows
+		 * @see #trBeginTextIdx
 		 */
 		public Vector<String[]> tText;
 

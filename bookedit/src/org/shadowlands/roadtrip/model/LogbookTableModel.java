@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010-2016 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2017 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -74,7 +74,8 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	/**
 	 * Column headings for standard mode.
 	 * The length of this array determines the number of columns.
-	 * Rows with this format are filled in {@link #addRowsFromTrips_formatTripsStops(Vector, Vector, RDBAdapter)}.
+	 * Rows with this format are filled in
+	 * {@link #addRowsFromTrips_formatTripsStops(List, Vector, TripListTimeRange, int, Set, RDBAdapter)}.
 	 * @see #trip_simple_mode
 	 */
 	public static final String[] COL_HEADINGS
@@ -89,7 +90,8 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 
 	/**
 	 * Column headings for simple mode (no TStops).  The length of this array determines the number of columns.
-	 * Rows with this format are filled in {@link #addRowsFromTrips_formatTripsSimple(Vector, Vector, RDBAdapter)}.
+	 * Rows with this format are filled in
+	 * {@link #addRowsFromTrips_formatTripsSimple(List, Vector, TripListTimeRange, RDBAdapter)}.
 	 * @see #trip_simple_mode
 	 * @since 0.9.20
 	 */
@@ -679,7 +681,8 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	/**
 	 * Add trip data as text to ttr.tText, looking up from the database as needed.
 	 * Updates {@link #tDataTextRowCount} to include the new text rows.
-	 * Updates {@link TripListTimeRange#tText} and if {@link TripListTimeRange#matchLocID} != -1
+	 * Updates {@link TripListTimeRange#tText} and {@link TripListTimeRange#trBeginTextIdx}.
+	 * If {@link TripListTimeRange#matchLocID} != -1,
 	 * also updates {@link TripListTimeRange#tMatchedRows}.
 	 * @param ttr  Query and add text of this TripTimeRange's contents
 	 * @param conn  Add from this connection
@@ -694,6 +697,9 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 
 		if (dtf == null)
 			dtf = new RTRDateTimeFormatter();
+
+		// ttr.tText is set up here to append rows;
+		// ttr.trBeginTextIdx is set up in addRowsFromTrips_formatTripsS*.
 		final int tRowCount;  // rows in tText before add
 		if (ttr.tText == null)
 		{
@@ -706,7 +712,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 
 		if (trip_simple_mode)
 		{
-			addRowsFromTrips_formatTripsSimple(trips, tText, conn);
+			addRowsFromTrips_formatTripsSimple(trips, tText, ttr, conn);
 		} else {
 			Set<Integer> matchSet;
 			if (ttr.matchLocID != -1)
@@ -719,7 +725,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 				matchSet = null;
 			}
 
-			addRowsFromTrips_formatTripsStops(trips, ttr.matchLocID, tText, matchSet, conn);
+			addRowsFromTrips_formatTripsStops(trips, tText, ttr, ttr.matchLocID, matchSet, conn);
 
 			if ((matchSet != null) && (ttr.tMatchedRows == null) && ! matchSet.isEmpty())
 				ttr.tMatchedRows = matchSet;
@@ -732,15 +738,18 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	 * Add rows to strings from a list of {@link Trip}s and their {@link TStop}s.
 	 * Columns of added rows line up with {@link #COL_HEADINGS}.
 	 * @param trips Trips data to add to {@code tText}
+	 * @param tText Append rows here from {@code trips}; typically {@link TripListTimeRange#tText ttr.tText};
+	 *     not {@code null}
+	 * @param ttr   TripListTimeRange being appended to, to update
+	 *     {@link TripListTimeRange#trBeginTextIdx ttr.trBeginTextIdx} with the new {@code trips}, or {@code null}
 	 * @param matchLocID  For Location Mode, the optional location ID being searched for; otherwise -1
-	 * @param tText Append rows here from {@code trips}
 	 * @param matchSet  For Location Mode, if not {@code null} will add elements to this set for {@code tText}
 	 *      index numbers (row numbers in text) of {@link TStop}s matching {@code matchLocID}.
 	 * @param conn  Add from this connection
 	 */
 	public void addRowsFromTrips_formatTripsStops
-		(final List<Trip> trips, final int matchLocID,
-		 Vector<String[]> tText, Set<Integer> matchSet, RDBAdapter conn)
+		(final List<Trip> trips, Vector<String[]> tText, final TripListTimeRange ttr,
+		 final int matchLocID, Set<Integer> matchSet, RDBAdapter conn)
 	{
 		Date prevTripStart = null;  // time of trip start
 
@@ -748,6 +757,21 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 		RTRDateTimeFormatter.DateAndTime prevShownDT = new RTRDateTimeFormatter.DateAndTime();
 
 		final int L = trips.size();
+		final int tripIdx0;  // starting index within ttr.trBeginTextIdx for trips being added
+
+		// Create or extend ttr.trBeginTextIdx for the new trips
+		if ((ttr != null) && (ttr.trBeginTextIdx != null) && ! tText.isEmpty())
+		{
+			tripIdx0 = ttr.trBeginTextIdx.length;
+			final int[] newi = new int[tripIdx0 + L];
+			System.arraycopy(ttr.trBeginTextIdx, 0, newi, 0, tripIdx0);
+			ttr.trBeginTextIdx = newi;
+		} else {
+			tripIdx0 = 0;
+			if (ttr != null)
+				ttr.trBeginTextIdx = new int[L];
+		}
+
 		final boolean doCommentBrackets = render_comments_brackets;  // shorter name, cache value
 
 		// Does next trip continue from the same tstop and odometer?
@@ -756,6 +780,9 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 		// Loop for each trip in trips
 		for (int i = 0; i < L; ++i)  // towards end of trip, must look at next trip
 		{
+			if (ttr != null)
+				ttr.trBeginTextIdx[tripIdx0 + i] = tText.size();
+
 			final Trip t = trips.get(i);
 			int odo_total;  // used only with trip_odo_delta_mode
 			if (trip_odo_delta_mode != 0)
@@ -1082,17 +1109,37 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	 * Add rows (simple mode) to strings from a list of {@link Trip}s and their {@link TStop}s.
 	 * Columns of added rows line up with {@link #COL_HEADINGS_SIMPLE}.
 	 * @param trips Trips data to add to {@code tText}
-	 * @param tText Append rows here from {@code trips}
+	 * @param tText Append rows here from {@code trips}; typically {@link TripListTimeRange#tText ttr.tText};
+	 *     not {@code null}
+	 * @param ttr   TripListTimeRange being appended to, to update
+	 *     {@link TripListTimeRange#trBeginTextIdx ttr.trBeginTextIdx} with the new {@code trips}, or {@code null}
 	 * @param conn  Add from this connection
 	 */
 	public void addRowsFromTrips_formatTripsSimple
-		(final List<Trip> trips, Vector<String[]> tText, RDBAdapter conn)
+		(final List<Trip> trips, final Vector<String[]> tText, final TripListTimeRange ttr, RDBAdapter conn)
 	{
 		final int L = trips.size();
+		final int tripIdx0;  // starting index within ttr.trBeginTextIdx for trips being added
+
+		// Create or extend ttr.trBeginTextIdx for the new trips
+		if ((ttr != null) && (ttr.trBeginTextIdx != null) && ! tText.isEmpty())
+		{
+			tripIdx0 = ttr.trBeginTextIdx.length;
+			final int[] newi = new int[tripIdx0 + L];
+			System.arraycopy(ttr.trBeginTextIdx, 0, newi, 0, tripIdx0);
+			ttr.trBeginTextIdx = newi;
+		} else {
+			tripIdx0 = 0;
+			if (ttr != null)
+				ttr.trBeginTextIdx = new int[L];
+		}
 
 		// Loop for each trip in trips
 		for (int i = 0; i < L; ++i)  // towards end of trip, must look at next trip
 		{
+			if (ttr != null)
+				ttr.trBeginTextIdx[tripIdx0 + i] = tText.size();
+
 			final Trip t = trips.get(i);
 
 			String[] tr = new String[COL_HEADINGS_SIMPLE.length];

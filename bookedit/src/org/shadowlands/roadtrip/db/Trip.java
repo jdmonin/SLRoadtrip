@@ -1,6 +1,6 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
- *  This file Copyright (C) 2010-2016 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2017 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -1795,8 +1795,11 @@ public class Trip extends RDBRecord
 		 */
 		public final int matchLocID;
 
-		/** Trips found within this range of time */
-		public List<Trip> tr;
+		/**
+		 * Trips found within this range of time.
+		 * Public for access from roadtrip.model; please treat as read-only.
+		 */
+		public final List<Trip> tr;
 
 		/**
 		 * Holds each rendered data row, not including the 1 empty-string row at the end.
@@ -1825,14 +1828,19 @@ public class Trip extends RDBRecord
 		/** Are there no trips beyond this range? False if unknown. */
 		public boolean noneEarlier, noneLater;
 
+		/**
+		 * Constructor from a list of trips.
+		 * @param time_start First trip's start time, from {@link Trip#getTime_start()}
+		 * @param time_end  Last trip's <b>start</b> time (not end time)
+		 * @param trips  List of trips
+		 */
 		public TripListTimeRange(int time_start, int time_end, List<Trip> t)
 		{
 			this(time_start, time_end, t, -1);
 		}
 
 		/**
-		 * Constructor from a list of trips; {@code time_start} will be first trip's start time,
-		 * {@code time_end} will be last trip's <b>start</b> time (not end time).
+		 * Constructor from a list of trips, with optional search location ID.
 		 * @param trips  List of trips
 		 * @param matchLocID  Optional Location ID (for results of searching by location), or -1;
 		 *     if provided, this range will track which {@link TStop}s use this Location ID.

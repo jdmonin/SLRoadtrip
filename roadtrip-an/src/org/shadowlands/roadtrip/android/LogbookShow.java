@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010-2016 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2017 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,7 +19,9 @@
 
 package org.shadowlands.roadtrip.android;
 
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.List;
 
 import org.shadowlands.roadtrip.R;
 import org.shadowlands.roadtrip.android.util.DBExport;
@@ -29,6 +31,7 @@ import org.shadowlands.roadtrip.db.RDBAdapter;
 import org.shadowlands.roadtrip.db.RDBKeyNotFoundException;
 import org.shadowlands.roadtrip.db.RDBVerifier;
 import org.shadowlands.roadtrip.db.Settings;
+import org.shadowlands.roadtrip.db.Trip;
 import org.shadowlands.roadtrip.db.VehSettings;
 import org.shadowlands.roadtrip.db.Vehicle;
 import org.shadowlands.roadtrip.db.ViaRoute;
@@ -361,27 +364,34 @@ public class LogbookShow extends Activity
 		} else {
 			ltm = new LogbookTableModel(showV, locMode_allV, locID, LOCID_TRIP_INCREMENT, dtf, db);
 		}
-		StringBuffer sbTrips = new StringBuffer();
+
+		boolean sbEmpty = false;
+		List<StringBuilder> sbTrips = null;
 		if (ltm.getRangeCount() > 0)
-			ltm.getRange(0).appendRowsAsTabbedString(sbTrips);
+			sbTrips = ltm.getRange(0).getTripListRowsTabbed();
+
+		if ((sbTrips == null) || sbTrips.isEmpty())
+		{
+			sbEmpty = true;
+			sbTrips = new ArrayList<StringBuilder>();
+			sbTrips.add(new StringBuilder());
+		}
 		if (ltm.hasCurrentTrip())
 		{
-			sbTrips.append("\n\t\t(Current Trip in progress)");
+			sbTrips.get(sbTrips.size() - 1).append("\n\t\t(Current Trip in progress)");
 		}
-		else if (sbTrips.length() < 5)
+		else if (sbEmpty || (sbTrips.get(0).length() < 5))
 		{
-			tvNoTripsFound = tvContent;
+			StringBuilder sb = sbTrips.get(0);
 			if (locID != -1)
-				sbTrips.append("\nNo trips found to that Location for this Vehicle.");
+				sb.append("\nNo trips found to that Location for this Vehicle.");
 			else if (goToDate != 0)
-				sbTrips.append("\nNo trips on or after that date for this vehicle.");
+				sb.append("\nNo trips on or after that date for this vehicle.");
 			else
-				sbTrips.append("\nNo trips found for this Vehicle.");
+				sb.append("\nNo trips found for this Vehicle.");
 		}
 
-		tvContent.setText(sbTrips);
-
-		// Find the trip layout linearlayout, for onClick_BtnEarlier's benefit.
+		// Find the trip layout linearlayout, to benefit addTripsTextViews
 		tripListParentLayout = (LinearLayout) findViewById(R.id.logbook_show_triplist_parent);
 		if (tripListParentLayout != null)
 		{
@@ -401,6 +411,13 @@ public class LogbookShow extends Activity
 			if (btnEarlier != null)
 				btnEarlier.setVisibility(View.GONE);
 		}
+
+		tvNoTripsFound = tvContent;  // first textview, for addTripsTextViews to reuse
+		addTripsTextViews(sbTrips, true, false);
+		if (sbEmpty)
+			tvNoTripsFound = tvContent;  // addTripsTextViews may have set it null
+		else
+			tvNoTripsFound = null;
 
 		// If we're in Go To Date Mode, show the hidden "newer trips" button.
 		if ((goToDate != 0) && (ltm.getRangeCount() > 0))
@@ -693,6 +710,7 @@ public class LogbookShow extends Activity
 	/**
 	 * Load a few weeks of earlier trips from the database.
 	 * @param v  ignored
+	 * @see #onClick_BtnLater(View)
 	 */
 	public void onClick_BtnEarlier(View v)
 	{
@@ -708,33 +726,19 @@ public class LogbookShow extends Activity
 		}
 
 		rangeEarlierClicked = true;
-		StringBuffer sbTrips = new StringBuffer();
-		ltm.getRange(0).appendRowsAsTabbedString(sbTrips);
 
-		final TextView tv;
-		if (tvNoTripsFound != null)
-		{
-			// replace that with the trip text
-			tv = tvNoTripsFound;
-			tv.setText(sbTrips);
-			tvNoTripsFound = null;
-		} else {
-			// create a new textview
-			if (TS_ROW_LP == null)
-				TS_ROW_LP = new ViewGroup.LayoutParams
-					(ViewGroup.LayoutParams.FILL_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-			tv = new TextView(this);
-			tv.setLayoutParams(TS_ROW_LP);
-			tv.setText(sbTrips);
-			tripListParentLayout.addView(tv, tripListBtnEarlierPosition + 1);
-		}
+		final List<TextView> ltv = addTripsTextViews(ltm.getRange(0).getTripListRowsTabbed(), false, true);
 
 		// Once layout is done, scroll to the bottom of the newly added text
 		// so that what's currently visible, stays visible.
 		if (sv != null)
 			sv.post(new Runnable() {
 				public void run() {
-					sv.scrollTo(0, tv.getMeasuredHeight());
+					int h = 0;
+					if (ltv != null)
+						for (TextView tv : ltv)
+							h += tv.getMeasuredHeight();
+					sv.scrollTo(0, h);
 				}
 			});
 	}
@@ -742,6 +746,7 @@ public class LogbookShow extends Activity
 	/**
 	 * Load a few weeks of later trips from the database.
 	 * @param v  ignored
+	 * @see #onClick_BtnEarlier(View)
 	 */
 	public void onClick_BtnLater(View v)
 	{
@@ -756,19 +761,74 @@ public class LogbookShow extends Activity
 			return;
 		}
 		rangeEarlierClicked = false;
-		StringBuffer sbTrips = new StringBuffer();
-		ltm.getRange(ltm.getRangeCount()-1).appendRowsAsTabbedString(sbTrips);
+
+		addTripsTextViews(ltm.getRange(ltm.getRangeCount()-1).getTripListRowsTabbed(), true, false);
+	}
+
+	/**
+	 * Add new Trips as TextViews to the top or bottom of the activity.
+	 * @param sbTtrips  New trip strings to add, by calling {@link Trip.TripListTimeRange#getTripListRowsTabbed()}
+	 * @param addAtEnd  True to add at the bottom of the activity (at {@link #tripListBtnLaterPosition}),
+	 *     false to add at the top (below {@link #tripListBtnEarlierPosition}).
+	 *     If {@link #tvNoTripsFound} != {@code null}, that TextView's contents will be replaced
+	 *     with the first trip's strings.
+	 * @param wantTVList  True to return a list of the created TextViews for callback use
+	 * @return A list of the created TextViews if {@code wantTVList} (which may be null), or {@code null}
+	 * @since 0.9.51
+	 */
+	private List<TextView> addTripsTextViews
+		(final List<StringBuilder> sbTrips, final boolean isLaterPos, final boolean wantTVList)
+	{
+		if ((sbTrips == null) || sbTrips.isEmpty())
+			return null;
 
 		if (TS_ROW_LP == null)
 			TS_ROW_LP = new ViewGroup.LayoutParams
 				(ViewGroup.LayoutParams.FILL_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-		final TextView tv = new TextView(this);
-		tv.setLayoutParams(TS_ROW_LP);
-		tv.setText(sbTrips);
-		tripListParentLayout.addView(tv, tripListBtnLaterPosition);
-		++tripListBtnLaterPosition;
+
+		final List<TextView> tvl = (wantTVList) ? new ArrayList<TextView>(sbTrips.size()) : null;
+		if (isLaterPos)
+			for (StringBuilder sb : sbTrips)
+				addTripsTextViews_addOne(sb, tvl, true);
+		else
+			for (int i = sbTrips.size() - 1; i >= 0; --i)
+				addTripsTextViews_addOne(sbTrips.get(i), tvl, false);
+
+		return tvl;
 	}
 
+	/**
+	 * Add one trip's text to a new TextView within {@link #addTripsTextViews(List, boolean, boolean)}'s loop.
+	 */
+	private void addTripsTextViews_addOne
+		(final StringBuilder sb, final List<TextView> tvl, final boolean isLaterPos)
+	{
+		final TextView tv;
+
+		if (tvNoTripsFound != null)
+		{
+			// replace that with the trip text
+			tv = tvNoTripsFound;
+			tv.setText(sb);
+			tvNoTripsFound = null;
+		} else {
+			// create a new textview
+			tv = new TextView(this);
+			tv.setLayoutParams(TS_ROW_LP);
+			tv.setText(sb);
+
+			if (isLaterPos)
+			{
+				tripListParentLayout.addView(tv, tripListBtnLaterPosition);
+				++tripListBtnLaterPosition;
+			} else {
+				tripListParentLayout.addView(tv, tripListBtnEarlierPosition + 1);
+			}
+		}
+
+		if (tvl != null)
+			tvl.add(tv);
+	}
 
 	@Override
 	public void onPause()

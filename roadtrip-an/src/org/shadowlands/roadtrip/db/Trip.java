@@ -1781,7 +1781,7 @@ public class Trip extends RDBRecord
 	 * {@link #tripsForVehicle(RDBAdapter, Vehicle, int, int, boolean, boolean, boolean)}.
 	 *<P>
 	 * Trips added to this Range are available as text through {@link #tText}
-	 * or by calling {@link #appendRowsAsTabbedString(StringBuffer)}.
+	 * or by calling {@link #getTripListRowsTabbed()}.
 	 */
 	public static class TripListTimeRange
 	{
@@ -1829,7 +1829,7 @@ public class Trip extends RDBRecord
 		 * matching the Location {@link #matchLocID} within {@link #tText}; {@code null} in other modes
 		 * or when no matches found.
 		 *<P>
-		 * Used by {@link #appendRowsAsTabbedString(StringBuffer)} to highlight matching TStops.
+		 * Used by {@link #getTripListRowsTabbed()} to highlight matching TStops.
 		 * @since 0.9.50
 		 */
 		public Set<Integer> tMatchedRows;
@@ -1871,41 +1871,63 @@ public class Trip extends RDBRecord
 		}
 
 		/**
-		 * For StringBuffer output, append \n and then tab-delimited (\t)
-		 * contents of each text row to the stringbuffer.
+		 * For StringBuilder output, create and return tab-delimited (\t)
+		 * contents of each trip's text row(s) from {@link #tText}.
 		 *<P>
 		 * In Location Mode, as a temporary measure until more subtle match highlighting can be done,
 		 * {@link TStop}s at a Location matched in {@link #tMatchedRows} are shown in ALL CAPS.
+		 *<P>
+		 * Before v0.9.51, this method was {@code appendRowsAsTabbedString(StringBuffer)}.
+		 *
+		 * @return List of StringBuilders, 1 per trip in {@link #tr}, or {@code null} if none in {@link #tText}.
 		 */
-		public void appendRowsAsTabbedString(StringBuffer sb)
+		public List<StringBuilder> getTripListRowsTabbed()
 		{
-			if (tText == null)
-				return;
+			if ((tText == null) || tText.isEmpty())
+				return null;
 
+			final int L = tr.size();
+			List<StringBuilder> tlist = new ArrayList<StringBuilder>(L);
 			final boolean chkMatches = (matchLocID != -1)
 				&& (tMatchedRows != null) && ! tMatchedRows.isEmpty();
 
 			final int S = tText.size();
-			for (int r = 0; r < S; ++r)
+			for (int i = 0; i < L; ++i)
 			{
-				final String[] rstr = tText.elementAt(r);
-				sb.append('\n');
-				if (rstr[0] != null)
-					sb.append(rstr[0]);
-				for (int c = 1; c < rstr.length; ++c)
-				{
-					sb.append('\t');
-					if (rstr[c] != null)
-					{
-						String str = rstr[c];
-						if (chkMatches && (c == LogbookTableModel.COL_TSTOP_DESC)
-						    && tMatchedRows.contains(Integer.valueOf(r)))
-							str = str.toUpperCase();
+				StringBuilder sb = new StringBuilder();
+				final int rNextTr;
+				if ((i + 1) < trBeginTextIdx.length)
+					rNextTr = trBeginTextIdx[i + 1];
+				else
+					rNextTr = S;
 
-						sb.append(str);
+				for (int r = trBeginTextIdx[i]; r < rNextTr; ++r)
+				{
+					final String[] rstr = tText.elementAt(r);
+					if (rstr[0] != null)
+						sb.append(rstr[0]);
+					for (int c = 1; c < rstr.length; ++c)
+					{
+						sb.append('\t');
+						if (rstr[c] != null)
+						{
+							String str = rstr[c];
+							if (chkMatches && (c == LogbookTableModel.COL_TSTOP_DESC)
+							    && tMatchedRows.contains(Integer.valueOf(r)))
+								str = str.toUpperCase();
+
+							sb.append(str);
+						}
 					}
+
+					if (r < (rNextTr - 1))
+						sb.append('\n');
 				}
+
+				tlist.add(sb);
 			}
+
+			return tlist;
 		}
 
 	}  // public static nested class TripListTimeRange

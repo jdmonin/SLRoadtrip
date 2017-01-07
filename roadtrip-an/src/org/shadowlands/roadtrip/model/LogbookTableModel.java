@@ -474,6 +474,16 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	}
 
 	/**
+	 * Get this LTM's Vehicle.
+	 * @return the Vehicle passed to this LTM's constructor; never null
+	 * @since 0.9.51
+	 */
+	public final Vehicle getVehicle()
+	{
+		return veh;
+	}
+
+	/**
 	 * Is this vehicle currently on the current trip?
 	 * Determined in Week Mode constructor, not updated afterwards.
 	 * @return whether this vehicle has a current trip
@@ -836,18 +846,9 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 				final int tcatID = t.getTripCategoryID();
 				if (tcatID != 0)
 				{
-					TripCategory tcat = tcatCache.get(tcatID);
-					if (tcat == null)
-					{
-						try
-						{
-							tcat = new TripCategory(conn, tcatID);
-							tcat.setName("[" + tcat.getName() + "]");
-							tcatCache.put(tcatID, tcat);
-						}
-						catch (Throwable th) {}
-					}
-					tr5 = tcat.getName();
+					TripCategory tcat = getCachedTripCategory(tcatID, conn);
+					if (tcat != null)
+						tr5 = "[" + tcat.getName() + "]";
 				}
 
 				final int pax = t.getPassengerCount();
@@ -1234,13 +1235,15 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	 *<P>
 	 * Since this method is for display only, not further processing, it tries to give
 	 * a human-readable message if the location data is missing (db inconsistency).
+	 *<P>
+	 * Public method in v0.9.51; previously private.
 	 *
 	 * @param conn  db connection to use
 	 * @param ts  TStop to look at
 	 * @return Location text, or if not found in db,
 	 *     "(locID " + {@link TStop#getLocationID() ts.getLocationID()} + " not found)"
 	 */
-	private final String getTStopLocDescr(TStop ts, RDBAdapter conn)
+	public final String getTStopLocDescr(TStop ts, RDBAdapter conn)
 	{
 		String locDescr = ts.getLocationDescr();
 		if (locDescr == null)
@@ -1255,7 +1258,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 					{
 						lo = new Location(conn, locID);
 						locCache.put(locID, lo);
-					} catch (Throwable e) { }  // RDBKeyNotFoundException
+					} catch (Exception e) { }  // RDBKeyNotFoundException
 				}
 				if (lo != null)
 					locDescr = lo.getLocation();
@@ -1375,6 +1378,37 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	{
 		return tData.elementAt(i);
 	}
+
+
+	/// Cache helper methods ///
+
+	// see also getTStopLocDescr
+
+	/**
+	 * Get a TripCategory from the cache, or if not cached, from the db and add to cache.
+	 * @param tcatID  TripCategory ID to get
+	 * @param conn  db connection to use if needed
+	 * @return The requested TripCategory, or {@code null} if not found in cache or db
+	 * @since 0.9.51
+	 */
+	public final TripCategory getCachedTripCategory(final int tcatID, RDBAdapter conn)
+	{
+		TripCategory tcat = tcatCache.get(tcatID);
+		if (tcat == null)
+		{
+			try
+			{
+				tcat = new TripCategory(conn, tcatID);
+				tcatCache.put(tcatID, tcat);
+			}
+			catch (Exception e) {}  // RDBKeyNotFoundException
+		}
+
+		return tcat;
+	}
+
+
+	/// Table interface methods ///
 
 	/** column count; same as length of {@link #COL_HEADINGS} */
 	public int getColumnCount() { return COL_HEADINGS.length; }

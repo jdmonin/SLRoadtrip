@@ -59,6 +59,7 @@ import org.shadowlands.roadtrip.util.RTRDateTimeFormatter;
  * depending on the mode.  You can either
  * retrieve them as a grid of cells, or can retrieve the ranges
  * by calling {@link #getRangeCount()} and {@link #getRange(int)}.
+ * When first constructed, all data is loaded into a single range.
  * Load increments of earlier data by calling {@link #addEarlierTrips(RDBAdapter)}.
  *<P>
  * Assumes that data won't change elsewhere while displayed; for example,
@@ -351,7 +352,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	 *<P>
 	 * You can add earlier trips afterwards by calling
 	 * {@link #addEarlierTrips(RDBAdapter)}.
-	 * @param veh  Vehicle
+	 * @param veh  Vehicle; never null
 	 * @param weeks  Increment in weeks when loading newer/older trips from the database,
 	 *          or 0 to load all (This may run out of memory).
 	 *          The vehicle's most recent trips are loaded in this constructor.
@@ -371,31 +372,28 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 		tripIncr = 0;
 		filterWeekModeStartDate = 0;
 
-		if (veh != null)
-		{
-			Trip currT = VehSettings.getCurrentTrip(conn, veh, false);
-			TStop currTS = null;
-			if (currT != null)
-				currTS = VehSettings.getCurrentTStop(conn, veh, false);
+		Trip currT = VehSettings.getCurrentTrip(conn, veh, false);
+		TStop currTS = null;
+		if (currT != null)
+			currTS = VehSettings.getCurrentTStop(conn, veh, false);
 
-			int ltime = 0;
-			if (currTS != null)
-			{
-				ltime = currTS.getTime_stop();
-				if (ltime == 0)
-					currTS = null;
-			}
-			if (currTS == null)
-				ltime = veh.readLatestTime(currT);  // don't call if we have currTS
-			if ((ltime != 0) && (weekIncr != 0))
-			{
-				++ltime;  // addRowsFromDBTrips range is exclusive; make it include ltime
-				addRowsFromDBTrips(ltime, weekIncr, true, false, conn);
-				if (! tData.isEmpty())
-					tData.lastElement().noneLater = true;  // we know it's the newest trip
-			} else {
-				addRowsFromDBTrips(conn);
-			}
+		int ltime = 0;
+		if (currTS != null)
+		{
+			ltime = currTS.getTime_stop();
+			if (ltime == 0)
+				currTS = null;
+		}
+		if (currTS == null)
+			ltime = veh.readLatestTime(currT);  // don't call if we have currTS
+		if ((ltime != 0) && (weekIncr != 0))
+		{
+			++ltime;  // addRowsFromDBTrips range is exclusive; make it include ltime
+			addRowsFromDBTrips(ltime, weekIncr, true, false, conn);
+			if (! tData.isEmpty())
+				tData.lastElement().noneLater = true;  // we know it's the newest trip
+		} else {
+			addRowsFromDBTrips(conn);
 		}
 	}
 
@@ -404,7 +402,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	 *<P>
 	 * You can add earlier trips afterwards by calling
 	 * {@link #addEarlierTrips(RDBAdapter)}.
-	 * @param veh  Vehicle
+	 * @param veh  Vehicle; never null
 	 * @param timeStart  Starting date/time of trip range, in Unix format.
 	 *          If no trips found within <tt>weeks</tt> of this date,
 	 *          keep searching until a trip is found.
@@ -418,7 +416,8 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	 * @see #LogbookTableModel(Vehicle, int, RTRDateTimeFormatter, RDBAdapter)
 	 */
 	public LogbookTableModel
-		(Vehicle veh, final int timeStart, final int weeks, final boolean towardsNewer, RTRDateTimeFormatter dtf, RDBAdapter conn)
+		(Vehicle veh, final int timeStart, final int weeks, final boolean towardsNewer,
+		 RTRDateTimeFormatter dtf, RDBAdapter conn)
 		throws IllegalArgumentException
 	{
 		initCommonConstruc(veh, dtf);  // set veh, tData, locCache, etc
@@ -449,7 +448,9 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	 * @param conn Add existing rows from this connection, via addRowsFromTrips.
 	 * @throws IllegalArgumentException if the required veh, locID or tripIncr are null or &lt;= 0
 	 */
-	public LogbookTableModel(Vehicle veh, final boolean showAllV, final int locID, final int tripIncr, RTRDateTimeFormatter dtf, RDBAdapter conn)
+	public LogbookTableModel
+		(Vehicle veh, final boolean showAllV, final int locID, final int tripIncr,
+		 RTRDateTimeFormatter dtf, RDBAdapter conn)
 		throws IllegalArgumentException
 	{
 		if (locID <= 0)
@@ -696,7 +697,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 		}
 
 		if (dtf == null)
-			dtf = new RTRDateTimeFormatter();
+			dtf = new RTRDateTimeFormatter();  // fallback: caller should have set before constructing LTM
 
 		// ttr.tText is set up here to append rows;
 		// ttr.trBeginTextIdx is set up in addRowsFromTrips_formatTripsS*.
@@ -1354,6 +1355,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 
 	/**
 	 * Get the number of ranges currently loaded from the database.
+	 * When the LTM is first constructed, all data is loaded into 1 range.
 	 * @see #getRange(int)
 	 */
 	public int getRangeCount() { return tData.size(); }

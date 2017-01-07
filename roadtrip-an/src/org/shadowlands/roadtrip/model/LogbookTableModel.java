@@ -300,7 +300,6 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 		this.veh = veh;
 		getValue_RangeRow0 = -1;
 		getValue_RangeRowN = -1;
-		hasCurrT = false;		
 	}
 
 	/**
@@ -350,8 +349,9 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	/**
 	 * Create in Week Mode, and populate with the most recent trip data.
 	 *<P>
-	 * You can add earlier trips afterwards by calling
-	 * {@link #addEarlierTrips(RDBAdapter)}.
+	 * You can add earlier trips afterwards by calling {@link #addEarlierTrips(RDBAdapter)}.
+	 * This is the only non-copy constructor that might set {@link #hasCurrentTrip()}.
+	 *
 	 * @param veh  Vehicle; never null
 	 * @param weeks  Increment in weeks when loading newer/older trips from the database,
 	 *          or 0 to load all (This may run out of memory).
@@ -375,7 +375,10 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 		Trip currT = VehSettings.getCurrentTrip(conn, veh, false);
 		TStop currTS = null;
 		if (currT != null)
+		{
+			hasCurrT = true;
 			currTS = VehSettings.getCurrentTStop(conn, veh, false);
+		}
 
 		int ltime = 0;
 		if (currTS != null)
@@ -400,8 +403,9 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	/**
 	 * Create in Week Mode, and populate with trip data around the specified starting time.
 	 *<P>
-	 * You can add earlier trips afterwards by calling
-	 * {@link #addEarlierTrips(RDBAdapter)}.
+	 * You can add earlier trips afterwards by calling {@link #addEarlierTrips(RDBAdapter)}.
+	 * This constructor never sets {@link #hasCurrentTrip()} because initial data may be in the past.
+	 *
 	 * @param veh  Vehicle; never null
 	 * @param timeStart  Starting date/time of trip range, in Unix format.
 	 *          If no trips found within <tt>weeks</tt> of this date,
@@ -471,8 +475,8 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 
 	/**
 	 * Is this vehicle currently on the current trip?
-	 * Determined in constructor, not updated afterwards.
-	 * @return whether this vehicle has the current trip
+	 * Determined in Week Mode constructor, not updated afterwards.
+	 * @return whether this vehicle has a current trip
 	 */
 	public boolean hasCurrentTrip()
 	{

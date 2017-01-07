@@ -271,7 +271,9 @@ e3dae2e	0.9.43	2015-06-07	First release to include a BookEdit jar; minor improve
 				- Show TStop comments without superfluous square brackets
 	0.9.51			Being developed now; improvements and bugfixes since 0.9.50
 				SLRoadtrip android app:
-				- LogbookShow: Search by Via Route from menu
+				- LogbookShow:
+					- Search by Via Route from menu
+					- Show "Current Trip in progress" (not shown in 0.9.40 - 0.9.50)
 
 Also see doc/hist/*.sql for previous schema updates.
 

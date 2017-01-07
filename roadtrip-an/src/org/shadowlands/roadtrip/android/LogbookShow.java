@@ -876,9 +876,7 @@ public class LogbookShow extends Activity
 		if ((tag == null) || ! (tag instanceof Trip))
 			return;
 
-		final Trip tr = (Trip) tag;
-		// TODO more info popup
-		Toast.makeText(this, "Clicked trip id " + tr.getID(), Toast.LENGTH_SHORT).show();
+		new LogbookShowTripDetailDialogBuilder(this, (Trip) tag, ltm, db).create().show();
 	}
 
 	@Override

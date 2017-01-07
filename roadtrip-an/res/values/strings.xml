@@ -2,7 +2,7 @@
 <!--
  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
 
- This file Copyright (C) 2010-2016 Jeremy D Monin (jdmonin@nand.net)
+ This file Copyright (C) 2010-2017 Jeremy D Monin (jdmonin@nand.net)
 
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
@@ -46,6 +46,7 @@
 <string name="build_number__fmt">Build number: %1s</string>
 <string name="calculator">Calculator...</string>
 <string name="cancel_trip">Cancel Trip</string>
+<string name="category">Category</string>
 <string name="change">Change</string>
 <string name="change_driver">Change Driver</string>
 <string name="change_driver_vehicle">Change Driver / Vehicle</string>
@@ -68,6 +69,7 @@
 <string name="description">Description</string>
 <string name="destination">Destination</string>
 <string name="destination_within_the_area">Destination\nwithin the area</string>
+<string name="distance">Distance</string>
 <string name="done">Done</string><!-- done editing a list of drivers or vehicles -->
 <string name="driver">Driver</string>
 <string name="edit_drivers">Edit drivers</string>
@@ -191,6 +193,9 @@
 <string name="logbook_show__validation_failed">Validation failed</string>
 <string name="logbook_show__validation_no_problems">Validation complete, no problems found.</string>
 <string name="logbook_show_popup_export_filename">CSV Filename:</string>
+<!-- odometer as (12.3) with auto-localized decimal separator -->
+<string name="logbook_show_popup_trip_detail__odo__parens_float">(%1$.1f)</string>
+<string name="logbook_show_popup_trip_detail__trip_stops">Trip Stops:</string>
 <string name="main_cancel_are_you_sure">Are you sure you want to cancel the current trip?</string>
 <string name="main_cancel_cannot_with_stops">Cannot cancel a trip with stops; use End Trip instead.</string>
 <string name="main_create_freq_from_recent">Create Frequent from recent trip...</string>
@@ -202,6 +207,7 @@
 <string name="main_roadtrip_in_progress">Roadtrip in progress.</string>
 <string name="main_roadtrip_start_area">Roadtrip start area:</string>
 <string name="main_trip_based_on_frequent">This trip is based on another frequent trip.</string>
+<!-- main_trip_in_progress also used in logbook_show_popup_trip_detail -->
 <string name="main_trip_in_progress">Trip in Progress.</string>
 <string name="main_undo_continue">Undo \'Continue\'</string>
 <string name="main_undo_continue__text">Undo continuing travel from previous stop?\n\nLocation: %1$s</string>

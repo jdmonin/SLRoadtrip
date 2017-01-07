@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+ logbook_show_popup_trip_detail.xml - LogbookShow activity's trip detail dialog,
+ to be inflated into an AlertDialog.Builder by LogbookShowTripDetailDialogBuilder.
+
+ This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
+
+ This file Copyright (C) 2017 Jeremy D Monin (jdmonin@nand.net)
+
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with this program.  If not, see http://www.gnu.org/licenses/ .
+ -->
+<LinearLayout  xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="fill_parent" android:layout_height="fill_parent"
+    >
+	<TableLayout
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:stretchColumns="2"
+		>
+		<TableRow android:id="@+id/logbook_show_popup_trip_detail_categ_row">
+			<TextView android:text="@string/category"
+				android:layout_width="wrap_content" android:layout_height="wrap_content"
+				/>
+			<TextView android:id="@+id/logbook_show_popup_trip_detail_categ"
+				android:layout_width="wrap_content" android:layout_height="wrap_content"
+				/>
+		</TableRow>
+		<TableRow>
+			<TextView android:text="@string/vehicle"
+				android:layout_width="wrap_content" android:layout_height="wrap_content"
+				/>
+			<TextView android:id="@+id/logbook_show_popup_trip_detail_veh"
+				android:layout_width="wrap_content" android:layout_height="wrap_content"
+				/>
+		</TableRow>
+		<TableRow>
+			<TextView android:text="@string/driver"
+				android:layout_width="wrap_content" android:layout_height="wrap_content"
+				/>
+			<TextView android:id="@+id/logbook_show_popup_trip_detail_driver"
+				android:layout_width="wrap_content" android:layout_height="wrap_content"
+				/>
+		</TableRow>
+		<TableRow>
+			<TextView android:text="@string/distance"
+				android:layout_width="wrap_content" android:layout_height="wrap_content"
+				/>
+			<TextView android:id="@+id/logbook_show_popup_trip_detail_distance"
+				android:layout_width="wrap_content" android:layout_height="wrap_content"
+				/>
+		</TableRow>
+		<TableRow>
+			<TextView android:text="@string/starting_time"
+				android:layout_width="wrap_content" android:layout_height="wrap_content"
+				/>
+			<TextView android:id="@+id/logbook_show_popup_trip_detail_starting_time"
+				android:layout_width="wrap_content" android:layout_height="wrap_content"
+				/>
+		</TableRow>
+		<TableRow>
+			<!-- set right margin, otherwise columns' text has no gap -->
+			<TextView android:text="@string/starting_location"
+				android:layout_width="wrap_content" android:layout_height="wrap_content"
+				android:layout_marginRight="3dp"
+				/>
+			<TextView android:id="@+id/logbook_show_popup_trip_detail_starting_loc"
+				android:layout_width="wrap_content" android:layout_height="wrap_content"
+				/>
+		</TableRow>
+	</TableLayout>
+	<TextView android:text="@string/logbook_show_popup_trip_detail__trip_stops"
+		android:layout_marginTop="9dp"
+		android:layout_width="fill_parent" android:layout_height="wrap_content"
+		/>
+	<ListView android:id="@+id/logbook_show_popup_trip_detail_tstop_list"
+		android:layout_width="fill_parent" android:layout_height="wrap_content" />
+</LinearLayout>

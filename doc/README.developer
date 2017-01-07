@@ -272,6 +272,7 @@ e3dae2e	0.9.43	2015-06-07	First release to include a BookEdit jar; minor improve
 	0.9.51			Being developed now; improvements and bugfixes since 0.9.50
 				SLRoadtrip android app:
 				- LogbookShow:
+					- Tap on trip to see more details
 					- Search by Via Route from menu
 					- Show "Current Trip in progress" (not shown in 0.9.40 - 0.9.50)
 

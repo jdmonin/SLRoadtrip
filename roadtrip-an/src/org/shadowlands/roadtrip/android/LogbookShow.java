@@ -70,6 +70,7 @@ import android.widget.Toast;
 
 /**
  * Present an unformatted view of the current vehicle's trip log.
+ * Can tap on any Trip for more details; see {@link #onClick(View)}.
  *<P>
  * Optionally, can filter to show only trips that include a given {@link #EXTRAS_LOCID location ID}
  * (Location Mode, same as in {@link LogbookTableModel}).
@@ -80,6 +81,7 @@ import android.widget.Toast;
  * @author jdmonin
  */
 public class LogbookShow extends Activity
+	implements View.OnClickListener
 {
 	/**
 	 * Increment in weeks when loading newer/older trips from the database,
@@ -367,8 +369,13 @@ public class LogbookShow extends Activity
 
 		boolean sbEmpty = false;
 		List<StringBuilder> sbTrips = null;
+		List<Trip> trips = null;
 		if (ltm.getRangeCount() > 0)
-			sbTrips = ltm.getRange(0).getTripListRowsTabbed();
+		{
+			Trip.TripListTimeRange range = ltm.getRange(0);
+			sbTrips = range.getTripListRowsTabbed();
+			trips = range.tr;
+		}
 
 		if ((sbTrips == null) || sbTrips.isEmpty())
 		{
@@ -412,8 +419,10 @@ public class LogbookShow extends Activity
 				btnEarlier.setVisibility(View.GONE);
 		}
 
+		Log.d(TAG, "L415 init positions: earlier=" + tripListBtnEarlierPosition + ", later=" + tripListBtnLaterPosition);
+
 		tvNoTripsFound = tvContent;  // first textview, for addTripsTextViews to reuse
-		addTripsTextViews(sbTrips, true, false);
+		addTripsTextViews(sbTrips, trips, true, false);
 		if (sbEmpty)
 			tvNoTripsFound = tvContent;  // addTripsTextViews may have set it null
 		else
@@ -727,7 +736,9 @@ public class LogbookShow extends Activity
 
 		rangeEarlierClicked = true;
 
-		final List<TextView> ltv = addTripsTextViews(ltm.getRange(0).getTripListRowsTabbed(), false, true);
+		final Trip.TripListTimeRange range = ltm.getRange(0);
+		final List<TextView> ltv = addTripsTextViews
+			(range.getTripListRowsTabbed(), range.tr, false, true);
 
 		// Once layout is done, scroll to the bottom of the newly added text
 		// so that what's currently visible, stays visible.
@@ -762,25 +773,38 @@ public class LogbookShow extends Activity
 		}
 		rangeEarlierClicked = false;
 
-		addTripsTextViews(ltm.getRange(ltm.getRangeCount()-1).getTripListRowsTabbed(), true, false);
+		final Trip.TripListTimeRange range = ltm.getRange(ltm.getRangeCount() - 1);
+		addTripsTextViews(range.getTripListRowsTabbed(), range.tr, true, false);
 	}
 
 	/**
 	 * Add new Trips as TextViews to the top or bottom of the activity.
-	 * @param sbTtrips  New trip strings to add, by calling {@link Trip.TripListTimeRange#getTripListRowsTabbed()}
+	 *<P>
+	 * If {@code tr != null}, will call {@link View#setTag(Object) tv.setTag(tr)} and add {@code LogbookShow}
+	 * as an onClickListener.
+	 *
+	 * @param sbTrips  New trip strings to add, by calling {@link Trip.TripListTimeRange#getTripListRowsTabbed()}
+	 * @param trips    Optional list of {@link Trip}s (one per sbTrips item) to associate one per TextView,
+	 *     or {@code null}
 	 * @param addAtEnd  True to add at the bottom of the activity (at {@link #tripListBtnLaterPosition}),
 	 *     false to add at the top (below {@link #tripListBtnEarlierPosition}).
 	 *     If {@link #tvNoTripsFound} != {@code null}, that TextView's contents will be replaced
 	 *     with the first trip's strings.
 	 * @param wantTVList  True to return a list of the created TextViews for callback use
 	 * @return A list of the created TextViews if {@code wantTVList} (which may be null), or {@code null}
+	 * @throws IllegalArgumentException if {@code trips} != {@code null} but its size differs from {@code sbTrips}
 	 * @since 0.9.51
 	 */
 	private List<TextView> addTripsTextViews
-		(final List<StringBuilder> sbTrips, final boolean isLaterPos, final boolean wantTVList)
+		(final List<StringBuilder> sbTrips, final List<Trip> trips,
+		 final boolean isLaterPos, final boolean wantTVList)
+		throws IllegalArgumentException
 	{
 		if ((sbTrips == null) || sbTrips.isEmpty())
 			return null;
+		final int S = sbTrips.size();
+		if ((trips != null) && (trips.size() != S))
+			throw new IllegalArgumentException("trips size != sbTrips");
 
 		if (TS_ROW_LP == null)
 			TS_ROW_LP = new ViewGroup.LayoutParams
@@ -788,20 +812,22 @@ public class LogbookShow extends Activity
 
 		final List<TextView> tvl = (wantTVList) ? new ArrayList<TextView>(sbTrips.size()) : null;
 		if (isLaterPos)
-			for (StringBuilder sb : sbTrips)
-				addTripsTextViews_addOne(sb, tvl, true);
+			for (int i = 0; i < S; ++i)
+				addTripsTextViews_addOne
+				    (sbTrips.get(i), ((trips != null) ? trips.get(i) : null), tvl, true);
 		else
-			for (int i = sbTrips.size() - 1; i >= 0; --i)
-				addTripsTextViews_addOne(sbTrips.get(i), tvl, false);
+			for (int i = S - 1; i >= 0; --i)
+				addTripsTextViews_addOne
+				    (sbTrips.get(i), ((trips != null) ? trips.get(i) : null), tvl, false);
 
 		return tvl;
 	}
 
 	/**
-	 * Add one trip's text to a new TextView within {@link #addTripsTextViews(List, boolean, boolean)}'s loop.
+	 * Add one trip's text to a new TextView within {@link #addTripsTextViews(List, List, boolean, boolean)}'s loop.
 	 */
 	private void addTripsTextViews_addOne
-		(final StringBuilder sb, final List<TextView> tvl, final boolean isLaterPos)
+		(final StringBuilder sb, final Trip tr, final List<TextView> tvl, final boolean isLaterPos)
 	{
 		final TextView tv;
 
@@ -811,6 +837,7 @@ public class LogbookShow extends Activity
 			tv = tvNoTripsFound;
 			tv.setText(sb);
 			tvNoTripsFound = null;
+			Log.d(TAG, "set trip at tvNoTripsFound");
 		} else {
 			// create a new textview
 			tv = new TextView(this);
@@ -819,15 +846,39 @@ public class LogbookShow extends Activity
 
 			if (isLaterPos)
 			{
+				Log.d(TAG, "ins trip at later idx " + tripListBtnLaterPosition);
 				tripListParentLayout.addView(tv, tripListBtnLaterPosition);
 				++tripListBtnLaterPosition;
 			} else {
+				Log.d(TAG, "ins trip after earlier idx " + tripListBtnEarlierPosition);
 				tripListParentLayout.addView(tv, tripListBtnEarlierPosition + 1);
 			}
 		}
 
+		if (tr != null)
+		{
+			tv.setTag(tr);
+			tv.setOnClickListener(this);
+		}
+
 		if (tvl != null)
 			tvl.add(tv);
+	}
+
+	/**
+	 * Handle taps on a Trip's TextView to show more info.
+	 * @since 0.9.51
+	 */
+	@Override
+	public void onClick(View v)
+	{
+		final Object tag = v.getTag();
+		if ((tag == null) || ! (tag instanceof Trip))
+			return;
+
+		final Trip tr = (Trip) tag;
+		// TODO more info popup
+		Toast.makeText(this, "Clicked trip id " + tr.getID(), Toast.LENGTH_SHORT).show();
 	}
 
 	@Override

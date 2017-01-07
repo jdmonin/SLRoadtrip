@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010-2016 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2017 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -89,6 +89,9 @@ import android.widget.Toast;
  * then {@link #onCreate(Bundle)} will bring up another activity to ask the
  * user if we've stopped at one of those {@link FreqTripTStop frequent TStops}.
  * If that activity is canceled, this one will be too.
+ *<P>
+ * Odometer fields include a calculator dialog for convenience (Edit button);
+ * see {@link #onClickEditOdo(OdometerNumberPicker, boolean)}.
  *<P>
  * This activity is finished by pressing one of the two large buttons
  * {@link #onClick_BtnEnterTStop(View)} or {@link #onClick_BtnSaveChanges(View)},

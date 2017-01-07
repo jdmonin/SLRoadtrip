@@ -32,6 +32,7 @@ import org.shadowlands.roadtrip.db.Trip;
 import org.shadowlands.roadtrip.db.TripCategory;
 import org.shadowlands.roadtrip.db.Vehicle;
 import org.shadowlands.roadtrip.model.LogbookTableModel;
+import org.shadowlands.roadtrip.util.android.RTRAndroidDateTimeFormatter;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -74,6 +75,14 @@ public class LogbookShowTripDetailDialogBuilder
 	 */
 	private StringBuffer fmt_dow_meddate;
 
+	/** For hh:mm output, android-specific DateTimeFormatter for locale and user prefs */
+	private RTRAndroidDateTimeFormatter dtf;
+
+	/**
+	 * Create a Builder. All params must be non-null.
+	 * After calling this constructor, call {@link #create()} to get the AlertDialog
+	 * and then {@link AlertDialog#show()}.
+	 */
 	public LogbookShowTripDetailDialogBuilder
 		(final Activity caller, final Trip tr, final LogbookTableModel ltm, final RDBAdapter db)
 	{
@@ -81,8 +90,13 @@ public class LogbookShowTripDetailDialogBuilder
 		this.tr = tr;
 		this.ltm = ltm;
 		this.db = db;
+		dtf = new RTRAndroidDateTimeFormatter(caller.getApplicationContext());
 	}
 
+	/**
+	 * Build the AlertDialog, to call {@link AlertDialog#show()}.
+	 * @return a newly built AlertDialog
+	 */
 	public AlertDialog create()
 	{
 		if (fmt_dow_meddate == null)
@@ -157,7 +171,8 @@ public class LogbookShowTripDetailDialogBuilder
 			if (ts == 0)
 				tv.setText(R.string.none__parens);
 			else
-				tv.setText(DateFormat.format(fmt_dow_meddate, ts * 1000L));  // TODO add hh:mm
+				tv.setText(DateFormat.format(fmt_dow_meddate, ts * 1000L)
+					   + " " + dtf.formatTime(ts * 1000L));
 		}
 
 		lvTStopsList = (ListView) itms.findViewById(R.id.logbook_show_popup_trip_detail_tstop_list);

@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  Copyright (C) 2011 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2011,2017 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,7 +28,9 @@ import android.content.Context;
 import android.text.format.DateFormat;
 
 /**
- * Android-specific date/time formatting, based on user preference settings.
+ * Android-specific date/time formatting, based on user's locale and preference settings.
+ * For time of day, {@link #formatTime(Date)} and similar methods respect both
+ * the locale and the 24-hour preference flag.
  * @author jdmonin
  */
 public class RTRAndroidDateTimeFormatter

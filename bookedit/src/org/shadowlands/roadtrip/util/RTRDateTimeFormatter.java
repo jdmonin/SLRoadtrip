@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2011,2015 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2011,2015,2017 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -60,21 +60,43 @@ public class RTRDateTimeFormatter
 		dfdt = java.text.DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT);
 	}
 
+	/**
+	 * Format the Date using getDateInstance({@link DateFormat#MEDIUM}) or the android-specific equivalent.
+	 * @param millis  Date to format, same format as {@link System#currentTimeMillis()}
+	 * @return  The date as a formatted String
+	 * @see #formatDate(Date)
+	 */
 	public String formatDate(final long millis)
 	{
 		return dfd.format(new Date(millis));
 	}
 
+	/**
+	 * Format the Date using getDateInstance({@link DateFormat#MEDIUM}) or the android-specific equivalent.
+	 * @param dt  Date to format
+	 * @return  The date as a formatted String
+	 * @see #formatDate(long)
+	 */
 	public String formatDate(final Date dt)
 	{
 		return dfd.format(dt);
 	}
 
+	/**
+	 * Format the time of day using getTimeInstance({@link DateFormat#SHORT}) or the android-specific equivalent.
+	 * @param millis  Time to format, same format as {@link System#currentTimeMillis()}
+	 * @return  The time of day as a formatted String
+	 */
 	public String formatTime(final long millis)
 	{
 		return dft.format(new Date(millis));
 	}
 
+	/**
+	 * Format the time of day using getTimeInstance({@link DateFormat#SHORT}) or the android-specific equivalent.
+	 * @param tm  Time to format
+	 * @return  The time of day as a formatted String
+	 */
 	public String formatTime(final Date tm)
 	{
 		return dft.format(tm);

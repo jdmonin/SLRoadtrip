@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  Copyright (C) 2010-2011,2014-2015 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2011,2014-2015,2017 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -20,6 +20,7 @@
 package org.shadowlands.roadtrip.android.util;
 
 import java.util.Calendar;
+import java.util.Date;
 import java.util.Vector;
 
 import org.shadowlands.roadtrip.R;
@@ -37,6 +38,9 @@ public abstract class Misc
 	 * DateFormatter (day-of-week + short date) for use by {@link DateFormat#format(CharSequence, Calendar)}.
 	 * Format will be: Day-of-week\nshort-date  or  Day-of-week short-date
 	 *<P>
+	 * For time-of-day formatting, see
+	 * {@link org.shadowlands.roadtrip.util.android.RTRAndroidDateTimeFormatter#formatTime(Date)}.
+	 *
 	 * @param ctx calling context, to get user's current date format
 	 * @param twoLines  If true, format includes <tt>\n</tt> between day of week and short date.
 	 * @return a StringBuffer usable in <tt>DateFormat.format</tt>
@@ -82,6 +86,9 @@ public abstract class Misc
 	 * DateFormatter (day-of-week + medium date) for use by {@link DateFormat#format(CharSequence, long)}.
 	 * Format will be: Sat 9 Jun 2001 (YMD order depends on user settings).
 	 *<P>
+	 * For time-of-day formatting, see
+	 * {@link org.shadowlands.roadtrip.util.android.RTRAndroidDateTimeFormatter#formatTime(Date)}.
+	 *
 	 * @param ctx calling context, to get user's current date format
 	 * @return a StringBuffer usable in <tt>DateFormat.format</tt>
 	 * @see org.shadowlands.roadtrip.util.android.RTRAndroidDateTimeFormatter

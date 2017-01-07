@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010-2012 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2012,2017 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -44,7 +44,14 @@ import android.widget.AutoCompleteTextView;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ListAdapter;
+import android.widget.TextView;
 
+/**
+ * Enter a TStop's gas details from {@link TripTStopEntry}.
+ *<P>
+ * All fields are read-only if called with the
+ * {@link TripTStopEntry#EXTRAS_FIELD_VIEW_TSTOP_ID} intent extra.
+ */
 public class TripTStopGas extends Activity
 	implements TextWatcher, OnItemClickListener
 {
@@ -68,6 +75,12 @@ public class TripTStopGas extends Activity
 
 	/** needed to populate {@link #brandGrade_at}, {@link #brandGradeObj} */
 	private RDBAdapter db = null;
+
+	/**
+	 * Read-only mode, for {@link TripTStopEntry#EXTRAS_FIELD_VIEW_TSTOP_ID}.
+	 * @since 0.9.51
+	 */
+	private boolean isReadOnly;
 
 	/** Current vehicle */
 	private Vehicle currV;  // TODO use this to set up currency symbol
@@ -123,6 +136,8 @@ public class TripTStopGas extends Activity
 	    	b = getIntent().getExtras();
 	    if (b != null)
 	    {
+	    	isReadOnly = (b.containsKey(TripTStopEntry.EXTRAS_FIELD_VIEW_TSTOP_ID));
+
 	    	loadFieldsFromBundle(b);
 	    	if (currV.getID() != b.getInt(EXTRAS_FIELD_VEH_ID))
 	    	{
@@ -131,9 +146,12 @@ public class TripTStopGas extends Activity
 	    	}
 	    }
 
-	    quant_et.addTextChangedListener(this);
-	    perunit_et.addTextChangedListener(this);
-	    totalcost_et.addTextChangedListener(this);
+	    if (! isReadOnly)
+	    {
+		quant_et.addTextChangedListener(this);
+		perunit_et.addTextChangedListener(this);
+		totalcost_et.addTextChangedListener(this);
+	    }
 
 		// see onResume for rest of initialization, such as populating brandGrade_at.
 	}
@@ -146,20 +164,55 @@ public class TripTStopGas extends Activity
 			db.close();
 	}
 
-	/** Populate {@link #brandGrade_at} from db */
+	/**
+	 * If not {@link #isReadOnly}, populate {@link #brandGrade_at} from db.
+	 * Otherwise make fields read-only and disable checkboxes/buttons.
+	 */
 	@Override
 	public void onResume()
 	{
 		super.onResume();
-		GasBrandGrade[] gbg = GasBrandGrade.getAll(db);
-		if (gbg != null)
+
+		if (! isReadOnly)
 		{
-			ArrayAdapter<GasBrandGrade> adapter = new ArrayAdapter<GasBrandGrade>(this, R.layout.list_item, gbg);
-			brandGrade_at.setAdapter(adapter);
-			brandGrade_at.setOnItemClickListener(this);
+			GasBrandGrade[] gbg = GasBrandGrade.getAll(db);
+			if (gbg != null)
+			{
+				ArrayAdapter<GasBrandGrade> adapter
+					= new ArrayAdapter<GasBrandGrade>(this, R.layout.list_item, gbg);
+				brandGrade_at.setAdapter(adapter);
+				brandGrade_at.setOnItemClickListener(this);
+			} else {
+				brandGrade_at.setAdapter((ArrayAdapter<GasBrandGrade>) null);
+			}
 		} else {
-			brandGrade_at.setAdapter((ArrayAdapter<GasBrandGrade>) null);
-		}	
+			// disable buttons, checkboxes
+			final int[] btns = {
+				R.id.trip_tstopgas_fillup_chk,
+				R.id.trip_tstopgas_btn_enter
+			};
+			for (final int id : btns)
+			{
+				TextView tv = (TextView) findViewById(id);
+				if (tv != null)
+					tv.setEnabled(false);
+				tv.setFocusable(false);  // prevent
+			}
+
+			// prevent edit of text fields, but don't excessively darken the appearance
+			final int[] flds = {
+				R.id.trip_tstopgas_quant,
+				R.id.trip_tstopgas_perunit,
+				R.id.trip_tstopgas_total,
+				R.id.trip_tstopgas_brandgrade
+			};
+			for (final int id : flds)
+			{
+				TextView tv = (TextView) findViewById(id);
+				if (tv != null)
+					tv.setFocusable(false);
+			}
+		}
 	}
 
 	@Override
@@ -184,6 +237,9 @@ public class TripTStopGas extends Activity
 
 	public void onClick_BtnOK(View v)
 	{
+		if (isReadOnly)
+			return;  // just in case; shouldn't be called if so
+
 		Intent i = getIntent();
 		Bundle b = i.getExtras();
 		final boolean wasNew = (b == null);

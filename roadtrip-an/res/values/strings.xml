@@ -54,6 +54,7 @@
 <string name="choose_a_frequent_trip">Choose a frequent trip</string>
 <string name="choose_an_inactive_vehicle">Choose an inactive vehicle.</string>
 <string name="choose_a_stop">Choose a stop:</string>
+<string name="close">Close</string>
 <string name="confirm">Confirm</string>
 <string name="continue_from_colon">Continue from:</string>
 <string name="create">Create</string>
@@ -285,6 +286,7 @@
 <string name="trip_tstop_entry_totalodo_low">The total odometer is lower than %1$d, the previous stop\'s value.</string>
 <string name="trip_tstop_entry_tripodo_low">The trip odometer is lower than %1$.1f, the previous stop\'s value.</string>
 <string name="trip_tstop_entry_roadtrip_end_geoarea">Choose this stop\'s geo area to end this roadtrip.</string>
+<string name="trip_tstop_entry__title_view_prev">View Previous Trip Stop</string>
 <string name="trip_tstop_gas_atprice"> \@ Price</string>
 <string name="trip_tstop_gas_brand_grade">Brand/\nGrade</string>
 <string name="trip_tstop_gas_equalscost"> = Cost</string>

@@ -37,6 +37,7 @@ import org.shadowlands.roadtrip.util.android.RTRAndroidDateTimeFormatter;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
+import android.content.Intent;
 import android.content.res.Resources;
 import android.text.format.DateFormat;
 import android.view.View;
@@ -214,9 +215,10 @@ public class LogbookShowTripDetailDialogBuilder
 		if (tt == null)
 			return;
 
-		// TODO more (show details from tstop, etc)
-		Toast.makeText(caller, tt.tsLocText + ": id " + tt.ts.getID(),
-			Toast.LENGTH_SHORT).show();
+		// view TStop details using TripTStopEntry
+		Intent i = new Intent(caller, TripTStopEntry.class);
+		i.putExtra(TripTStopEntry.EXTRAS_FIELD_VIEW_TSTOP_ID, tt.ts.getID());
+		caller.startActivity(i);
 	}
 
 	/** TStop's data and rendered text for list adapter */

@@ -108,8 +108,20 @@ import android.widget.Toast;
 public class TripTStopEntry extends Activity
 	implements OnDateSetListener, OnItemClickListener, TextWatcher, OnTimeChangedListener
 {
-	/** Flag for ending the entire trip (not just stopping), for {@link Intent#putExtra(String, boolean)} */
+	/**
+	 * Flag for ending the entire trip (not just stopping), for {@link Intent#putExtra(String, boolean)}.
+	 * Ignored if {@link #EXTRAS_FIELD_VIEW_TSTOP_ID} is also used.
+	 */
 	public static final String EXTRAS_FLAG_ENDTRIP = "endtrip";
+
+	/**
+	 * Field to view any previous {@link TStop} instead of the current trip and TStop.
+	 * Use the TStop's ID and {@link Intent#putExtra(String, int)}.
+	 * Even if this TStop ID is the current TStop or the current trip in Settings/VehSettings,
+	 * the view will be read-only.
+	 * @since 0.9.51
+	 */
+	public static final String EXTRAS_FIELD_VIEW_TSTOP_ID = "view_tstop_id";
 
 	/**
 	 * Historical Mode threshold is 24 hours, in milliseconds.
@@ -138,11 +150,34 @@ public class TripTStopEntry extends Activity
 	private static final String TAG = "Roadtrip.TripTStopEntry";
 
 	private RDBAdapter db = null;
+
+	/** Current GeoArea, from {@link #checkCurrentDriverVehicleTripSettings()}. */
 	private GeoArea currA;
+
+	/** This trip's Vehicle, from {@link #checkCurrentDriverVehicleTripSettings()}. */
 	private Vehicle currV;
+
+	/** This trip's driver, from {@link #checkCurrentDriverVehicleTripSettings()}. */
 	private Person currD;
+
+	/**
+	 * Current trip, from {@link #checkCurrentDriverVehicleTripSettings()},
+	 * or {@link #viewTS}'s trip if not null.
+	 */
 	private Trip currT;
+
+	/**
+	 * Current TStop (from {@link #checkCurrentDriverVehicleTripSettings()}),
+	 * or {@link #viewTS} if not null.
+	 */
 	private TStop currTS;
+
+	/**
+	 * For View Previous TStop mode; this field is null unless that
+	 * mode was activated using {@link #EXTRAS_FIELD_VIEW_TSTOP_ID}.
+	 * @since 0.9.51
+	 */
+	private TStop viewTS;
 
 	/**
 	 * All locations within the {@link GeoArea} having ID {@link #areaLocs_areaID}, or null;
@@ -308,6 +343,8 @@ public class TripTStopEntry extends Activity
 	 * Used for {@link #viaRouteObj}.
 	 * If {@code null} because of a missing {@link VehSettings}, ViaRoutes can't be created or autocompleted,
 	 * but causes no other problems: Make sure code checks != null before using prevLocObj.
+	 *<P>
+	 * Is {@code null} when {@link #viewTS != null}.
 	 */
 	private Location prevLocObj;
 
@@ -524,35 +561,21 @@ public class TripTStopEntry extends Activity
 		btnContTimeDate = (Button) findViewById(R.id.trip_tstop_btn_cont_date);
 		btnGas = (Button) findViewById(R.id.trip_tstop_btn_gas);
 
-		// get currA, currV, currT, maybe currTS and prevLocObj
-		if (! checkCurrentDriverVehicleTripSettings())
-		{
-			// Internal error: Current area/driver/vehicle/trip not found in db
-			Toast.makeText
-				(getApplicationContext(),
-				 R.string.internal__current_notfound_area_driver_veh_trip,
-				 Toast.LENGTH_SHORT).show();
-			startActivity(new Intent(TripTStopEntry.this, AndroidStartup.class));
-			finish();
-			return;
-		}
-		isCurrentlyStopped = (currTS != null);
-
-		// if currTS != null, we'll read stopGas in updateTextAndButtons,
-		// and set btnGas's green light.
-		stopGas = null;
-
-		if (! isCurrentlyStopped)
-		{
-			View sb = findViewById(R.id.trip_tstop_btn_save);
-			if (sb != null)
-				sb.setVisibility(View.GONE);
-		}
-
 		Intent i = getIntent();
 		if (i != null)
 		{
-			stopEndsTrip = i.getBooleanExtra(EXTRAS_FLAG_ENDTRIP, false);
+			if (i.hasExtra(EXTRAS_FIELD_VIEW_TSTOP_ID))
+			{
+				final int tsid = i.getIntExtra(EXTRAS_FIELD_VIEW_TSTOP_ID, 0);
+				if (tsid > 0)
+					try
+					{
+						viewTS = new TStop(db, tsid);
+					}
+					catch(Exception e) {}
+			}
+
+			stopEndsTrip = i.getBooleanExtra(EXTRAS_FLAG_ENDTRIP, false) && (viewTS == null);
 			if (stopEndsTrip)
 			{
 				Button eb = (Button) findViewById(R.id.trip_tstop_btn_enter);
@@ -580,6 +603,45 @@ public class TripTStopEntry extends Activity
 				}
 			}
 		} // else, stopEndsTrip is false
+
+		// get currA, currV, currT, maybe currTS and prevLocObj
+		// If viewTS != null, those will be taken from viewTS's fields
+		// instead of current settings.
+		if (! checkCurrentDriverVehicleTripSettings())
+		{
+			// Internal error: Current area/driver/vehicle/trip not found in db
+			Toast.makeText
+				(getApplicationContext(),
+				 R.string.internal__current_notfound_area_driver_veh_trip,
+				 Toast.LENGTH_SHORT).show();
+			startActivity(new Intent(TripTStopEntry.this, AndroidStartup.class));
+			finish();
+			return;
+		}
+
+		isCurrentlyStopped = (currTS != null);  // true when viewTS != null
+
+		// if currTS != null, we'll read stopGas in updateTextAndButtons,
+		// and set btnGas's green light.
+		stopGas = null;
+
+		if (! isCurrentlyStopped)
+		{
+			View sb = findViewById(R.id.trip_tstop_btn_save);
+			if (sb != null)
+				sb.setVisibility(View.GONE);
+		}
+
+		if (viewTS != null)
+		{
+			// View Previous TStop mode:
+			// Disable Save button; Enter will be renamed below.
+			// Other fields will be updated or disabled below.
+			Button b = (Button) findViewById(R.id.trip_tstop_btn_save);
+			if (b != null)
+				b.setEnabled(false);
+
+		}
 
 		// Hide rows unless stopEndsTrip;
 		// set "continue" button text if already stopped
@@ -622,34 +684,43 @@ public class TripTStopEntry extends Activity
 			{
 				Button eb = (Button) findViewById(R.id.trip_tstop_btn_enter);
 				if (eb != null)
-					eb.setText(R.string.continu);
+				{
+					if (viewTS == null)
+						eb.setText(R.string.continu);
+					else
+						eb.setText(R.string.close);
+				}
 			}
 		}
 
 		// Add TimeChangedListeners soon, after UI thread is done refreshing hour/minute values
-		tp_time_stop.postDelayed(new Runnable()
-		{
-			@Override
-			public void run()
+		if (viewTS == null)
+			tp_time_stop.postDelayed(new Runnable()
 			{
-				tp_time_stop.setOnTimeChangedListener(TripTStopEntry.this);
-					// onTimeChanged - to set checkbox if user sets time
-				tp_time_cont.setOnTimeChangedListener(TripTStopEntry.this);
-					// onTimeChanged - to cancel auto-update of time if user sets time
-			}
-		}, 750);
+				@Override
+				public void run()
+				{
+					tp_time_stop.setOnTimeChangedListener(TripTStopEntry.this);
+						// onTimeChanged - to set checkbox if user sets time
+					tp_time_cont.setOnTimeChangedListener(TripTStopEntry.this);
+						// onTimeChanged - to cancel auto-update of time if user sets time
+				}
+			}, 750);
 
 		// Change title if needed; default title label is stop_during_a_trip
 		if (stopEndsTrip)
 		{
 			setTitle(getResources().getString(R.string.end_trip));
+		} else if (viewTS != null) {
+			setTitle(getResources().getString(R.string.trip_tstop_entry__title_view_prev));
 		} else if (isCurrentlyStopped) {
 			setTitle(getResources().getString(R.string.continu_from_stop));
 		}
 
 		// Set up autocompletes
 		loc = (AutoCompleteTextView) findViewById(R.id.trip_tstop_loc);
-		loc.addTextChangedListener(this);
+		if (viewTS == null)
+			loc.addTextChangedListener(this);
 		areaLocs_areaID = -1;
 		areaLocs = null;
 		// loc, areaLocs, areaLocs_areaID will be filled soon.
@@ -661,8 +732,34 @@ public class TripTStopEntry extends Activity
 			View vlab = findViewById(R.id.trip_tstop_via_label);
 			vlab.setVisibility(View.GONE);
 		} else {
-			viaListener = new ViaRouteListenerWatcher();
-			via.addTextChangedListener(viaListener);
+			if (viewTS == null) {
+				viaListener = new ViaRouteListenerWatcher();
+				via.addTextChangedListener(viaListener);
+			}
+		}
+
+		if (viewTS != null)
+		{
+			View v = findViewById(R.id.trip_tstop_via_dropdown);
+			if (v != null)
+				v.setEnabled(false);
+
+			// Won't be able to set via text in updateViaRouteAutocomplete because
+			// prevLocObj == null. Fake it by setting old via_route text field:
+			String via_text = viewTS.getVia_route();
+			if ((via_text == null) || (via_text.length() == 0))
+			{
+				int via_id = viewTS.getVia_id();
+				if (via_id != 0)
+				{
+					try
+					{
+						ViaRoute via = new ViaRoute(db, via_id);
+						viewTS.setVia_route(via.getDescr());
+					}
+					catch (Exception e) {}
+				}
+			}
 		}
 
 		// etRoadtripAreaOther is initialized below only if currT.isRoadtrip(), otherwise remains null.
@@ -682,9 +779,25 @@ public class TripTStopEntry extends Activity
 			findViewById(R.id.trip_tstop_time_cont_label).setVisibility(View.GONE);
 		} else {
 			contTime = Calendar.getInstance();
-			contTime.setTimeInMillis(timeNow);
-			tp_time_cont_chk.setChecked(true);
-			contTimeIsNow = true;
+			if (viewTS == null)
+			{
+				contTime.setTimeInMillis(timeNow);
+				tp_time_cont_chk.setChecked(true);
+				contTimeIsNow = true;
+			} else {
+				contTimeIsNow = false;
+				final int t = viewTS.getTime_continue();
+				if (t != 0)
+				{
+					contTime.setTimeInMillis(t * 1000L);
+				} else {
+					btnContTimeDate.setText("");
+				}
+				tp_time_cont_chk.setChecked(t != 0);
+				tp_time_cont.setEnabled(false);
+				tp_time_cont_chk.setEnabled(false);
+				btnContTimeDate.setEnabled(false);
+			}
 
 			// Note that stop-time code may adjust contTime if Historical Mode.
 		}
@@ -700,7 +813,7 @@ public class TripTStopEntry extends Activity
 				setTimeStopCheckbox = true;
 				stopTime.setTimeInMillis(1000L * stoptime_sec);
 
-				if ((contTime != null)
+				if ((contTime != null) && (viewTS == null)
 					&& (Math.abs(timeNow - (1000L * stoptime_sec)) >= TIMEDIFF_HISTORICAL_MILLIS))
 				{
 					// Historical Mode: continue from that date & time, not from today
@@ -736,12 +849,18 @@ public class TripTStopEntry extends Activity
 				stopTime.setTimeInMillis(latestVehTime);  // might be timeNow
 			}
 
-			if (! contTimeIsNow)
+			if ((! contTimeIsNow) && (viewTS == null))
 				tp_time_cont_chk.setChecked(false);
 
 			// Focus on continue-time, to scroll the screen down
-			tp_time_cont.requestFocus();
-
+			if (viewTS == null)
+			{
+				tp_time_cont.requestFocus();
+			} else {
+				tp_time_stop.setEnabled(false);
+				tp_time_stop_chk.setEnabled(false);
+				btnStopTimeDate.setEnabled(false);
+			}
 		} else {
 
 			// It's a new stop.
@@ -769,7 +888,7 @@ public class TripTStopEntry extends Activity
 		if (contTime != null)
 		{
 			initTimePicker(contTime, tp_time_cont);
-			if (contTimeIsNow)
+			if (contTimeIsNow && (viewTS == null))
 				initContTimeRunning(contTime);  // keep tp_time_cont current
 		}
 		rbRoadtripArea_chosen = null;  // Will soon be set by calling selectRoadtripAreaButton
@@ -881,6 +1000,13 @@ public class TripTStopEntry extends Activity
 			rbRoadtripAreaStart.setText(ga_s.getName());
 			rbRoadtripAreaEnd.setText(ga_e.getName());
 			selectRoadtripAreaButton(areaLocs_areaID, null, false, 0);
+			if (viewTS != null)
+			{
+				rbRoadtripAreaStart.setEnabled(false);
+				rbRoadtripAreaNone.setEnabled(false);
+				rbRoadtripAreaEnd.setEnabled(false);
+				rbRoadtripAreaOther.setEnabled(false);
+			}
 
 			etRoadtripAreaOther = (AutoCompleteTextView) findViewById(R.id.trip_tstop_areas_et_other);
 			areaOther = null;
@@ -888,38 +1014,43 @@ public class TripTStopEntry extends Activity
 			if (etRoadtripAreaOtherListener == null)
 				etRoadtripAreaOtherListener = new GeoAreaListenerWatcher();
 
-			GeoArea[] othera = GeoArea.getAll(db, -1);
-			if (othera != null)
+			if (viewTS == null)
 			{
-				ArrayAdapter<GeoArea> adapter = new ArrayAdapter<GeoArea>
-					(this, R.layout.list_item, othera);
-
-				etRoadtripAreaOther.setAdapter(adapter);
-
-				// If areaLocs_areaID isn't start, end, or none, set areaOther and show its name
-				if ((areaLocs_areaID != 0) && (areaLocs_areaID != gaID_s) && (areaLocs_areaID != gaID_e))
+				GeoArea[] othera = GeoArea.getAll(db, -1);
+				if (othera != null)
 				{
-					for (int j = 0; j < othera.length; ++j)
+					ArrayAdapter<GeoArea> adapter = new ArrayAdapter<GeoArea>
+						(this, R.layout.list_item, othera);
+
+					etRoadtripAreaOther.setAdapter(adapter);
+
+					// If areaLocs_areaID isn't start, end, or none, set areaOther and show its name
+					if ((areaLocs_areaID != 0) && (areaLocs_areaID != gaID_s)
+					    && (areaLocs_areaID != gaID_e))
 					{
-						if (othera[j].getID() == areaLocs_areaID)
+						for (int j = 0; j < othera.length; ++j)
 						{
-							areaOther = othera[j];
-							etRoadtripAreaOther.setText(othera[j].getName());
-							break;
+							if (othera[j].getID() == areaLocs_areaID)
+							{
+								areaOther = othera[j];
+								etRoadtripAreaOther.setText(othera[j].getName());
+								break;
+							}
 						}
+
+						if ((currTS != null)
+						    && currTS.isSingleFlagSet(TStop.TEMPFLAG_CREATED_GEOAREA))
+							areaOtherCreatedHere = areaOther;
 					}
 
-					if ((currTS != null) && currTS.isSingleFlagSet(TStop.TEMPFLAG_CREATED_GEOAREA))
-						areaOtherCreatedHere = areaOther;
+					etRoadtripAreaOther.setOnItemClickListener(etRoadtripAreaOtherListener);
+				} else {
+					etRoadtripAreaOther.setAdapter((ArrayAdapter<GeoArea>) null);
 				}
 
-				etRoadtripAreaOther.setOnItemClickListener(etRoadtripAreaOtherListener);
-			} else {
-				etRoadtripAreaOther.setAdapter((ArrayAdapter<GeoArea>) null);
+				etRoadtripAreaOther.addTextChangedListener(etRoadtripAreaOtherListener);
+				etRoadtripAreaOther.setOnFocusChangeListener(etRoadtripAreaOtherListener);
 			}
-
-			etRoadtripAreaOther.addTextChangedListener(etRoadtripAreaOtherListener);
-			etRoadtripAreaOther.setOnFocusChangeListener(etRoadtripAreaOtherListener);
 
 		} else {
 			View v = findViewById(R.id.trip_tstop_areas_row1);
@@ -937,6 +1068,13 @@ public class TripTStopEntry extends Activity
 					GeoArea ga = new GeoArea(db, areaLocs_areaID);
 					tv.setText(ga.getName());
 				} catch (Exception e) {}  // very unlikely, ignore: used for display only
+			}
+
+			if (viewTS != null)
+			{
+				v = findViewById(R.id.trip_tstop_area_local_change);
+				if (v != null)
+					v.setEnabled(false);
 			}
 		}
 	}
@@ -959,6 +1097,9 @@ public class TripTStopEntry extends Activity
 	 */
 	private final void initContTimeRunning(Calendar cNow)
 	{
+		if (viewTS != null)
+			return;
+
 		final boolean setTimePicker;
 		if (cNow == null)
 		{
@@ -1296,7 +1437,7 @@ public class TripTStopEntry extends Activity
 	}
 
 	/**
-	 * Check Settings table for <tt>CURRENT_DRIVER</tt>, <tt>CURRENT_VEHICLE</tt>,
+	 * Check Settings and VehSettings tables for <tt>CURRENT_DRIVER</tt>, <tt>CURRENT_VEHICLE</tt>,
 	 * <tt>CURRENT_TRIP</tt>.
 	 * Set {@link #currA}, {@link #currD}, {@link #currV} and {@link #currT}.
 	 * Set {@link #currTS} if <tt>CURRENT_TSTOP</tt> is set.
@@ -1304,11 +1445,35 @@ public class TripTStopEntry extends Activity
 	 *<P>
 	 * If there's an inconsistency between Settings and GeoArea/Vehicle/Person tables, don't fix it
 	 * in those tables, but don't load objects either.  The current GeoArea setting may be updated if missing.
+	 *<P>
+	 * If {@link #viewTS != null} when called, those fields will all be set from viewTS
+	 * instead of current settings. If a record is missing, will return false.
 	 *
 	 * @return true if settings exist and are OK, false otherwise.
 	 */
 	private boolean checkCurrentDriverVehicleTripSettings()  // TODO refactor common
 	{
+		if (viewTS != null)
+		{
+			currTS = viewTS;
+			try
+			{
+				currT = new Trip(db, viewTS.getTripID());
+				currV = new Vehicle(db, currT.getVehicleID());
+				currD = new Person(db, currT.getDriverID());
+
+				int a_id = viewTS.getAreaID();
+				if (a_id == 0)
+					a_id = currT.getAreaID();
+				currA = new GeoArea(db, a_id);
+			}
+			catch (Exception e) {
+				return false;  // missing required data
+			}
+
+			return true;
+		}
+
 		currV = Settings.getCurrentVehicle(db, false);
 		if (currV == null)
 			return false;
@@ -1373,7 +1538,22 @@ public class TripTStopEntry extends Activity
 			odo_trip.setCurrent10d(odos[1], false);
 		}
 
-		// fill text fields, unless null or 0-length
+		// Disable odos in viewTS mode
+		if (viewTS != null)
+		{
+			odo_trip_chk.setEnabled(false);
+			odo_total_chk.setEnabled(false);
+			odo_trip.setEnabled(false);
+			odo_total.setEnabled(false);
+			View v = findViewById(R.id.trip_tstop_odo_trip_calc_edit);
+			if (v != null)
+				v.setEnabled(false);
+			v = findViewById(R.id.trip_tstop_odo_total_calc_edit);
+			if (v != null)
+				v.setEnabled(false);
+		}
+
+		// fill text fields, unless null or 0-length; if viewTS != null, sets read-only
 		setEditText(currTS.readLocationText(), R.id.trip_tstop_loc);
 		setEditText(currTS.getVia_route(), R.id.trip_tstop_via);
 		setEditText(currTS.getComment(), R.id.trip_tstop_comment);
@@ -1415,6 +1595,8 @@ public class TripTStopEntry extends Activity
 
 		} catch (RDBKeyNotFoundException e) {
 			stopGas = null;
+			if (viewTS != null)
+				btnGas.setEnabled(false);
 		}
 	}
 
@@ -1598,6 +1780,8 @@ public class TripTStopEntry extends Activity
 	 * IF ending the trip, the total odometer is required
 	 * for this stop.  If creating a Frequent Trip, the
 	 * ending trip odometer is also required.
+	 *<P>
+	 * In View Previous TStop mode, the "Close" button calls this method.
 	 */
 	public void onClick_BtnEnterTStop(View v)
 	{
@@ -1611,6 +1795,9 @@ public class TripTStopEntry extends Activity
 	 * Check for required fields, prompt if missing. Otherwise
 	 * save changes to db, continue from stop if {@link #isCurrentlyStopped}
 	 * unless <tt>saveOnly</tt>, and finish this Activity.
+	 *<P>
+	 * If {@link #viewTS} != null, there's nothing to save: finish the activity.
+	 *
 	 * @param saveOnly  If true, save changes but don't leave
 	 *   the stop or continue the trip.
 	 * @since 0.9.20
@@ -1620,6 +1807,15 @@ public class TripTStopEntry extends Activity
 		String locat = null, via_route = null, comment = null;
 		boolean createdGeoArea = false, createdLoc = false, createdVia = false;
 		boolean allOK = true;  // set to false if exception thrown, etc; if false, won't finish() the activity
+
+		/**
+		 * View Previous TStop mode: No changes to save.
+		 */
+		if (viewTS != null)
+		{
+			finish();  // <--- Finish this Activity ---
+			return;
+		}
 
 		/**
 		 * Before any db changes, check entered data for consistency.
@@ -2507,6 +2703,10 @@ public class TripTStopEntry extends Activity
 
 			}
 		}
+
+		if (viewTS != null)
+			i.putExtra(EXTRAS_FIELD_VIEW_TSTOP_ID, viewTS.getID());
+
 		startActivityForResult(i, R.id.trip_tstop_btn_gas);
 	}
 
@@ -2685,13 +2885,22 @@ public class TripTStopEntry extends Activity
 			return null;
 	}
 
-	/** Unless <tt>txt</tt> is <tt>null</tt>, set <tt>editTextID</tt>'s contents. */
-	private void setEditText(final String txt, final int editTextID)
+	/**
+	 * Unless <tt>txt</tt> is <tt>null</tt>, set <tt>editTextID</tt>'s contents.
+	 * If {@link #viewTS != null}, makes the field read-only but not visibly dark
+	 * by calling {@link View#setFocusable(boolean)}.
+	 */
+	private void setEditText(String txt, final int editTextID)
 	{
-		if ((txt == null) || (txt.length() == 0))
+		if (((txt == null) || (txt.length() == 0)) && (viewTS == null))
 			return;
+		else if (txt == null)
+			txt = "";
+
 		EditText et = (EditText) findViewById (editTextID);
 		et.setText(txt);
+		if (viewTS != null)
+			et.setFocusable(false);
 	}
 
 	/**

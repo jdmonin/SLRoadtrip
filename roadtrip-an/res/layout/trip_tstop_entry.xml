@@ -2,8 +2,9 @@
 <!--
  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  Layout for stop during trip / resume trip / end trip; default title label is stop_during_a_trip.
+ See TripTStopEntry class.
 
- This file Copyright (C) 2010-2012,2015 Jeremy D Monin (jdmonin@nand.net)
+ This file Copyright (C) 2010-2012,2015,2017 Jeremy D Monin (jdmonin@nand.net)
 
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
@@ -143,7 +144,7 @@
 		    android:layout_weight="1"
 		    android:textSize="18sp"
 		    android:gravity="center_vertical|left" />
-		<Button
+		<Button android:id="@+id/trip_tstop_area_local_change"
 		    android:text="@string/change"
 		    android:layout_width="wrap_content"
 		    android:layout_height="fill_parent"
@@ -176,7 +177,7 @@
 			android:text="@string/via_route"
 			android:clickable="true"
 			android:onClick="onClick_BtnViaDropdown" />
-		<ImageButton
+		<ImageButton android:id="@+id/trip_tstop_via_dropdown"
 			android:src="@android:drawable/arrow_down_float"
 			android:contentDescription="@string/show_dropdown"
 			android:layout_margin="0dp"
@@ -211,7 +212,7 @@
 		    android:layout_width="wrap_content"
 		    android:layout_height="wrap_content"
 		    android:text="@string/trip_odometer" />
-		<ImageButton
+		<ImageButton android:id="@+id/trip_tstop_odo_trip_calc_edit"
 		    android:src="@android:drawable/ic_menu_edit"
 		    android:contentDescription="@string/calculator"
 		    android:layout_margin="0dp"
@@ -241,7 +242,7 @@
 		    android:layout_width="wrap_content"
 		    android:layout_height="wrap_content"
 		    android:text="@string/current_total_odometer" />
-		<ImageButton
+		<ImageButton android:id="@+id/trip_tstop_odo_total_calc_edit"
 		    android:src="@android:drawable/ic_menu_edit"
 		    android:contentDescription="@string/calculator"
 		    android:layout_margin="0dp"
@@ -394,6 +395,7 @@
 	    android:layout_height="wrap_content"
 	    android:layout_weight="0.5"
 	    android:onClick="onClick_BtnSaveChanges" />
+	<!-- "Enter" text is sometimes changed: button renamed to "End Trip" or "Close" -->
 	<Button android:id="@+id/trip_tstop_btn_enter"
 	    android:text="@string/enter_stop"
 	    android:layout_width="wrap_content"

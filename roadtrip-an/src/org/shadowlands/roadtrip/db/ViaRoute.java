@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010-2011,2014-2016 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2011,2014-2017 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -23,7 +23,9 @@ import java.util.Vector;
 
 /**
  * In-memory representation, and database access for, a ViaRoute (<tt>via_route</tt> table).
+ * ViaRoutes are also referenced from {@link TStop} and {@link FreqTripTStop}.
  * @author jdmonin
+ * @since 0.8.13
  */
 public class ViaRoute extends RDBRecord
 {

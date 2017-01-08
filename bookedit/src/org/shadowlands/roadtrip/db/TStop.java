@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010-2016 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2017 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -201,7 +201,10 @@ public class TStop extends RDBRecord
     /** route/comment; may be null */
     private String via_route, comment;
 
-    /** via route; 0 is empty/unused */
+    /**
+     * via route; 0 is empty/unused. See older field {@link #via_route}.
+     * @since 0.8.13
+     */
     private int via_id;
 
     /**
@@ -504,7 +507,7 @@ public class TStop extends RDBRecord
      * @param geo_lat    Latitude, or null
      * @param geo_lon    Longitude, or null
      * @param flag_sides  Side-table flags, or 0
-     * @param via_id     Street via_route ID from previous tstop's location, or 0
+     * @param via_id     {@link ViaRoute} ID from previous tstop's location, or 0
      * @param comment    Comment/description, or null
      * @throws IllegalArgumentException if <tt>trip</tt> or <tt>locid</tt> or <tt>locat</tt> or <tt>areaid</tt> is bad
      *     or if comment.length > {@link #COMMENT_MAXLEN}
@@ -865,7 +868,8 @@ public class TStop extends RDBRecord
 	}
 
 	/**
-	 * Get the via route, or null if unused.
+	 * Get the via route text, or null if unused.
+	 * Since v0.8.13 {@link #getVia_id()} should be used instead.
 	 * @see #getVia_id()
 	 * @see #readVia()
 	 */
@@ -883,6 +887,7 @@ public class TStop extends RDBRecord
 
 	/**
 	 * Get the via_route id, or 0 if empty/unused.
+	 * Before v0.8.13 {@link #getVia_route()} was used instead.
 	 * @see #readVia()
 	 */
 	public int getVia_id() {

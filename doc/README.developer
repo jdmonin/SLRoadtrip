@@ -199,8 +199,11 @@ Version history:
 rev	version	date
 -	0.8.05	2010-10-06	first install on any device hardware
 -	0.8.07	2010-10-15
--	0.9.01	2010-11-20
-r5	0.9.05	2010-11-30
+-	0.8.09	2010-10-26	Location table, CURRENT_VEHICLE setting
+-	0.8.12	2010-11-07	TStop +geoarea id
+-	0.8.13	2010-11-11	Add via_route table for tstops and freqtrips, PREV_LOCATION setting
+-	0.9.01	2010-11-20	Add Frequent Trips; via_route +odo_dist
+r5	0.9.05	2010-11-30	TStopGas sets flag_sides=256 in TStop
 r24	0.9.06	2011-02-13
 r25		2011-02-19
 r64		2011-04-18

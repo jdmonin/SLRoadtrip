@@ -1646,6 +1646,10 @@ public class TripTStopEntry extends Activity
 			v = findViewById(R.id.trip_tstop_odo_total_calc_edit);
 			if (v != null)
 				v.setVisibility(View.GONE);
+			// Current total odometer -> Total odometer
+			TextView tv = (TextView) findViewById(R.id.trip_tstop_odo_total_calc_lbl);
+			if (tv != null)
+				tv.setText(R.string.total_odometer);
 
 			// find and replace odometer widgets with text values
 			odo = currTS.getOdo_total();

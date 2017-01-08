@@ -18,6 +18,7 @@
  along with this program.  If not, see http://www.gnu.org/licenses/ .
 
  Remember that trailing spaces are trimmed away automatically.
+ The non-breaking space u00A0 remains after trimming, search below for example use.
  Remember that string formatter placeholders such as %1s require parameters in getResources().getString().
 
  The "About..." text is found here; the version number is found in AndroidManifest.xml.
@@ -150,6 +151,7 @@
 <string name="to__colon">To:</string>
 <string name="tools">Tools</string>
 <string name="total">total</string>
+<string name="total_odometer">Total\nodometer</string>
 <string name="trip__category">Trip\ncategory</string>
 <string name="trip_odometer">Trip\nodometer</string>
 <string name="undo">Undo</string>
@@ -198,7 +200,8 @@
 <string name="logbook_show__validation_failed">Validation failed</string>
 <string name="logbook_show__validation_no_problems">Validation complete, no problems found.</string>
 <string name="logbook_show_popup_export_filename">CSV Filename:</string>
-<string name="logbook_show_popup_trip_detail__trip_stops">Trip Stops:</string>
+<!-- use non-breaking space to visually separate in TextView; simple "   " is shortened -->
+<string name="logbook_show_popup_trip_detail__trip_stops">Trip Stops: \u00A0 (tap for stop details)</string>
 <string name="main_cancel_are_you_sure">Are you sure you want to cancel the current trip?</string>
 <string name="main_cancel_cannot_with_stops">Cannot cancel a trip with stops; use End Trip instead.</string>
 <string name="main_create_freq_from_recent">Create Frequent from recent trip...</string>

@@ -41,6 +41,7 @@ import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
+import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ListAdapter;
@@ -186,6 +187,8 @@ public class TripTStopGas extends Activity
 				brandGrade_at.setAdapter((ArrayAdapter<GasBrandGrade>) null);
 			}
 		} else {
+			((Button) findViewById(R.id.trip_tstopgas_btn_cancel)).setText(R.string.close);
+
 			// disable buttons, checkboxes
 			final int[] btns = {
 				R.id.trip_tstopgas_fillup_chk,

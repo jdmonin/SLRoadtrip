@@ -41,6 +41,7 @@ import org.shadowlands.roadtrip.db.VehSettings;
 import org.shadowlands.roadtrip.db.Vehicle;
 import org.shadowlands.roadtrip.db.ViaRoute;
 import org.shadowlands.roadtrip.db.android.RDBOpenHelper;
+import org.shadowlands.roadtrip.util.android.RTRAndroidDateTimeFormatter;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -388,6 +389,14 @@ public class TripTStopEntry extends Activity
 	 * initialized once in {@link #updateDateButtons(int)}.
 	 */
 	private StringBuffer fmt_dow_shortdate;
+
+	/**
+	 * For hh:mm output in View Previous TStop mode, an android-specific DateTimeFormatter
+	 * for locale and user prefs, or {@code null}.
+	 * @since 0.9.51
+	 */
+	private RTRAndroidDateTimeFormatter dtf;
+
 	private Button btnStopTimeDate, btnContTimeDate;
 
 	/**
@@ -769,6 +778,29 @@ public class TripTStopEntry extends Activity
 		final long timeNow = System.currentTimeMillis();
 		boolean contTimeIsNow = false;
 
+		if (viewTS == null)
+		{
+			findViewById(R.id.trip_tstop_time_stop_value_row).setVisibility(View.GONE);
+			findViewById(R.id.trip_tstop_time_cont_value_row).setVisibility(View.GONE);
+		} else {
+			// if needed expand height of 2-line Stopped At Time and Continue At Time labels,
+			// based on another 2-line with known-good height
+			final TextView vStopLbl = (TextView) findViewById(R.id.trip_tstop_time_stop_value_lbl),
+			               vContLbl = (TextView) findViewById(R.id.trip_tstop_time_cont_value_lbl);
+			vStopLbl.post(new Runnable()
+			{
+				public void run() {
+					final int chkHeight = odo_trip_chk.getHeight(),
+					          stopHeight = vStopLbl.getHeight(),
+					          contHeight = vContLbl.getHeight();
+					if (stopHeight < chkHeight)
+						vStopLbl.setHeight(chkHeight);
+					if (contHeight < chkHeight)
+						vContLbl.setHeight(chkHeight);
+				}
+			});
+		}
+
 		// Continue Time:
 		if (stopEndsTrip || (currTS == null))
 		{
@@ -786,17 +818,30 @@ public class TripTStopEntry extends Activity
 				contTimeIsNow = true;
 			} else {
 				contTimeIsNow = false;
-				final int t = viewTS.getTime_continue();
-				if (t != 0)
-				{
-					contTime.setTimeInMillis(t * 1000L);
-				} else {
-					btnContTimeDate.setText("");
-				}
-				tp_time_cont_chk.setChecked(t != 0);
+				final int conttime_sec = viewTS.getTime_continue();
+
 				tp_time_cont.setEnabled(false);
 				tp_time_cont_chk.setEnabled(false);
 				btnContTimeDate.setEnabled(false);
+
+				StringBuilder sb = new StringBuilder();
+				if (conttime_sec != 0)
+				{
+					final long conttime_ms = conttime_sec * 1000L;
+					contTime.setTimeInMillis(conttime_ms);
+
+					if (fmt_dow_shortdate == null)
+						fmt_dow_shortdate = Misc.buildDateFormatDOWShort(this, true);
+					if (dtf == null)
+						dtf = new RTRAndroidDateTimeFormatter(getApplicationContext());
+
+					sb.append(DateFormat.format(fmt_dow_shortdate, contTime));
+					sb.append(' ');
+					sb.append(dtf.formatTime(conttime_ms));
+				}
+				replaceViewWithText
+					(findViewById(R.id.trip_tstop_time_cont_row),
+					 R.id.trip_tstop_time_cont_value_txt, sb, false);
 			}
 
 			// Note that stop-time code may adjust contTime if Historical Mode.
@@ -804,62 +849,84 @@ public class TripTStopEntry extends Activity
 
 		// Stop Time:
 		stopTime = Calendar.getInstance();
-		boolean setTimeStopCheckbox;
+		boolean setTimeStopCheckbox = false;
 		if (isCurrentlyStopped)
 		{
 			int stoptime_sec = currTS.getTime_stop();
-			if (stoptime_sec != 0)
-			{
-				setTimeStopCheckbox = true;
-				stopTime.setTimeInMillis(1000L * stoptime_sec);
-
-				if ((contTime != null) && (viewTS == null)
-					&& (Math.abs(timeNow - (1000L * stoptime_sec)) >= TIMEDIFF_HISTORICAL_MILLIS))
-				{
-					// Historical Mode: continue from that date & time, not from today
-					contTime.setTimeInMillis(1000L * (stoptime_sec + 60));  // 1 minute later
-					contTimeIsNow = false;
-				}
-
-			} else {
-				// Stop time is unknown:
-				// If the trip's most recent time is older than the historical threshold,
-				// fill in that time as a "guessed" stop & continue time.
-
-				long latestVehTime = 1000L * currV.readLatestTime(currT);
-				if ((latestVehTime != 0L)
-				    && (Math.abs(latestVehTime - timeNow) >= TIMEDIFF_HISTORICAL_MILLIS))
-				{
-					Toast.makeText
-						(this,
-						 R.string.using_old_date_due_to_previous,
-						 Toast.LENGTH_SHORT).show();
-
-					if (contTime != null)
-					{
-						// Historical Mode: continue from that date & time, not from today
-						contTime.setTimeInMillis(latestVehTime + 60000L);  // 1 minute later
-						contTimeIsNow = false;
-					}
-				} else {
-					latestVehTime = timeNow;
-				}
-
-				setTimeStopCheckbox = false;
-				stopTime.setTimeInMillis(latestVehTime);  // might be timeNow
-			}
-
-			if ((! contTimeIsNow) && (viewTS == null))
-				tp_time_cont_chk.setChecked(false);
-
-			// Focus on continue-time, to scroll the screen down
 			if (viewTS == null)
 			{
+				if (stoptime_sec != 0)
+				{
+					setTimeStopCheckbox = true;
+					stopTime.setTimeInMillis(1000L * stoptime_sec);
+
+					if ((contTime != null) && (viewTS == null)
+						&& (Math.abs(timeNow - (1000L * stoptime_sec)) >= TIMEDIFF_HISTORICAL_MILLIS))
+					{
+						// Historical Mode: continue from that date & time, not from today
+						contTime.setTimeInMillis(1000L * (stoptime_sec + 60));  // 1 minute later
+						contTimeIsNow = false;
+					}
+
+				} else {
+					// Stop time is unknown:
+					// If the trip's most recent time is older than the historical threshold,
+					// fill in that time as a "guessed" stop & continue time.
+
+					long latestVehTime = 1000L * currV.readLatestTime(currT);
+					if ((latestVehTime != 0L)
+					    && (Math.abs(latestVehTime - timeNow) >= TIMEDIFF_HISTORICAL_MILLIS))
+					{
+						Toast.makeText
+							(this,
+							 R.string.using_old_date_due_to_previous,
+							 Toast.LENGTH_SHORT).show();
+
+						if (contTime != null)
+						{
+							// Historical Mode: continue from that date & time, not from today
+							contTime.setTimeInMillis(latestVehTime + 60000L);  // 1 minute later
+							contTimeIsNow = false;
+						}
+					} else {
+						latestVehTime = timeNow;
+					}
+
+					setTimeStopCheckbox = false;
+					stopTime.setTimeInMillis(latestVehTime);  // might be timeNow
+				}
+
+				if (! contTimeIsNow)
+					tp_time_cont_chk.setChecked(false);
+
+				// Focus on continue-time, to scroll the screen down
 				tp_time_cont.requestFocus();
 			} else {
+				// viewTS != null:
+				// disable/hide other elements, show stopTime if any
+
 				tp_time_stop.setEnabled(false);
 				tp_time_stop_chk.setEnabled(false);
 				btnStopTimeDate.setEnabled(false);
+
+				StringBuilder sb = new StringBuilder();
+				if (stoptime_sec != 0)
+				{
+					final long stoptime_ms = stoptime_sec * 1000L;
+					stopTime.setTimeInMillis(stoptime_ms);
+
+					if (fmt_dow_shortdate == null)
+						fmt_dow_shortdate = Misc.buildDateFormatDOWShort(this, true);
+					if (dtf == null)
+						dtf = new RTRAndroidDateTimeFormatter(getApplicationContext());
+
+					sb.append(DateFormat.format(fmt_dow_shortdate, stopTime));
+					sb.append(' ');
+					sb.append(dtf.formatTime(stoptime_ms));
+				}
+				replaceViewWithText
+					(findViewById(R.id.trip_tstop_time_stop_row),
+					 R.id.trip_tstop_time_stop_value_txt, sb, false);
 			}
 		} else {
 
@@ -881,15 +948,19 @@ public class TripTStopEntry extends Activity
 			stopTime.setTimeInMillis(latestVehTime);
 		}
 
-		tp_time_stop_chk.setChecked(setTimeStopCheckbox);
-		updateDateButtons(0);
-		initTimePicker(stopTime, tp_time_stop);
-		tp_time_stop_init = true;
-		if (contTime != null)
+		if (viewTS == null)
 		{
-			initTimePicker(contTime, tp_time_cont);
-			if (contTimeIsNow && (viewTS == null))
-				initContTimeRunning(contTime);  // keep tp_time_cont current
+			tp_time_stop_chk.setChecked(setTimeStopCheckbox);
+			updateDateButtons(0);
+			initTimePicker(stopTime, tp_time_stop);
+			tp_time_stop_init = true;
+
+			if (contTime != null)
+			{
+				initTimePicker(contTime, tp_time_cont);
+				if (contTimeIsNow && (viewTS == null))
+					initContTimeRunning(contTime);  // keep tp_time_cont current
+			}
 		}
 		rbRoadtripArea_chosen = null;  // Will soon be set by calling selectRoadtripAreaButton
 
@@ -934,7 +1005,8 @@ public class TripTStopEntry extends Activity
 		}
 
 		// Based on current area, set up Location auto-complete
-		areaLocs = Location.getAll(db, areaLocs_areaID);
+		if (viewTS == null)
+			areaLocs = Location.getAll(db, areaLocs_areaID);
 		if (areaLocs != null)
 		{
 			ArrayAdapter<Location> adapter = new ArrayAdapter<Location>(this, R.layout.list_item, areaLocs);
@@ -1575,11 +1647,13 @@ public class TripTStopEntry extends Activity
 			odo = currTS.getOdo_total();
 			replaceViewWithText
 				(odo_total, R.id.trip_tstop_odo_total_value_txt,
-				 ((odo != 0) ? Integer.toString(odo / 10) : " "));
+				 ((odo != 0) ? Integer.toString(odo / 10) : " "),
+				 true);
 			odo = currTS.getOdo_trip();
 			replaceViewWithText
 				(odo_trip, R.id.trip_tstop_odo_trip_value_txt,
-				 ((odo != 0) ? getResources().getString(R.string.value__odo__float, odo / 10f) : " "));
+				 ((odo != 0) ? getResources().getString(R.string.value__odo__float, odo / 10f) : " "),
+				 true);
 		}
 
 		// fill text fields, unless null or 0-length; if viewTS != null, sets read-only
@@ -1631,21 +1705,25 @@ public class TripTStopEntry extends Activity
 
 	/**
 	 * Replace a View within the layout with a {@link TextView} containing given text.
-	 * @param vOld  The view to hide (visibility becomes {@link View#GONE})
+	 * @param vOld  The view to hide (visibility becomes {@link View#GONE}), or {@code null}
 	 * @param vTxtID  The text view's ID to use
 	 * @param ext  Text to use; if null or "", will use {@code "(none)"} from {@code R.string.none__parens}.
+	 * @param setPadLeft  True to set 6dp padding on left
 	 * @since 0.9.51
 	 */
 	private void replaceViewWithText
-		(final View vOld, final int vTxtID, final CharSequence txt)
+		(final View vOld, final int vTxtID, final CharSequence txt, final boolean setPadLeft)
 	{
 		final TextView tv = (TextView) findViewById(vTxtID);
 		if (tv == null)
 			return;
 
-		vOld.setVisibility(View.GONE);
+		if (vOld != null)
+			vOld.setVisibility(View.GONE);
+
 		// pad left 6dp and set text:
-		tv.setPadding((int) (6.0f * getResources().getDisplayMetrics().density), 0, 0, 0);
+		if (setPadLeft)
+			tv.setPadding((int) (6.0f * getResources().getDisplayMetrics().density), 0, 0, 0);
 		if ((txt != null) && (txt.length() > 0))
 			tv.setText(txt);
 		else

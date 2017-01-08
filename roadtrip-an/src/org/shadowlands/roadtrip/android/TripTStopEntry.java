@@ -171,15 +171,27 @@ public class TripTStopEntry extends Activity
 	/**
 	 * Current TStop (from {@link #checkCurrentDriverVehicleTripSettings()}),
 	 * or {@link #viewTS} if not null.
+	 * @see #isViewTScurrTS
 	 */
 	private TStop currTS;
 
 	/**
 	 * For View Previous TStop mode; this field is null unless that
 	 * mode was activated using {@link #EXTRAS_FIELD_VIEW_TSTOP_ID}.
+	 * @see #isViewTScurrTS
 	 * @since 0.9.51
 	 */
 	private TStop viewTS;
+
+	/**
+	 * In View Previous TStop mode, is the specified {@link #viewTS}
+	 * the current stop of some vehicle's current trip? If so, must
+	 * behave strictly read-only to prevent any possible inconsistencies
+	 * based on assumptions that {@code viewTS} must be a previous stop.
+	 * Set in {@link #checkCurrentDriverVehicleTripSettings()}.
+	 * @since 0.9.51
+	 */
+	private boolean isViewTScurrTS;
 
 	/**
 	 * All locations within the {@link GeoArea} having ID {@link #areaLocs_areaID}, or null;
@@ -1533,6 +1545,7 @@ public class TripTStopEntry extends Activity
 	 * Set {@link #currA}, {@link #currD}, {@link #currV} and {@link #currT}.
 	 * Set {@link #currTS} if <tt>CURRENT_TSTOP</tt> is set.
 	 * Set {#link {@link #prevLocObj}} if <tt>PREV_LOCATION</tt> is set.
+	 * Check for and set {@link #isViewTScurrTS} if {@link #viewTS} is set.
 	 *<P>
 	 * If there's an inconsistency between Settings and GeoArea/Vehicle/Person tables, don't fix it
 	 * in those tables, but don't load objects either.  The current GeoArea setting may be updated if missing.
@@ -1542,7 +1555,7 @@ public class TripTStopEntry extends Activity
 	 *
 	 * @return true if settings exist and are OK, false otherwise.
 	 */
-	private boolean checkCurrentDriverVehicleTripSettings()  // TODO refactor common
+	private boolean checkCurrentDriverVehicleTripSettings()
 	{
 		if (viewTS != null)
 		{
@@ -1557,6 +1570,13 @@ public class TripTStopEntry extends Activity
 				if (a_id == 0)
 					a_id = currT.getAreaID();
 				currA = new GeoArea(db, a_id);
+
+				if (! currT.isEnded())
+				{
+					TStop ts = currT.readLatestTStop();
+					if (ts != null)
+						isViewTScurrTS = (viewTS.getID() == ts.getID());
+				}
 			}
 			catch (Exception e) {
 				return false;  // missing required data
@@ -1961,7 +1981,8 @@ public class TripTStopEntry extends Activity
 		boolean allOK = true;  // set to false if exception thrown, etc; if false, won't finish() the activity
 
 		/**
-		 * View Previous TStop mode: No changes to save.
+		 * View Previous TStop mode: No changes to save,
+		 * especially if isViewTScurrTS.
 		 */
 		if (viewTS != null)
 		{

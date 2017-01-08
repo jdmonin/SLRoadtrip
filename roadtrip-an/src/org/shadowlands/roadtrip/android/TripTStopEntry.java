@@ -787,6 +787,7 @@ public class TripTStopEntry extends Activity
 		{
 			findViewById(R.id.trip_tstop_time_stop_value_row).setVisibility(View.GONE);
 			findViewById(R.id.trip_tstop_time_cont_value_row).setVisibility(View.GONE);
+			findViewById(R.id.trip_tstop_comment_status_row).setVisibility(View.GONE);
 		} else {
 			// if needed expand height of 2-line Stopped At Time and Continue At Time labels,
 			// based on another 2-line with known-good height
@@ -1702,6 +1703,45 @@ public class TripTStopEntry extends Activity
 		setEditText(currTS.readLocationText(), R.id.trip_tstop_loc);
 		setEditText(currTS_via_text, R.id.trip_tstop_via);  // if via_id, sets in updateViaRouteAutocomplete()
 		setEditText(currTS.getComment(), R.id.trip_tstop_comment);
+		if (viewTS != null)
+		{
+			// check comment status flags
+			StringBuilder sb = new StringBuilder();
+
+			// TODO i18n
+			boolean any = false;
+			if (currTS.isSingleFlagSet(TStop.FLAG_COMMENT_ADDED))
+			{
+				sb.append("added");
+				any = true;
+			}
+			if (currTS.isSingleFlagSet(TStop.FLAG_COMMENT_EDITED))
+			{
+				if (any)
+					sb.append(", ");
+				sb.append("edited");
+				any = true;
+			}
+			if (currTS.isSingleFlagSet(TStop.FLAG_COMMENT_REMOVED))
+			{
+				if (any)
+					sb.append(", ");
+				sb.append("removed");
+				any = true;
+			}
+
+			if (any)
+			{
+				sb.insert(0, "Comment was ");
+				sb.append(" later.");
+				TextView tv = (TextView) findViewById(R.id.trip_tstop_comment_status_txt);
+				if (tv != null)
+					tv.setText(sb);
+			} else {
+				findViewById(R.id.trip_tstop_comment_status_row).setVisibility(View.GONE);
+			}
+		}
+
 		locObj = null;
 		if (currTS.getLocationID() > 0)
 		{

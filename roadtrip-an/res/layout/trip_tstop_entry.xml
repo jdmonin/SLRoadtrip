@@ -126,6 +126,7 @@
 		    android:layout_height="wrap_content"
 		    android:singleLine="true" />
 		<ImageButton
+		    android:id="@+id/trip_tstop_areas_et_other_dropdown"
 		    android:src="@android:drawable/arrow_down_float"
 		    android:contentDescription="@string/show_dropdown"
 		    android:layout_width="wrap_content"

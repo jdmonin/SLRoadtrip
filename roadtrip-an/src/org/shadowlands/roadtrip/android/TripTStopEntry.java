@@ -1006,28 +1006,38 @@ public class TripTStopEntry extends Activity
 				rbRoadtripAreaNone.setEnabled(false);
 				rbRoadtripAreaEnd.setEnabled(false);
 				rbRoadtripAreaOther.setEnabled(false);
+				v = findViewById(R.id.trip_tstop_areas_et_other_dropdown);
+				if (v != null)
+					v.setVisibility(View.GONE);
 			}
 
 			etRoadtripAreaOther = (AutoCompleteTextView) findViewById(R.id.trip_tstop_areas_et_other);
 			areaOther = null;
 			areaOther_prev = null;
-			if (etRoadtripAreaOtherListener == null)
-				etRoadtripAreaOtherListener = new GeoAreaListenerWatcher();
 
-			if (viewTS == null)
+			// If areaLocs_areaID isn't start, end, or none, set areaOther and show its name
+			final boolean tsAreaIsOther = (areaLocs_areaID != 0)
+				&& (areaLocs_areaID != gaID_s) && (areaLocs_areaID != gaID_e);
+
+			if (tsAreaIsOther || (viewTS == null))
 			{
+				if (etRoadtripAreaOtherListener == null)
+					etRoadtripAreaOtherListener = new GeoAreaListenerWatcher();
+
 				GeoArea[] othera = GeoArea.getAll(db, -1);
 				if (othera != null)
 				{
-					ArrayAdapter<GeoArea> adapter = new ArrayAdapter<GeoArea>
-						(this, R.layout.list_item, othera);
-
-					etRoadtripAreaOther.setAdapter(adapter);
-
-					// If areaLocs_areaID isn't start, end, or none, set areaOther and show its name
-					if ((areaLocs_areaID != 0) && (areaLocs_areaID != gaID_s)
-					    && (areaLocs_areaID != gaID_e))
+					if (viewTS == null)
 					{
+						ArrayAdapter<GeoArea> adapter = new ArrayAdapter<GeoArea>
+							(this, R.layout.list_item, othera);
+
+						etRoadtripAreaOther.setAdapter(adapter);
+					}
+
+					if (tsAreaIsOther)
+					{
+						// find and set other area name text from areaID
 						for (int j = 0; j < othera.length; ++j)
 						{
 							if (othera[j].getID() == areaLocs_areaID)
@@ -1038,21 +1048,29 @@ public class TripTStopEntry extends Activity
 							}
 						}
 
-						if ((currTS != null)
+						if ((currTS != null) && (viewTS == null)
 						    && currTS.isSingleFlagSet(TStop.TEMPFLAG_CREATED_GEOAREA))
 							areaOtherCreatedHere = areaOther;
 					}
 
-					etRoadtripAreaOther.setOnItemClickListener(etRoadtripAreaOtherListener);
+					if (viewTS == null)
+						etRoadtripAreaOther.setOnItemClickListener(etRoadtripAreaOtherListener);
 				} else {
 					etRoadtripAreaOther.setAdapter((ArrayAdapter<GeoArea>) null);
 				}
+			}
 
+			if (viewTS == null)
+			{
 				etRoadtripAreaOther.addTextChangedListener(etRoadtripAreaOtherListener);
 				etRoadtripAreaOther.setOnFocusChangeListener(etRoadtripAreaOtherListener);
+			} else {
+				etRoadtripAreaOther.setFocusable(false);
 			}
 
 		} else {
+			// local trip, not roadtrip
+
 			View v = findViewById(R.id.trip_tstop_areas_row1);
 			if (v != null)
 				v.setVisibility(View.GONE);

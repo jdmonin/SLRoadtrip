@@ -134,7 +134,6 @@ public class LogbookShow extends Activity
 	private static ViewGroup.LayoutParams TS_ROW_LP = null;
 
 	private RDBAdapter db = null;
-	private TextView tvHeader;
 
 	/** Message that no trips were found in {@link #onCreate(Bundle)}, or null */
 	private TextView tvNoTripsFound = null;
@@ -304,7 +303,6 @@ public class LogbookShow extends Activity
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.logbook_show);
 
-		tvHeader = (TextView) findViewById(R.id.logbook_show_header);  // TODO show date range or location
 		TextView tvContent = (TextView) findViewById(R.id.logbook_show_textview);
 		db = new RDBOpenHelper(this);
 

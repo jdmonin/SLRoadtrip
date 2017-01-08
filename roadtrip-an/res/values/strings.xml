@@ -156,6 +156,10 @@
 <string name="using_old_date_due_to_previous">Historical Mode:\nUsing an old date because of the previous date entered for this vehicle.</string>
 <string name="validate">Validate</string>
 <string name="validation_failed">Validation failed</string>
+<!-- odometer as "12.3" with auto-localized decimal separator -->
+<string name="value__odo__float">%1$.1f</string>
+<!-- odometer as "(12.3)" with auto-localized decimal separator -->
+<string name="value__odo__parens_float">(%1$.1f)</string>
 <string name="vehicle">Vehicle</string>
 <string name="via">via</string>
 <string name="via_route">Via route</string>
@@ -194,8 +198,6 @@
 <string name="logbook_show__validation_failed">Validation failed</string>
 <string name="logbook_show__validation_no_problems">Validation complete, no problems found.</string>
 <string name="logbook_show_popup_export_filename">CSV Filename:</string>
-<!-- odometer as (12.3) with auto-localized decimal separator -->
-<string name="logbook_show_popup_trip_detail__odo__parens_float">(%1$.1f)</string>
 <string name="logbook_show_popup_trip_detail__trip_stops">Trip Stops:</string>
 <string name="main_cancel_are_you_sure">Are you sure you want to cancel the current trip?</string>
 <string name="main_cancel_cannot_with_stops">Cannot cancel a trip with stops; use End Trip instead.</string>

@@ -238,8 +238,7 @@ public class LogbookShowTripDetailDialogBuilder
 			if (odo != 0)
 			{
 				// "(12.3)" with auto-localization of decimal separator
-				sb.append(res.getString
-					    (R.string.logbook_show_popup_trip_detail__odo__parens_float, odo / 10f));
+				sb.append(res.getString(R.string.value__odo__parens_float, odo / 10f));
 				sb.append(' ');
 			}
 			sb.append(tsLocText);

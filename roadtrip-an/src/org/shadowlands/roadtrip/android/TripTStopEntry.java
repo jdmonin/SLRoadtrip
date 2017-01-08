@@ -219,7 +219,7 @@ public class TripTStopEntry extends Activity
 
 	/**
 	 * When this activity was created, were we already at a TStop?
-	 * True if <tt>{@link #currTS} != null</tt>.
+	 * True if <tt>{@link #currTS} != null</tt> or <tt>{@link #viewTS} != null</tt>.
 	 * @see #stopEndsTrip
 	 */
 	private boolean isCurrentlyStopped;
@@ -943,6 +943,7 @@ public class TripTStopEntry extends Activity
 		}
 
 		// See if we're stopping on a frequent trip:
+		// Also assumes viewTS == null because ! isCurrentlyStopped.
 		if ((! isCurrentlyStopped) && currT.isFrequent())
 		{
 			FreqTrip ft = VehSettings.getCurrentFreqTrip(db, currV, false);
@@ -1565,10 +1566,20 @@ public class TripTStopEntry extends Activity
 			odo_total.setEnabled(false);
 			View v = findViewById(R.id.trip_tstop_odo_trip_calc_edit);
 			if (v != null)
-				v.setEnabled(false);
+				v.setVisibility(View.GONE);
 			v = findViewById(R.id.trip_tstop_odo_total_calc_edit);
 			if (v != null)
-				v.setEnabled(false);
+				v.setVisibility(View.GONE);
+
+			// find and replace odometer widgets with text values
+			odo = currTS.getOdo_total();
+			replaceViewWithText
+				(odo_total, R.id.trip_tstop_odo_total_value_txt,
+				 ((odo != 0) ? Integer.toString(odo / 10) : " "));
+			odo = currTS.getOdo_trip();
+			replaceViewWithText
+				(odo_trip, R.id.trip_tstop_odo_trip_value_txt,
+				 ((odo != 0) ? getResources().getString(R.string.value__odo__float, odo / 10f) : " "));
 		}
 
 		// fill text fields, unless null or 0-length; if viewTS != null, sets read-only
@@ -1616,6 +1627,29 @@ public class TripTStopEntry extends Activity
 			if (viewTS != null)
 				btnGas.setEnabled(false);
 		}
+	}
+
+	/**
+	 * Replace a View within the layout with a {@link TextView} containing given text.
+	 * @param vOld  The view to hide (visibility becomes {@link View#GONE})
+	 * @param vTxtID  The text view's ID to use
+	 * @param ext  Text to use; if null or "", will use {@code "(none)"} from {@code R.string.none__parens}.
+	 * @since 0.9.51
+	 */
+	private void replaceViewWithText
+		(final View vOld, final int vTxtID, final CharSequence txt)
+	{
+		final TextView tv = (TextView) findViewById(vTxtID);
+		if (tv == null)
+			return;
+
+		vOld.setVisibility(View.GONE);
+		// pad left 6dp and set text:
+		tv.setPadding((int) (6.0f * getResources().getDisplayMetrics().density), 0, 0, 0);
+		if ((txt != null) && (txt.length() > 0))
+			tv.setText(txt);
+		else
+			tv.setText(R.string.none__parens);
 	}
 
 	/**

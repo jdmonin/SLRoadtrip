@@ -80,7 +80,8 @@
 				/>
 		</TableRow>
 	</TableLayout>
-	<TextView android:text="@string/logbook_show_popup_trip_detail__trip_stops"
+	<TextView android:id="@+id/logbook_show_popup_trip_detail_tstop_list_head"
+		android:text="@string/logbook_show_popup_trip_detail__trip_stops"
 		android:layout_marginTop="9dp"
 		android:layout_width="fill_parent" android:layout_height="wrap_content"
 		/>

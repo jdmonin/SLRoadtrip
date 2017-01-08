@@ -45,7 +45,6 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 /**
  * Dialog builder for {@link LogbookShow} to show detail about one trip.
@@ -64,10 +63,13 @@ public class LogbookShowTripDetailDialogBuilder
 	/** Trip being shown in this dialog. */
 	private final Trip tr;
 
-	/** ListView of {@link TStop}s on this trip. Adapter is {@link #lvTSAdapter}. Set in {@link #create()}. */
+	/**
+	 * ListView of {@link TStop}s on this trip; may be empty. Set in {@link #create()}.
+	 * Adapter is {@link #lvTSAdapter} or {@code null}.
+	 */
 	private ListView lvTStopsList;
 
-	/** Adapter for {@link #lvTStopsList} */
+	/** Adapter for {@link #lvTStopsList}, or {@code null} if list is empty. */
 	private ArrayAdapter<TStopText> lvTSAdapter;
 
 	/**
@@ -180,15 +182,32 @@ public class LogbookShowTripDetailDialogBuilder
 		if (lvTStopsList != null)
 		{
 			List<TStop> allTS = tr.readAllTStops();
-			if (! tr.isStartTStopFromPrevTrip())
-				allTS.remove(0);  // shown as starting location: don't list it twice
+			if ((allTS != null) && ! allTS.isEmpty())
+			{
+				if (! tr.isStartTStopFromPrevTrip())
+				{
+					// starting location already shown: remove it from stop list,
+					// but don't modify model's cached allTS
+					allTS = new ArrayList<TStop>(allTS);
+					allTS.remove(0);
+				}
+				if (! allTS.isEmpty())
+				{
+					lvTSAdapter = new ArrayAdapter<TStopText>
+					    (caller, R.layout.list_item,
+					    TStopText.fromList(allTS, caller.getResources()));
+					lvTStopsList.setAdapter(lvTSAdapter);
+					lvTStopsList.setOnItemClickListener(this);
+				}
+			}
 
-			// TODO to show more fields or controls, custom list item layout
-			lvTSAdapter =
-				new ArrayAdapter<TStopText>
-				    (caller, R.layout.list_item, TStopText.fromList(allTS, caller.getResources()));
-			lvTStopsList.setAdapter(lvTSAdapter);
-			lvTStopsList.setOnItemClickListener(this);
+			if (lvTSAdapter == null)
+			{
+				// TStop list is empty (new trip in progress): change list heading text
+				tv = (TextView) itms.findViewById(R.id.logbook_show_popup_trip_detail_tstop_list_head);
+				if (tv != null)
+					tv.setText(R.string.logbook_show_popup_trip_detail__trip_stops_none);
+			}
 		}
 
 		tv = (TextView) itms.findViewById(R.id.logbook_show_popup_trip_detail_starting_loc);

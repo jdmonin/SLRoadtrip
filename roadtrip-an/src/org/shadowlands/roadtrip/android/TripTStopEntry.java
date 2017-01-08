@@ -50,6 +50,7 @@ import android.app.DatePickerDialog.OnDateSetListener;
 import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.res.Resources;
 import android.os.Bundle;
 import android.os.Handler;
 import android.text.Editable;
@@ -720,14 +721,15 @@ public class TripTStopEntry extends Activity
 			}, 750);
 
 		// Change title if needed; default title label is stop_during_a_trip
+		final Resources res = getResources();
 		if (stopEndsTrip)
 		{
-			setTitle(getResources().getString(R.string.end_trip));
+			setTitle(res.getString(R.string.end_trip));
 		} else if (viewTS != null) {
-			setTitle(getResources().getString(R.string.trip_tstop_entry__title_view_prev));
+			setTitle(res.getString(R.string.trip_tstop_entry__title_view_prev));
 			findViewById(R.id.trip_tstop_prompt).setVisibility(View.GONE);
 		} else if (isCurrentlyStopped) {
-			setTitle(getResources().getString(R.string.continu_from_stop));
+			setTitle(res.getString(R.string.continu_from_stop));
 		}
 
 		// Set up autocompletes
@@ -842,6 +844,13 @@ public class TripTStopEntry extends Activity
 					sb.append(DateFormat.format(fmt_dow_shortdate, contTime));
 					sb.append(' ');
 					sb.append(dtf.formatTime(conttime_ms));
+				}
+				else if (currT.isEnded())
+				{
+					// no continue time, and trip has ended: did it end at this TStop?
+					final TStop endingTS = currT.readLatestTStop();
+					if ((endingTS != null) && (endingTS.getID() == viewTS.getID()))
+						sb.append(res.getString(R.string.trip_tstop_entry_trip_ends_here));
 				}
 				replaceViewWithText
 					(findViewById(R.id.trip_tstop_time_cont_row),

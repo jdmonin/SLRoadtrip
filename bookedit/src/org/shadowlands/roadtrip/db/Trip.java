@@ -1371,6 +1371,7 @@ public class Trip extends RDBRecord
 	 * Is this trip ended?  Completed trips have a nonzero
 	 * total-odometer value in {@link #getOdo_end()}.
 	 * @return true if the trip is completed
+	 * @see #readLatestTStop()
 	 */
 	public final boolean isEnded()
 	{

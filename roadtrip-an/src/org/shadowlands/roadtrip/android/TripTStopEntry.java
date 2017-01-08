@@ -571,19 +571,39 @@ public class TripTStopEntry extends Activity
 		btnGas = (Button) findViewById(R.id.trip_tstop_btn_gas);
 
 		Intent i = getIntent();
+
+		// check viewTS first: determines where to get other settings
+		if ((i != null) && i.hasExtra(EXTRAS_FIELD_VIEW_TSTOP_ID))
+		{
+			final int tsid = i.getIntExtra(EXTRAS_FIELD_VIEW_TSTOP_ID, 0);
+			if (tsid > 0)
+				try
+				{
+					viewTS = new TStop(db, tsid);
+				}
+				catch(Exception e) {}
+		}
+
+		// get currA, currV, currT, maybe currTS and prevLocObj;
+		// If viewTS != null, those will be taken from viewTS's fields
+		// instead of current settings.
+		if (! checkCurrentDriverVehicleTripSettings())
+		{
+			// Internal error: Current area/driver/vehicle/trip not found in db
+			Toast.makeText
+				(getApplicationContext(),
+				 R.string.internal__current_notfound_area_driver_veh_trip,
+				 Toast.LENGTH_SHORT).show();
+			startActivity(new Intent(TripTStopEntry.this, AndroidStartup.class));
+			finish();
+			return;
+		}
+
+		isCurrentlyStopped = (currTS != null);  // true when viewTS != null
+
+		// now check other intent extras
 		if (i != null)
 		{
-			if (i.hasExtra(EXTRAS_FIELD_VIEW_TSTOP_ID))
-			{
-				final int tsid = i.getIntExtra(EXTRAS_FIELD_VIEW_TSTOP_ID, 0);
-				if (tsid > 0)
-					try
-					{
-						viewTS = new TStop(db, tsid);
-					}
-					catch(Exception e) {}
-			}
-
 			stopEndsTrip = i.getBooleanExtra(EXTRAS_FLAG_ENDTRIP, false) && (viewTS == null);
 			if (stopEndsTrip)
 			{
@@ -612,23 +632,6 @@ public class TripTStopEntry extends Activity
 				}
 			}
 		} // else, stopEndsTrip is false
-
-		// get currA, currV, currT, maybe currTS and prevLocObj
-		// If viewTS != null, those will be taken from viewTS's fields
-		// instead of current settings.
-		if (! checkCurrentDriverVehicleTripSettings())
-		{
-			// Internal error: Current area/driver/vehicle/trip not found in db
-			Toast.makeText
-				(getApplicationContext(),
-				 R.string.internal__current_notfound_area_driver_veh_trip,
-				 Toast.LENGTH_SHORT).show();
-			startActivity(new Intent(TripTStopEntry.this, AndroidStartup.class));
-			finish();
-			return;
-		}
-
-		isCurrentlyStopped = (currTS != null);  // true when viewTS != null
 
 		// if currTS != null, we'll read stopGas in updateTextAndButtons,
 		// and set btnGas's green light.
@@ -722,6 +725,7 @@ public class TripTStopEntry extends Activity
 			setTitle(getResources().getString(R.string.end_trip));
 		} else if (viewTS != null) {
 			setTitle(getResources().getString(R.string.trip_tstop_entry__title_view_prev));
+			findViewById(R.id.trip_tstop_prompt).setVisibility(View.GONE);
 		} else if (isCurrentlyStopped) {
 			setTitle(getResources().getString(R.string.continu_from_stop));
 		}

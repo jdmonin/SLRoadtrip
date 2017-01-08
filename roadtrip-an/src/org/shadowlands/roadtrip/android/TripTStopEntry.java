@@ -2582,7 +2582,7 @@ public class TripTStopEntry extends Activity
 			// text fields, info fields
 			currTS.setLocationID(locID);
 			currTS.setVia_id(viaID);
-			currTS.setComment(comment);
+			currTS.setComment(comment, false, false);
 			if ((currT.isRoadtrip() || wantsConvertLocalToRoadtrip)
 			    && (areaLocs_areaID >= ((stopEndsTrip) ? 1 : 0)))
 				currTS.setAreaID(areaLocs_areaID);

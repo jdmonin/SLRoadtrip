@@ -103,6 +103,12 @@ public class TStop extends RDBRecord
     /** Field array with only the GeoArea ID field: { {@code "a_id"} } */
     private final static String[] FIELD_AREA_ID_ARR = { "a_id" };
 
+    /**
+     * Field array with only the Comment and Flags fields: { {@code "comment", "flag_sides"} }
+     * @since 0.9.51
+     */
+    private final static String[] FIELD_COMMENT_AND_FLAGS_ARR = { "comment", "flag_sides" };
+
     /** Maximum length (2000) of comment field. {@code MAXLEN} was 255 before v0.9.50. */
     public static final int COMMENT_MAXLEN = 2000;  // The value 2000 is also hardcoded into trip_tstop_entry.xml
 
@@ -163,6 +169,33 @@ public class TStop extends RDBRecord
     /** Flag to indicate this TStop has a related {@link TStopGas} record */
     public static final int FLAG_GAS = 0x100;
 
+    /**
+     * Flag to indicate this TStop's {@link #getComment()} was added later,
+     * after continuing travel from the stop.
+     * @since 0.9.51
+     * @see #FLAG_COMMENT_EDITED
+     * @see #FLAG_COMMENT_REMOVED
+     */
+    public static final int FLAG_COMMENT_ADDED = 0x200;
+
+    /**
+     * Flag to indicate this TStop's {@link #getComment()} was edited later,
+     * after continuing travel from the stop.
+     * @since 0.9.51
+     * @see #FLAG_COMMENT_ADDED
+     * @see #FLAG_COMMENT_REMOVED
+     */
+    public static final int FLAG_COMMENT_EDITED = 0x400;
+
+    /**
+     * Flag to indicate this TStop's {@link #getComment()} was removed later,
+     * after continuing travel from the stop.
+     * @since 0.9.51
+     * @see #FLAG_COMMENT_ADDED
+     * @see #FLAG_COMMENT_EDITED
+     */
+    public static final int FLAG_COMMENT_REMOVED = 0x800;
+
     private int tripid;  // FK
 
     /** may be blank (0) */
@@ -198,8 +231,27 @@ public class TStop extends RDBRecord
     /** location text ('<tt>descr</tt>' field); will be null if {@link #locid} is used instead. */
     private String locat;
 
-    /** route/comment; may be null */
-    private String via_route, comment;
+    /** route string; likely null, {@link #via_id} has been used instead since v0.8.13. */
+    private String via_route;
+
+    /**
+     * comment; null if empty.
+     *<P>
+     * In v0.9.51 and higher, the android app allows adding or editing the comment later
+     * after continuing travel from the TStop. See {@link #setComment(String, boolean, boolean)}
+     * for details and related {@link #flag_sides} flags.
+     * @see #isCommentSetInDB
+     */
+    private String comment;
+
+    /**
+     * Is the {@link #comment} field currently set (not null) in the database?
+     * Updated when TStop is loaded from DB or committed/inserted, by calling
+     * {@link #recalcIsCommentSetInDB()}. Used by {@link #setComment(String, boolean, boolean)} when
+     * its {@code isLater} param is set. Ignore this field if TStop is new ({@link RDBRecord#id id} &lt; 1).
+     * @since 0.9.51
+     */
+    private boolean isCommentSetInDB;
 
     /**
      * via route; 0 is empty/unused. See older field {@link #via_route}.
@@ -398,13 +450,15 @@ public class TStop extends RDBRecord
     		throw new RDBKeyNotFoundException(id);
 
     	initFields(rec);  // null descr shouldn't occur (IllegalArgumentException)
+    	// initFields also calls recalcIsCommentSetInDB()
     }
 
     /**
      * Existing record, only some fields, from {@link TStopGas} db query:
      * Fill our obj fields from db-record string contents.
      * For use by {@link TStopGas#recentGasForVehicle(RDBAdapter, Vehicle, int)}.
-     * Very limited use, because (for example) the {@link Trip} field isn't filled.
+     * Very limited use, because (for example) the {@link Trip} and {@link #getComment()} fields aren't filled.
+     *
      * @param db  connection
      * @param tsg  TStopGas associated with this stop; it must be committed, with a valid ID
      * @param odo_total  Total odometer
@@ -423,6 +477,7 @@ public class TStop extends RDBRecord
     	throws RDBKeyNotFoundException, IllegalArgumentException, NumberFormatException
     {
     	super(db, tsg.id);
+
     	if (odo_total == null)
     		throw new IllegalArgumentException("null odo_total");
     	if (locid == null)
@@ -451,6 +506,7 @@ public class TStop extends RDBRecord
 
     /**
      * Fill our obj fields from db-record string contents.
+     * Also calls {@link #recalcIsCommentSetInDB()}.
      * @param rec  field contents, as returned by db.getRow(FIELDS) or db.getRows(FIELDS_AND_ID)
      * @throws IllegalArgumentException if locat is null; locat is rec[10]
      * @throws NumberFormatException if an integer string can't be parsed
@@ -479,6 +535,7 @@ public class TStop extends RDBRecord
     	if (rec[12] != null)
     		via_id = Integer.parseInt(rec[12]);
     	comment = rec[13];
+    	recalcIsCommentSetInDB();
 
     	if (rec.length == 15)
     		id = Integer.parseInt(rec[14]);
@@ -572,7 +629,7 @@ public class TStop extends RDBRecord
 	 * Clears dirty field; sets id and dbConn fields.
 	 *<P>
 	 * After calling this, if this stop is the highest mileage
-	 * on a Trip in progess, please call
+	 * on a Trip in progress, please call
 	 * {@link Trip#addCommittedTStop(TStop)} to keep the
 	 * Trip object consistent.
 	 *
@@ -583,8 +640,10 @@ public class TStop extends RDBRecord
         throws IllegalStateException
     {
     	id = db.insert(TABNAME, FIELDS, buildInsertUpdate(), true);
-		dirty = false;
+    	recalcIsCommentSetInDB();
+    	dirty = false;
     	dbConn = db;
+
     	return id;
     }
 
@@ -603,7 +662,9 @@ public class TStop extends RDBRecord
 	{
 		if (! dirty)
 			return;
+
 		dbConn.update(TABNAME, id, FIELDS, buildInsertUpdate());
+		recalcIsCommentSetInDB();
 		dirty = false;
 	}
 
@@ -719,7 +780,7 @@ public class TStop extends RDBRecord
 	/**
 	 * Set or clear the travel-continue time (ending the stop) for this TStop.
 	 * @param sTime Time at which travel resumes (unix format), or 0 for blank
-	 * @param commit Also commit this field change (ONLY!) to db right now;
+	 * @param commitNow Also commit this field change (ONLY!) to db right now;
 	 *               if false, only set {@link #isDirty()}.
 	 * @see #getTime_continue()
 	 */
@@ -1016,19 +1077,45 @@ public class TStop extends RDBRecord
     	dirty = true;
     }
 
-    /** Get the description/comment, or null. */
+	/**
+	 * Get the description/comment, or null if none.
+	 *<P>
+	 * In v0.9.51 and higher, the android app allows adding or editing the comment later
+	 * after continuing travel from the TStop. See {@link #setComment(String, boolean, boolean)}
+	 * for details and related {@link #getFlags()} flags.
+	 */
 	public String getComment() {
 		return comment;
 	}
 
 	/**
-	 * Set the description/comment field.
-	 * @param comment new value, or null
+	 * Set or clear the description/comment field.
+	 *<P>
+	 * In v0.9.51 and higher, the android app allows adding or editing the comment later
+	 * after continuing travel from the TStop. {@code setComment(..)} supports this by
+	 * updating related {@link #getFlags()} flags if {@code isLater} is set:
+	 *<UL>
+	 * <LI> {@link #FLAG_COMMENT_ADDED}
+	 * <LI> {@link #FLAG_COMMENT_EDITED}
+	 * <LI> {@link #FLAG_COMMENT_REMOVED}
+	 *</UL>
+	 * The flag update is done by comparing the comment's current status (present or empty)
+	 * against its status when the TStop was last loaded from the DB or committed.
+	 * Once set, these flags are never cleared by {@code setComment(..)}.
+	 *
+	 * @param comment  New value, or null for none
+	 * @param isLater  If true, method is being called after continuing travel from the TStop:
+	 *     Update related fields as noted above.
+	 * @param commitNow  Commit this updated field (ONLY!) to db right now,
+	 *     along with related flags if changed. If false, only set {@link #isDirty()}.
 	 * @throws IllegalArgumentException if comment.length > {@link #COMMENT_MAXLEN}
+	 *     or if {@code isLater} but TStop is new and hasn't been {@link #insert(RDBAdapter)}ed yet
 	 */
-	public void setComment(final String comment)
+	public void setComment(final String comment, final boolean isLater, final boolean commitNow)
 		throws IllegalArgumentException
 	{
+		if (isLater && (id < 1))
+			throw new IllegalArgumentException("isLater but tstop is new");
 		if (comment != null)
 		{
 			if (comment.length() > COMMENT_MAXLEN)
@@ -1036,10 +1123,49 @@ public class TStop extends RDBRecord
 			if (comment.equals(this.comment))
 				return;
 		}
+
 		this.comment = comment;
-		dirty = true;
 		if (toString_descr != null)
 			toString_descr = null;
+
+		if (isLater)
+		{
+			final boolean isSetNow = (comment != null) && (comment.length() > 0);
+
+			if (isCommentSetInDB)
+			{
+				if (isSetNow)
+					flag_sides |= FLAG_COMMENT_EDITED;
+				else
+					flag_sides |= FLAG_COMMENT_REMOVED;
+			} else {
+				if (isSetNow)
+					flag_sides |= FLAG_COMMENT_ADDED;
+				// else
+				//   not set before, not set now: no flag change
+			}
+		}
+
+		if (! commitNow)
+		{
+			dirty = true;
+			return;
+		}
+
+		String[] newVals = { comment, Integer.toString(flag_sides) };
+		dbConn.update(TABNAME, id, FIELD_COMMENT_AND_FLAGS_ARR, newVals);
+		recalcIsCommentSetInDB();
+	}
+
+	/**
+	 * Recalculate {@link #isCommentSetInDB} after loading the TStop from the DB,
+	 * committing changes, or after initial insert. Assumes current value of
+	 * {@link #comment} reflects what's in the database at this moment.
+	 * @since 0.9.51
+	 */
+	private void recalcIsCommentSetInDB()
+	{
+		isCommentSetInDB = (comment != null) && (comment.length() > 0);
 	}
 
 	/**

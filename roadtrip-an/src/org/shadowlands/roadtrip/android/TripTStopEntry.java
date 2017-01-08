@@ -759,22 +759,9 @@ public class TripTStopEntry extends Activity
 			if (v != null)
 				v.setEnabled(false);
 
-			// Won't be able to set via text in updateViaRouteAutocomplete because
-			// prevLocObj == null. Fake it by setting old via_route text field:
-			String via_text = viewTS.getVia_route();
-			if ((via_text == null) || (via_text.length() == 0))
-			{
-				int via_id = viewTS.getVia_id();
-				if (via_id != 0)
-				{
-					try
-					{
-						ViaRoute via = new ViaRoute(db, via_id);
-						viewTS.setVia_route(via.getDescr());
-					}
-					catch (Exception e) {}
-				}
-			}
+			// Won't be able to set via_text in updateViaRouteAutocomplete() because
+			// prevLocObj == null. Workaround is handled later in this method; search for
+			// setEditText(currTS_via_text, R.id.trip_tstop_via).
 		}
 
 		// etRoadtripAreaOther is initialized below only if currT.isRoadtrip(), otherwise remains null.
@@ -1673,9 +1660,27 @@ public class TripTStopEntry extends Activity
 				 true);
 		}
 
+		// Prep to fill via_route text field in read-only View Previous TStop mode:
+		// Won't be able to set via_text in updateViaRouteAutocomplete() because
+		// prevLocObj == null. Query it here instead:
+		String currTS_via_text = currTS.getVia_route();
+		if ((viewTS != null) && ((currTS_via_text == null) || (currTS_via_text.length() == 0)))
+		{
+			int via_id = viewTS.getVia_id();
+			if (via_id != 0)
+			{
+				try
+				{
+					ViaRoute via = new ViaRoute(db, via_id);
+					currTS_via_text = via.getDescr();
+				}
+				catch (Exception e) {}
+			}
+		}
+
 		// fill text fields, unless null or 0-length; if viewTS != null, sets read-only
 		setEditText(currTS.readLocationText(), R.id.trip_tstop_loc);
-		setEditText(currTS.getVia_route(), R.id.trip_tstop_via);
+		setEditText(currTS_via_text, R.id.trip_tstop_via);  // if via_id, sets in updateViaRouteAutocomplete()
 		setEditText(currTS.getComment(), R.id.trip_tstop_comment);
 		locObj = null;
 		if (currTS.getLocationID() > 0)

@@ -1103,7 +1103,8 @@ public class TStop extends RDBRecord
 	 * against its status when the TStop was last loaded from the DB or committed.
 	 * Once set, these flags are never cleared by {@code setComment(..)}.
 	 *
-	 * @param comment  New value, or null for none
+	 * @param comment  New value, or null for none. If equal to current {@link #getComment()}
+	 *     contents, nothing happens: No commit is made, {@link #isDirty()} isn't set.
 	 * @param isLater  If true, method is being called after continuing travel from the TStop:
 	 *     Update related fields as noted above.
 	 * @param commitNow  Commit this updated field (ONLY!) to db right now,

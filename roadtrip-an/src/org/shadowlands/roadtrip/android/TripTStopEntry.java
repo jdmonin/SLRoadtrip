@@ -1706,8 +1706,23 @@ public class TripTStopEntry extends Activity
 
 			// TODO i18n
 			boolean any = false;
+			final boolean wasRemoved = currTS.isSingleFlagSet(TStop.FLAG_COMMENT_REMOVED);
+			boolean removedThenAdded = false;
+			if (wasRemoved)
+			{
+				final String comment = viewTS.getComment();
+				if ((comment != null) && (comment.length() > 0))
+				{
+					removedThenAdded = true;
+					sb.append("removed");
+					any = true;
+				}
+			}
+
 			if (currTS.isSingleFlagSet(TStop.FLAG_COMMENT_ADDED))
 			{
+				if (any)
+					sb.append(", ");
 				sb.append("added");
 				any = true;
 			}
@@ -1718,7 +1733,7 @@ public class TripTStopEntry extends Activity
 				sb.append("edited");
 				any = true;
 			}
-			if (currTS.isSingleFlagSet(TStop.FLAG_COMMENT_REMOVED))
+			if (wasRemoved && ! removedThenAdded)
 			{
 				if (any)
 					sb.append(", ");

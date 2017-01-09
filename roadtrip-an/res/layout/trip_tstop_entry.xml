@@ -369,17 +369,11 @@
 			android:maxLength="2000"
 			android:minLines="2" />
 	</TableRow>
-	<!-- View Previous TStop mode: Comment status flags (added, edited, etc) -->
-	<TableRow android:id="@+id/trip_tstop_comment_status_row">
-		<TextView
-			android:layout_width="wrap_content"
-			android:layout_height="fill_parent" />
-		<TextView android:id="@+id/trip_tstop_comment_status_txt"
-			android:layout_width="fill_parent"
-			android:layout_height="wrap_content"
-			android:textSize="15sp" />
-	</TableRow>
 </TableLayout>
+<!-- View Previous TStop mode: Comment status flags (added, edited, etc) -->
+<TextView android:id="@+id/trip_tstop_comment_status_txt"
+	android:layout_width="fill_parent"
+	android:layout_height="wrap_content" />
 <!-- TStop detail buttons row (gas, etc) -->
 <LinearLayout
 	android:orientation="horizontal"

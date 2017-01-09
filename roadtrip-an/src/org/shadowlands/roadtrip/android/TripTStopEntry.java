@@ -650,23 +650,19 @@ public class TripTStopEntry extends Activity
 		// and set btnGas's green light.
 		stopGas = null;
 
-		if (! isCurrentlyStopped)
+		// Hide or disable Save button in various modes.
 		{
-			View sb = findViewById(R.id.trip_tstop_btn_save);
-			if (sb != null)
-				sb.setVisibility(View.GONE);
-		}
-
-		if (viewTS != null)
-		{
-			// View Previous TStop mode:
-			// Disable Save button; Enter will be renamed below.
-			// Other fields will be updated or disabled below.
 			Button b = (Button) findViewById(R.id.trip_tstop_btn_save);
 			if (b != null)
-				b.setEnabled(false);
-
+			{
+				if (! isCurrentlyStopped)
+					b.setVisibility(View.GONE);
+				else if (isViewTScurrTS)
+					b.setEnabled(false);
+			}
 		}
+		// In View Previous TStop mode, Enter will be renamed below to Close
+		// and most other fields updated or disabled.
 
 		// Hide rows unless stopEndsTrip;
 		// set "continue" button text if already stopped
@@ -1702,7 +1698,7 @@ public class TripTStopEntry extends Activity
 		// fill text fields, unless null or 0-length; if viewTS != null, sets read-only
 		setEditText(currTS.readLocationText(), R.id.trip_tstop_loc);
 		setEditText(currTS_via_text, R.id.trip_tstop_via);  // if via_id, sets in updateViaRouteAutocomplete()
-		setEditText(currTS.getComment(), R.id.trip_tstop_comment);
+		setEditText(currTS.getComment(), R.id.trip_tstop_comment);  // not read-only unless isViewTScurrTS
 		if (viewTS != null)
 		{
 			// check comment status flags
@@ -2008,7 +2004,10 @@ public class TripTStopEntry extends Activity
 	 * save changes to db, continue from stop if {@link #isCurrentlyStopped}
 	 * unless <tt>saveOnly</tt>, and finish this Activity.
 	 *<P>
-	 * If {@link #viewTS} != null, there's nothing to save: finish the activity.
+	 * If {@link #viewTS} != null: There's nothing to save except possibly comments:
+	 * finish the activity immediately after checking those. If also {@link #isViewTScurrTS},
+	 * everything is read-only including comments. If {@code ! saveOnly}, treat as Close button
+	 * and save nothing.
 	 *
 	 * @param saveOnly  If true, save changes but don't leave
 	 *   the stop or continue the trip.
@@ -2021,11 +2020,18 @@ public class TripTStopEntry extends Activity
 		boolean allOK = true;  // set to false if exception thrown, etc; if false, won't finish() the activity
 
 		/**
-		 * View Previous TStop mode: No changes to save,
-		 * especially if isViewTScurrTS.
+		 * View Previous TStop mode: Almost no changes to save.
+		 * If isViewTScurrTS or not saveOnly, close & finish without saving changes.
 		 */
 		if (viewTS != null)
 		{
+			if (saveOnly && ! isViewTScurrTS)
+			{
+				// Save any comment field changes
+				comment = textIfEntered(R.id.trip_tstop_comment);
+				viewTS.setComment(comment, true, true);
+			}
+
 			finish();  // <--- Finish this Activity ---
 			return;
 		}
@@ -3100,8 +3106,10 @@ public class TripTStopEntry extends Activity
 
 	/**
 	 * Unless <tt>txt</tt> is <tt>null</tt>, set <tt>editTextID</tt>'s contents.
-	 * If {@link #viewTS != null}, makes the field read-only but not visibly dark
-	 * by calling {@link View#setFocusable(boolean)}.
+	 *<P>
+	 * If <tt>{@link #viewTS} != null</tt>, makes the field read-only but not visibly dark
+	 * by calling {@link View#setFocusable(boolean)}. Exception: The {@code trip_tstop_comment}
+	 * field isn't made read-only unless {@link #isViewTScurrTS}.
 	 */
 	private void setEditText(String txt, final int editTextID)
 	{
@@ -3112,7 +3120,7 @@ public class TripTStopEntry extends Activity
 
 		EditText et = (EditText) findViewById (editTextID);
 		et.setText(txt);
-		if (viewTS != null)
+		if ((viewTS != null) && ((editTextID != R.id.trip_tstop_comment) || isViewTScurrTS))
 			et.setFocusable(false);
 	}
 

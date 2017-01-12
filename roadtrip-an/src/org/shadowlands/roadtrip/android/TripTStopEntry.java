@@ -104,6 +104,14 @@ import android.widget.Toast;
  * If stopping here creates a new {@link Location} or {@link ViaRoute}, and the
  * text is changed when resuming the trip, make sure the new item's text is updated
  * in the database.
+ *<P>
+ * <B>View Previous TStop mode</B> in v0.9.51 and higher:<BR>
+ * Can instead be called in View Previous TStop mode to show any stop of any previous trip,
+ * using {@link #EXTRAS_FIELD_VIEW_TSTOP_ID}. This view is mostly read-only except for
+ * the Comment field; see that extra field's javadoc. If the comment is changed,
+ * calls {@link #setResult(int) setResult}({@link Activity#RESULT_FIRST_USER RESULT_FIRST_USER},
+ * {@link Activity#getIntent() getIntent()}) to return that news and the TStop ID
+ * to the caller.
  *
  * @author jdmonin
  */
@@ -117,10 +125,12 @@ public class TripTStopEntry extends Activity
 	public static final String EXTRAS_FLAG_ENDTRIP = "endtrip";
 
 	/**
-	 * Field to view any previous {@link TStop} instead of the current trip and TStop.
-	 * Use the TStop's ID and {@link Intent#putExtra(String, int)}.
-	 * Even if this TStop ID is the current TStop or the current trip in Settings/VehSettings,
-	 * the view will be read-only.
+	 * Extras field to view any previous {@link TStop} instead of the current trip and TStop
+	 * (View Previous TStop Mode). Use the TStop's ID and {@link Intent#putExtra(String, int)}.
+	 * Read-only except for Comment field. See class javadoc for details.
+	 *<P>
+	 * If this TStop ID is the current TStop of the current trip in Settings/VehSettings,
+	 * the view will be completely read-only.
 	 * @since 0.9.51
 	 */
 	public static final String EXTRAS_FIELD_VIEW_TSTOP_ID = "view_tstop_id";
@@ -2048,13 +2058,16 @@ public class TripTStopEntry extends Activity
 		 */
 		if (viewTS != null)
 		{
+			boolean anyChanges = false;
+
 			if (saveOnly && ! isViewTScurrTS)
 			{
 				// Save any comment field changes
 				comment = textIfEntered(R.id.trip_tstop_comment);
-				viewTS.setComment(comment, true, true);
+				anyChanges = viewTS.setComment(comment, true, true);
 			}
 
+			setResult((anyChanges ? RESULT_FIRST_USER : RESULT_CANCELED), getIntent());
 			finish();  // <--- Finish this Activity ---
 			return;
 		}

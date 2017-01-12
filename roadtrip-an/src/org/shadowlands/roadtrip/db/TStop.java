@@ -1109,10 +1109,12 @@ public class TStop extends RDBRecord
 	 *     Update related fields as noted above.
 	 * @param commitNow  Commit this updated field (ONLY!) to db right now,
 	 *     along with related flags if changed. If false, only set {@link #isDirty()}.
+	 * @return true if the field was updated and TStop either dirtied or committed,
+	 *     or false if contents were unchanged
 	 * @throws IllegalArgumentException if comment.length > {@link #COMMENT_MAXLEN}
 	 *     or if {@code isLater} but TStop is new and hasn't been {@link #insert(RDBAdapter)}ed yet
 	 */
-	public void setComment(final String comment, final boolean isLater, final boolean commitNow)
+	public boolean setComment(final String comment, final boolean isLater, final boolean commitNow)
 		throws IllegalArgumentException
 	{
 		if (isLater && (id < 1))
@@ -1122,7 +1124,7 @@ public class TStop extends RDBRecord
 			if (comment.length() > COMMENT_MAXLEN)
 				throw new IllegalArgumentException("comment length");
 			if (comment.equals(this.comment))
-				return;
+				return false;
 		}
 
 		this.comment = comment;
@@ -1150,12 +1152,14 @@ public class TStop extends RDBRecord
 		if (! commitNow)
 		{
 			dirty = true;
-			return;
+			return true;
 		}
 
 		String[] newVals = { comment, Integer.toString(flag_sides) };
 		dbConn.update(TABNAME, id, FIELD_COMMENT_AND_FLAGS_ARR, newVals);
 		recalcIsCommentSetInDB();
+
+		return true;
 	}
 
 	/**

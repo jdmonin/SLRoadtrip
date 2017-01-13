@@ -168,6 +168,12 @@ public class LogbookShow extends Activity
 	 */
 	private boolean rangeEarlierClicked = false;
 
+	/**
+	 * The Builder for the currently/most recently shown Trip Detail Dialog, or null.
+	 * @since 0.9.51
+	 */
+	private LogbookShowTripDetailDialogBuilder tddb;
+
 	/** Cached verifier object, for successive manual calls from {@link #doDBValidation()} */
 	private RDBVerifier verifCache = null;
 
@@ -895,7 +901,28 @@ public class LogbookShow extends Activity
 		if ((tag == null) || ! (tag instanceof Trip))
 			return;
 
-		new LogbookShowTripDetailDialogBuilder(this, (Trip) tag, ltm, db).create().show();
+		tddb = new LogbookShowTripDetailDialogBuilder
+			(this, R.id.logbook_show_popup_trip_detail_tstop_list,
+			 (Trip) tag, ltm, db);
+		tddb.create().show();
+	}
+
+	/**
+	 * Callback when TStop data is changed from {@link TripTStopEntry}
+	 * via {@link LogbookShowTripDetailDialogBuilder}'s dialog.
+	 * @param idata  intent which may contain a TStop ID
+	 * @since 0.9.51
+	 */
+	@Override
+	public void onActivityResult(final int requestCode, final int resultCode, Intent idata)
+	{
+		if ((requestCode != R.id.logbook_show_popup_trip_detail_tstop_list)
+		    || (resultCode != RESULT_FIRST_USER))
+			return;
+
+		if (tddb == null)
+			return;
+		tddb.updateTStopText(idata.getIntExtra(TripTStopEntry.EXTRAS_FIELD_VIEW_TSTOP_ID, 0));
 	}
 
 	@Override

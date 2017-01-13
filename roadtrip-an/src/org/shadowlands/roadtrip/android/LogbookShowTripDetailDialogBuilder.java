@@ -47,30 +47,45 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 /**
- * Dialog builder for {@link LogbookShow} to show detail about one trip.
+ * Dialog builder for {@link LogbookShow} to show detail about one {@link Trip}.
+ *<P>
+ * Includes a list of the Trip's {@link TStop}s which can be clicked to show their
+ * details in {@link TripTStopEntry}, which has a callback if a TStop's comment is
+ * modified. Because the dialog isn't an Activity, the Activity which created this
+ * dialog receives the {@link Activity#onActivityResult(int, int, Intent)}.
+ * For callback contents details see {@link TripTStopEntry}.
  *
  * @since 0.9.51
  */
 public class LogbookShowTripDetailDialogBuilder
 	implements AdapterView.OnItemClickListener
 {
-	/** Calling context, for resources */
+	/** Calling context, for resources and {@link Activity#startActivityForResult(Intent, int)} */
 	private final Activity caller;
+
+	/** Caller's arbitrary "request code" given to constructor, for callbacks */
+	private final int callbackReqCode;
 
 	private final LogbookTableModel ltm;
 	private final RDBAdapter db;
 
-	/** Trip being shown in this dialog. */
+	/** Trip being shown in this dialog. Its TStops are in {@link #allTS}. */
 	private final Trip tr;
 
 	/**
-	 * ListView of {@link TStop}s on this trip; may be empty. Set in {@link #create()}.
+	 * ListView of {@link TStop}s on this trip ({@link #allTS}); may be empty. Set in {@link #create()}.
 	 * Adapter is {@link #lvTSAdapter} or {@code null}.
 	 */
 	private ListView lvTStopsList;
 
 	/** Adapter for {@link #lvTStopsList}, or {@code null} if list is empty. */
 	private ArrayAdapter<TStopText> lvTSAdapter;
+
+	/**
+	 * List of non-starting {@link TStop}s in {@link #tr}, presented in {@link #lvTStopsList},
+	 * or {@code null} if none.
+	 */
+	private List<TStop> allTS;
 
 	/**
 	 * date formatter for use by {@link DateFormat#format(CharSequence, Calendar)},
@@ -85,11 +100,15 @@ public class LogbookShowTripDetailDialogBuilder
 	 * Create a Builder. All params must be non-null.
 	 * After calling this constructor, call {@link #create()} to get the AlertDialog
 	 * and then {@link AlertDialog#show()}.
+	 * @param callbackReqCode Arbitrary "request code" to give caller with
+	 *     {@link Activity#onActivityResult(int, int, Intent)} if a TStop detail is modified.
 	 */
 	public LogbookShowTripDetailDialogBuilder
-		(final Activity caller, final Trip tr, final LogbookTableModel ltm, final RDBAdapter db)
+		(final Activity caller, final int callbackReqCode,
+		 final Trip tr, final LogbookTableModel ltm, final RDBAdapter db)
 	{
 		this.caller = caller;
+		this.callbackReqCode = callbackReqCode;
 		this.tr = tr;
 		this.ltm = ltm;
 		this.db = db;
@@ -99,6 +118,7 @@ public class LogbookShowTripDetailDialogBuilder
 	/**
 	 * Build the AlertDialog, to call {@link AlertDialog#show()}.
 	 * @return a newly built AlertDialog
+	 * @see #updateTStopText(int)
 	 */
 	public AlertDialog create()
 	{
@@ -181,7 +201,7 @@ public class LogbookShowTripDetailDialogBuilder
 		lvTStopsList = (ListView) itms.findViewById(R.id.logbook_show_popup_trip_detail_tstop_list);
 		if (lvTStopsList != null)
 		{
-			List<TStop> allTS = tr.readAllTStops();
+			allTS = tr.readAllTStops();
 			if ((allTS != null) && ! allTS.isEmpty())
 			{
 				if (! tr.isStartTStopFromPrevTrip())
@@ -191,13 +211,20 @@ public class LogbookShowTripDetailDialogBuilder
 					allTS = new ArrayList<TStop>(allTS);
 					allTS.remove(0);
 				}
+
 				if (! allTS.isEmpty())
 				{
+					final Resources res = caller.getResources();
+					List<TStopText> allTT = new ArrayList<TStopText>(allTS.size());
+					for (TStop ts : allTS)
+						allTT.add(new TStopText(ts, res));
+
 					lvTSAdapter = new ArrayAdapter<TStopText>
-					    (caller, R.layout.list_item,
-					    TStopText.fromList(allTS, caller.getResources()));
+					    (caller, R.layout.list_item, allTT);
 					lvTStopsList.setAdapter(lvTSAdapter);
 					lvTStopsList.setOnItemClickListener(this);
+				} else {
+					allTS = null;
 				}
 			}
 
@@ -237,21 +264,76 @@ public class LogbookShowTripDetailDialogBuilder
 		// view TStop details using TripTStopEntry
 		Intent i = new Intent(caller, TripTStopEntry.class);
 		i.putExtra(TripTStopEntry.EXTRAS_FIELD_VIEW_TSTOP_ID, tt.ts.getID());
-		caller.startActivity(i);
+		caller.startActivityForResult(i, callbackReqCode);
+	}
+
+	/**
+	 * Requery DB and update the rendered text for this TStop in the list, after a change to the TStop's fields.
+	 * @param ts  ID of a TStop displayed in the AlertDialog's stop list
+	 */
+	public void updateTStopText(final int tsID)
+	{
+		if ((lvTSAdapter == null) || (allTS == null))
+			return;
+
+		final int S = allTS.size();
+		int i;
+		for (i = 0; i < S; ++i)
+			if (allTS.get(i).getID() == tsID)
+				break;
+		if (i >= S)
+			return;
+
+		TStopText tt = lvTSAdapter.getItem(i);
+		if (tt.requeryRenderedText())
+			lvTSAdapter.notifyDataSetChanged();
 	}
 
 	/** TStop's data and rendered text for list adapter */
-	private final static class TStopText
+	private final class TStopText
 	{
-		final public TStop ts;
+		private TStop ts;
+
+		/** Location, from {@link TStop#readLocationText() ts.readLocationText()} */
 		final public String tsLocText;
-		final public String str;
+
+		String str;  // set by updateRenderedText()
+		final private Resources res;
 
 		public TStopText(final TStop ts, final Resources res)
 		{
 			this.ts = ts;
+			this.res = res;
 			tsLocText = ts.readLocationText();
+			updateRenderedText();
+		}
 
+		/**
+		 * Update the {@link #toString()} text by requerying this TStop from the database by its ID.
+		 * @return true if query was successful, false otherwise
+		 * @see #updateRenderedText()
+		 */
+		public boolean requeryRenderedText()
+		{
+			try
+			{
+				TStop s = new TStop(db, ts.getID());
+				this.ts = s;
+				updateRenderedText();
+				return true;
+			}
+			catch (Exception e)
+			{
+				return false;
+			}
+		}
+
+		/**
+		 * Update the {@link #toString()} text from the TStop object's fields and {@link #tsLocText}.
+		 * @see #requeryRenderedText()
+		 */
+		public void updateRenderedText()
+		{
 			StringBuilder sb = new StringBuilder();
 			int odo = ts.getOdo_trip();
 			if (odo != 0)
@@ -268,15 +350,10 @@ public class LogbookShowTripDetailDialogBuilder
 			str = sb.toString();
 		}
 
+		/**
+		 * Get the text rendered from the TStop's data and {@link #tsLocText}.
+		 * @see #requeryRenderedText()
+		 */
 		public String toString() { return str; }
-
-		public static List<TStopText> fromList(List<TStop> tsl, Resources res)
-		{
-			List<TStopText> li = new ArrayList<TStopText>(tsl.size());
-			for (TStop ts : tsl)
-				li.add(new TStopText(ts, res));
-
-			return li;
-		}
 	}
 }

@@ -130,7 +130,12 @@ public class LogbookShow extends Activity
 	/** tag for android logging */
 	private static final String TAG = "RTR.LogbookShow";
 
-	/** for use by {@link #onClick_BtnEarlier(View)}. Width <tt>FILL_PARENT</tt>, height <tt>WRAP_CONTENT</tt>. */
+	/**
+	 * For use by {@link #onClick_BtnEarlier(View)} and {@link #onClick_BtnLater(View)}
+	 * to dynamically create TextViews to show more trips.
+	 * Width <tt>FILL_PARENT</tt>, height <tt>WRAP_CONTENT</tt>.
+	 * @see #addTripsTextViews(List, List, boolean, boolean)
+	 */
 	private static ViewGroup.LayoutParams TS_ROW_LP = null;
 
 	private RDBAdapter db = null;
@@ -172,10 +177,16 @@ public class LogbookShow extends Activity
 	/** Used by {@link #onClick_BtnEarlier(View)}, {@link #onClick_BtnLater(View)} */
 	private LinearLayout tripListParentLayout = null;
 
-	/** Used by {@link #onClick_BtnEarlier(View)} */
+	/**
+	 * Used by {@link #onClick_BtnEarlier(View)},
+	 * {@link #addTripsTextViews_addOne(StringBuilder, Trip, List, boolean)}.
+	 */
 	private int tripListBtnEarlierPosition = -1;
 
-	/** Used by {@link #onClick_BtnLater(View)} */
+	/**
+	 * Used by {@link #onClick_BtnLater(View)},
+	 * {@link #addTripsTextViews_addOne(StringBuilder, Trip, List, boolean)}.
+	 */
 	private int tripListBtnLaterPosition = -1;
 
 	/**
@@ -185,7 +196,8 @@ public class LogbookShow extends Activity
 	 * @param vID   If not <tt>allV</tt>, a specific vehicle ID to show, or 0 for current vehicle
 	 * @param fromActivity  Current activity; will call {@link Activity#startActivity(Intent)} on it
 	 */
-	public static final void showTripsForLocation(final int locID, final boolean allV, final int vID, final Activity fromActivity)
+	public static final void showTripsForLocation
+		(final int locID, final boolean allV, final int vID, final Activity fromActivity)
 	{
 		Intent i = new Intent(fromActivity, LogbookShow.class);
 		i.putExtra(EXTRAS_LOCID, locID);
@@ -257,7 +269,7 @@ public class LogbookShow extends Activity
 		// do "quick validation" levels (below LEVEL_TDATA) first
 		int chkLevel;
 		for (chkLevel = RDBVerifier.LEVEL_PHYS; chkLevel < RDBVerifier.LEVEL_TDATA; ++chkLevel)
-		{			
+		{
 			if (verifiedLevel < chkLevel)
 			{
 				res = verifCache.verify(chkLevel);
@@ -272,6 +284,7 @@ public class LogbookShow extends Activity
 		{
 			// completed all "quick" levels successfully
 			new ValidateDBTDataTask().execute();
+
 			return;  // <--- Early return: Verify DB in bg task ---
 		}
 
@@ -288,6 +301,7 @@ public class LogbookShow extends Activity
 		default:
 			vLevel = "";  // to satisfy compiler
 		}
+
 		if (res != 0)
 		{
 			vLevel += " validation failed at level " + chkLevel;
@@ -299,7 +313,8 @@ public class LogbookShow extends Activity
 	}
 
 	@Override
-	public void onCreate(Bundle savedInstanceState) {
+	public void onCreate(Bundle savedInstanceState)
+	{
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.logbook_show);
 
@@ -644,7 +659,10 @@ public class LogbookShow extends Activity
 						fname = fname + DBExport.DBEXPORT_FILENAME_SUFFIX;  // ".csv"
 					doExport(fname);
 				} else {
-					Toast.makeText(LogbookShow.this, R.string.please_enter_the_filename, Toast.LENGTH_SHORT).show();
+					Toast.makeText
+						(LogbookShow.this,
+						 R.string.please_enter_the_filename, Toast.LENGTH_SHORT
+						 ).show();
 				}
 			}
 		});
@@ -823,6 +841,7 @@ public class LogbookShow extends Activity
 
 	/**
 	 * Add one trip's text to a new TextView within {@link #addTripsTextViews(List, List, boolean, boolean)}'s loop.
+	 * @since 0.9.51
 	 */
 	private void addTripsTextViews_addOne
 		(final StringBuilder sb, final Trip tr, final List<TextView> tvl, final boolean isLaterPos)
@@ -865,6 +884,8 @@ public class LogbookShow extends Activity
 
 	/**
 	 * Handle taps on a Trip's TextView to show more info.
+	 * Creates and shows a dialog using {@link LogbookShowTripDetailDialogBuilder}.
+	 * @param v  A trip's TextView; {@link View#getTag() v.getTag()} contains the {@link Trip} to show
 	 * @since 0.9.51
 	 */
 	@Override
@@ -881,11 +902,13 @@ public class LogbookShow extends Activity
 	public void onPause()
 	{
 		super.onPause();
+
 		if ((verifCache != null) && (verifTask == null))
 		{
 			verifCache.release();
 			verifCache = null;
 		}
+
 		if (db != null)
 			db.close();
 	}
@@ -907,6 +930,7 @@ public class LogbookShow extends Activity
 			verifCache.release();
 			verifCache = null;
 		}
+
 		if (db != null)
 			db.close();
 	}
@@ -1099,7 +1123,8 @@ public class LogbookShow extends Activity
 						loc.setAdapter((ArrayAdapter<Location>) null);
 						return;
 					}
-					loc.setAdapter(new ArrayAdapter<Location>(fromActivity, R.layout.list_item, areaLocs));
+					loc.setAdapter(new ArrayAdapter<Location>
+					                  (fromActivity, R.layout.list_item, areaLocs));
 				}
 
 				public void onNothingSelected(AdapterView<?> parent) { } // Required stub
@@ -1220,11 +1245,15 @@ public class LogbookShow extends Activity
 			Location[] areaLocs = Location.getAll(db, aID);
 			if (areaLocs == null)
 			{
-				Toast.makeText(fromActivity, R.string.logbook_show__no_locs_in_area, Toast.LENGTH_SHORT).show();
+				Toast.makeText
+					(fromActivity,
+					 R.string.logbook_show__no_locs_in_area, Toast.LENGTH_SHORT
+					 ).show();
 				return;
 			}
 
-			final View askItems = fromActivity.getLayoutInflater().inflate(R.layout.logbook_loc_vias_search, null);
+			final View askItems =
+				fromActivity.getLayoutInflater().inflate(R.layout.logbook_loc_vias_search, null);
 
 			final AutoCompleteTextView locA =
 				(AutoCompleteTextView) askItems.findViewById(R.id.logbook_loc_vias_locA);
@@ -1296,7 +1325,8 @@ public class LogbookShow extends Activity
 						return;
 					}
 
-					locA.setAdapter(new ArrayAdapter<Location>(fromActivity, R.layout.list_item, areaLocs));
+					locA.setAdapter(new ArrayAdapter<Location>
+					                   (fromActivity, R.layout.list_item, areaLocs));
 				}
 
 				public void onNothingSelected(AdapterView<?> parent) { } // Required stub
@@ -1325,7 +1355,8 @@ public class LogbookShow extends Activity
 						return;
 					}
 
-					locB.setAdapter(new ArrayAdapter<Location>(fromActivity, R.layout.list_item, areaLocs));
+					locB.setAdapter(new ArrayAdapter<Location>
+					                   (fromActivity, R.layout.list_item, areaLocs));
 				}
 
 				public void onNothingSelected(AdapterView<?> parent) { } // Required stub

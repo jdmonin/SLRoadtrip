@@ -68,6 +68,9 @@ public class TStop extends RDBRecord
     /** Foreign-key field name for TStop.locid in the database.  Access is package, not private, for TStopGas's use */
     static final String FIELD_LOCID = "locid";
 
+    /** Field name for optional Comment in the database. */
+    private static final String FIELD_COMMENT = "comment";
+
     /** Field names/where-clause for use in {@link #readStartingStopWithinTrip(RDBAdapter, Trip)} */
     private static final String WHERE_TRIPID_AND_ODOTRIP = FIELD_TRIPID + " = ? AND odo_trip = 0";
 
@@ -94,11 +97,11 @@ public class TStop extends RDBRecord
     private static final String[] FIELDS =
         { FIELD_TRIPID, FIELD_ODO_TOTAL, "odo_trip", FIELD_TIME_STOP, FIELD_TIME_CONTINUE,
     	  FIELD_LOCID, "a_id", "geo_lat", "geo_lon", "flag_sides",
-    	  "descr", "via_route", "via_id", "comment" };
+    	  "descr", "via_route", "via_id", FIELD_COMMENT };
     private static final String[] FIELDS_AND_ID =
 	    { FIELD_TRIPID, FIELD_ODO_TOTAL, "odo_trip", FIELD_TIME_STOP, "time_continue",
     	  FIELD_LOCID, "a_id", "geo_lat", "geo_lon", "flag_sides",
-		  "descr", "via_route", "via_id", "comment", "_id" };
+		  "descr", "via_route", "via_id", FIELD_COMMENT, "_id" };
     private final static String[] FIELD_TIME_CONTINUE_ARR = { "time_continue" };
     /** Field array with only the GeoArea ID field: { {@code "a_id"} } */
     private final static String[] FIELD_AREA_ID_ARR = { "a_id" };
@@ -107,7 +110,7 @@ public class TStop extends RDBRecord
      * Field array with only the Comment and Flags fields: { {@code "comment", "flag_sides"} }
      * @since 0.9.51
      */
-    private final static String[] FIELD_COMMENT_AND_FLAGS_ARR = { "comment", "flag_sides" };
+    private final static String[] FIELD_COMMENT_AND_FLAGS_ARR = { FIELD_COMMENT, "flag_sides" };
 
     /** Maximum length (2000) of comment field. {@code MAXLEN} was 255 before v0.9.50. */
     public static final int COMMENT_MAXLEN = 2000;  // The value 2000 is also hardcoded into trip_tstop_entry.xml
@@ -241,6 +244,7 @@ public class TStop extends RDBRecord
      * after continuing travel from the TStop. See {@link #setComment(String, boolean, boolean)}
      * for details and related {@link #flag_sides} flags.
      * @see #isCommentSetInDB
+     * @see #requeryComment()
      */
     private String comment;
 
@@ -705,6 +709,32 @@ public class TStop extends RDBRecord
 		return fv;
 	}
 
+	/**
+	 * Read the changed comment field from the database, after another TStop object instance
+	 * of the same TStop ID has updated it with {@link #setComment(String, boolean, boolean)}
+	 * and committed that change.
+	 *<P>
+	 * Does not clear {@link #isDirty()} because other fields may still be dirty.
+	 *
+	 * @return True if this instance's {@link #getComment()} value changed after querying,
+	 *     false if the field already matched what's in the database
+	 * @throws IllegalStateException if dbConn was null because
+	 *     this is a new record, not an existing one
+	 * @since 0.9.51
+	 */
+	public boolean requeryComment()
+		throws IllegalStateException
+	{
+		if (dbConn == null)
+			throw new IllegalStateException("db null");
+
+		final String origComment = comment;
+		comment = dbConn.getRowField(TABNAME, id, FIELD_COMMENT);
+
+		return ((origComment == null) != (comment == null))
+		    || ((origComment != null) && ! origComment.equals(comment));
+	}
+
 	public int getTripID() {
 		return tripid;
 	}
@@ -1102,6 +1132,9 @@ public class TStop extends RDBRecord
 	 * The flag update is done by comparing the comment's current status (present or empty)
 	 * against its status when the TStop was last loaded from the DB or committed.
 	 * Once set, these flags are never cleared by {@code setComment(..)}.
+	 *<P>
+	 * After the new comment is committed, other TStop object instances of the same TStop ID
+	 * can call {@link #requeryComment()} to read the changed comment field from the database.
 	 *
 	 * @param comment  New value, or null for none. If equal to current {@link #getComment()}
 	 *     contents, nothing happens: No commit is made, {@link #isDirty()} isn't set.

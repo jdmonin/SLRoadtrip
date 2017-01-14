@@ -21,6 +21,7 @@ package org.shadowlands.roadtrip.android;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashSet;
 import java.util.List;
 
 import org.shadowlands.roadtrip.R;
@@ -81,7 +82,7 @@ import android.widget.Toast;
  * @author jdmonin
  */
 public class LogbookShow extends Activity
-	implements View.OnClickListener
+	implements View.OnClickListener, LogbookShowTripDetailDialogBuilder.DetailDialogListener
 {
 	/**
 	 * Increment in weeks when loading newer/older trips from the database,
@@ -170,9 +171,16 @@ public class LogbookShow extends Activity
 
 	/**
 	 * The Builder for the currently/most recently shown Trip Detail Dialog, or null.
+	 * Shows the Trip held in {@link #tddb_tripView}.
 	 * @since 0.9.51
 	 */
 	private LogbookShowTripDetailDialogBuilder tddb;
+
+	/**
+	 * The TextView of the {@link Trip} currently/most recently shown in {@link #tddb}, or null.
+	 * @since 0.9.51
+	 */
+	private TextView tddb_tripView;
 
 	/** Cached verifier object, for successive manual calls from {@link #doDBValidation()} */
 	private RDBVerifier verifCache = null;
@@ -901,8 +909,9 @@ public class LogbookShow extends Activity
 		if ((tag == null) || ! (tag instanceof Trip))
 			return;
 
+		tddb_tripView = (TextView) v;
 		tddb = new LogbookShowTripDetailDialogBuilder
-			(this, R.id.logbook_show_popup_trip_detail_tstop_list,
+			(this, R.id.logbook_show_popup_trip_detail_tstop_list, this,
 			 (Trip) tag, ltm, db);
 		tddb.create().show();
 	}
@@ -923,6 +932,35 @@ public class LogbookShow extends Activity
 		if (tddb == null)
 			return;
 		tddb.updateTStopText(idata.getIntExtra(TripTStopEntry.EXTRAS_FIELD_VIEW_TSTOP_ID, 0));
+	}
+
+	/**
+	 * Callback when {@link LogbookShowTripDetailDialogBuilder}'s dialog is dismissed.
+	 * @param src Builder for the dialog; same as {@link #tddb} field.
+	 * @since 0.9.51
+	 */
+	public void onDetailDialogDismissed(LogbookShowTripDetailDialogBuilder src)
+	{
+		final TextView tripView = tddb_tripView;
+
+		final HashSet<Integer> changedTSIDs = src.getUpdatedTStopIDs();
+		if (changedTSIDs == null)
+			return;
+
+		Trip.TripListTimeRange tripTTR = null;
+		for (Integer tsid : changedTSIDs)
+		{
+			Trip.TripListTimeRange ttr = ltm.requeryTStopComment(tsid);
+			if (tripTTR == null)
+				tripTTR = ttr;
+		}
+
+		if ((tripTTR != null) && (tripView != null))
+		{
+			StringBuilder sb = tripTTR.getTripRowsTabbed(src.tr.getID());
+			if (sb != null)
+				tripView.setText(sb);
+		}
 	}
 
 	@Override

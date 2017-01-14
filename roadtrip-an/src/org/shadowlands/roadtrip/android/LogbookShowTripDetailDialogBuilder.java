@@ -21,6 +21,7 @@ package org.shadowlands.roadtrip.android;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashSet;
 import java.util.List;
 
 import org.shadowlands.roadtrip.R;
@@ -37,6 +38,9 @@ import org.shadowlands.roadtrip.util.android.RTRAndroidDateTimeFormatter;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.DialogInterface.OnCancelListener;
+import android.content.DialogInterface.OnDismissListener;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.text.format.DateFormat;
@@ -54,6 +58,11 @@ import android.widget.TextView;
  * modified. Because the dialog isn't an Activity, the Activity which created this
  * dialog receives the {@link Activity#onActivityResult(int, int, Intent)}.
  * For callback contents details see {@link TripTStopEntry}.
+ *<P>
+ * Any TStops whose contents are changed by the user from this dialog are tracked
+ * in {@link #getUpdatedTStopIDs()}, which can be called after the dialog is dismissed
+ * or cancelled: See {@link LogbookShowTripDetailDialogBuilder.DetailDialogListener}
+ * for callback interface.
  *
  * @since 0.9.51
  */
@@ -63,6 +72,9 @@ public class LogbookShowTripDetailDialogBuilder
 	/** Calling context, for resources and {@link Activity#startActivityForResult(Intent, int)} */
 	private final Activity caller;
 
+	/** Optional listener */
+	private final DetailDialogListener lsnr;
+
 	/** Caller's arbitrary "request code" given to constructor, for callbacks */
 	private final int callbackReqCode;
 
@@ -70,7 +82,7 @@ public class LogbookShowTripDetailDialogBuilder
 	private final RDBAdapter db;
 
 	/** Trip being shown in this dialog. Its TStops are in {@link #allTS}. */
-	private final Trip tr;
+	public final Trip tr;
 
 	/**
 	 * ListView of {@link TStop}s on this trip ({@link #allTS}); may be empty. Set in {@link #create()}.
@@ -88,6 +100,12 @@ public class LogbookShowTripDetailDialogBuilder
 	private List<TStop> allTS;
 
 	/**
+	 * Set of {@link TStop} IDs whose comments were changed by the user from this dialog,
+	 * or {@code null} if none yet.
+	 */
+	private HashSet<Integer> updatedTSID;
+
+	/**
 	 * date formatter for use by {@link DateFormat#format(CharSequence, Calendar)},
 	 * initialized via {@link Misc#buildDateFormatDOWMed(Context)}
 	 */
@@ -97,18 +115,19 @@ public class LogbookShowTripDetailDialogBuilder
 	private RTRAndroidDateTimeFormatter dtf;
 
 	/**
-	 * Create a Builder. All params must be non-null.
+	 * Create a Builder. All params except {@code lsnr} must be non-null.
 	 * After calling this constructor, call {@link #create()} to get the AlertDialog
 	 * and then {@link AlertDialog#show()}.
 	 * @param callbackReqCode Arbitrary "request code" to give caller with
 	 *     {@link Activity#onActivityResult(int, int, Intent)} if a TStop detail is modified.
 	 */
 	public LogbookShowTripDetailDialogBuilder
-		(final Activity caller, final int callbackReqCode,
+		(final Activity caller, final int callbackReqCode, final DetailDialogListener lsnr,
 		 final Trip tr, final LogbookTableModel ltm, final RDBAdapter db)
 	{
 		this.caller = caller;
 		this.callbackReqCode = callbackReqCode;
+		this.lsnr = lsnr;
 		this.tr = tr;
 		this.ltm = ltm;
 		this.db = db;
@@ -248,6 +267,26 @@ public class LogbookShowTripDetailDialogBuilder
 			.setPositiveButton(android.R.string.ok, null)
 			.setView(itms)
 			.create();
+		if (lsnr != null)
+		{
+			bld.setOnCancelListener(new OnCancelListener()
+			{
+				@Override
+				public void onCancel(DialogInterface dialog)
+				{
+					lsnr.onDetailDialogDismissed(LogbookShowTripDetailDialogBuilder.this);
+				}
+			});
+			bld.setOnDismissListener(new OnDismissListener()
+			{
+				@Override
+				public void onDismiss(DialogInterface dialog)
+				{
+					lsnr.onDetailDialogDismissed(LogbookShowTripDetailDialogBuilder.this);
+				}
+			});
+		}
+
 		return bld;
 	}
 
@@ -269,7 +308,9 @@ public class LogbookShowTripDetailDialogBuilder
 
 	/**
 	 * Requery DB and update the rendered text for this TStop in the list, after a change to the TStop's fields.
-	 * @param ts  ID of a TStop displayed in the AlertDialog's stop list
+	 * If the data and text were different and were updated here, {@code tsID} is added to the set kept in
+	 * {@link #getUpdatedTStopIDs()}.
+	 * @param tsID  ID of a TStop displayed in the AlertDialog's stop list
 	 */
 	public void updateTStopText(final int tsID)
 	{
@@ -286,7 +327,37 @@ public class LogbookShowTripDetailDialogBuilder
 
 		TStopText tt = lvTSAdapter.getItem(i);
 		if (tt.requeryRenderedText())
+		{
+			if (updatedTSID == null)
+				updatedTSID = new HashSet<Integer>();
+			updatedTSID.add(Integer.valueOf(tsID));
+
 			lvTSAdapter.notifyDataSetChanged();
+		}
+	}
+
+	/**
+	 * Get the set of TStop IDs whose comments were changed by the user from this dialog
+	 * via {@link #updateTStopText(int)}, if any.
+	 * @return  Updated TStop IDs, or {@code null} if none
+	 */
+	public HashSet<Integer> getUpdatedTStopIDs()
+	{
+		return updatedTSID;
+	}
+
+	/**
+	 * Optional callback interface for when the dialog is dismissed or canceled.
+	 * Passed to {@link LogbookShowTripDetailDialogBuilder} constructor.
+	 */
+	public static interface DetailDialogListener
+	{
+		/**
+		 * Dialog has been dismissed or canceled. {@code src} can be used to obtain more info such as
+		 * {@link LogbookShowTripDetailDialogBuilder#getUpdatedTStopIDs() getUpdatedTStopIDs()}.
+		 * @param src The dialog builder
+		 */
+		public void onDetailDialogDismissed(LogbookShowTripDetailDialogBuilder src);
 	}
 
 	/** TStop's data and rendered text for list adapter */

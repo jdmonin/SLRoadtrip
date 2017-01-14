@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010-2012,2014-2015 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2012,2014-2015,2017 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -76,9 +76,14 @@ public class RDBOpenHelper
 
 	/** SQLite default db, or null when opening a different file path ({@link #dbPath} not null) */
 	private final OpenHelper opener;
+
 	/** File path to db, or null if {@link #opener} not null. */
 	private final String dbPath;
-	/** Calling {@link #getWritableDatabase()} or {@link #getReadableDatabase()} will set this field. */
+
+	/**
+	 * Android SQLite db interface.
+	 * Calling {@link #getWritableDatabase()} or {@link #getReadableDatabase()} will set this field.
+	 */
 	private SQLiteDatabase db;
 
 	/**
@@ -256,6 +261,9 @@ public class RDBOpenHelper
 	// javadocs inherited from interface
 	//
 
+	// db's SQLiteDatabase interface has query methods taking String select-field values, but none taking int IDs.
+	// So all the get-by-id(int) methods devolve into get-by-pri-key(str) here.
+
 	public String[] getRow(final String tabname, final int id, final String[] fields)
 	    throws IllegalStateException
 	{
@@ -367,6 +375,12 @@ public class RDBOpenHelper
 
 		dbqc.close();
 		return rv;
+	}
+
+	public String getRowField(final String tabname, final int id, final String fn)
+	    throws IllegalStateException
+	{
+		return getRowField(tabname, "_id", Integer.toString(id), fn);
 	}
 
 	public String getRowField(final String tabname, final String kf, final String kv, final String fn)

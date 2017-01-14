@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010-2011,2014-2015 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2011,2014-2015,2017 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -458,6 +458,8 @@ public class RDBJDBCAdapter implements RDBAdapter
 		return rs;
 	}
 
+	// TODO write a getRowField_rset for int _id primary keys
+
 	/**
 	 * Common query code for all {@link #getRowField(String, String, String, String[])}-type methods.
 	 * Get one field in one row, given a string-type key field name.
@@ -514,6 +516,12 @@ public class RDBJDBCAdapter implements RDBAdapter
 		}
 
 		return rs;
+	}
+
+	public String getRowField(final String tabname, final int id, final String fn)
+	    throws IllegalStateException
+	{
+		return getRowField(tabname, "_id", Integer.toString(id), fn);
 	}
 
 	public String getRowField(final String tabname, final String kf, final String kv, final String fn)

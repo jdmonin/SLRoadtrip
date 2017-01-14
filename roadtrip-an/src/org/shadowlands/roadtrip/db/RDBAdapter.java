@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010-2011,2014-2015 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2011,2014-2015,2017 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -129,6 +129,23 @@ public interface RDBAdapter
 	    (final String tabname, final String where, final String[] whereArgs, final String[] fieldnames,
 	     final String orderby, final int limit)
 	    throws IllegalArgumentException, IllegalStateException;
+
+	/**
+	 * Get one field in one row, by row ID.
+	 * Returns null if key ID not found.
+	 *
+	 * @param tabname  Table to query
+	 * @param id      ID field value, for primary key field "_id"
+	 * @param fn  Field name to get
+	 * @return field value, or null if not found
+	 * @throws IllegalStateException if conn has been closed, table not found, etc.
+	 * @see #getRowField(String, String, String, String)
+	 * @see #getRowField(String, String, String, String[])
+	 * @see #getRowIntField(String, int, String, int)
+	 * @since 0.9.51
+	 */
+	public String getRowField(final String tabname, final int id, final String fn)
+	    throws IllegalStateException;
 
 	/**
 	 * Get one field in one row, given a string-type key field name.

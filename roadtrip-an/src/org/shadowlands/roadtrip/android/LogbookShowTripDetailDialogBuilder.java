@@ -290,7 +290,7 @@ public class LogbookShowTripDetailDialogBuilder
 	}
 
 	/** TStop's data and rendered text for list adapter */
-	private final class TStopText
+	private final static class TStopText
 	{
 		private TStop ts;
 
@@ -310,22 +310,18 @@ public class LogbookShowTripDetailDialogBuilder
 
 		/**
 		 * Update the {@link #toString()} text by requerying this TStop from the database by its ID.
-		 * @return true if query was successful, false otherwise
+		 * @return true if query changed the text, false otherwise
 		 * @see #updateRenderedText()
 		 */
 		public boolean requeryRenderedText()
 		{
-			try
+			if (ts.requeryComment())
 			{
-				TStop s = new TStop(db, ts.getID());
-				this.ts = s;
 				updateRenderedText();
 				return true;
 			}
-			catch (Exception e)
-			{
-				return false;
-			}
+
+			return false;
 		}
 
 		/**

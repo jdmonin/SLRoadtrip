@@ -1750,6 +1750,32 @@ public class Trip extends RDBRecord
 	}
 
 	/**
+	 * Get this {@link TStop}, only if currently cached from reading all TStops of the trip:
+	 * Convenience method. Does not query the DB if stop isn't currently cached.
+	 * @param tsID  ID of a {@code TStop} on this trip
+	 * @return  The TStop if cached, or {@code null}
+	 * @since 0.9.51
+	 */
+	public TStop getCachedTStop(final int tsID)
+	{
+		if (allStops == null)
+			return null;
+
+		synchronized (allStops)
+		{
+			final int L = allStops.size();
+			for (int i = 0; i < L; ++i)
+			{
+				TStop ts = allStops.get(i);
+				if (ts.id == tsID)
+					return ts;
+			}
+		}
+
+		return null;
+	}
+
+	/**
 	 * Does this trip have TStops, other than its start and end?
 	 * Queries the database, not a cached list of stops.
 	 * @return true if any TStops exist in the middle of the trip
@@ -1889,46 +1915,75 @@ public class Trip extends RDBRecord
 
 			final int L = tr.size();
 			List<StringBuilder> tlist = new ArrayList<StringBuilder>(L);
+
+			for (int i = 0; i < L; ++i)
+				tlist.add(getTripRowsTabbed_idx(i));
+
+			return tlist;
+		}
+
+		/**
+		 * Create and return tab-delimited (\t) contents of one trip's text row(s)
+		 * from {@link #tText} and {@link #tr}.
+		 * @param tripID  {@link Trip} ID in the database of a Trip in this TripListTimeRange
+		 * @return The Trip's text rows as a StringBuilder,
+		 *     or {@code null} if trip not in {@link #trBeginTextIdx}.
+		 * @since 0.9.51
+		 */
+		public StringBuilder getTripRowsTabbed(final int tripID)
+		{
+			if ((tText == null) || (trBeginTextIdx == null))
+				return null;
+
+			for (int i = 0; i < trBeginTextIdx.length; ++i)
+				if (tr.get(i).id == tripID)
+					return getTripRowsTabbed_idx(i);
+
+			return null;
+		}
+
+		/**
+		 * Get a Trip's rows by trip index within this TripListTimeRange.
+		 * @param i  Index into {@link #trBeginTextIdx} and {@link #tr}
+		 * @return  StringBuilder for the Trip
+		 * @since 0.9.51
+		 */
+		private StringBuilder getTripRowsTabbed_idx(final int i)
+		{
 			final boolean chkMatches = (matchLocID != -1)
 				&& (tMatchedRows != null) && ! tMatchedRows.isEmpty();
 
-			final int S = tText.size();
-			for (int i = 0; i < L; ++i)
+			StringBuilder sb = new StringBuilder();
+			final int rNextTr;
+			if ((i + 1) < trBeginTextIdx.length)
+				rNextTr = trBeginTextIdx[i + 1];
+			else
+				rNextTr = tText.size();
+
+			for (int r = trBeginTextIdx[i]; r < rNextTr; ++r)
 			{
-				StringBuilder sb = new StringBuilder();
-				final int rNextTr;
-				if ((i + 1) < trBeginTextIdx.length)
-					rNextTr = trBeginTextIdx[i + 1];
-				else
-					rNextTr = S;
-
-				for (int r = trBeginTextIdx[i]; r < rNextTr; ++r)
+				final String[] rstr = tText.elementAt(r);
+				if (rstr[0] != null)
+					sb.append(rstr[0]);
+				for (int c = 1; c < rstr.length; ++c)
 				{
-					final String[] rstr = tText.elementAt(r);
-					if (rstr[0] != null)
-						sb.append(rstr[0]);
-					for (int c = 1; c < rstr.length; ++c)
+					sb.append('\t');
+					if (rstr[c] != null)
 					{
-						sb.append('\t');
-						if (rstr[c] != null)
-						{
-							String str = rstr[c];
-							if (chkMatches && (c == LogbookTableModel.COL_TSTOP_DESC)
-							    && tMatchedRows.contains(Integer.valueOf(r)))
-								str = str.toUpperCase();
+						String str = rstr[c];
+						if (chkMatches && (c == LogbookTableModel.COL_TSTOP_DESC)
+						    && tMatchedRows.contains(Integer.valueOf(r)))
+							str = str.toUpperCase();
 
-							sb.append(str);
-						}
+						sb.append(str);
 					}
-
-					if (r < (rNextTr - 1))
-						sb.append('\n');
 				}
 
-				tlist.add(sb);
+				if (r < (rNextTr - 1))
+					sb.append('\n');
 			}
 
-			return tlist;
+			return sb;
 		}
 
 	}  // public static nested class TripListTimeRange

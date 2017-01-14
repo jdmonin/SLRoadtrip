@@ -39,8 +39,6 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.DialogInterface.OnCancelListener;
-import android.content.DialogInterface.OnDismissListener;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.text.format.DateFormat;
@@ -67,7 +65,8 @@ import android.widget.TextView;
  * @since 0.9.51
  */
 public class LogbookShowTripDetailDialogBuilder
-	implements AdapterView.OnItemClickListener
+	implements AdapterView.OnItemClickListener,
+	    DialogInterface.OnCancelListener, DialogInterface.OnDismissListener
 {
 	/** Calling context, for resources and {@link Activity#startActivityForResult(Intent, int)} */
 	private final Activity caller;
@@ -269,22 +268,8 @@ public class LogbookShowTripDetailDialogBuilder
 			.create();
 		if (lsnr != null)
 		{
-			bld.setOnCancelListener(new OnCancelListener()
-			{
-				@Override
-				public void onCancel(DialogInterface dialog)
-				{
-					lsnr.onDetailDialogDismissed(LogbookShowTripDetailDialogBuilder.this);
-				}
-			});
-			bld.setOnDismissListener(new OnDismissListener()
-			{
-				@Override
-				public void onDismiss(DialogInterface dialog)
-				{
-					lsnr.onDetailDialogDismissed(LogbookShowTripDetailDialogBuilder.this);
-				}
-			});
+			bld.setOnCancelListener(this);
+			bld.setOnDismissListener(this);
 		}
 
 		return bld;
@@ -344,6 +329,20 @@ public class LogbookShowTripDetailDialogBuilder
 	public HashSet<Integer> getUpdatedTStopIDs()
 	{
 		return updatedTSID;
+	}
+
+	/** Callback for when dialog is canceled: Call our {@link DetailDialogListener}, if any. */
+	public void onCancel(DialogInterface dialog)
+	{
+		if (lsnr != null)
+			lsnr.onDetailDialogDismissed(this);
+	}
+
+	/** Callback for when dialog is dismissed: Call our {@link DetailDialogListener}, if any. */
+	public void onDismiss(DialogInterface dialog)
+	{
+		if (lsnr != null)
+			lsnr.onDetailDialogDismissed(this);
 	}
 
 	/**

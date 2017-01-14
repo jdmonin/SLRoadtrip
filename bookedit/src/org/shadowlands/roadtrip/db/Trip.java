@@ -19,6 +19,7 @@
 package org.shadowlands.roadtrip.db;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 import java.util.Vector;
@@ -1830,11 +1831,22 @@ public class Trip extends RDBRecord
 		public final List<Trip> tr;
 
 		/**
-		 * Holds beginning index within {@link #tText} of each trip in {@link #tr}, or {@code null}.
+		 * Holds beginning index (row) within {@link #tText} of each trip in {@link #tr}, or {@code null}.
 		 * Public for access and update from {@link LogbookTableModel}; please treat as read-only otherwise.
+		 * @see #tstopTextIdx
 		 * @since 0.9.51
 		 */
 		public int[] trBeginTextIdx;
+
+		/**
+		 * Holds index (row) within {@link #tText} of each {@link TStop} ID in {@link #tr}, or {@code null}.
+		 * Does not contain trips' starting {@code TStop}s, only intermediate and final stops,
+		 * because starting TStops' comments aren't rendered in {@code tr}.
+		 * Public for access and update from {@link LogbookTableModel}; please treat as read-only otherwise.
+		 * @see #trBeginTextIdx
+		 * @since 0.9.51
+		 */
+		public HashMap<Integer, Integer> tstopTextIdx;
 
 		/**
 		 * Holds each rendered data row, not including the 1 empty-string row at the end.

@@ -22,6 +22,7 @@ package org.shadowlands.roadtrip.model;
 import gnu.trove.TIntObjectHashMap;
 
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -88,6 +89,13 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	 * @since 0.9.50
 	 */
 	public static final int COL_TSTOP_DESC = 5;
+
+	/**
+	 * For columns in standard mode, the TStop Comment column number
+	 * and index within {@link #COL_HEADINGS}.
+	 * @since 0.9.51
+	 */
+	public static final int COL_TSTOP_COMMENT = 7;
 
 	/**
 	 * Column headings for simple mode (no TStops).  The length of this array determines the number of columns.
@@ -694,11 +702,13 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	}
 
 	/**
-	 * Add trip data as text to ttr.tText, looking up from the database as needed.
-	 * Updates {@link #tDataTextRowCount} to include the new text rows.
-	 * Updates {@link TripListTimeRange#tText} and {@link TripListTimeRange#trBeginTextIdx}.
-	 * If {@link TripListTimeRange#matchLocID} != -1,
-	 * also updates {@link TripListTimeRange#tMatchedRows}.
+	 * Add trip data as text from range {@code ttr} to ttr.tText, looking up from the database as needed.
+	 *<UL>
+	 * <LI> Updates {@link #tDataTextRowCount} to include the new text rows.
+	 * <LI> Updates {@link TripListTimeRange#tText}, and {@link TripListTimeRange#trBeginTextIdx}
+	 *      unless using {@link #trip_simple_mode}.
+	 * <LI> If {@link TripListTimeRange#matchLocID} != -1, also updates {@link TripListTimeRange#tMatchedRows}.
+	 *</UL>
 	 * @param ttr  Query and add text of this TripTimeRange's contents
 	 * @param conn  Add from this connection
 	 */
@@ -751,16 +761,23 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 
 	/**
 	 * Add rows to strings from a list of {@link Trip}s and their {@link TStop}s.
+	 * Standard Mode (! {@link #trip_simple_mode}):
 	 * Columns of added rows line up with {@link #COL_HEADINGS}.
+	 *<P>
+	 * Creates or updates {@link TripListTimeRange#trBeginTextIdx ttr.trBeginTextIdx}
+	 * and {@link TripListTimeRange#tstopTextIdx ttr.tstopTextIdx}.
+	 *
 	 * @param trips Trips data to add to {@code tText}
 	 * @param tText Append rows here from {@code trips}; typically {@link TripListTimeRange#tText ttr.tText};
 	 *     not {@code null}
-	 * @param ttr   TripListTimeRange being appended to, to update
-	 *     {@link TripListTimeRange#trBeginTextIdx ttr.trBeginTextIdx} with the new {@code trips}, or {@code null}
+	 * @param ttr   TripListTimeRange being appended to, to place the new {@code trips} into
+	 *     {@link TripListTimeRange#trBeginTextIdx ttr.trBeginTextIdx} and
+	 *     {@link TripListTimeRange#tstopTextIdx ttr.tstopTextIdx}, or {@code null}
 	 * @param matchLocID  For Location Mode, the optional location ID being searched for; otherwise -1
 	 * @param matchSet  For Location Mode, if not {@code null} will add elements to this set for {@code tText}
 	 *      index numbers (row numbers in text) of {@link TStop}s matching {@code matchLocID}.
 	 * @param conn  Add from this connection
+	 * @see #addRowsFromTrips_formatTripsSimple(List, Vector, TripListTimeRange, RDBAdapter)
 	 */
 	public void addRowsFromTrips_formatTripsStops
 		(final List<Trip> trips, Vector<String[]> tText, final TripListTimeRange ttr,
@@ -773,8 +790,9 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 
 		final int L = trips.size();
 		final int tripIdx0;  // starting index within ttr.trBeginTextIdx for trips being added
+		HashMap<Integer, Integer> tstopTextIdx = null;  // ttr.tstopTextIdx, if any
 
-		// Create or extend ttr.trBeginTextIdx for the new trips
+		// Create or extend ttr.trBeginTextIdx and tstopTextIdx for the new trips
 		if ((ttr != null) && (ttr.trBeginTextIdx != null) && ! tText.isEmpty())
 		{
 			tripIdx0 = ttr.trBeginTextIdx.length;
@@ -785,6 +803,15 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 			tripIdx0 = 0;
 			if (ttr != null)
 				ttr.trBeginTextIdx = new int[L];
+		}
+		if (ttr != null)
+		{
+			tstopTextIdx = ttr.tstopTextIdx;
+			if (tstopTextIdx == null)
+			{
+				tstopTextIdx = new HashMap<Integer, Integer>();
+				ttr.tstopTextIdx = tstopTextIdx;
+			}
 		}
 
 		final boolean doCommentBrackets = render_comments_brackets;  // shorter name, cache value
@@ -1044,9 +1071,10 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 					tr[COL_TSTOP_DESC] = desc.toString();  // tr[5] is COL_TSTOP_DESC
 
 					// Comment, if any
+					// If comment format changes, also update requeryTStopComment(..).
 					String stopc = ts.getComment();
 					if (stopc != null)
-						tr[7] = (doCommentBrackets) ? ("[" + stopc + "]") : stopc;
+						tr[COL_TSTOP_COMMENT] = (doCommentBrackets) ? ("[" + stopc + "]") : stopc;
 
 					// In Location Mode, check tstop's location and update matchSet if needed
 					if ((matchSet != null) && (matchLocID != -1)
@@ -1056,6 +1084,9 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 					}
 
 					// Done with this row
+					if (tstopTextIdx != null)
+						tstopTextIdx.put(Integer.valueOf(ts.getID()),
+						                 Integer.valueOf(tText.size()));
 					tText.addElement(tr);
 
 					// start-time (if present)
@@ -1098,6 +1129,61 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	}
 
 	/**
+	 * Requery a single TStop from the database, and update its comment text in the model.
+	 *<P>
+	 * After updating its changed TStops, call {@link Trip.TripListTimeRange#getTripRowsTabbed(int)}
+	 * if an entire Trip is needed as a single rendered piece of text.
+	 * @param tsID  {@link TStop} ID to update
+	 * @return  The updated TStop's {@link Trip.TripListTimeRange}, or {@code null} if not found in model
+	 * @throws IllegalStateException if {@link #trip_simple_mode} is active
+	 * @since 0.9.51
+	 */
+	public TripListTimeRange requeryTStopComment(final int tsID)
+		throws IllegalStateException
+	{
+		if (trip_simple_mode)
+			throw new IllegalStateException();
+
+		// look for TLTR, go from there
+		final int tsIdObj = Integer.valueOf(tsID);
+		final int S = tData.size();
+		for (int i = 0; i < S; ++i)
+		{
+			TripListTimeRange ttr = tData.get(i);
+			Integer tsRow = ttr.tstopTextIdx.get(tsIdObj);
+			if (tsRow != null)
+			{
+				// find Trip and update TStop from db
+				Trip tr = null;
+				TStop ts = null;
+				for (int ti = 0; ti < ttr.trBeginTextIdx.length; ++ti)
+				{
+					tr = ttr.tr.get(ti);
+					ts = tr.getCachedTStop(tsID);  // assume cached because of how TLTR is built
+					if (ts != null)
+						break;
+				}
+				if (ts == null)
+					return null;  // not found
+
+				// Comment changed: Update comment text in row.
+				// If comment format changes, also update addRowsFromTrips_formatTripsStops(..).
+				ts.requeryComment();  // ignore return value: already updated in db in dialog
+				String[] trText = ttr.tText.get(tsRow.intValue());
+				String stopc = ts.getComment();  // may be null
+				if ((stopc != null) && render_comments_brackets)
+					stopc = "[" + stopc + "]";
+				trText[COL_TSTOP_COMMENT] = stopc;
+
+				// ret its TLTR
+				return ttr;
+			}
+		}
+
+		return null;  // not found
+	}
+
+	/**
 	 * Convert n to a 2-digit string.
 	 * @param n  A non-negative integer
 	 * @return  {@code n} as a string with at least 2 digits, such as "51" or "09", including a leading 0 if needed
@@ -1112,14 +1198,19 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	}
 
 	/**
-	 * Add rows (simple mode) to strings from a list of {@link Trip}s and their {@link TStop}s.
+	 * Add rows to strings from a list of {@link Trip}s and their {@link TStop}s.
+	 * Simple Mode ({@link #trip_simple_mode}):
 	 * Columns of added rows line up with {@link #COL_HEADINGS_SIMPLE}.
+	 *<P>
+	 * Simple Mode creates or updates {@link TripListTimeRange#trBeginTextIdx ttr.trBeginTextIdx}
+	 * but not {@link TripListTimeRange#tstopTextIdx ttr.tstopTextIdx}.
 	 * @param trips Trips data to add to {@code tText}
 	 * @param tText Append rows here from {@code trips}; typically {@link TripListTimeRange#tText ttr.tText};
 	 *     not {@code null}
 	 * @param ttr   TripListTimeRange being appended to, to update
 	 *     {@link TripListTimeRange#trBeginTextIdx ttr.trBeginTextIdx} with the new {@code trips}, or {@code null}
 	 * @param conn  Add from this connection
+	 * @see #addRowsFromTrips_formatTripsStops(List, Vector, TripListTimeRange, int, Set, RDBAdapter)
 	 */
 	public void addRowsFromTrips_formatTripsSimple
 		(final List<Trip> trips, final Vector<String[]> tText, final TripListTimeRange ttr, RDBAdapter conn)

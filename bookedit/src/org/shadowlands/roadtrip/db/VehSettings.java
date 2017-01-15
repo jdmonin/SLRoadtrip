@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2014-2015 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2014-2015,2017 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -50,10 +50,18 @@ public class VehSettings extends RDBRecord
 	/**
 	 * int setting for current {@link GeoArea} area ID.
 	 * During a roadtrip, this is the trip's starting area ID; when the
-	 * roadtrip ends, will be changed to {@link Trip#getRoadtripEndAreaID()}.
-	 * While the roadtrip is active, this field is ignored except as a fallback;
+	 * roadtrip ends, will be changed to {@link Trip#getRoadtripEndAreaID()}
+	 * by {@link #endCurrentTrip(RDBAdapter, Vehicle, int, int, int, TripCategory, int)}.
+	 *<P>
+	 * While a roadtrip is active, this field is ignored except as a fallback;
 	 * the area ID considered 'current' during the roadtrip comes from
-	 * {@link #CURRENT_TSTOP}'s record if any, or {@link #PREV_LOCATION} otherwise.
+	 * {@link #CURRENT_TSTOP}'s record if any, or {@link #PREV_LOCATION} otherwise
+	 * if that location's area ID != 0.
+	 *<P>
+	 * In v0.9.51 and newer, {@link TStop}s during a roadtrip may optionally
+	 * update {@code CURRENT_AREA} to their GeoArea to help future stops
+	 * guess a likely GeoArea if stopping in multiple areas during the trip.
+	 *
 	 * @see #getCurrentArea(RDBAdapter, Vehicle, boolean)
 	 */
 	public static final String CURRENT_AREA = "CURRENT_AREA";

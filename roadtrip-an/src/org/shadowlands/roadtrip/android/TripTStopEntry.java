@@ -2807,6 +2807,27 @@ public class TripTStopEntry extends Activity
 				allOK = false;
 				Misc.showExceptionAlertDialog(this, e);
 			}
+		} else {
+			// Continuing current trip.
+
+			// If roadtrip, update CURRENT_AREA if new stop is in a new GeoArea
+			// (optional, helps future guesses for currA after stops in no area).
+			if (currT.isRoadtrip())
+			{
+				final int locAID = locObj.getAreaID();
+				if (locAID > 0)
+				{
+					GeoArea dbCurrA = VehSettings.getCurrentArea(db, currV, false);
+					if ((dbCurrA == null) || (locAID != dbCurrA.getID()))
+						try
+						{
+							GeoArea geo = new GeoArea(db, locAID);
+							VehSettings.setCurrentArea(db, currV, geo);
+							currA = geo;
+						}
+						catch (Exception e) {}
+				}
+			}
 		}
 
 		if (! saveOnly)

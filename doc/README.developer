@@ -288,6 +288,7 @@ e3dae2e	0.9.43	2015-06-07	First release to include a BookEdit jar; minor improve
 				- TStop: Support for adding/editing comment after continuing from stop,
 				  including new flags FLAG_COMMENT_ADDED, FLAG_COMMENT_EDITED, FLAG_COMMENT_REMOVED
 				- Trip.TLTR.getTripRowsTabbed: Don't append trailing tabs when final columns are blank
+				- VehSettings: During roadtrips, update CURRENT_AREA when new TStops are in a different area
 
 Also see doc/hist/*.sql for previous schema updates.
 

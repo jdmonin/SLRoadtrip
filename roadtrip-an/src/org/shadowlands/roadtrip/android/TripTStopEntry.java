@@ -366,9 +366,9 @@ public class TripTStopEntry extends Activity
 	 * from {@link VehSettings#getPreviousLocation(RDBAdapter, Vehicle, boolean)}.
 	 * Used for {@link #viaRouteObj}.
 	 * If {@code null} because of a missing {@link VehSettings}, ViaRoutes can't be created or autocompleted,
-	 * but causes no other problems: Make sure code checks != null before using prevLocObj.
+	 * but causes no other problems: Make sure code checks != {@code null} before using {@code prevLocObj}.
 	 *<P>
-	 * Is {@code null} when {@link #viewTS != null}.
+	 * Is {@code null} when <tt>{@link #viewTS viewTS} != null</tt>.
 	 */
 	private Location prevLocObj;
 
@@ -665,7 +665,7 @@ public class TripTStopEntry extends Activity
 			Button b = (Button) findViewById(R.id.trip_tstop_btn_save);
 			if (b != null)
 			{
-				if (! isCurrentlyStopped)
+				if (! (isCurrentlyStopped || stopEndsTrip))
 					b.setVisibility(View.GONE);
 				else if (isViewTScurrTS)
 					b.setEnabled(false);
@@ -2001,10 +2001,14 @@ public class TripTStopEntry extends Activity
 	 * Read fields, and record this TStop in the database.
 	 * Don't continue from the stop at this time.
 	 * Finish this Activity.
+	 *<P>
+	 * Save button is also visible if {@link #stopEndsTrip}:
+	 * If not {@link #isCurrentlyStopped}, will create TStop
+	 * but not end trip.
 	 */
 	public void onClick_BtnSaveChanges(View v)
 	{
-		if (! isCurrentlyStopped)
+		if (! (isCurrentlyStopped || stopEndsTrip))
 			return;
 
 		enterTStop(true);
@@ -2043,7 +2047,8 @@ public class TripTStopEntry extends Activity
 	 * and save nothing.
 	 *
 	 * @param saveOnly  If true, save changes but don't leave
-	 *   the stop or continue the trip.
+	 *   the stop or continue the trip.  Can assume {@link #isCurrentlyStopped} when true,
+	 *   unless {@link #stopEndsTrip}.
 	 * @since 0.9.20
 	 */
 	protected void enterTStop(final boolean saveOnly)
@@ -2227,7 +2232,7 @@ public class TripTStopEntry extends Activity
 		// validate area ID @ end of roadtrip: starting or ending, and not 0 (none)
 		// or can pick any other area to change the trip's ending area.
 		if (stopEndsTrip && currT.isRoadtrip()
-			&& (areaLocs_areaID <= 0))
+			&& (areaLocs_areaID <= 0) && ! saveOnly)
 		{
 			// Scroll to top and show toast
 			final ScrollView sv = (ScrollView) findViewById(R.id.trip_tstop_scrollview);
@@ -2292,7 +2297,7 @@ public class TripTStopEntry extends Activity
 		//    (Be sure roadtrip_end_aid isn't 0, that means local trip in db;
 		//     Trip.convertLocalToRoadtrip uses trip's starting area as a nonzero placeholder)
 
-		if ((areaLocs_areaID <= 0) && (stopEndsTrip || ! currT.isRoadtrip()))
+		if ((areaLocs_areaID <= 0) && ((stopEndsTrip && ! saveOnly) || ! currT.isRoadtrip()))
 		{
 			if (! stopEndsTrip)
 			{
@@ -2305,11 +2310,11 @@ public class TripTStopEntry extends Activity
 		}
 
 		// Check for required trip category:
-		if (stopEndsTrip && ! saveOnly)
+		if (stopEndsTrip && (! saveOnly)
+		    && Settings.getBoolean(db, Settings.REQUIRE_TRIPCAT, false))
 		{
 			final int tripCat = ((TripCategory) (spTripCat.getSelectedItem())).getID();
-			if ((Settings.getBoolean(db, Settings.REQUIRE_TRIPCAT, false))
-			    && (tripCat <= 0))
+			if (tripCat <= 0)
 			{
 				spTripCat.requestFocus();
 				Toast.makeText(this, R.string.trip_tstart_categ_req, Toast.LENGTH_SHORT).show();
@@ -2589,7 +2594,7 @@ public class TripTStopEntry extends Activity
 			// Create a new TStop; set tsid (not currTS).
 
 			int areaID;  // geoarea of new tstop
-			if (stopEndsTrip)
+			if (stopEndsTrip && ! saveOnly)
 			{
 				// For local trips, this ending TStop's areaID will be 0.
 				// For roadtrips, can't end in area ID 0 (no geoarea),
@@ -2618,7 +2623,7 @@ public class TripTStopEntry extends Activity
 			}
 
 			int flags = 0;
-			if (! stopEndsTrip)
+			if (saveOnly || ! stopEndsTrip)
 			{
 				if (createdGeoArea)
 					flags |= TStop.TEMPFLAG_CREATED_GEOAREA;
@@ -2633,13 +2638,14 @@ public class TripTStopEntry extends Activity
 			  (currT, odoTotal, odoTrip, stopTimeSec, 0, locID, areaID, null, null, flags, viaID, comment);
 			tsid = newStop.insert(db);
 			currT.addCommittedTStop(newStop);  // update the Trip's cached TStop list, if any
-			if (! stopEndsTrip)
+			if (saveOnly || ! stopEndsTrip)
 				VehSettings.setCurrentTStop(db, currV, newStop);
 
 			// Convert local trip to roadtrip now if requested.
 			// areaID 0 (none) is allowed for TStops during a trip,
 			// but not for the final tstop ending the trip.
-			if (wantsConvertLocalToRoadtrip && (areaID >= ((stopEndsTrip) ? 1 : 0)))
+			if (wantsConvertLocalToRoadtrip
+			    && (areaID >= ((stopEndsTrip && ! saveOnly) ? 1 : 0)))
 				currT.convertLocalToRoadtrip(newStop);
 
 			// Don't set currTS field yet, it needs to be null for code here.
@@ -2666,7 +2672,7 @@ public class TripTStopEntry extends Activity
 			currTS.setVia_id(viaID);
 			currTS.setComment(comment, false, false);
 			if ((currT.isRoadtrip() || wantsConvertLocalToRoadtrip)
-			    && (areaLocs_areaID >= ((stopEndsTrip) ? 1 : 0)))
+			    && (areaLocs_areaID >= ((stopEndsTrip && ! saveOnly) ? 1 : 0)))
 				currTS.setAreaID(areaLocs_areaID);
 
 			if (! saveOnly)
@@ -2733,7 +2739,8 @@ public class TripTStopEntry extends Activity
 			if (wantsConvertLocalToRoadtrip)
 			{
 				final int newAreaID = currTS.getAreaID();
-				if ((newAreaID != currT.getAreaID()) && (newAreaID >= ((stopEndsTrip) ? 1 : 0)))
+				if ((newAreaID != currT.getAreaID())
+				    && (newAreaID >= ((stopEndsTrip && ! saveOnly) ? 1 : 0)))
 					currT.convertLocalToRoadtrip(currTS);
 			}
 

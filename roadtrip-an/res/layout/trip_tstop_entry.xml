@@ -451,6 +451,7 @@
 	android:layout_height="wrap_content"
 	android:layout_width="fill_parent"
 	android:orientation="horizontal" >
+	<!-- "Save": Hidden except when currently stopped or when stop ends trip -->
 	<Button android:id="@+id/trip_tstop_btn_save"
 	    android:text="@string/save_changes"
 	    android:layout_width="wrap_content"

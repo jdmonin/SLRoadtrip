@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.Vector;
 
 /**
- * In-memory representation, and database access for, a Trip Stop.
+ * In-memory representation, and database access for, a {@link Trip} Stop.
  * Most TStops are created once, when the vehicle stops during a trip,
  * and then updated when the vehicle leaves that stop to continue its journey.
  * See SQL schema comments for details.

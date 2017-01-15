@@ -1977,7 +1977,12 @@ public class Trip extends RDBRecord
 				final String[] rstr = tText.elementAt(r);
 				if (rstr[0] != null)
 					sb.append(rstr[0]);
-				for (int c = 1; c < rstr.length; ++c)
+
+				// append rest of non-blank columns; don't append trailing tabs
+				int last = rstr.length - 1;
+				while ((rstr[last] == null) && (last > 0))
+					--last;
+				for (int c = 1; c <= last; ++c)
 				{
 					sb.append('\t');
 					if (rstr[c] != null)

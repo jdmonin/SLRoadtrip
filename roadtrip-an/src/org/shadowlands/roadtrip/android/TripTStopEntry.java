@@ -751,12 +751,14 @@ public class TripTStopEntry extends Activity
 		}
 
 		// Set up autocompletes
+
 		loc = (AutoCompleteTextView) findViewById(R.id.trip_tstop_loc);
 		if (viewTS == null)
 			loc.addTextChangedListener(this);
 		areaLocs_areaID = -1;
 		areaLocs = null;
-		// loc, areaLocs, areaLocs_areaID will be filled soon.
+		// A bit further along, we'll determine areaLocs_areaID and
+		// then fill areaLocs and loc.
 
 		via = (AutoCompleteTextView) findViewById(R.id.trip_tstop_via);
 		if (Settings.getBoolean(db, Settings.HIDE_VIA, false))
@@ -1002,9 +1004,12 @@ public class TripTStopEntry extends Activity
 					areaLocs_areaID = currT.getAreaID();
 				}
 			}
-			else if ((prevLocObj != null) && currT.isRoadtrip() && ! stopEndsTrip)
+			else if ((prevLocObj != null) && currT.isRoadtrip())
 			{
-				areaLocs_areaID = prevLocObj.getAreaID();
+				final int aID = prevLocObj.getAreaID();
+				if ((aID > 0) || ! stopEndsTrip)
+					areaLocs_areaID = aID;
+				// else, see fallback just below
 			}
 		}
 
@@ -1012,13 +1017,12 @@ public class TripTStopEntry extends Activity
 		// (a new vehicle with no previous trips, or we're not stopped and stopEndsTrip, etc)
 		if (areaLocs_areaID == -1)
 		{
-			if (! stopEndsTrip)
+			areaLocs_areaID = currA.getID();  // likely == trip's starting area
+			if (stopEndsTrip && (areaLocs_areaID == 0))  // can't end trip in geoarea 0
 			{
-				areaLocs_areaID = currA.getID();  // likely == trip's starting area
-			} else {
 				areaLocs_areaID = currT.getRoadtripEndAreaID();  // will be 0 for local trips
-				if (areaLocs_areaID == 0)  // can't end trip in geoarea 0
-					areaLocs_areaID = currA.getID();
+				if (areaLocs_areaID == 0)
+					areaLocs_areaID = currT.getAreaID();
 			}
 		}
 

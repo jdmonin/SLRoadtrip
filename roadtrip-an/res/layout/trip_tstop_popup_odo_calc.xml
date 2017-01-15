@@ -4,7 +4,7 @@
 
  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
 
- This file Copyright (C) 2011,2015-2016 Jeremy D Monin (jdmonin@nand.net)
+ This file Copyright (C) 2011,2015-2017 Jeremy D Monin (jdmonin@nand.net)
 
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
@@ -31,8 +31,13 @@
 	    android:padding="0dp"
 	    >
 		<TextView android:id="@+id/trip_tstop_popup_odo_calc_status"
+		    android:textSize="18sp"
 		    android:layout_width="wrap_content"
 		    android:layout_height="wrap_content"
+		    android:paddingLeft="4sp"
+		    android:paddingRight="4sp"
+		    android:gravity="center"
+		    android:layout_gravity="center_vertical"
 		    />
 		<EditText android:id="@+id/trip_tstop_popup_odo_calc_value"
 		    android:layout_width="fill_parent"

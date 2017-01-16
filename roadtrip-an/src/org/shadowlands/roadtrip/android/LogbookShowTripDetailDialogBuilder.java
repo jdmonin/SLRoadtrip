@@ -26,6 +26,7 @@ import java.util.List;
 
 import org.shadowlands.roadtrip.R;
 import org.shadowlands.roadtrip.android.util.Misc;
+import org.shadowlands.roadtrip.db.GeoArea;
 import org.shadowlands.roadtrip.db.Person;
 import org.shadowlands.roadtrip.db.RDBAdapter;
 import org.shadowlands.roadtrip.db.TStop;
@@ -214,6 +215,29 @@ public class LogbookShowTripDetailDialogBuilder
 			else
 				tv.setText(DateFormat.format(fmt_dow_meddate, ts * 1000L)
 					   + " " + dtf.formatTime(ts * 1000L));
+		}
+
+		if (tr.isRoadtrip())
+		{
+			tv = (TextView) itms.findViewById(R.id.logbook_show_popup_trip_detail_starting_area);
+			try
+			{
+				GeoArea geo = new GeoArea(db, tr.getAreaID());
+				tv.setText(geo.getName());
+			} catch (Exception e) {}
+
+			tv = (TextView) itms.findViewById(R.id.logbook_show_popup_trip_detail_desti_area);
+			try
+			{
+				GeoArea geo = new GeoArea(db, tr.getRoadtripEndAreaID());
+				tv.setText(geo.getName());
+			} catch (Exception e) {}
+		} else {
+			View v = itms.findViewById(R.id.logbook_show_popup_trip_detail_starting_area_row);
+			v.setVisibility(View.GONE);
+
+			v = itms.findViewById(R.id.logbook_show_popup_trip_detail_desti_area_row);
+			v.setVisibility(View.GONE);
 		}
 
 		lvTStopsList = (ListView) itms.findViewById(R.id.logbook_show_popup_trip_detail_tstop_list);

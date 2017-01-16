@@ -69,6 +69,15 @@
 				android:layout_width="wrap_content" android:layout_height="wrap_content"
 				/>
 		</TableRow>
+		<!-- starting GeoArea: hide during local trips -->
+		<TableRow android:id="@+id/logbook_show_popup_trip_detail_starting_area_row">
+			<TextView android:text="@string/logbook_show_popup_trip_detail__starting_area"
+				android:layout_width="wrap_content" android:layout_height="wrap_content"
+				/>
+			<TextView android:id="@+id/logbook_show_popup_trip_detail_starting_area"
+				android:layout_width="wrap_content" android:layout_height="wrap_content"
+				/>
+		</TableRow>
 		<TableRow>
 			<!-- set right margin, otherwise columns' text has no gap -->
 			<TextView android:text="@string/starting_location"
@@ -76,6 +85,15 @@
 				android:layout_marginRight="3dp"
 				/>
 			<TextView android:id="@+id/logbook_show_popup_trip_detail_starting_loc"
+				android:layout_width="wrap_content" android:layout_height="wrap_content"
+				/>
+		</TableRow>
+		<!-- ending GeoArea: hide during local trips -->
+		<TableRow android:id="@+id/logbook_show_popup_trip_detail_desti_area_row">
+			<TextView android:text="@string/logbook_show_popup_trip_detail__desti_area"
+				android:layout_width="wrap_content" android:layout_height="wrap_content"
+				/>
+			<TextView android:id="@+id/logbook_show_popup_trip_detail_desti_area"
 				android:layout_width="wrap_content" android:layout_height="wrap_content"
 				/>
 		</TableRow>

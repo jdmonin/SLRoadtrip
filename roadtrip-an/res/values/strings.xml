@@ -200,6 +200,8 @@
 <string name="logbook_show__validation_failed">Validation failed</string>
 <string name="logbook_show__validation_no_problems">Validation complete, no problems found.</string>
 <string name="logbook_show_popup_export_filename">CSV Filename:</string>
+<string name="logbook_show_popup_trip_detail__desti_area">Destination\narea</string>
+<string name="logbook_show_popup_trip_detail__starting_area">Starting area</string>
 <!-- use non-breaking space to visually separate in TextView; simple "   " is shortened -->
 <string name="logbook_show_popup_trip_detail__trip_stops">Trip Stops: \u00A0 (tap for stop details)</string>
 <string name="logbook_show_popup_trip_detail__trip_stops_none">Trip Stops: None</string>

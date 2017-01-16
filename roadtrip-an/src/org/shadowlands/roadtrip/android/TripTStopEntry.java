@@ -1179,11 +1179,15 @@ public class TripTStopEntry extends Activity
 
 			// Look up and show current geoarea name
 			TextView tv = (TextView) findViewById(R.id.trip_tstop_area_local_value);
-			if ((tv != null) && (areaLocs_areaID > 0))
+			if ((tv != null) && (areaLocs_areaID >= 0))
 			{
 				try {
-					GeoArea ga = new GeoArea(db, areaLocs_areaID);
-					tv.setText(ga.getName());
+					String newAreaText;
+					if (areaLocs_areaID != 0)
+						newAreaText = new GeoArea(db, areaLocs_areaID).getName();
+					else
+						newAreaText = getResources().getString(R.string.none__parens);
+					tv.setText(newAreaText);
 				} catch (Exception e) {}  // very unlikely, ignore: used for display only
 			}
 
@@ -1379,7 +1383,7 @@ public class TripTStopEntry extends Activity
 		{
 			// popup to confirm changing it; see confirmChange javadoc
 			if (newAreaText == null)
-				newAreaText = getResources().getString(R.string.none);
+				newAreaText = getResources().getString(R.string.none__parens);
 			showRoadtripAreaButtonConfirmDialog
 				(areaID, locObj.toString(), newAreaText, via.getText().toString());
 
@@ -1403,7 +1407,7 @@ public class TripTStopEntry extends Activity
 			if (tv != null)
 			{
 				if ((newAreaText == null) || (areaID == 0))
-					newAreaText = getResources().getString(R.string.none);
+					newAreaText = getResources().getString(R.string.none__parens);
 				tv.setText(newAreaText);
 			}
 		}

@@ -2239,7 +2239,7 @@ public class TripTStopEntry extends Activity
 
 		// validate area ID @ end of roadtrip: can't end in 0 (none);
 		// user can pick any geo area to set the trip's ending area.
-		// If not stopEndsTrip, area ID 0 is OK: convert local to roadtrip.
+		// If not stopEndsTrip, area ID 0 is OK: can still convert local to roadtrip.
 		if (stopEndsTrip && (areaLocs_areaID <= 0) && ! saveOnly)
 		{
 			// Scroll to top and show toast
@@ -2294,18 +2294,23 @@ public class TripTStopEntry extends Activity
 			// which ignores existing locObj if areaid differs.
 		}
 
+		final boolean wantsConvertLocalToRoadtrip
+			= (! currT.isRoadtrip())
+			  && (areaLocs_areaID >= ((stopEndsTrip && ! saveOnly) ? 1 : 0))
+			  && (areaLocs_areaID != currT.getAreaID());
+
 		// areaLocs_areaID is set in onCreate, updated by radios or dialogs
 		// or dropdowns, but check again now just in case.
 		// This is a fallback in case other checks somehow missed it,
 		// to avoid data inconsistency caused by ending a trip at null geoarea.
 
-		// TODO: if not stopEndsTrip, allow conversion of local to roadtrip but
-		//    still preserve areaLocs_areaID == 0 if stopping in null geoarea;
-		//    might move wantsConvertLocalToRoadtrip decl up here.
-		//    (Be sure roadtrip_end_aid isn't 0, that means local trip in db;
+		// Note: If not stopEndsTrip, we allow conversion of local to roadtrip but
+		//    still preserve areaLocs_areaID == 0 if stopping in null geoarea.
+		//    (To avoid roadtrip_end_aid 0, which means local trip in db,
 		//     Trip.convertLocalToRoadtrip uses trip's starting area as a nonzero placeholder)
 
-		if ((areaLocs_areaID <= 0) && ((stopEndsTrip && ! saveOnly) || ! currT.isRoadtrip()))
+		if ((areaLocs_areaID <= 0)
+		    && ((stopEndsTrip && ! saveOnly) || ! (currT.isRoadtrip() || wantsConvertLocalToRoadtrip)))
 		{
 			if (! stopEndsTrip)
 			{
@@ -2588,11 +2593,6 @@ public class TripTStopEntry extends Activity
 		}  // if (bundle contains gas brand)
 
 		// Now either create a new TStop in the database, or update currTS there.
-
-		final boolean wantsConvertLocalToRoadtrip
-			= (! currT.isRoadtrip())
-			  && (areaLocs_areaID > 0)
-			  && (areaLocs_areaID != currT.getAreaID());
 
 		// Note: A roadtrip can't end in geoarea 0, the db roadtrip field uses 0 when it's a local trip.
 		//       Can't allow tstop in area 0 if stopEndsTrip, so code earlier in this method checks
@@ -3043,8 +3043,9 @@ public class TripTStopEntry extends Activity
 	 * or "Choose a new GeoArea" after {@link #onClick_BtnAreaLocalChange(View)}.
 	 * @param id  Unique dialog key, borrowed from various controls' {@code R.id}s:
 	 *    <UL>
-	 *    <LI> {@code trip_tstop_area_local_row}: Show "Choose a new GeoArea for this stop" without "none" choice.
-	 *         (Used when the trip is currently local, to convert it to a roadtrip)
+	 *    <LI> {@code trip_tstop_area_local_row}: Show "Choose a new GeoArea for this stop"
+	 *         (including "none" choice {@link GeoArea#GEOAREA_NONE} unless {@link #stopEndsTrip}).
+	 *         Used when the trip is currently local, to convert it to a roadtrip.
 	 *         When "OK" is pressed, sets {@link #areaLocs_areaID} by calling
 	 *         {@link #selectRoadtripAreaButton(int, String, boolean, int)}.
 	 *         The spinner includes the current (starting) geoarea as the default selection,
@@ -3066,8 +3067,8 @@ public class TripTStopEntry extends Activity
 			final View popupLayout = getLayoutInflater().inflate
 				(R.layout.trip_tstop_popup_choose_area, null);
 			final Spinner areas = (Spinner) popupLayout.findViewById(R.id.logbook_show_popup_locs_areas);
-			SpinnerDataFactory.setupGeoAreasSpinner(db, this, areas, areaLocs_areaID, false, -1);
-				// (TODO) geoarea "none" can be allowed unless stopEndsTrip
+			SpinnerDataFactory.setupGeoAreasSpinner(db, this, areas, areaLocs_areaID, ! stopEndsTrip, -1);
+				// unless stopEndsTrip, includes "none" placeholder object GeoArea.GEOAREA_NONE
 
 			AlertDialog.Builder alert = new AlertDialog.Builder(this);
 			alert.setView(popupLayout);

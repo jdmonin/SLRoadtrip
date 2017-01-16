@@ -274,6 +274,9 @@ e3dae2e	0.9.43	2015-06-07	First release to include a BookEdit jar; minor improve
 				- Show TStop comments without superfluous square brackets
 	0.9.51			Being developed now; improvements and bugfixes since 0.9.50
 				SLRoadtrip android app:
+				- Stop during a Trip:
+					- First non-local stop can be outside all GeoAreas:
+					  Added "(none)" to area list shown with local trip's Change button
 				- End Trip:
 					- Always show "Save Changes" button to save without ending trip now,
 					  even if not currently stopped

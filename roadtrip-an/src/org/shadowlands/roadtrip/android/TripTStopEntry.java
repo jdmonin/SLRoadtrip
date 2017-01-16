@@ -2374,13 +2374,17 @@ public class TripTStopEntry extends Activity
 			|| ((areaLocs_areaID != locObj.getAreaID())
 			    && ((locObjCreatedHere == null) || (locObj.getID() != locObjCreatedHere.getID()))))
 		{
+			locObj = null;
+
 			final int locatIdx = loc.getListSelection();
 			ListAdapter la = loc.getAdapter();
 			if ((locatIdx != ListView.INVALID_POSITION)
 			    && (locatIdx != ListAdapter.NO_SELECTION) && (la != null))
 			{
 				locObj = (Location) la.getItem(locatIdx);
-				if (locObj != null)
+				// use same criteria as above
+				if ((locObj != null) && locObj.getLocation().equalsIgnoreCase(locat)
+				    && (areaLocs_areaID == locObj.getAreaID()))
 					locID = locObj.getID();
 			}
 

@@ -163,7 +163,11 @@ public class TripTStopEntry extends Activity
 
 	private RDBAdapter db = null;
 
-	/** Current GeoArea, from {@link #checkCurrentDriverVehicleTripSettings()}. */
+	/**
+	 * Current or most recent GeoArea, from {@link #checkCurrentDriverVehicleTripSettings()}.
+	 * For more details see {@link VehSettings#CURRENT_AREA}.
+	 * Always a valid GeoArea in the db, never {@link GeoArea#GEOAREA_NONE}.
+	 */
 	private GeoArea currA;
 
 	/** This trip's Vehicle, from {@link #checkCurrentDriverVehicleTripSettings()}. */
@@ -2233,10 +2237,10 @@ public class TripTStopEntry extends Activity
 			}
 		}
 
-		// validate area ID @ end of roadtrip: starting or ending, and not 0 (none)
-		// or can pick any other area to change the trip's ending area.
-		if (stopEndsTrip && currT.isRoadtrip()
-			&& (areaLocs_areaID <= 0) && ! saveOnly)
+		// validate area ID @ end of roadtrip: can't end in 0 (none);
+		// user can pick any geo area to set the trip's ending area.
+		// If not stopEndsTrip, area ID 0 is OK: convert local to roadtrip.
+		if (stopEndsTrip && (areaLocs_areaID <= 0) && ! saveOnly)
 		{
 			// Scroll to top and show toast
 			final ScrollView sv = (ScrollView) findViewById(R.id.trip_tstop_scrollview);
@@ -2311,6 +2315,8 @@ public class TripTStopEntry extends Activity
 				if (areaLocs_areaID == 0)  // can't end trip in geoarea 0
 					areaLocs_areaID = currA.getID();
 			}
+
+			// if usedAreaOther, will set areaLocs_areaID soon below from areaOther and areaOtherName.
 		}
 
 		// Check for required trip category:
@@ -2580,14 +2586,14 @@ public class TripTStopEntry extends Activity
 		// Now either create a new TStop in the database, or update currTS there.
 
 		final boolean wantsConvertLocalToRoadtrip
-			= (areaLocs_areaID > 0) && (! currT.isRoadtrip())
+			= (! currT.isRoadtrip())
+			  && (areaLocs_areaID > 0)
 			  && (areaLocs_areaID != currT.getAreaID());
 
-			// note: the following code assumes wantsConvertLocalToRoadtrip implies areaLocs_areaID > 0
-			//       A roadtrip can't end in geoarea 0, the db uses that value when it's a local trip.
-			//       (TODO) different placeholder than 0, because Trip.convertLocalToRoadtrip can handle 0
-			//              by using trip.areaid as a nonzero ending area id.
-			//              Still can't allow tstop in area 0 if stopEndsTrip.
+		// Note: A roadtrip can't end in geoarea 0, the db roadtrip field uses 0 when it's a local trip.
+		//       Can't allow tstop in area 0 if stopEndsTrip, so code earlier in this method checks
+		//       for (stopEndsTrip && (areaLocs_areaID <= 0) && ! saveOnly) and if found, shows a
+		//       Toast and returns. So at this point areaLocs_areaID > 0 if stopEndsTrip && ! saveOnly.
 
 		/**
 		 * Done creating/updating related and 'master record' data.
@@ -2603,7 +2609,7 @@ public class TripTStopEntry extends Activity
 				// For local trips, this ending TStop's areaID will be 0.
 				// For roadtrips, can't end in area ID 0 (no geoarea),
 				// so as a fallback change that here to the ending area.
-				// (The GUI has likely already given the user a chance to correct it.)
+				// (The GUI has already given the user a chance to correct it.)
 				// If all the roadtrip's stops are in the starting geoarea, it will be
 				// converted into a local trip by VehSettings.endCurrentTrip.
 				// Similar code is below, used when updating an existing TStop;

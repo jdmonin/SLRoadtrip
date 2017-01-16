@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010-2011,2013-2015 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2011,2013-2015,2017 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -40,6 +40,13 @@ public class Location extends RDBRecord
         { "a_id", "geo_lat", "geo_lon", "loc_descr", "latest_gas_brandgrade_id" };
     private static final String[] FIELDS_AND_ID =
 	    { "a_id", "geo_lat", "geo_lon", "loc_descr", "latest_gas_brandgrade_id", "_id" };
+
+    /**
+     * Field names/where-clause for case-insensitive description search within area.
+     * @since 0.9.51
+     */
+    private static final String WHERE_AREAID_AND_DESCR =
+	"a_id=? and loc_descr COLLATE NOCASE =?";
 
     /** May be unused (0); foreign key to {@link GeoArea}. */
     private int area_id;
@@ -98,7 +105,8 @@ public class Location extends RDBRecord
 	throws IllegalStateException
     {
 	try {
-		Vector<String[]> locs = db.getRows(TABNAME, "loc_descr COLLATE NOCASE", descr, FIELDS_AND_ID, "_id", 0);
+		final String[] whereArgs = { Integer.toString(areaID), descr };
+		Vector<String[]> locs = db.getRows(TABNAME, WHERE_AREAID_AND_DESCR, whereArgs, FIELDS_AND_ID, "_id", 0);
 		if (locs != null)
 			return new Location(db, locs.firstElement());
 	}

@@ -285,6 +285,7 @@ e3dae2e	0.9.43	2015-06-07	First release to include a BookEdit jar; minor improve
 					- Search by Via Route from menu
 					- Show "Current Trip in progress" (not shown in 0.9.40 - 0.9.50)
 				Database schema and model:
+				- Location.getByDescr: Use areaID in query
 				- TStop: Support for adding/editing comment after continuing from stop,
 				  including new flags FLAG_COMMENT_ADDED, FLAG_COMMENT_EDITED, FLAG_COMMENT_REMOVED
 				- Trip.TLTR.getTripRowsTabbed: Don't append trailing tabs when final columns are blank

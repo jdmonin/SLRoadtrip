@@ -209,7 +209,6 @@
 <string name="main_cancel_cannot_with_stops">Cannot cancel a trip with stops; use End Trip instead.</string>
 <string name="main_create_freq_from_recent">Create Frequent from recent trip...</string>
 <string name="main_changedriver_cannot_during_trip">Sorry, cannot change driver during a trip yet; use End Trip instead.</string>
-<string name="main_destination_area">Destination area:</string>
 <string name="main_from_frequent_trip">From frequent trip:</string>
 <string name="main_no_current_trip">No current trip.</string>
 <string name="main_no_recent_trips_for_vehicle">No recent trips found for this vehicle.</string>

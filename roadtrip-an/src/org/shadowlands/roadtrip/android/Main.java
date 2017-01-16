@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010-2012,2014-2015 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2012,2014-2015,2017 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -633,28 +633,11 @@ public class Main extends Activity
 
 			txt.append("\n\n");
 			if (destAreaID == 0)
-			{
 				txt.append(res.getString(R.string.main_trip_in_progress));
-				if (currTCateg != null)
-					txt.append(currTCateg);
-			} else {
+			else
 				txt.append(res.getString(R.string.main_roadtrip_in_progress));
-				if (currTCateg != null)
-					txt.append(currTCateg);
-				txt.append("\n");
-				txt.append(res.getString(R.string.main_destination_area));
-				txt.append(' ');
-				try
-				{
-					txt.append(new GeoArea(db, destAreaID).getName());
-				} catch (IllegalStateException e) {
-					// shouldn't happen, db is open
-				} catch (RDBKeyNotFoundException e) {
-					// shouldn't happen
-					Toast.makeText(this, "L132: Internal error, area " + destAreaID + " not found in DB",
-						Toast.LENGTH_LONG).show();
-				}
-			}
+			if (currTCateg != null)
+				txt.append(currTCateg);
 			if (currFT != null)
 			{
 				txt.append("\n");

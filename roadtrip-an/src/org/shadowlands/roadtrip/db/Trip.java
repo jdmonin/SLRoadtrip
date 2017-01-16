@@ -167,7 +167,7 @@ public class Trip extends RDBRecord
     private String comment;
     /** This trip's optional passenger count, or -1 if unused */
     private int passengers = -1;
-    /** ending area ID if roadtrip, 0 otherwise */
+    /** ending area ID if roadtrip, 0 otherwise. If trip in progress, may change. See {@link #getRoadtripEndAreaID()} */
     private int roadtrip_end_aid;
     private boolean has_continue;
 
@@ -1203,6 +1203,13 @@ public class Trip extends RDBRecord
 
 	/**
 	 * For roadtrips, get the ending {@link GeoArea} ID; for local trips, returns 0.
+	 * If the Trip is in progress, this value was likely set by the first stop outside
+	 * the starting area ({@link #getAreaID()}) and may change with further
+	 * travel; see {@link #convertLocalToRoadtrip(TStop)}.
+	 *<P>
+	 * Before v0.9.50, a roadtrip's end area was known because the user had to choose it
+	 * when starting a trip, instead of converting from local during the trip.
+	 *
 	 * @see #isRoadtrip()
 	 */
 	public int getRoadtripEndAreaID() {

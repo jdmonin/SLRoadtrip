@@ -2824,6 +2824,24 @@ public class TripTStopEntry extends Activity
 		} else {
 			// Continuing current trip.
 
+			// Update TripCategory if its spinner was showing
+			if (stopEndsTrip)
+			{
+				int tripCat = ((TripCategory) (spTripCat.getSelectedItem())).getID();
+				if (tripCat < 0)
+					tripCat = 0;
+				currT.setTripCategoryID(tripCat);
+				if (currT.isDirty())
+					try
+					{
+						currT.commit();
+					} catch (Exception e) {
+						// All validation is done above, so no exception is expected
+						allOK = false;
+						Misc.showExceptionAlertDialog(this, e);
+					}
+			}
+
 			// If roadtrip, update CURRENT_AREA if new stop is in a new GeoArea
 			// (optional, helps future guesses for currA after stops in no area).
 			if (currT.isRoadtrip())

@@ -51,7 +51,7 @@ public class SpinnerDataFactory
 	public static Person NEW_DRIVER;  // TODO keep?
 	public static Person NEW_VEHICLE; // TODO keep?
 
-	/** Placeholder in spinners for an empty {@link TripCategory}. */
+	/** Placeholder in spinners for an empty {@link TripCategory}, with db _id -1. */
 	public static TripCategory EMPTY_TRIPCAT;
 
 	/**
@@ -248,6 +248,7 @@ public class SpinnerDataFactory
 
 	/**
 	 * Populate a spinner from the {@link TripCategory}s in the database.
+	 * First item will be the blank (empty) category placeholder {@link #EMPTY_TRIPCAT}.
 	 * @param db  connection to use
 	 * @param ctx  the calling Activity or Context
 	 * @param sp  spinner to fill with the areas

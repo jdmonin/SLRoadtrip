@@ -58,7 +58,7 @@ public class VehSettings extends RDBRecord
 	 * {@link #CURRENT_TSTOP}'s record if any, or {@link #PREV_LOCATION} otherwise
 	 * if that location's area ID != 0.
 	 *<P>
-	 * In v0.9.51 and newer, {@link TStop}s during a roadtrip may optionally
+	 * In v0.9.60 and newer, {@link TStop}s during a roadtrip may optionally
 	 * update {@code CURRENT_AREA} to their GeoArea to help future stops
 	 * guess a likely GeoArea if stopping in multiple areas during the trip.
 	 *

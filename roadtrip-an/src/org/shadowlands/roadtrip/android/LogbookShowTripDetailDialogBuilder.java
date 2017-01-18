@@ -63,7 +63,7 @@ import android.widget.TextView;
  * or cancelled: See {@link LogbookShowTripDetailDialogBuilder.DetailDialogListener}
  * for callback interface.
  *
- * @since 0.9.51
+ * @since 0.9.60
  */
 public class LogbookShowTripDetailDialogBuilder
 	implements AdapterView.OnItemClickListener,

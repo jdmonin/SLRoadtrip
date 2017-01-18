@@ -79,7 +79,7 @@ public class TripTStopGas extends Activity
 
 	/**
 	 * Read-only mode, for {@link TripTStopEntry#EXTRAS_FIELD_VIEW_TSTOP_ID}.
-	 * @since 0.9.51
+	 * @since 0.9.60
 	 */
 	private boolean isReadOnly;
 

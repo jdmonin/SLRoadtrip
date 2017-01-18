@@ -43,7 +43,7 @@ public class Location extends RDBRecord
 
     /**
      * Field names/where-clause for case-insensitive description search within area.
-     * @since 0.9.51
+     * @since 0.9.60
      */
     private static final String WHERE_AREAID_AND_DESCR =
 	"a_id=? and loc_descr COLLATE NOCASE =?";

@@ -93,7 +93,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	/**
 	 * For columns in standard mode, the TStop Comment column number
 	 * and index within {@link #COL_HEADINGS}.
-	 * @since 0.9.51
+	 * @since 0.9.60
 	 */
 	public static final int COL_TSTOP_COMMENT = 7;
 
@@ -484,7 +484,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	/**
 	 * Get this LTM's Vehicle.
 	 * @return the Vehicle passed to this LTM's constructor; never null
-	 * @since 0.9.51
+	 * @since 0.9.60
 	 */
 	public final Vehicle getVehicle()
 	{
@@ -1136,7 +1136,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	 * @param tsID  {@link TStop} ID to update
 	 * @return  The updated TStop's {@link Trip.TripListTimeRange}, or {@code null} if not found in model
 	 * @throws IllegalStateException if {@link #trip_simple_mode} is active
-	 * @since 0.9.51
+	 * @since 0.9.60
 	 */
 	public TripListTimeRange requeryTStopComment(final int tsID)
 		throws IllegalStateException
@@ -1327,7 +1327,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	 * Since this method is for display only, not further processing, it tries to give
 	 * a human-readable message if the location data is missing (db inconsistency).
 	 *<P>
-	 * Public method in v0.9.51; previously private.
+	 * Public method in v0.9.60; previously private.
 	 *
 	 * @param conn  db connection to use
 	 * @param ts  TStop to look at
@@ -1480,7 +1480,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	 * @param tcatID  TripCategory ID to get
 	 * @param conn  db connection to use if needed
 	 * @return The requested TripCategory, or {@code null} if not found in cache or db
-	 * @since 0.9.51
+	 * @since 0.9.60
 	 */
 	public final TripCategory getCachedTripCategory(final int tcatID, RDBAdapter conn)
 	{

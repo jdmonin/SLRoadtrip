@@ -108,7 +108,7 @@ public class TStop extends RDBRecord
 
     /**
      * Field array with only the Comment and Flags fields: { {@code "comment", "flag_sides"} }
-     * @since 0.9.51
+     * @since 0.9.60
      */
     private final static String[] FIELD_COMMENT_AND_FLAGS_ARR = { FIELD_COMMENT, "flag_sides" };
 
@@ -175,7 +175,7 @@ public class TStop extends RDBRecord
     /**
      * Flag to indicate this TStop's {@link #getComment()} was added later,
      * after continuing travel from the stop.
-     * @since 0.9.51
+     * @since 0.9.60
      * @see #FLAG_COMMENT_EDITED
      * @see #FLAG_COMMENT_REMOVED
      */
@@ -184,7 +184,7 @@ public class TStop extends RDBRecord
     /**
      * Flag to indicate this TStop's {@link #getComment()} was edited later,
      * after continuing travel from the stop.
-     * @since 0.9.51
+     * @since 0.9.60
      * @see #FLAG_COMMENT_ADDED
      * @see #FLAG_COMMENT_REMOVED
      */
@@ -193,7 +193,7 @@ public class TStop extends RDBRecord
     /**
      * Flag to indicate this TStop's {@link #getComment()} was removed later,
      * after continuing travel from the stop.
-     * @since 0.9.51
+     * @since 0.9.60
      * @see #FLAG_COMMENT_ADDED
      * @see #FLAG_COMMENT_EDITED
      */
@@ -240,7 +240,7 @@ public class TStop extends RDBRecord
     /**
      * comment; null if empty.
      *<P>
-     * In v0.9.51 and higher, the android app allows adding or editing the comment later
+     * In v0.9.60 and higher, the android app allows adding or editing the comment later
      * after continuing travel from the TStop. See {@link #setComment(String, boolean, boolean)}
      * for details and related {@link #flag_sides} flags.
      * @see #isCommentSetInDB
@@ -253,7 +253,7 @@ public class TStop extends RDBRecord
      * Updated when TStop is loaded from DB or committed/inserted, by calling
      * {@link #recalcIsCommentSetInDB()}. Used by {@link #setComment(String, boolean, boolean)} when
      * its {@code isLater} param is set. Ignore this field if TStop is new ({@link RDBRecord#id id} &lt; 1).
-     * @since 0.9.51
+     * @since 0.9.60
      */
     private boolean isCommentSetInDB;
 
@@ -720,7 +720,7 @@ public class TStop extends RDBRecord
 	 *     false if the field already matched what's in the database
 	 * @throws IllegalStateException if dbConn was null because
 	 *     this is a new record, not an existing one
-	 * @since 0.9.51
+	 * @since 0.9.60
 	 */
 	public boolean requeryComment()
 		throws IllegalStateException
@@ -1110,7 +1110,7 @@ public class TStop extends RDBRecord
 	/**
 	 * Get the description/comment, or null if none.
 	 *<P>
-	 * In v0.9.51 and higher, the android app allows adding or editing the comment later
+	 * In v0.9.60 and higher, the android app allows adding or editing the comment later
 	 * after continuing travel from the TStop. See {@link #setComment(String, boolean, boolean)}
 	 * for details and related {@link #getFlags()} flags.
 	 */
@@ -1121,7 +1121,7 @@ public class TStop extends RDBRecord
 	/**
 	 * Set or clear the description/comment field.
 	 *<P>
-	 * In v0.9.51 and higher, the android app allows adding or editing the comment later
+	 * In v0.9.60 and higher, the android app allows adding or editing the comment later
 	 * after continuing travel from the TStop. {@code setComment(..)} supports this by
 	 * updating related {@link #getFlags()} flags if {@code isLater} is set:
 	 *<UL>
@@ -1199,7 +1199,7 @@ public class TStop extends RDBRecord
 	 * Recalculate {@link #isCommentSetInDB} after loading the TStop from the DB,
 	 * committing changes, or after initial insert. Assumes current value of
 	 * {@link #comment} reflects what's in the database at this moment.
-	 * @since 0.9.51
+	 * @since 0.9.60
 	 */
 	private void recalcIsCommentSetInDB()
 	{

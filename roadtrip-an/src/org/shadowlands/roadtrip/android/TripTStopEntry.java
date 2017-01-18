@@ -105,7 +105,7 @@ import android.widget.Toast;
  * text is changed when resuming the trip, make sure the new item's text is updated
  * in the database.
  *<P>
- * <B>View Previous TStop mode</B> in v0.9.51 and higher:<BR>
+ * <B>View Previous TStop mode</B> in v0.9.60 and higher:<BR>
  * Can instead be called in View Previous TStop mode to show any stop of any previous trip,
  * using {@link #EXTRAS_FIELD_VIEW_TSTOP_ID}. This view is mostly read-only except for
  * the Comment field; see that extra field's javadoc. If the comment is changed,
@@ -131,7 +131,7 @@ public class TripTStopEntry extends Activity
 	 *<P>
 	 * If this TStop ID is the current TStop of the current trip in Settings/VehSettings,
 	 * the view will be completely read-only.
-	 * @since 0.9.51
+	 * @since 0.9.60
 	 */
 	public static final String EXTRAS_FIELD_VIEW_TSTOP_ID = "view_tstop_id";
 
@@ -193,7 +193,7 @@ public class TripTStopEntry extends Activity
 	 * For View Previous TStop mode; this field is null unless that
 	 * mode was activated using {@link #EXTRAS_FIELD_VIEW_TSTOP_ID}.
 	 * @see #isViewTScurrTS
-	 * @since 0.9.51
+	 * @since 0.9.60
 	 */
 	private TStop viewTS;
 
@@ -203,7 +203,7 @@ public class TripTStopEntry extends Activity
 	 * behave strictly read-only to prevent any possible inconsistencies
 	 * based on assumptions that {@code viewTS} must be a previous stop.
 	 * Set in {@link #checkCurrentDriverVehicleTripSettings()}.
-	 * @since 0.9.51
+	 * @since 0.9.60
 	 */
 	private boolean isViewTScurrTS;
 
@@ -420,7 +420,7 @@ public class TripTStopEntry extends Activity
 	/**
 	 * For hh:mm output in View Previous TStop mode, an android-specific DateTimeFormatter
 	 * for locale and user prefs, or {@code null}.
-	 * @since 0.9.51
+	 * @since 0.9.60
 	 */
 	private RTRAndroidDateTimeFormatter dtf;
 
@@ -1838,7 +1838,7 @@ public class TripTStopEntry extends Activity
 	 * @param vTxtID  The text view's ID to use
 	 * @param ext  Text to use; if null or "", will use {@code "(none)"} from {@code R.string.none__parens}.
 	 * @param setPadLeft  True to set 6dp padding on left
-	 * @since 0.9.51
+	 * @since 0.9.60
 	 */
 	private void replaceViewWithText
 		(final View vOld, final int vTxtID, final CharSequence txt, final boolean setPadLeft)

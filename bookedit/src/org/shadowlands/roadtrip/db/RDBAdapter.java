@@ -142,7 +142,7 @@ public interface RDBAdapter
 	 * @see #getRowField(String, String, String, String)
 	 * @see #getRowField(String, String, String, String[])
 	 * @see #getRowIntField(String, int, String, int)
-	 * @since 0.9.51
+	 * @since 0.9.60
 	 */
 	public String getRowField(final String tabname, final int id, final String fn)
 	    throws IllegalStateException;

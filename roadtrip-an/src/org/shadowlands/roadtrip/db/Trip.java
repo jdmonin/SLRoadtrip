@@ -1762,7 +1762,7 @@ public class Trip extends RDBRecord
 	 * Convenience method. Does not query the DB if stop isn't currently cached.
 	 * @param tsID  ID of a {@code TStop} on this trip
 	 * @return  The TStop if cached, or {@code null}
-	 * @since 0.9.51
+	 * @since 0.9.60
 	 */
 	public TStop getCachedTStop(final int tsID)
 	{
@@ -1841,7 +1841,7 @@ public class Trip extends RDBRecord
 		 * Holds beginning index (row) within {@link #tText} of each trip in {@link #tr}, or {@code null}.
 		 * Public for access and update from {@link LogbookTableModel}; please treat as read-only otherwise.
 		 * @see #tstopTextIdx
-		 * @since 0.9.51
+		 * @since 0.9.60
 		 */
 		public int[] trBeginTextIdx;
 
@@ -1851,7 +1851,7 @@ public class Trip extends RDBRecord
 		 * because starting TStops' comments aren't rendered in {@code tr}.
 		 * Public for access and update from {@link LogbookTableModel}; please treat as read-only otherwise.
 		 * @see #trBeginTextIdx
-		 * @since 0.9.51
+		 * @since 0.9.60
 		 */
 		public HashMap<Integer, Integer> tstopTextIdx;
 
@@ -1923,7 +1923,7 @@ public class Trip extends RDBRecord
 		 * In Location Mode, as a temporary measure until more subtle match highlighting can be done,
 		 * {@link TStop}s at a Location matched in {@link #tMatchedRows} are shown in ALL CAPS.
 		 *<P>
-		 * Before v0.9.51, this method was {@code appendRowsAsTabbedString(StringBuffer)}.
+		 * Before v0.9.60, this method was {@code appendRowsAsTabbedString(StringBuffer)}.
 		 *
 		 * @return List of StringBuilders, 1 per trip in {@link #tr}, or {@code null} if none in {@link #tText}.
 		 */
@@ -1947,7 +1947,7 @@ public class Trip extends RDBRecord
 		 * @param tripID  {@link Trip} ID in the database of a Trip in this TripListTimeRange
 		 * @return The Trip's text rows as a StringBuilder,
 		 *     or {@code null} if trip not in {@link #trBeginTextIdx}.
-		 * @since 0.9.51
+		 * @since 0.9.60
 		 */
 		public StringBuilder getTripRowsTabbed(final int tripID)
 		{
@@ -1965,7 +1965,7 @@ public class Trip extends RDBRecord
 		 * Get a Trip's rows by trip index within this TripListTimeRange.
 		 * @param i  Index into {@link #trBeginTextIdx} and {@link #tr}
 		 * @return  StringBuilder for the Trip
-		 * @since 0.9.51
+		 * @since 0.9.60
 		 */
 		private StringBuilder getTripRowsTabbed_idx(final int i)
 		{

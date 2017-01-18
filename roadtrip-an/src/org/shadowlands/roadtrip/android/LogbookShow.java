@@ -172,13 +172,13 @@ public class LogbookShow extends Activity
 	/**
 	 * The Builder for the currently/most recently shown Trip Detail Dialog, or null.
 	 * Shows the Trip held in {@link #tddb_tripView}.
-	 * @since 0.9.51
+	 * @since 0.9.60
 	 */
 	private LogbookShowTripDetailDialogBuilder tddb;
 
 	/**
 	 * The TextView of the {@link Trip} currently/most recently shown in {@link #tddb}, or null.
-	 * @since 0.9.51
+	 * @since 0.9.60
 	 */
 	private TextView tddb_tripView;
 
@@ -823,7 +823,7 @@ public class LogbookShow extends Activity
 	 * @param wantTVList  True to return a list of the created TextViews for callback use
 	 * @return A list of the created TextViews if {@code wantTVList} (which may be null), or {@code null}
 	 * @throws IllegalArgumentException if {@code trips} != {@code null} but its size differs from {@code sbTrips}
-	 * @since 0.9.51
+	 * @since 0.9.60
 	 */
 	private List<TextView> addTripsTextViews
 		(final List<StringBuilder> sbTrips, final List<Trip> trips,
@@ -855,7 +855,7 @@ public class LogbookShow extends Activity
 
 	/**
 	 * Add one trip's text to a new TextView within {@link #addTripsTextViews(List, List, boolean, boolean)}'s loop.
-	 * @since 0.9.51
+	 * @since 0.9.60
 	 */
 	private void addTripsTextViews_addOne
 		(final StringBuilder sb, final Trip tr, final List<TextView> tvl, final boolean isLaterPos)
@@ -900,7 +900,7 @@ public class LogbookShow extends Activity
 	 * Handle taps on a Trip's TextView to show more info.
 	 * Creates and shows a dialog using {@link LogbookShowTripDetailDialogBuilder}.
 	 * @param v  A trip's TextView; {@link View#getTag() v.getTag()} contains the {@link Trip} to show
-	 * @since 0.9.51
+	 * @since 0.9.60
 	 */
 	@Override
 	public void onClick(View v)
@@ -920,7 +920,7 @@ public class LogbookShow extends Activity
 	 * Callback when TStop data is changed from {@link TripTStopEntry}
 	 * via {@link LogbookShowTripDetailDialogBuilder}'s dialog.
 	 * @param idata  intent which may contain a TStop ID
-	 * @since 0.9.51
+	 * @since 0.9.60
 	 */
 	@Override
 	public void onActivityResult(final int requestCode, final int resultCode, Intent idata)
@@ -937,7 +937,7 @@ public class LogbookShow extends Activity
 	/**
 	 * Callback when {@link LogbookShowTripDetailDialogBuilder}'s dialog is dismissed.
 	 * @param src Builder for the dialog; same as {@link #tddb} field.
-	 * @since 0.9.51
+	 * @since 0.9.60
 	 */
 	public void onDetailDialogDismissed(LogbookShowTripDetailDialogBuilder src)
 	{
@@ -1063,8 +1063,8 @@ public class LogbookShow extends Activity
 	 * Logbook in Location Mode: Show a popup with the current GeoArea's locations.
 	 * The user will pick one and a new LogbookShow activity is launched for it.
 	 *<P>
-	 * Before v0.9.51 this was {@code LogbookShow.askLocationAndShow(..)}.
-	 * @since 0.9.51
+	 * Before v0.9.60 this was {@code LogbookShow.askLocationAndShow(..)}.
+	 * @since 0.9.60
 	 */
 	public static final class SearchLocationPopup
 	{
@@ -1260,7 +1260,7 @@ public class LogbookShow extends Activity
 	 * Call the {@link #SearchViasPopup(int, Activity, RDBAdapter) constructor}
 	 * and then either {@link #getDialog()} or {@link #show()}.
 	 * @see SearchLocationPopup
-	 * @since 0.9.51
+	 * @since 0.9.60
 	 */
 	public static final class SearchViasPopup
 	{

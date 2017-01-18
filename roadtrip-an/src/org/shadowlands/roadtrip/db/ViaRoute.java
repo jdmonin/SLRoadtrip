@@ -109,7 +109,7 @@ public class ViaRoute extends RDBRecord
      * @return ViaRoutes between these locations, ordered by locid_from and then description, or null if none
      * @throws IllegalStateException if db not open
      * @see #getAll(RDBAdapter, int, int)
-     * @since 0.9.51
+     * @since 0.9.60
      */
     public static ViaRoute[] getAll
 	(RDBAdapter db, final int locID_A, final int locID_B, final boolean bidirectional)
@@ -140,7 +140,7 @@ public class ViaRoute extends RDBRecord
      * @param sv  String vector results from db.getRows(..), or null
      * @return  Array of ViaRoute objects created with {@link #ViaRoute(RDBAdapter, String[])},
      *     or null if {@code sv == null}
-     * @since 0.9.51
+     * @since 0.9.60
      */
     private static ViaRoute[] toArray(final RDBAdapter db, final Vector<String[]> sv)
     {

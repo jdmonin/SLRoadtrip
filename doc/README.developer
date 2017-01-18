@@ -272,7 +272,7 @@ e3dae2e	0.9.43	2015-06-07	First release to include a BookEdit jar; minor improve
 				  current vehicle is on a trip
 				BookEdit desktop utility app:
 				- Show TStop comments without superfluous square brackets
-	0.9.51			Being developed now; improvements and bugfixes since 0.9.50
+	0.9.60			Being developed now; improvements and bugfixes since 0.9.50
 				SLRoadtrip android app:
 				- LogbookShow can add and edit comments in past trips:
 					- Tap on trip to see more details

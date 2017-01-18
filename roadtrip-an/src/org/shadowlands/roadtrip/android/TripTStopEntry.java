@@ -1731,11 +1731,12 @@ public class TripTStopEntry extends Activity
 		}
 		else if ((viewTS != null) && (tv != null))
 		{
-			// check comment status flags
-			StringBuilder sb = new StringBuilder();
+			// check comment status flags and form a localized string:
+			// "Comment was added and edited later.", etc
+			final Resources res = getResources();
+			final String[] cverbs = new String[3];  // contains "added", "edited", etc
+			int ci = 0;  // next index to use
 
-			// TODO i18n
-			boolean any = false;
 			final boolean wasRemoved = currTS.isSingleFlagSet(TStop.FLAG_COMMENT_REMOVED);
 			boolean removedThenAdded = false;
 			if (wasRemoved)
@@ -1744,38 +1745,43 @@ public class TripTStopEntry extends Activity
 				if ((comment != null) && (comment.length() > 0))
 				{
 					removedThenAdded = true;
-					sb.append("removed");
-					any = true;
+					cverbs[0] = res.getString(R.string.trip_tstop_entry_comment_later__removed);
+					++ci;
 				}
 			}
 
 			if (currTS.isSingleFlagSet(TStop.FLAG_COMMENT_ADDED))
 			{
-				if (any)
-					sb.append(", ");
-				sb.append("added");
-				any = true;
+				cverbs[ci] = res.getString(R.string.trip_tstop_entry_comment_later__added);
+				++ci;
 			}
 			if (currTS.isSingleFlagSet(TStop.FLAG_COMMENT_EDITED))
 			{
-				if (any)
-					sb.append(", ");
-				sb.append("edited");
-				any = true;
+				cverbs[ci] = res.getString(R.string.trip_tstop_entry_comment_later__edited);
+				++ci;
 			}
 			if (wasRemoved && ! removedThenAdded)
 			{
-				if (any)
-					sb.append(", ");
-				sb.append("removed");
-				any = true;
+				cverbs[ci] = res.getString(R.string.trip_tstop_entry_comment_later__removed);
+				++ci;
 			}
 
-			if (any)
+			if (ci > 0)
 			{
-				sb.insert(0, "Comment was ");
-				sb.append(" later.");
-				tv.setText(sb);
+				final int id;
+				switch (ci)
+				{
+				case 1:  // "Comment was (1) later."
+					id = R.string.trip_tstop_entry_comment_later__1;
+					break;
+				case 2:  // "Comment was (1) and (2) later."
+					id = R.string.trip_tstop_entry_comment_later__2;
+					break;
+				default:  // "Comment was (1), (2), and (3) later."
+					id = R.string.trip_tstop_entry_comment_later__3;
+				}
+
+				tv.setText(res.getString(id, (Object[]) cverbs));
 				setTV = true;
 			}
 		}

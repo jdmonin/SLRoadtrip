@@ -281,6 +281,13 @@
 <string name="trip_tstart_loc_prompt">Please enter the starting location.</string>
 <string name="trip_tstop_entry_calc_total_odo">Calculator: Total odometer</string>
 <string name="trip_tstop_entry_calc_trip_odo">Calculator: Trip odometer</string>
+<string name="trip_tstop_entry_comment_later__1">Comment was %1$s later.</string>
+<string name="trip_tstop_entry_comment_later__2">Comment was %1$s and %2$s later.</string>
+<string name="trip_tstop_entry_comment_later__3">Comment was %1$s, %2$s, and %3$s later.</string>
+<!-- Comment past-tense verbs to put into __1 __2 __3 above -->
+<string name="trip_tstop_entry_comment_later__added">added</string>
+<string name="trip_tstop_entry_comment_later__edited">edited</string>
+<string name="trip_tstop_entry_comment_later__removed">removed</string>
 <string name="trip_tstop_entry_choose_geoarea">Choose a geographic area for this stop.</string>
 <string name="trip_tstop_entry_clear_location">Clear\nlocation</string>
 <string name="trip_tstop_entry_geo_area">Geographic\narea</string>

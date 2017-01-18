@@ -22,7 +22,7 @@ PRAGMA user_version = 0943;
 
 -- This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
 --
---  This file Copyright (C) 2010-2015 Jeremy D Monin (jdmonin@nand.net)
+--  This file Copyright (C) 2010-2015,2017 Jeremy D Monin (jdmonin@nand.net)
 --
 --  This program is free software: you can redistribute it and/or modify
 --  it under the terms of the GNU General Public License as published by
@@ -100,7 +100,8 @@ create table veh_settings ( _id integer PRIMARY KEY AUTOINCREMENT not null, vid 
 	-- so for now they aren't declared. See doc/README.developer for details.
 	--
 	-- CURRENT_AREA (int _id within geoarea)
-	--      During a roadtrip, the starting area (setting changes only when trip ends)
+	--      During a roadtrip, is updated when adding a new tstop in a different non-null geoarea.
+	--      In v0.9.50 and earlier, was updated only at end of a roadtrip.
 	-- CURRENT_DRIVER (int _id within people)
 	-- CURRENT_TRIP (int _id, or 0) -- if the CURRENT_VEHICLE changes, update this setting too
 	-- CURRENT_TSTOP (int _id, or 0) -- 0 when not stopped, 0 when not on a trip

@@ -274,25 +274,25 @@ e3dae2e	0.9.43	2015-06-07	First release to include a BookEdit jar; minor improve
 				- Show TStop comments without superfluous square brackets
 	0.9.51			Being developed now; improvements and bugfixes since 0.9.50
 				SLRoadtrip android app:
+				- LogbookShow can add and edit comments in past trips:
+					- Tap on trip to see more details
+					- From that detail view, tap TStop to add/edit/remove earlier comments
+					- Search by Via Route from menu
+					- Also shows "Current Trip in progress" indicator (not shown in 0.9.40 - 0.9.50)
 				- Stop during a Trip:
-					- First non-local stop can be outside all GeoAreas:
+					- For easier use on roadtrips, first non-local stop can be outside all GeoAreas:
 					  Added "(none)" to area list shown with local trip's Change button
 				- End Trip:
 					- Always show "Save Changes" button to save without ending trip now,
 					  even if not currently stopped
 					- On roadtrips, use previous stop's GeoArea if possible instead of using
 					  trip's end area (which was guessed from first stop outside start area)
-				- LogbookShow:
-					- Tap on trip to see more details
-					- From that detail view, tap TStop to add/edit/remove earlier comments
-					- Search by Via Route from menu
-					- Show "Current Trip in progress" (not shown in 0.9.40 - 0.9.50)
 				Database schema and model:
 				- Location.getByDescr: Use areaID in query
 				- TStop: Support for adding/editing comment after continuing from stop,
 				  including new flags FLAG_COMMENT_ADDED, FLAG_COMMENT_EDITED, FLAG_COMMENT_REMOVED
 				- Trip.TLTR.getTripRowsTabbed: Don't append trailing tabs when final columns are blank
-				- VehSettings: During roadtrips, update CURRENT_AREA when new TStops are in a different area
+				- VehSettings: During roadtrips, update CURRENT_AREA when new TStop is in a different area
 
 Also see doc/hist/*.sql for previous schema updates.
 

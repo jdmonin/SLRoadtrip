@@ -277,6 +277,7 @@ e3dae2e	0.9.43	2015-06-07	First release to include a BookEdit jar; minor improve
 				- LogbookShow can add and edit comments in past trips:
 					- Tap on trip to see more details
 					- From that detail view, tap TStop to add/edit/remove earlier comments
+					  or copy comments to clipboard
 					- Search by Via Route from menu
 					- Also shows "Current Trip in progress" indicator (not shown in 0.9.40 - 0.9.50)
 				- Stop during a Trip:

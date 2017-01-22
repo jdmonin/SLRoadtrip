@@ -29,7 +29,6 @@ import org.shadowlands.roadtrip.db.FreqTrip;
 import org.shadowlands.roadtrip.db.GeoArea;
 import org.shadowlands.roadtrip.db.Person;
 import org.shadowlands.roadtrip.db.RDBAdapter;
-import org.shadowlands.roadtrip.db.RDBKeyNotFoundException;
 import org.shadowlands.roadtrip.db.Settings;
 import org.shadowlands.roadtrip.db.TStop;
 import org.shadowlands.roadtrip.db.Trip;
@@ -613,12 +612,22 @@ public class Main extends Activity
 			final int destAreaID = currT.getRoadtripEndAreaID();
 			txt.append("\n");
 			if ((currT != null) && (destAreaID != 0))
+			{
 				txt.append(res.getString(R.string.main_roadtrip_start_area));
-			else
+				txt.append(' ');
+				final int a_id = currT.getAreaID();
+				if ((currA != null) && (currA.getID() == a_id))
+					txt.append(currA.toString());
+				else
+					try {
+						txt.append(new GeoArea(db, a_id).toString());
+					} catch (Exception e) {}
+			} else {
 				txt.append(res.getString(R.string.area__colon));
-			txt.append(' ');
-			if (currA != null)
-				txt.append(currA.toString());
+				txt.append(' ');
+				if (currA != null)
+					txt.append(currA.toString());
+			}
 
 			String currTCateg = null;
 			if (currT.getTripCategoryID() != 0)

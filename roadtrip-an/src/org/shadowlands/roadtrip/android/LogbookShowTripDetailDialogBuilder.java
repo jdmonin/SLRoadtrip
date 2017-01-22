@@ -226,12 +226,18 @@ public class LogbookShowTripDetailDialogBuilder
 				tv.setText(geo.getName());
 			} catch (Exception e) {}
 
-			tv = (TextView) itms.findViewById(R.id.logbook_show_popup_trip_detail_desti_area);
-			try
+			if (tr.isEnded())
 			{
-				GeoArea geo = new GeoArea(db, tr.getRoadtripEndAreaID());
-				tv.setText(geo.getName());
-			} catch (Exception e) {}
+				tv = (TextView) itms.findViewById(R.id.logbook_show_popup_trip_detail_desti_area);
+				try
+				{
+					GeoArea geo = new GeoArea(db, tr.getRoadtripEndAreaID());
+					tv.setText(geo.getName());
+				} catch (Exception e) {}
+			} else {
+				itms.findViewById(R.id.logbook_show_popup_trip_detail_desti_area_row)
+					.setVisibility(View.GONE);
+			}
 		} else {
 			View v = itms.findViewById(R.id.logbook_show_popup_trip_detail_starting_area_row);
 			v.setVisibility(View.GONE);

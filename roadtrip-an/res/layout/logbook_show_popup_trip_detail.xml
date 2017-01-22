@@ -88,7 +88,7 @@
 				android:layout_width="wrap_content" android:layout_height="wrap_content"
 				/>
 		</TableRow>
-		<!-- ending GeoArea: hide during local trips -->
+		<!-- ending GeoArea: hide unless viewing a completed roadtrip -->
 		<TableRow android:id="@+id/logbook_show_popup_trip_detail_desti_area_row">
 			<TextView android:text="@string/logbook_show_popup_trip_detail__desti_area"
 				android:layout_width="wrap_content" android:layout_height="wrap_content"

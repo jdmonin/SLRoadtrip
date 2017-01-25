@@ -344,6 +344,7 @@ public class ViaRoute extends RDBRecord
 	 * Set the trip-odometer distance.
 	 * @param dist  new distance, or 0
 	 * @since 0.9.02
+	 * @see #set(int, int, String)
 	 */
 	public void setOdoDist(final int dist) {
 		if (dist == odo_dist)
@@ -357,6 +358,23 @@ public class ViaRoute extends RDBRecord
 		return via_descr;
 	}
 
+	/**
+	 * Set the description string.
+	 * @param via_descr  New description; not null
+	 * @throws IllegalArgumentException  if via_descr is null
+	 * @see #set(int, int, String)
+	 * @since 0.9.60
+	 */
+	public void setDescr(final String via_descr)
+		throws IllegalArgumentException
+	{
+		if (via_descr == null)
+			throw new IllegalArgumentException("null via_descr");
+
+		this.via_descr = via_descr;
+		dirty = true;
+	}
+
 	/** Set several fields, for re-use of an existing record. */
 	public void set(final int locid_to, final int odo_dist, final String via_descr)
 	{
@@ -366,7 +384,7 @@ public class ViaRoute extends RDBRecord
 		dirty = true;
 	}
 
-	/** toString gets the description string. */
+	/** toString returns the description string {@link #getDescr()}. */
 	public String toString() {
 		return via_descr;
 	}

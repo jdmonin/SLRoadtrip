@@ -2472,6 +2472,15 @@ public class TripTStopEntry extends Activity
 		{
 			viaID = viaRouteObj.getID();
 
+			// update description if via created here and its capitalization has changed;
+			// must check because of above getDescr().equalsIgnoreCase
+			if ((viaRouteObjCreatedHere != null) && (viaID == viaRouteObjCreatedHere.getID())
+			    && ! viaRouteObjCreatedHere.getDescr().equals(via_route))
+			{
+				viaRouteObjCreatedHere.setDescr(via_route);
+				viaRouteObjCreatedHere.commit();
+			}
+
 			// if isCurrentlyStopped, or ending the trip,
 			// and we don't yet have odo_dist for
 			// this ViaRoute, set it from this tstop:

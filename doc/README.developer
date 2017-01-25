@@ -283,6 +283,7 @@ e3dae2e	0.9.43	2015-06-07	First release to include a BookEdit jar; minor improve
 				- Stop during a Trip:
 					- For easier use on roadtrips, first non-local stop can be outside all GeoAreas:
 					  Added "(none)" to area list shown with local trip's Change button
+					- If Via Route created at stop, save any changes to its case/capitalization
 				- End Trip:
 					- Always show "Save Changes" button to save without ending trip now,
 					  even if not currently stopped

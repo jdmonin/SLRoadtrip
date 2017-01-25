@@ -2427,6 +2427,15 @@ public class TripTStopEntry extends Activity
 					locObj.commit();
 				}
 			}
+			else if ((locObjCreatedHere != null) && (locID == locObjCreatedHere.getID())
+				 && ! locObjCreatedHere.getLocation().equals(locat))
+			{
+				// update description if loc created here and its capitalization has changed;
+				// if so, form field's listener had set locObj null and we found it through
+				// the Location.getByDescr call above.
+				locObjCreatedHere.setLocation(locat);
+				locObjCreatedHere.commit();
+			}
 		} else {
 			// not null, and text matches: use it
 			locID = locObj.getID();

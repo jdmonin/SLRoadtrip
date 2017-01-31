@@ -10,7 +10,8 @@ The project development site is https://github.com/jdmonin/SLRoadtrip
 Further documentation will be provided soon, along with screenshots on
 the project wiki.
 
-For now, please see the 'doc' directory for details, such as README.developer.
+For now, please see the 'doc' directory for details, such as README.developer
+which includes a version history and roadmap.
 
 To run the bookedit JAR, you will need to download sqlite-jdbc-<version>.jar
 from https://bitbucket.org/xerial/sqlite-jdbc -> Downloads, and place it in
@@ -25,4 +26,4 @@ Known limitations:
 - Two copies of the db library source (one each for bookedit and roadtrip-an)
 
 Jeremy D Monin <jdmonin@nand.net>
-May 2015
+January 2017

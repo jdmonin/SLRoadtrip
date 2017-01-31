@@ -300,13 +300,13 @@ c34c351	0.9.60	2017-01-30	Improvements and bugfixes since 0.9.50
 Also see doc/hist/*.sql for previous schema updates.
 
 * Because a git commit can't predict and include its own hash, a released
-  version's copy of README.developer contains its release date and its most
-  recent commit hash, the parent of the commit updating README.developer
-  with that info. The release-#.#.## tag in git points to that README update,
-  and the released APK's About box also shows its commit hash.
+  version's copy of README.developer does not contain its release date or
+  its most recent commit hash. The release-#.#.## tag in git points to the
+  master commit which was tested for that release, and the released APK's
+  About box also shows that same commit hash.
 
   After release and before continuing development, README.developer should be
-  updated to list that same hash for the released version.
+  updated to list the released version's release date and commit hash.
 
 
 

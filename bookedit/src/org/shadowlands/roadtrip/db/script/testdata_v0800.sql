@@ -1,7 +1,22 @@
 -- org.shadowlands.roadtrip
--- version 0.8.00 test data  2010-03-29
--- (for schema 0.8.00)
--- This file is Copyright (C) 2010 Jeremy D Monin <jeremy@nand.net>
+-- version 0.8.00 test data  2010-03-29 (for schema 0.8.00)
+
+-- This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
+-- 
+--  Copyright (C) 2010 Jeremy D Monin (jdmonin@nand.net)
+-- 
+--  This program is free software: you can redistribute it and/or modify
+--  it under the terms of the GNU General Public License as published by
+--  the Free Software Foundation, either version 3 of the License, or
+--  (at your option) any later version.
+-- 
+--  This program is distributed in the hope that it will be useful,
+--  but WITHOUT ANY WARRANTY; without even the implied warranty of
+--  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+--  GNU General Public License for more details.
+-- 
+--  You should have received a copy of the GNU General Public License
+--  along with this program.  If not, see http://www.gnu.org/licenses/ .
 
 -- Assumes an empty, newly created db.
 -- assumes Honda == vehiclemake 15, for instance

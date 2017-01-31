@@ -272,7 +272,7 @@ e3dae2e	0.9.43	2015-06-07	First release to include a BookEdit jar; minor improve
 				  current vehicle is on a trip
 				BookEdit desktop utility app:
 				- Show TStop comments without superfluous square brackets
-	0.9.60			Being developed now; improvements and bugfixes since 0.9.50
+c34c351	0.9.60	2017-01-30	Improvements and bugfixes since 0.9.50
 				SLRoadtrip android app:
 				- LogbookShow can add and edit comments in past trips:
 					- Tap on trip to see more details
@@ -295,6 +295,7 @@ e3dae2e	0.9.43	2015-06-07	First release to include a BookEdit jar; minor improve
 				  including new flags FLAG_COMMENT_ADDED, FLAG_COMMENT_EDITED, FLAG_COMMENT_REMOVED
 				- Trip.TLTR.getTripRowsTabbed: Don't append trailing tabs when final columns are blank
 				- VehSettings: During roadtrips, update CURRENT_AREA when new TStop is in a different area
+	0.9.61			Being developed now; improvements and bugfixes since 0.9.60
 
 Also see doc/hist/*.sql for previous schema updates.
 

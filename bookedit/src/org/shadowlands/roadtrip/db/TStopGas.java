@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  Copyright (C) 2010-2011 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2011,2017 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -27,7 +27,7 @@ import java.util.Vector;
  * The TStop's {@link TStop#getFlags()} will have
  * {@link TStop#FLAG_GAS} set.
  *<P>
- * -- NOTE: tstop_gas._id == associated tstop._id :
+ *<B>NOTE:</B> tstop_gas._id == associated tstop._id:
  *  The primary key is the same value as the stop's {@link #TStop#id} field.
  *<P>
  * The obsolete field <tt>station</tt> is ignored if present in the database.
@@ -37,105 +37,109 @@ import java.util.Vector;
  */
 public class TStopGas extends RDBRecord
 {
-    private static final String TABNAME = "tstop_gas";
+	private static final String TABNAME = "tstop_gas";
 
-    /** db table fields.
-     * @see #buildInsertUpdate(boolean)
-     * @see #initFields(String[])
-     */
-    private static final String[] FIELDS =
-    { "quant", "price_per", "price_total", "fillup", "vid", "gas_brandgrade_id" };
-    private static final String[] FIELDS_AND_ID =
-    { "quant", "price_per", "price_total", "fillup", "vid", "gas_brandgrade_id", "_id" };
+	/** db table fields.
+	 * @see #buildInsertUpdate(boolean)
+	 * @see #initFields(String[])
+	 */
+	private static final String[] FIELDS =
+		{ "quant", "price_per", "price_total", "fillup", "vid", "gas_brandgrade_id" };
+	private static final String[] FIELDS_AND_ID =
+		{ "quant", "price_per", "price_total", "fillup", "vid", "gas_brandgrade_id", "_id" };
 
-    /** All of our fields, and a few TStop fields, for {@link #recentGasForVehicle(RDBAdapter, Vehicle, int)} */
-    private static final String[] FIELDS_AND_ID_AND_TSTOP_SOME =
-    { "g.quant", "g.price_per", "g.price_total", "g.fillup", "g.vid", "g.gas_brandgrade_id", "g._id",
-    	"ts." + TStop.FIELD_ODO_TOTAL,
-    	"ts." + TStop.FIELD_TIME_STOP,
-    	"ts." + TStop.FIELD_TIME_CONTINUE,
-    	"ts." + TStop.FIELD_LOCID
-    };
+	/** All of our fields, and a few TStop fields, for {@link #recentGasForVehicle(RDBAdapter, Vehicle, int)} */
+	private static final String[] FIELDS_AND_ID_AND_TSTOP_SOME =
+		{ "g.quant", "g.price_per", "g.price_total", "g.fillup",
+		  "g.vid", "g.gas_brandgrade_id", "g._id",
+		  "ts." + TStop.FIELD_ODO_TOTAL,
+		  "ts." + TStop.FIELD_TIME_STOP,
+		  "ts." + TStop.FIELD_TIME_CONTINUE,
+		  "ts." + TStop.FIELD_LOCID
+		};
 
-    /** Field offset within {@link #FIELDS_AND_ID_AND_TSTOP_SOME} */
-    private static final int FIELDNUM_TSTOP_ODO_TOTAL = FIELDS_AND_ID.length,
-        FIELDNUM_TSTOP_TIME_STOP = FIELDNUM_TSTOP_ODO_TOTAL + 1,
-        FIELDNUM_TSTOP_TIME_CONTINUE = FIELDNUM_TSTOP_TIME_STOP + 1,
-        FIELDNUM_TSTOP_LOCID = FIELDNUM_TSTOP_TIME_CONTINUE + 1;
+	/** Field offset within {@link #FIELDS_AND_ID_AND_TSTOP_SOME} */
+	private static final int FIELDNUM_TSTOP_ODO_TOTAL = FIELDS_AND_ID.length,
+		FIELDNUM_TSTOP_TIME_STOP = FIELDNUM_TSTOP_ODO_TOTAL + 1,
+		FIELDNUM_TSTOP_TIME_CONTINUE = FIELDNUM_TSTOP_TIME_STOP + 1,
+		FIELDNUM_TSTOP_LOCID = FIELDNUM_TSTOP_TIME_CONTINUE + 1;
 
-    /** Where-clause to join with {@link TStop} for use in {@link #recentGasForVehicle(RDBAdapter, Vehicle, int) */
-    private static final String WHERE_VID_AND_JOIN_TSTOP =
-    	"vid = ? and g._id = ts._id";
+	/** Where-clause to join with {@link TStop} for use in {@link #recentGasForVehicle(RDBAdapter, Vehicle, int) */
+	private static final String WHERE_VID_AND_JOIN_TSTOP = "vid = ? and g._id = ts._id";
 
-    /**
-     * The TStop that we're related to.
-     * May be null if this TStopGas was already in the database;
-     * calling {@link #getTStop()} will retrieve it.
-     */
-    private TStop ts;
+	/**
+	 * The TStop that we're related to.
+	 * May be null if this TStopGas was already in the database;
+	 * calling {@link #getTStop()} will retrieve it.
+	 */
+	private TStop ts;
 
-    public int quant, price_per, price_total;
+	public int quant, price_per, price_total;
 
-    public boolean fillup;
+	public boolean fillup;
 
-    /** vehicle ID */
-    public int vid;
+	/** vehicle ID */
+	public int vid;
 
-    /** 0 if unused */
-    public int gas_brandgrade_id;
+	/** 0 if unused */
+	public int gas_brandgrade_id;
 
-    /**
-     * Convenience field, not stored in database; used in {@link #toStringBuffer(Vehicle)}.
-     * If not <tt>null</tt>, its ID must == {@link gas_brandgrade_id}.
-     */
-    public transient GasBrandGrade gas_brandgrade;
+	/**
+	 * Convenience field, not stored in database; used in {@link #toStringBuffer(Vehicle)}.
+	 * If not <tt>null</tt>, its ID must == {@link gas_brandgrade_id}.
+	 */
+	public transient GasBrandGrade gas_brandgrade;
 
-    /**
-     * Convenience field, not stored in database, used in fuel
-     * efficiency calcs between fill-ups.  Calculated in
-     * {@link #recentGasForVehicle(RDBAdapter, Vehicle, int)}.
-     * 0 for non-{@link #fillup} stops or when not calculated.
-     */
-    public transient int effic_quant, effic_dist;
+	/**
+	 * Convenience field, not stored in database, used in fuel
+	 * efficiency calcs between fill-ups.  Calculated in
+	 * {@link #recentGasForVehicle(RDBAdapter, Vehicle, int)}.
+	 * 0 for non-{@link #fillup} stops or when not calculated.
+	 */
+	public transient int effic_quant, effic_dist;
 
-    /**
-     * Find recent gas stops for this vehicle in the database.
-     *<P>
-     * Note that each returned {@link TStopGas} has all fields from the database,
-     * but its {@link #getTStop()} has only a few fields:
-     * ID, total odometer, stop time, continue time, and location ID.
-     * The trip ID and other fields are not filled by this query,
-     * so do not use that TStop object for other purposes than gas information.
-     *<P>
-     * The {@link #effic_quant} and {@link #effic_dist} fields are calculated
-     * for each {@link #fillup} gas stop after the oldest, by looking at the
-     * distance and quantity since the previous fill-up.
-     *<P>
-     * The TStopGas.{@link #gas_brandgrade} convenience field is not filled here.
-     *
-     * @param db  db connection
-     * @param veh  retrieve for this vehicle
-     * @param limit  maximum number of gas stops to return, or 0 for no limit
-     * @return Gas stops for this vehicle, most recent first, or null if none
-     * @throws IllegalStateException if db is null or not open, or if an unexpected result parse error occurs
-     * @see #efficToStringBuffer(boolean, StringBuffer, Vehicle)
-     */
-    public static Vector<TStopGas> recentGasForVehicle(RDBAdapter db, final Vehicle veh, final int limit)
-    	throws IllegalStateException
-    {
-    	// select g.*, ts.odo_total, ts.time_stop, ts.time_cont, ts.locid
-    	//    from tstop_gas g, tstop ts
-    	//    where g.vid=2 and g._id=ts._id
-    	//    order by g._id desc limit 5;
-    	if (db == null)
-    		throw new IllegalStateException("db null");
-    	Vector<String[]> sv = db.getRows
+	/**
+	 * Find recent gas stops for this vehicle in the database.
+	 *<P>
+	 * Note that each returned {@link TStopGas} has all fields from the database,
+	 * but its {@link #getTStop()} has only a few fields:
+	 * ID, total odometer, stop time, continue time, and location ID.
+	 * The trip ID and other fields are not filled by this query,
+	 * so do not use that TStop object for other purposes than gas information.
+	 *<P>
+	 * The {@link #effic_quant} and {@link #effic_dist} fields are calculated
+	 * for each {@link #fillup} gas stop after the oldest, by looking at the
+	 * distance and quantity since the previous fill-up.
+	 *<P>
+	 * The TStopGas.{@link #gas_brandgrade} convenience field is not filled here.
+	 *
+	 * @param db  db connection
+	 * @param veh  retrieve for this vehicle
+	 * @param limit  maximum number of gas stops to return, or 0 for no limit
+	 * @return Gas stops for this vehicle, most recent first, or null if none
+	 * @throws IllegalStateException if db is null or not open, or if an unexpected result parse error occurs
+	 * @see #efficToStringBuffer(boolean, StringBuffer, Vehicle)
+	 */
+	public static Vector<TStopGas> recentGasForVehicle
+		(RDBAdapter db, final Vehicle veh, final int limit)
+		throws IllegalStateException
+	{
+		if (db == null)
+			throw new IllegalStateException("db null");
+
+		// select g.*, ts.odo_total, ts.time_stop, ts.time_cont, ts.locid
+		//    from tstop_gas g, tstop ts
+		//    where g.vid=2 and g._id=ts._id
+		//    order by g._id desc limit 5;
+
+		Vector<String[]> sv = db.getRows
 			(TABNAME + " g, " + TStop.TABNAME + " ts",
 			  WHERE_VID_AND_JOIN_TSTOP,
 			  new String[]{ Integer.toString(veh.getID()) },
 			  FIELDS_AND_ID_AND_TSTOP_SOME, "g._id DESC", limit);
 		if (sv == null)
 			return null;
+
 		final int L = sv.size();
 		Vector<TStopGas> tsgv = new Vector<TStopGas>(L);
 		try
@@ -144,13 +148,13 @@ public class TStopGas extends RDBRecord
 			{
 				TStopGas tsg = new TStopGas(null);
 				final String[] s = sv.elementAt(i);
-		    	tsg.initFields(s);
-		    	if (s[FIELDNUM_TSTOP_LOCID] == null)  // workaround for old tstop data
-		    		s[FIELDNUM_TSTOP_LOCID] = "0";    // from before locid was required
+				tsg.initFields(s);
+				if (s[FIELDNUM_TSTOP_LOCID] == null)  // workaround for old tstop data
+				s[FIELDNUM_TSTOP_LOCID] = "0";    // from before locid was required
 				tsg.setTStop(new TStop
 					(db, tsg, s[FIELDNUM_TSTOP_ODO_TOTAL], s[FIELDNUM_TSTOP_TIME_STOP],
 					 s[FIELDNUM_TSTOP_TIME_CONTINUE], s[FIELDNUM_TSTOP_LOCID]));
-		    	tsgv.addElement(tsg);
+				tsgv.addElement(tsg);
 			}
 
 			// Now that we have all TSGs and TStops,
@@ -162,163 +166,171 @@ public class TStopGas extends RDBRecord
 				if (! tsg.fillup)
 					continue;
 
-	    		// Look for previous fillup, calculate effic_dist and effic_quant.
-	    		// Higher i are earlier stops.
-	    		int quant = tsg.quant;
-	    		int odo = 0;  // if still 0 after iprev loop, no fill-ups found
-	    		int iprev;
-	    		for (iprev = i + 1; iprev < L; ++iprev)
-	    		{
-	    			TStopGas prev = tsgv.elementAt(iprev);
-	    			if (! prev.fillup)
-	    			{
-	    				quant += prev.quant;
-	    			} else {
-		    			odo = prev.ts.getOdo_total();
-	    				break;  // found prev fill-up
-	    			}
-	    		}
-	    		if (odo != 0)
-	    		{
-	    			tsg.effic_dist = tsg.ts.getOdo_total() - odo;
-	    			tsg.effic_quant = quant;
-	    		}
+				// Look for previous fillup, calculate effic_dist and effic_quant.
+				// Higher i are earlier stops.
+				int quant = tsg.quant;
+				int odo = 0;  // if still 0 after iprev loop, no fill-ups found
+				int iprev;
+				for (iprev = i + 1; iprev < L; ++iprev)
+				{
+					TStopGas prev = tsgv.elementAt(iprev);
+					if (! prev.fillup)
+					{
+						quant += prev.quant;
+					} else {
+						odo = prev.ts.getOdo_total();
+						break;  // found prev fill-up
+					}
+				}
 
-	    		// For next iteration, skip to prev fill-up:
-	    		i = iprev - 1;  
-	    	}
+				if (odo != 0)
+				{
+					tsg.effic_dist = tsg.ts.getOdo_total() - odo;
+					tsg.effic_quant = quant;
+				}
+
+				// For next iteration, skip to prev fill-up:
+				i = iprev - 1;
+			}
 
 		} catch (Throwable t) {
 			throw new IllegalStateException("Problem parsing query results", t);
 		}
+
 		return tsgv;
-    }
+	}
 
-    /** Constructor for creating a new record, before field contents are known.
-     * 
-     * @param tstop  tstop, or null; if null, you must call {@link #setTStop(TStop)}
-     *          before {@link #insert(RDBAdapter)}.
-     */
-    public TStopGas(TStop tstop)
-    {
-    	super();
-    	ts = tstop;  // will check it again during insert()
-    	if (tstop != null)
-    		id = tstop.getID();  // will check it again during insert()
-    }
+	/** Constructor for creating a new record, before field contents are known.
+	 *
+	 * @param tstop  tstop, or null; if null, you must call {@link #setTStop(TStop)}
+	 *          before {@link #insert(RDBAdapter)}.
+	 */
+	public TStopGas(TStop tstop)
+	{
+		super();
 
-    /**
-     * Retrieve an existing gas stop, by {@link TStop} id, from the database.
-     *
-     * @param db  db connection
-     * @param id  id field; matches a TStop ID
-     * @throws IllegalStateException if db not open
-     * @throws RDBKeyNotFoundException if cannot retrieve this ID
-     */
-    public TStopGas(RDBAdapter db, final int id)
-        throws IllegalStateException, RDBKeyNotFoundException
-    {
-    	super(db, id);
-    	String[] rec = db.getRow(TABNAME, id, FIELDS);
-    	if (rec == null)
-    		throw new RDBKeyNotFoundException(id);
+		ts = tstop;  // will check it again during insert()
+		if (tstop != null)
+			id = tstop.getID();  // will check it again during insert()
+	}
 
-    	initFields(rec);
-    }
+	/**
+	 * Retrieve an existing gas stop, by {@link TStop} id, from the database.
+	 *
+	 * @param db  db connection
+	 * @param id  id field; matches a TStop ID
+	 * @throws IllegalStateException if db not open
+	 * @throws RDBKeyNotFoundException if cannot retrieve this ID
+	 */
+	public TStopGas(RDBAdapter db, final int id)
+		throws IllegalStateException, RDBKeyNotFoundException
+	{
+		super(db, id);
 
-    /**
-     * Fill our obj fields from db-record string contents.
-     * @param rec  field contents, as returned by db.getRow(FIELDS) or db.getRows(FIELDS_AND_ID)
-     */
-    private void initFields(final String[] rec)
-    {
-    	quant = Integer.parseInt(rec[0]);
-    	price_per = Integer.parseInt(rec[1]);
-    	price_total = Integer.parseInt(rec[2]);
-    	fillup = ("1".equals(rec[3]));
-    	vid = Integer.parseInt(rec[4]);
-    	gas_brandgrade_id = (rec[5] != null)
-    		? Integer.parseInt(rec[5])
+		String[] rec = db.getRow(TABNAME, id, FIELDS);
+		if (rec == null)
+			throw new RDBKeyNotFoundException(id);
+
+		initFields(rec);
+	}
+
+	/**
+	 * Fill our obj fields from db-record string contents.
+	 * @param rec  field contents, as returned by
+	 *     db.getRow({@link #FIELDS}) or db.getRows({@link #FIELDS_AND_ID})
+	 */
+	private void initFields(final String[] rec)
+	{
+		quant = Integer.parseInt(rec[0]);
+		price_per = Integer.parseInt(rec[1]);
+		price_total = Integer.parseInt(rec[2]);
+		fillup = ("1".equals(rec[3]));
+		vid = Integer.parseInt(rec[4]);
+		gas_brandgrade_id = (rec[5] != null)
+			? Integer.parseInt(rec[5])
 			: 0 ;
 		effic_dist = 0;
 		effic_quant = 0;
-    	if (rec.length >= 7)
-    		id = Integer.parseInt(rec[6]);
+		if (rec.length >= 7)
+			id = Integer.parseInt(rec[6]);
 	}
 
-    /**
-     * Create a new gas trip stop, but don't yet write to the database.
-     * When ready to write (after any changes you make to this object),
-     * call {@link #insert(RDBAdapter)}.
-     *<P>
-     * When calling this constructor, the {@link TStop} can also be a new record not yet
-     * written to the database, but you must call {@link TStop#insert(RDBAdapter)}
-     * before calling {@link #insert(RDBAdapter)}} on the new TStopGas,
-     * so that the <tt>_id</tt> field will be set.
-     *
-     * @param tstop    TStop for this gas; must not be null
-     * @param quant    Quantity
-     * @param price_per  Price per unit
-     * @param price_total  Price total
-     * @param fillup   Completely filling up the tank?
-     * @param vehicle_id  Vehicle ID being fueled
-     * @param gasBrandGrade_id  Gas brand/grade (ID from {@link GasBrandGrade}), or 0 if unused
-     */
-    public TStopGas(TStop tstop, final int quant, final int price_per,
-    		final int price_total, final boolean fillup, final int vehicle_id, final int gasBrandGrade_id)
-    {
-    	super();    	
-    	ts = tstop;
-    	if (tstop != null)
-    		id = tstop.getID();  // will check it again during insert()
-    	this.quant = quant;
-    	this.price_per = price_per;
-    	this.price_total = price_total;
-    	this.fillup = fillup;
-    	vid = vehicle_id;
-    	this.gas_brandgrade_id = gasBrandGrade_id;
-    }
+	/**
+	 * Create a new gas trip stop, but don't yet write to the database.
+	 * When ready to write (after any changes you make to this object),
+	 * call {@link #insert(RDBAdapter)}.
+	 *<P>
+	 * When calling this constructor, the {@link TStop} can also be a new record not yet
+	 * written to the database, but you must call {@link TStop#insert(RDBAdapter)}
+	 * before calling {@link #insert(RDBAdapter)}} on the new TStopGas,
+	 * so that the <tt>_id</tt> field will be set.
+	 *
+	 * @param tstop    TStop for this gas; must not be null
+	 * @param quant    Quantity
+	 * @param price_per  Price per unit
+	 * @param price_total  Price total
+	 * @param fillup   Completely filling up the tank?
+	 * @param vehicle_id  Vehicle ID being fueled
+	 * @param gasBrandGrade_id  Gas brand/grade (ID from {@link GasBrandGrade}), or 0 if unused
+	 */
+	public TStopGas(TStop tstop, final int quant, final int price_per,
+		final int price_total, final boolean fillup, final int vehicle_id, final int gasBrandGrade_id)
+	{
+		super();
+
+		ts = tstop;
+		if (tstop != null)
+			id = tstop.getID();  // will check it again during insert()
+		this.quant = quant;
+		this.price_per = price_per;
+		this.price_total = price_total;
+		this.fillup = fillup;
+		vid = vehicle_id;
+		this.gas_brandgrade_id = gasBrandGrade_id;
+	}
 
 	/**
-     * Insert a new record based on field and value.
+	 * Insert a new record based on field and value.
 	 * Clears dirty field; sets id and dbConn fields.
 	 *<P>
 	 * Before calling this method, make sure that the related TStop
 	 * is written to the database.
 	 *
-     * @return new record's primary key (_id)
-     * @throws IllegalStateException if the insert fails,
-     *   or if <tt>tstop</tt> isn't set, or if <tt>tstop</tt> isn't inserted already
-     */
-    public int insert(RDBAdapter db)
-        throws IllegalStateException
-    {
-    	if (ts == null)
-    		throw new IllegalStateException("tstop not set");
-    	if (id < 1)
-    	{
-    		id = ts.id;
-    		if (id < 1)
-    			throw new IllegalStateException("tstop.id not set");
-    	}
-    	db.insert(TABNAME, FIELDS_AND_ID, buildInsertUpdate(true), true);
-		dirty = false;
-    	dbConn = db;
-    	return id;
-    }
+	 * @return new record's primary key (_id)
+	 * @throws IllegalStateException if the insert fails,
+	 *   or if <tt>tstop</tt> isn't set, or if <tt>tstop</tt> isn't inserted already
+	 */
+	public int insert(RDBAdapter db)
+		throws IllegalStateException
+	{
+		if (ts == null)
+			throw new IllegalStateException("tstop not set");
 
-    /**
+		if (id < 1)
+		{
+			id = ts.id;
+			if (id < 1)
+				throw new IllegalStateException("tstop.id not set");
+		}
+		db.insert(TABNAME, FIELDS_AND_ID, buildInsertUpdate(true), true);
+		dirty = false;
+		dbConn = db;
+
+		return id;
+	}
+
+	/**
 	 * Commit changes to an existing record.
 	 * Commits to the database; clears dirty field.
 	 *<P>
 	 * For new records, <b>do not call commit</b>:
 	 * use {@link #insert(RDBAdapter)} instead.
-     * @throws IllegalStateException if the update fails
-     * @throws NullPointerException if dbConn was null because
-     *     this is a new record, not an existing one
+	 * @throws IllegalStateException if the update fails
+	 * @throws NullPointerException if dbConn was null because
+	 *     this is a new record, not an existing one
 	 */
 	public void commit()
-        throws IllegalStateException, NullPointerException
+		throws IllegalStateException, NullPointerException
 	{
 		dbConn.update(TABNAME, id, FIELDS, buildInsertUpdate(false));
 		dirty = false;
@@ -334,9 +346,9 @@ public class TStopGas extends RDBRecord
 	private String[] buildInsertUpdate(final boolean withID)
 	{
 		String[] fv =
-		   (withID)
+		    (withID)
 			? new String[FIELDS_AND_ID.length]
-		    : new String[FIELDS.length];
+			: new String[FIELDS.length];
 		fv[0] = Integer.toString(quant);
 		fv[1] = Integer.toString(price_per);
 		fv[2] = Integer.toString(price_total);
@@ -345,17 +357,18 @@ public class TStopGas extends RDBRecord
 		fv[5] = (gas_brandgrade_id != 0) ? Integer.toString(gas_brandgrade_id) : null;
 		if (withID)
 			fv[6] = Integer.toString(id);
+
 		return fv;
 	}
 
 	/**
 	 * Delete an existing record.
 	 *
-     * @throws NullPointerException if dbConn was null because
-     *     this is a new record, not an existing one
+	 * @throws NullPointerException if dbConn was null because
+	 *     this is a new record, not an existing one
 	 */
 	public void delete()
-	    throws NullPointerException
+		throws NullPointerException
 	{
 		dbConn.delete(TABNAME, id);
 		deleteCleanup();
@@ -368,7 +381,7 @@ public class TStopGas extends RDBRecord
 	 * based on our <tt>id</tt> field.
 	 *
 	 * @return the TStop for this TStopGas
-     * @throws IllegalStateException if db not open, or ID not found in TStop
+	 * @throws IllegalStateException if db not open, or ID not found in TStop
 	 */
 	public TStop getTStop()
 		throws IllegalStateException
@@ -377,11 +390,11 @@ public class TStopGas extends RDBRecord
 		{
 			try {
 				ts = new TStop(dbConn, id);
-			} catch (RDBKeyNotFoundException e)
-			{
+			} catch (RDBKeyNotFoundException e) {
 				throw new IllegalStateException("tstop.id not in db");
 			}
 		}
+
 		return ts;
 	}
 
@@ -395,6 +408,7 @@ public class TStopGas extends RDBRecord
 	{
 		if (ts != null)
 			throw new IllegalStateException("tstop already set");
+
 		ts = tstop;
 	}
 
@@ -443,6 +457,7 @@ public class TStopGas extends RDBRecord
 	public StringBuffer toStringBuffer(Vehicle v)
 	{
 		StringBuffer sb = new StringBuffer();
+
 		if (! fillup)
 			sb.append("partial: ");
 		sb.append(RDBSchema.formatFixedDec(quant, v.fuel_qty_deci));
@@ -457,6 +472,7 @@ public class TStopGas extends RDBRecord
 			sb.append(' ');
 			sb.append(gas_brandgrade.getName());
 		}
+
 		return sb;
 	}
 

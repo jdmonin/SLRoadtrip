@@ -27,6 +27,9 @@ import java.util.Vector;
  * The TStop's {@link TStop#getFlags()} will have
  * {@link TStop#FLAG_GAS} set.
  *<P>
+ * Several fields here ({@link #quant}, etc) are fixed-point decimal but stored as integers;
+ * use {@link #toStringBuffer(Vehicle)} for user-friendly formatting.
+ *<P>
  *<B>NOTE:</B> tstop_gas._id == associated tstop._id:
  *  The primary key is the same value as the stop's {@link #TStop#id} field.
  *<P>
@@ -39,12 +42,19 @@ public class TStopGas extends RDBRecord
 {
 	private static final String TABNAME = "tstop_gas";
 
-	/** db table fields.
+	/**
+	 * db table fields, except for <tt>_id</tt>.
 	 * @see #buildInsertUpdate(boolean)
 	 * @see #initFields(String[])
+	 * @see #FIELDS_AND_ID
 	 */
 	private static final String[] FIELDS =
 		{ "quant", "price_per", "price_total", "fillup", "vid", "gas_brandgrade_id" };
+
+	/**
+	 * db table fields, including <tt>_id</tt>.
+	 * @see #FIELDS
+	 */
 	private static final String[] FIELDS_AND_ID =
 		{ "quant", "price_per", "price_total", "fillup", "vid", "gas_brandgrade_id", "_id" };
 
@@ -74,29 +84,63 @@ public class TStopGas extends RDBRecord
 	 */
 	private TStop ts;
 
-	public int quant, price_per, price_total;
+	/**
+	 * Fuel quantity added at this stop.
+	 * Units: fixed-point decimal (3 places).
+	 */
+	public int quant;
 
+	/**
+	 * Price per fuel unit at this stop.
+	 * Units: fixed-point decimal (3 places).
+	 */
+	public int price_per;
+
+	/**
+	 * Total actual cost paid for fuel at this stop,
+	 * calculated by vendor based on {@link #price_per} * {@link #quant}.
+	 * Units: fixed-point decimal (2 places).
+	 * @see #toStringBuffer(Vehicle)
+	 */
+	public int price_total;
+
+	/** Filled the tank if true, otherwise partial */
 	public boolean fillup;
 
-	/** vehicle ID */
+	/** vehicle ID: denormalization for query performance. */
 	public int vid;
 
-	/** 0 if unused */
+	/**
+	 * FK into {@link GasBrandGrade}, or 0 if unused.
+	 * @see #gas_brandgrade
+	 */
 	public int gas_brandgrade_id;
 
 	/**
 	 * Convenience field, not stored in database; used in {@link #toStringBuffer(Vehicle)}.
-	 * If not <tt>null</tt>, its ID must == {@link gas_brandgrade_id}.
+	 * If not <tt>null</tt>, its ID must == {@link #gas_brandgrade_id}.
 	 */
 	public transient GasBrandGrade gas_brandgrade;
 
 	/**
+	 * Total quantity since last {@link #fillup} gas stop; same units as {@link #quant}.
 	 * Convenience field, not stored in database, used in fuel
 	 * efficiency calcs between fill-ups.  Calculated in
 	 * {@link #recentGasForVehicle(RDBAdapter, Vehicle, int)}.
 	 * 0 for non-{@link #fillup} stops or when not calculated.
+	 * @see #effic_dist
 	 */
-	public transient int effic_quant, effic_dist;
+	public transient int effic_quant;
+
+	/**
+	 * Total distance since last {@link #fillup} gas stop; same units as {@link TStop#getOdo_total()}.
+	 * Convenience field, not stored in database, used in fuel
+	 * efficiency calcs between fill-ups.  Calculated in
+	 * {@link #recentGasForVehicle(RDBAdapter, Vehicle, int)}.
+	 * 0 for non-{@link #fillup} stops or when not calculated.
+	 * @see #effic_quant
+	 */
+	public transient int effic_dist;
 
 	/**
 	 * Find recent gas stops for this vehicle in the database.

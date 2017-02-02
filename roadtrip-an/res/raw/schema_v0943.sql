@@ -225,7 +225,11 @@ create index "tstop~t" ON tstop(tripid);
 
 -- tstop_gas is a "side table" for tstop.
 --   When a tstop has a tstop_gas, the FLAG_GAS bit is set in its flag_sides field.
--- NOTE: tstop_gas._id == associated tstop._id
+--   NOTE: tstop_gas._id == associated tstop._id
+--   Quant: Fuel quantity added at this stop: fixed-point decimal, 3 places
+--   Price_per: Price per fuel unit at this stop: fixed-point decimal, 3 places.
+--   Price_total: Total actual cost paid for fuel at this stop,
+--     calculated by vendor based on price_per * quant: fixed-point decimal, 2 places
 --   Fillup: 1 or 0 (Fill the tank, or partial)
 --   Station: obsolete for 0.9.06+, use gas_brandgrade_id instead
 --   vid: Vehicle ID (denormalization for query performance)

@@ -56,6 +56,9 @@ import org.shadowlands.roadtrip.util.FileUtils;
  *     (update case 0, add case for new schema version)
  *</UL>
  * At that point the update can be tested in android.
+ * Test upgrading an existing install, doing a fresh install,
+ * and restoring a backup made from an older schema.
+ * Be sure BookEdit can still view backups from older schemas.
  */
 public abstract class RDBSchema
 {

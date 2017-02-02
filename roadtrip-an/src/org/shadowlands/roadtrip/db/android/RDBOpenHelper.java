@@ -46,7 +46,7 @@ import android.util.Log;
  * Calling any insert/update/query method will call {@link #getWritableDatabase()}.
  * Be sure to call {@link #close()} when you are done.
  *<P>
- * The schema is stored in {@code res/raw/schema_v0943.sql}.
+ * The schema is stored in {@code res/raw/schema_v0961.sql}.
  * This location is hardcoded in {@link #getSQLScript(int)}.
  * If you update the schema, please update {@link #getSQLScript(int)}
  * and {@link RDBSchema#DATABASE_VERSION}; see the {@code DATABASE_VERSION} javadoc
@@ -749,7 +749,7 @@ public class RDBOpenHelper
 		int res = 0;
 		switch (upgScriptToVersion)
 		{
-		case   0: res = R.raw.schema_v0943;  break;  // create, not upgrade
+		case   0: res = R.raw.schema_v0961;  break;  // create, not upgrade
 
 		/* 
 		 * obsolete versions, not encountered in the wild:
@@ -769,6 +769,7 @@ public class RDBOpenHelper
 		case 909: res = R.raw.upg_v0909;  break;   // 2012-12-06
 		case 940: res = R.raw.upg_v0940;  break;   // 2014-02-15
 		case 943: res = R.raw.upg_v0943;  break;   // 2015-05-26
+		case 961: res = R.raw.upg_v0961;  break;   // 2017-02-02
 		}
 
 		if (res == 0)

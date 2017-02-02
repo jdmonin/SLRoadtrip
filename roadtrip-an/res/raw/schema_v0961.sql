@@ -1,16 +1,11 @@
 -- org.shadowlands.roadtrip
--- version 0.9.43 schema (2015-05-26) for SQLite 3.4 or higher
---
--- Updated 2015-10-20: Increase declared tstop.comment length to 2000;
--- this max length is not enforced by sqlite.
--- The filename will be changed from v0943 before v0.9.50 release;
--- holding off for now in case of multiple schema changes before then.
+-- version 0.9.61 schema (2017-02-02) for SQLite 3.4 or higher
 --
 -- The db schema version is sometimes lower than the app version, never higher.
 --
 -- Remember: When you upgrade the schema version, be sure to
 -- make all code changes listed in RDBSchema's class javadoc, and
--- add the upgrade script to RtrDBOpenHelper.getSQLScript().
+-- add the upgrade script to RDBOpenHelper.getSQLScript().
 -- Remember: Any schema changes must also be made
 -- within the java accessor classes.  Changes to important tables
 -- or transactional tables should also be changed in RDBVerifier.
@@ -18,7 +13,7 @@
 -- and doing a fresh install with the new schema, then restoring a
 -- previous backup that has an older schema (which will also upgrade).
 
-PRAGMA user_version = 0943;
+PRAGMA user_version = 0961;
 
 -- This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
 --
@@ -71,10 +66,10 @@ create table appinfo ( _id integer PRIMARY KEY AUTOINCREMENT not null, aifield v
 	--                       	 value is '' if using the default backup location DBBackup.getDBBackupPath(Context).
 	-- DB_BACKUP_THISFILE: written just before closing db for backup copy; if backup fails, clear it afterwards (copy it back from DB_BACKUP_PREVFILE)
 	-- DB_BACKUP_THISTIME: (unix format) time of DB_BACKUP_THISFILE
-	-- DB_CURRENT_SCHEMAVERSION '0943' if upgraded to current schema version
+	-- DB_CURRENT_SCHEMAVERSION '0961' if upgraded to current schema version
 
-insert into appinfo (aifield, aivalue) values ('DB_CREATE_SCHEMAVERSION', '0943');
-insert into appinfo (aifield, aivalue) values ('DB_CURRENT_SCHEMAVERSION', '0943');
+insert into appinfo (aifield, aivalue) values ('DB_CREATE_SCHEMAVERSION', '0961');
+insert into appinfo (aifield, aivalue) values ('DB_CURRENT_SCHEMAVERSION', '0961');
 
 create table settings ( _id integer PRIMARY KEY AUTOINCREMENT not null, sname varchar(32) not null unique, svalue varchar(64), ivalue int );
 	-- General current settings. See also veh_settings.
@@ -196,7 +191,7 @@ create table freqtrip ( _id integer PRIMARY KEY AUTOINCREMENT not null, a_id int
 
 create index "freqtrip~l" ON freqtrip(start_locid);
 
-create table tstop ( _id integer PRIMARY KEY AUTOINCREMENT not null, tripid int not null, odo_total int, odo_trip int, time_stop int, time_continue int, locid int, a_id int, geo_lat float, geo_lon float, flag_sides int not null default 0, descr varchar(255), via_id int, via_route varchar(255), comment varchar(2000));
+create table tstop ( _id integer PRIMARY KEY AUTOINCREMENT not null, tripid int not null, odo_total int, odo_trip int, time_stop int, time_continue int, locid int, a_id int, geo_lat float, geo_lon float, flag_sides int not null default 0, descr varchar(255), via_id int, via_route varchar(255), comment varchar(2000), expense_total int);
 	-- For convention for chronological order of stops within a trip,
 	--    and for seeing which is the "starting TStop" and "ending TStop",
 	--    see trip table's comments.
@@ -221,6 +216,12 @@ create table tstop ( _id integer PRIMARY KEY AUTOINCREMENT not null, tripid int 
 	-- flag_sides: bitmask, indicates this row has sidetables (exercise, food, gas, car-service).
 	--    also used for temporary flags.  In TStop.java see FLAG_*, TEMPFLAG_*.
 	--    0x100 (256) FLAG_GAS -> tstop_gas table entry
+	-- expense_total: Optional total expenses paid at this stop;
+	--    like tstop_gas.price_total, is fixed-point decimal with number of decimal digits
+	--    taken from trip's vehicle.expense_curr_deci (default 2).
+	--    If this stop also includes a tstop_gas, the expense_total amount includes
+	--    that gas's price_total and anything else paid besides gas.
+	--    Added in v0961: Data from earlier tstops having tstop_gas will have null expense_total.
 
 create index "tstop~t" ON tstop(tripid);
 

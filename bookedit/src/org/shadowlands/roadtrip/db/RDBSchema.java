@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010,2012-2015 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010,2012-2015,2017 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -39,6 +39,7 @@ import org.shadowlands.roadtrip.util.FileUtils;
  *<P>
  * <b>If you update the schema:</b> Please remember to:
  *<UL>
+ *<LI> Include version in comments for any new fields or changes to new-install default settings
  *<LI> Test the upgrade script with cut and paste in sqlite3
  *<LI> Add the upgrade script, such as {@code upg_v0909.sql}, to android {@code res/raw/}
  *     and bookedit {@code src/org/shadowlands/roadtrip/db/script/}
@@ -50,7 +51,7 @@ import org.shadowlands.roadtrip.util.FileUtils;
  *<LI> {@link #DATABASE_VERSION}
  *<LI> {@link #DB_SCHEMA_CREATE_FILENAME}
  *<LI> {@link #upgradeToCurrent(RDBAdapter, int, boolean)}
- *<LI> Under roadtrip-an, the {@code RDBOpenHelper} class javadoc
+ *<LI> Under roadtrip-an, {@code RDBOpenHelper}'s class javadoc (schema filename)
  *     and override of {@link RDBAdapter#getSQLScript(int)}
  *     (update case 0, add case for new schema version)
  *</UL>
@@ -67,15 +68,15 @@ public abstract class RDBSchema
 	 * See the class javadoc for what to change in the code when you update the schema version.
 	 * @see #DB_VERSION_MIN_UPGRADE
 	 */
-	public static final int DATABASE_VERSION = 943;
+	public static final int DATABASE_VERSION = 961;
 
 	/** Filename of schema create sql script for the current {@link #DATABASE_VERSION}. */
-	public static final String DB_SCHEMA_CREATE_FILENAME = "schema_v0943.sql";
+	public static final String DB_SCHEMA_CREATE_FILENAME = "schema_v0961.sql";
 
 	/**
 	 * The minimum {@link #DATABASE_VERSION} (901) that can be upgraded by
 	 * {@link #upgradeToCurrent(RDBAdapter, int, boolean)}. DB schema v901
-	 * is from 2010-11-16, previous versions are very early betas.
+	 * is from 2010-11-16, previous versions are very early pre-betas.
 	 * @since 0.9.41
 	 */
 	public static final int DB_VERSION_MIN_UPGRADE = 901;
@@ -205,7 +206,7 @@ public abstract class RDBSchema
 	 * @see RDBAdapter#getSQLScript(int)
 	 * @see #upgradeCopyToCurrent(File, File)
 	 * @throws IllegalStateException  if {@code oldVersion} is earlier than 901, too old to upgrade.
-	 *      Schema v0.9.01 was released on 2010-11-16, previous versions are very early betas.
+	 *      Schema v0.9.01 was released on 2010-11-16, previous versions are very early pre-betas.
 	 *      This will also be thrown if {@code oldVersion} is newer than the current schema version.
 	 * @throws IOException  if a problem occurs locating or opening an upgrade script
 	 * @throws SQLException  if a syntax or database error occurs
@@ -217,6 +218,7 @@ public abstract class RDBSchema
 		// from a starting old version.
 		// Android will call db.setVersion for us.
 		// REMEMBER: Also update RDBOpenHelper.getSQLScript !
+
 		boolean anythingDone = false;
 
 		switch (oldVersion)
@@ -241,7 +243,7 @@ public abstract class RDBSchema
 			*
 			*/
 
-		case 943:
+		case 961:
 			// Nothing to do, current version already. Don't fall through, don't set anythingDone.
 			break;
 
@@ -262,13 +264,15 @@ public abstract class RDBSchema
 			upgradeStep(db, 940);
 		case 940:  // 0940 -> 0943   2015-05-26
 			upgradeStep(db, 943);
+		case 943:  // 0943 -> 0961   2017-02-02
+			upgradeStep(db, 961);
 
 		// after all cases, but NOT default case or already-current case
 			anythingDone = true;
 			break;
 
 		default:
-			// Too old; only very early betas affected. v901 is from 2010-11-16.
+			// Too old; only very early pre-betas affected. v901 is from 2010-11-16.
 			// Too new would also be caught here.
 			final String tooOldMsg =
 				"-- Error, old-version minimum is 901, this version too old to upgrade: " + oldVersion;

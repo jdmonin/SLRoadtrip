@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010-2015 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2015,2017 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -40,6 +40,11 @@ import java.util.Vector;
  * to save the current-trip info for the old vehicle, and then call {@link #getTripInProgress()}
  * on the new vehicle.  See also {@link TStop} class comments about the current TStop
  * when changing current vehicle.
+ *<P>
+ * Currently the {@link #distance_storage}, {@code expense_*} and {@code fuel_*}
+ * field values are hardcoded in {@link #insert(RDBAdapter)}.
+ * A future version will use localization defaults and/or user dialogs to set these fields
+ * before the new vehicle begins its first {@link Trip}.
  *<P>
  * See also bookedit.MiscTablesCRUDDialog.createEditVehicleDialog.
  *
@@ -144,10 +149,10 @@ public class Vehicle extends RDBRecord
 	/** '$', etc */
 	public String expense_curr_sym;
 
-	/** decimal digits for expenses */
+	/** decimal digits for expenses, default 2; used in {@link TStopGas} */
 	public int expense_curr_deci;
 
-	/** decimal digits for fuel per-unit cost */
+	/** decimal digits for fuel per-unit cost, default 3; used in {@link TStopGas} */
 	public int fuel_curr_deci;
 
 	/** 'G' for gas, 'D' for diesel */
@@ -156,7 +161,7 @@ public class Vehicle extends RDBRecord
 	/** 'G' for gallon, 'L' for liter */
 	public char fuel_qty_unit;
 
-	/** decimal digits for fuel quantity */
+	/** decimal digits for fuel quantity, default 3; used in {@link TStopGas} */
 	public int fuel_qty_deci;
 
 	/** license plate/tag, or null */

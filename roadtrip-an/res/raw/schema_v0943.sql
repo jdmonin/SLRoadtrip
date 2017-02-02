@@ -142,10 +142,11 @@ create table vehicle ( _id integer PRIMARY KEY AUTOINCREMENT not null, nickname 
     -- distance_storage is 'KM' or 'MI'
     -- expense_currency is, for example, 'USD' or 'CAD'
     -- expense_curr_sym is, for example, '$'
-    -- expense_curr_deci and fuel_qty_deci are # of digits after decimal
-    -- fuel_curr_deci is per-unit price # digits after decimal
+    -- expense_curr_deci and fuel_qty_deci are # of digits after decimal (2, 3); used in tstop_gas
+    -- fuel_curr_deci is per-unit price # digits after decimal (3); used in tstop_gas
     -- fuel_qty_unit is 'ga' or 'L'
     -- fuel_type is 'G' gas, 'D' diesel
+    -- currently the distance_storage, expense_* and fuel_* field values are hardcoded in Vehicle.insert.
     -- date_added field added in schema v0943; may be null in data from older schemas
 
 create table tripcategory ( _id integer PRIMARY KEY AUTOINCREMENT not null, cname varchar(255) not null unique, rank int not null, is_work_related int not null default 0, is_user_add int );
@@ -233,6 +234,10 @@ create index "tstop~t" ON tstop(tripid);
 --   Fillup: 1 or 0 (Fill the tank, or partial)
 --   Station: obsolete for 0.9.06+, use gas_brandgrade_id instead
 --   vid: Vehicle ID (denormalization for query performance)
+--   NOTE: quant, price_per, and price_total fields' number of decimal digits
+--     could in future be different per vehicle; different installations or
+--     different vehicles in the same db could use different decimal places or units.
+--     In all versions released so far, the number of digits is hardcoded to what's noted above.
 create table tstop_gas ( _id integer PRIMARY KEY not null, quant int not null, price_per int not null, price_total int not null, fillup int not null, vid integer not null, gas_brandgrade_id int);
 create index "tstopgas~v" ON tstop_gas(vid);
 

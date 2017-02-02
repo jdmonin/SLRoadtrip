@@ -29,6 +29,11 @@ import java.util.Vector;
  *<P>
  * Several fields here ({@link #quant}, etc) are fixed-point decimal but stored as integers;
  * use {@link #toStringBuffer(Vehicle)} for user-friendly formatting.
+ * {@link #quant}, {@link #price_per}, and {@link #price_total} fields' number of decimal digits
+ * could in future be different per vehicle; different installations or
+ * different vehicles in the same db could use different decimal places or units.
+ * In all versions released so far, the number of digits is hardcoded to what's noted
+ * in those fields' javadocs.
  *<P>
  *<B>NOTE:</B> tstop_gas._id == associated tstop._id:
  *  The primary key is the same value as the stop's {@link #TStop#id} field.
@@ -86,20 +91,21 @@ public class TStopGas extends RDBRecord
 
 	/**
 	 * Fuel quantity added at this stop.
-	 * Units: fixed-point decimal (3 places).
+	 * Units: fixed-point decimal (3 places, from {@link Vehicle#fuel_qty_deci})
+	 * @see #toStringBuffer(Vehicle)
 	 */
 	public int quant;
 
 	/**
 	 * Price per fuel unit at this stop.
-	 * Units: fixed-point decimal (3 places).
+	 * Units: fixed-point decimal (3 places, from {@link Vehicle#fuel_curr_deci})
 	 */
 	public int price_per;
 
 	/**
 	 * Total actual cost paid for fuel at this stop,
 	 * calculated by vendor based on {@link #price_per} * {@link #quant}.
-	 * Units: fixed-point decimal (2 places).
+	 * Units: fixed-point decimal (2 places, from {@link Vehicle#expense_curr_deci}).
 	 * @see #toStringBuffer(Vehicle)
 	 */
 	public int price_total;
@@ -495,8 +501,9 @@ public class TStopGas extends RDBRecord
 	 * If {@link #gas_brandgrade} != <tt>null</tt> and its ID matches {@link #gas_brandgrade_id},
 	 * the brand/grade name will be placed into the string buffer.
 	 *
-	 *  @param v  used for number of decimal places, currency symbol
-	 *  @see #efficToStringBuffer(boolean, StringBuffer, Vehicle)
+	 * @param v  Vehicle taking the Trip containing this TStopGas;
+	 *     used for number of decimal places, currency symbol
+	 * @see #efficToStringBuffer(boolean, StringBuffer, Vehicle)
 	 */
 	public StringBuffer toStringBuffer(Vehicle v)
 	{

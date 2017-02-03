@@ -148,7 +148,7 @@ create table tripcategory ( _id integer PRIMARY KEY AUTOINCREMENT not null, cnam
 	-- rank is a place number for on-screen order (instead of alphabetical listing)
 	-- see bottom of file for inserts into tripcategory
 
-create table trip ( _id integer PRIMARY KEY AUTOINCREMENT not null, vid integer not null, did int not null, catid int, odo_start int not null, odo_end int, aid int, tstopid_start int, time_start int not null, time_end int, start_lat float, start_lon float, end_lat float, end_lon float, freqtripid int, comment varchar(255), passengers int, roadtrip_end_aid int, has_continue int not null default 0 );
+create table trip ( _id integer PRIMARY KEY AUTOINCREMENT not null, vid integer not null, did int not null, catid int, odo_start int not null, odo_end int, aid int, tstopid_start int, locid_start int, time_start int not null, time_end int, start_lat float, start_lon float, end_lat float, end_lon float, freqtripid int, comment varchar(255), passengers int, roadtrip_end_aid int, has_continue int not null default 0 );
 	-- Trips can be local within a GeoArea (aid field), or a "roadtrip" between areas (roadtrip_end_aid != null).
 	--    Any TStop along the way on a roadtrip can be in any geoarea or in none (between/outside of defined areas),
 	--    but the roadtrip must end at a TStop within roadtrip_end_aid.
@@ -156,6 +156,10 @@ create table trip ( _id integer PRIMARY KEY AUTOINCREMENT not null, vid integer 
 	-- if tstopid_start not null, it's the endpoint of a previous trip with the same odo_total.
 	--    This gives the starting location (descr and/or locid) for the trip.
 	--    Otherwise, see below under 'chronological order of stops within a trip'.
+	-- locid_start is the trip's starting location, set only if tstopid_start not null;
+	--    otherwise the trip's first TStop will have the starting location.
+	--    This denormalization helps search for trips by location.
+	--    Added in v0961: always null in data of earlier trips.
 	-- odo_end is 0 until trip is completed, and then it's a required field.
 	-- aid is the geoarea ID (most other tables use a_id)
 	-- catid is the optional trip category, or null (table tripcategory)

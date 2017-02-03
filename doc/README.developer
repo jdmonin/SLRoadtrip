@@ -297,6 +297,7 @@ c34c351	0.9.60	2017-01-30	Improvements and bugfixes since 0.9.50
 				- VehSettings: During roadtrips, update CURRENT_AREA when new TStop is in a different area
 	0.9.61			Being developed now; improvements and bugfixes since 0.9.60
 				Database schema and model:
+				- Trip: New field so trips' starting location can be searchable
 				- TStop: New optional field for total expenses paid at the stop
 
 Also see doc/hist/*.sql for previous schema updates.

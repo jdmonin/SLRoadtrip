@@ -74,12 +74,12 @@ public class Trip extends RDBRecord
      * @see #buildInsertUpdate()
      */
     private static final String[] FIELDS =
-        { "vid", "did", "catid", "odo_start", "odo_end", "aid", "tstopid_start",
+	{ "vid", "did", "catid", "odo_start", "odo_end", "aid", "tstopid_start", "locid_start",
 		  FIELD_TIME_START, "time_end", "start_lat", "start_lon", "end_lat", "end_lon",
 		  "freqtripid", "comment", "passengers", "roadtrip_end_aid", "has_continue" };
 
     private static final String[] FIELDS_AND_ID =
-	    { "vid", "did", "catid", "odo_start", "odo_end", "aid", "tstopid_start",
+	{ "vid", "did", "catid", "odo_start", "odo_end", "aid", "tstopid_start", "locid_start",
 		  FIELD_TIME_START, "time_end", "start_lat", "start_lon", "end_lat", "end_lon",
 		  "freqtripid", "comment", "passengers", "roadtrip_end_aid", "has_continue", "_id" };
 
@@ -148,6 +148,7 @@ public class Trip extends RDBRecord
      * Previous trip's last {@link TStop}, which gives the starting {@link Location} (descr and locid) for this trip.
      * If this field is 0, this trip's first TStop (with lowest {@code TStop._id}, trip odometer 0, and total
      * odometer == {@link #odo_start}) gives the starting location.
+     * @see #locid_start
      */
     private int tstopid_start;
 
@@ -157,6 +158,16 @@ public class Trip extends RDBRecord
      * if {@link #readStartTStop(boolean) readStartTStop(true)} was called.
      */
     private transient TStop tstop_start;
+
+    /**
+     * trip's starting location, or 0 for null/unused. Is set only if {@link #tstopid_start} is set;
+     * otherwise the trip's first {@link TStop} will have the starting location.
+     * This denormalization field helps search for trips by location.
+     *<P>
+     * Added in schema v0961: always null in data of earlier trips.
+     * @since 0.9.61
+     */
+    private int locid_start;
 
     /** optional time field; see sql schema for date fmt. 0 if unused. */
     private int time_start, time_end;
@@ -656,23 +667,25 @@ public class Trip extends RDBRecord
     	if (rec[6] != null)
     		tstopid_start = Integer.parseInt(rec[6]);  // FK
     	if (rec[7] != null)
-    		time_start = Integer.parseInt(rec[7]);
+    		locid_start = Integer.parseInt(rec[7]);  // FK
     	if (rec[8] != null)
-    		time_end = Integer.parseInt(rec[8]);
-    	start_lat = rec[9];
-    	start_lon = rec[10];
-    	end_lat = rec[11];
-    	end_lon = rec[12];
-    	if (rec[13] != null)
-    		freqtripid = Integer.parseInt(rec[13]);  // FK
-    	comment = rec[14];
-    	if (rec[15] != null)
-    		passengers = Integer.parseInt(rec[15]);
+    		time_start = Integer.parseInt(rec[8]);
+    	if (rec[9] != null)
+    		time_end = Integer.parseInt(rec[9]);
+    	start_lat = rec[10];
+    	start_lon = rec[11];
+    	end_lat = rec[12];
+    	end_lon = rec[13];
+    	if (rec[14] != null)
+    		freqtripid = Integer.parseInt(rec[14]);  // FK
+    	comment = rec[15];
+    	if (rec[16] != null)
+    		passengers = Integer.parseInt(rec[16]);
     	else
     		passengers = -1;
-    	if (rec[16] != null)
-    		roadtrip_end_aid = Integer.parseInt(rec[16]);
-    	has_continue = ("1".equals(rec[17]));
+    	if (rec[17] != null)
+    		roadtrip_end_aid = Integer.parseInt(rec[17]);
+    	has_continue = ("1".equals(rec[18]));
 	}
 
     /**
@@ -688,8 +701,9 @@ public class Trip extends RDBRecord
      * @param odo_start Starting odometer; required; not 0, unless this vehicle's total odometer really is 0.0.
      * @param odo_end   Ending odometer, or 0 if still in progress
      * @param a_id      GeoArea ID, or 0; for roadtrips, the starting area
-     * @param tstop_start  Starting TStop from end of previous trip, or null;
-     *                     if null, create this trip's starting {@link TStop} soon for
+     * @param tstop_start  Starting {@link TStop} from end of previous trip, or null;
+     *                     sets {@code tstopid_start} and {@code locid_start} fields.
+     *                     If null, caller should create this trip's starting {@link TStop} soon for
      *                     data consistency (see schema for its required field contents).
      * @param time_start  Starting date/time of trip, in Unix format, or 0 if unused
      * @param time_end    Ending date/time of trip, or 0 if still in progress or unused
@@ -732,6 +746,7 @@ public class Trip extends RDBRecord
         	}
         	tstopid_start = tstop_start.getID();
         	this.tstop_start = tstop_start;
+        	locid_start = tstop_start.getLocationID();
         }
         this.odo_start = odo_start;
         this.odo_end = odo_end;
@@ -905,7 +920,11 @@ public class Trip extends RDBRecord
 				dirty = true;
 			}
 			if (tstop_start != null)
+			{
+				locid_start = tstop_start.getLocationID();
+
 				return tstop_start;
+			}
     	}
  
     	// Assert: tstopid_start == 0.
@@ -914,6 +933,7 @@ public class Trip extends RDBRecord
 
     	// orFirstTStop is true.
     	// Look it up by matching trip ID, trip_odo==0.
+    	// Don't set locid_start, because tstopid_start == 0.
     	tstop_start = TStop.readStartingStopWithinTrip(dbConn, this);
     	return tstop_start;
     }
@@ -1111,7 +1131,7 @@ public class Trip extends RDBRecord
 	{
 		/*
     private static final String[] FIELDS =
-        { "vid", "did", "catid", "odo_start", "odo_end", "aid", "tstopid_start",
+        { "vid", "did", "catid", "odo_start", "odo_end", "aid", "tstopid_start", "locid_start",
           FIELD_TIME_START, "time_end", "start_lat", "start_lon", "end_lat", "end_lon",
           "freqtripid", "comment", "passengers", "roadtrip_end_aid", "has_continue" };
 		 */
@@ -1122,6 +1142,7 @@ public class Trip extends RDBRecord
 			Integer.toString(odo_start), (odo_end != 0 ? Integer.toString(odo_end) : null),
 			(a_id != 0 ? Integer.toString(a_id) : null),
 			(tstopid_start != 0 ? Integer.toString(tstopid_start) : null),
+			(locid_start != 0 ? Integer.toString(locid_start) : null),
 			Integer.toString(time_start), (time_end != 0 ? Integer.toString(time_end) : null),
 			start_lat, start_lon, end_lat, end_lon,
 			(freqtripid != 0 ? Integer.toString(freqtripid) : null),

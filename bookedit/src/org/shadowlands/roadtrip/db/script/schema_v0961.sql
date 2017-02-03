@@ -160,6 +160,8 @@ create table trip ( _id integer PRIMARY KEY AUTOINCREMENT not null, vid integer 
 	--    otherwise the trip's first TStop will have the starting location.
 	--    This denormalization helps search for trips by location.
 	--    Added in v0961: always null in data of earlier trips.
+	--    TODO: A later version could gradually update those in a background task:
+	--        UPDATE trip SET locid_start=(select locid from tstop where tstop._id=trip.tstopid_start) WHERE _id between 4501 and 5000 AND locid_start is null AND tstopid_start is not null;
 	-- odo_end is 0 until trip is completed, and then it's a required field.
 	-- aid is the geoarea ID (most other tables use a_id)
 	-- catid is the optional trip category, or null (table tripcategory)

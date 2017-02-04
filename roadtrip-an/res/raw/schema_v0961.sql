@@ -217,11 +217,13 @@ create table tstop ( _id integer PRIMARY KEY AUTOINCREMENT not null, tripid int 
 	--         like highway rest areas, a_id is null in the tstop and location.
 	-- via_route, via_id are the route from the previous tstop's location;
 	--    they are ignored for the tstop which starts a trip. (via_id goes to the via_route table)
+	-- comment is the user's optional comment text for this stop.
 	-- descr is null for all new rows (starting with app version 0.9.05), because the separate
 	--    location record (locid) stores the description.  Older data may use descr.
 	-- flag_sides: bitmask, indicates this row has sidetables (exercise, food, gas, car-service).
 	--    also used for temporary flags.  In TStop.java see FLAG_*, TEMPFLAG_*.
 	--    0x100 (256) FLAG_GAS -> tstop_gas table entry
+	--    This field also tracks later changes, with flag bits like FLAG_COMMENT_ADDED.
 	-- expense_total: Optional total expenses paid at this stop;
 	--    like tstop_gas.price_total, is fixed-point decimal with number of decimal digits
 	--    taken from trip's vehicle.expense_curr_deci (default 2).

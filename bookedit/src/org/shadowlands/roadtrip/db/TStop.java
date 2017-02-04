@@ -28,10 +28,15 @@ import java.util.Vector;
  * and then updated when the vehicle leaves that stop to continue its journey.
  * See SQL schema comments for details.
  *<P>
+ * To get the stop's optional comment, use {@link #getComment()} and not
+ * the obsolete {@link #getLocationDescr()} getter.
+ *<P>
  * To indicate this TStop has related side tables such as {@link TStopGas},
  * there is a <tt>flag_sides</tt> field where flag bits such as
  * {@link #FLAG_GAS} can be set.  See {@link #getFlags()}.
  * Side table entries always have the same {@code _id} as the TStop.
+ * {@link #getFlags()} also tracks later changes, with flag bits
+ * like {@link #FLAG_COMMENT_ADDED}.
  *<P>
  * To temporarily note things about the TStop while stopped there,
  * there are temporary flags such as {@link #TEMPFLAG_CREATED_LOCATION}.

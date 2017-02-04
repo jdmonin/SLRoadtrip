@@ -28,19 +28,19 @@ import org.shadowlands.roadtrip.model.LogbookTableModel;  // strictly for COL_TS
 
 /**
  * In-memory representation, and database access for, a Trip.
- * Trips can be local within a {@link GeoArea}, or a "roadtrip" between areas.
- * See schema file and its comments for details.
+ * Each Trip can be local within a {@link GeoArea}, or a "roadtrip" between areas
+ * which has a {@link #getRoadtripEndAreaID()}. See schema file and its comments for details.
  * An ongoing local trip can be converted to a roadtrip with {@link #convertLocalToRoadtrip(TStop)}.
- * A roadtrip which never left its starting area will be converted to a local trip by
+ * A roadtrip which never left its starting area will be converted back to a local trip by
  * {@code VehSettings.endCurrentTrip}, see end of this javadoc section for details.
  *<P>
- * Several static methods of this class select trips from the
- * database by different criteria, see method list for details.
+ * Several static methods of this class search and select trips from the
+ * database by different criteria; see method list for details.
  *<P>
  * Some methods related to a trip's {@link TStop}s are static
  * methods in {@link TStop}, so look into that class too.
  *<P>
- * The starting and ending location are taken from the trip's TStops.
+ * The trip's starting and ending location are taken from its TStops:
  *<P>
  * Starting location: If a Trip doesn't begin from the previous
  * trip's TStop, it must begin with a TStop with trip-odo = 0,
@@ -106,17 +106,17 @@ public class Trip extends RDBRecord
     private static final String WHERE_VID_AND_IS_ROADTRIP =
 	"_id=(select max(_id) from trip where vid = ? and roadtrip_end_aid is not null)";
 
-    /** Where-clause for use in {@link #tripsForVehicle(RDBAdapter, Vehicle, int, int, boolean, boolean, boolean)}  */
-    private static final String WHERE_TIME_START_AND_VID =
-    	"(time_start >= ?) and (time_start <= ?) and vid = ?";
+	/** Where-clause for use in {@link #tripsForVehicle(RDBAdapter, Vehicle, int, int, boolean, boolean, boolean)}. */
+	private static final String WHERE_TIME_START_AND_VID =
+		"(time_start >= ?) and (time_start <= ?) and vid = ?";
 
-    /** Where-clause for use in {@link #tripsForVehicle_searchBeyond(RDBAdapter, String, int, int, int, boolean)  */
-    private static final String WHERE_TIME_START_AFTER_AND_VID =
-    	"(time_start > ?) and vid = ?";
+	/** Where-clause for use in {@link #tripsForVehicle_searchBeyond(RDBAdapter, String, int, int, int, boolean)}. */
+	private static final String WHERE_TIME_START_AFTER_AND_VID =
+		"(time_start > ?) and vid = ?";
 
-    /** Where-clause for use in {@link #tripsForVehicle_searchBeyond(RDBAdapter, String, int, int, int, boolean)  */
-    private static final String WHERE_TIME_START_BEFORE_AND_VID =
-    	"(time_start < ?) and vid = ?";
+	/** Where-clause for use in {@link #tripsForVehicle_searchBeyond(RDBAdapter, String, int, int, int, boolean)}. */
+	private static final String WHERE_TIME_START_BEFORE_AND_VID =
+		"(time_start < ?) and vid = ?";
 
     /** Where-clause for use in {@link #tripsForLocation(RDBAdapter, int, int, int, boolean)} */
     private static final String WHERE_LOCID =
@@ -132,12 +132,18 @@ public class Trip extends RDBRecord
 
     private static final int WEEK_IN_SECONDS = 7 * 24 * 60 * 60;
 
+	/** {@link Vehicle} ID. */
     private int vehicleid;
+
+	/** {@link Driver} ID. */
     private int driverid;
+
     /** Optional {@link TripCategory} ID.  0 is empty/unused (null in db). */
     private int catid;
+
     /** Starting odometer, in tenths of a unit */
     private int odo_start;
+
     /** Ending odometer, in tenths of a unit, or 0 if trip is still in progress */
     private int odo_end;
 
@@ -145,9 +151,9 @@ public class Trip extends RDBRecord
     private int a_id;
 
     /**
-     * Previous trip's last {@link TStop}, which gives the starting {@link Location} (descr and locid) for this trip.
-     * If this field is 0, this trip's first TStop (with lowest {@code TStop._id}, trip odometer 0, and total
-     * odometer == {@link #odo_start}) gives the starting location.
+     * Previous trip's last {@link TStop}, which gives the starting {@link Location} (description and locid)
+     * for this trip. If this field is 0, this trip's first TStop (with lowest {@code TStop._id},
+     * trip odometer 0, and total odometer == {@link #odo_start}) gives the starting location.
      * @see #locid_start
      */
     private int tstopid_start;
@@ -171,18 +177,33 @@ public class Trip extends RDBRecord
 
     /** optional time field; see sql schema for date fmt. 0 if unused. */
     private int time_start, time_end;
-    /** may be null */
+
+    /** starting/ending latitude/longitude; declared for future use, currently always null. */
     private String start_lat, start_lon, end_lat, end_lon;
+
     /** This trip's {@link FreqTrip} ID; 0 if unused */
     private int freqtripid;
+
+    /** Unused comment field: Comments are entered at {@link TStop}s instead. */
     private String comment;
+
     /** This trip's optional passenger count, or -1 if unused */
     private int passengers = -1;
-    /** ending area ID if roadtrip, 0 otherwise. If trip in progress, may change. See {@link #getRoadtripEndAreaID()} */
+
+    /**
+     * Ending area ID if roadtrip, 0 otherwise. If trip in progress, may change.
+     * See {@link #getRoadtripEndAreaID()} for details.
+     */
     private int roadtrip_end_aid;
+
+    /** Does this trip logically continue with a different driver? For future use; currently always false. */
     private boolean has_continue;
 
-    /** null unless {@link #readAllTStops()} called */
+    /**
+     * Cache of this trip's {@link TStops}; null unless {@link #readAllTStops()} called.
+     * @see #hasCheckedStops
+     * @see #hasUnreadStops
+     */
     private transient Vector<TStop> allStops;
 
     /**
@@ -192,7 +213,7 @@ public class Trip extends RDBRecord
      * been called.  Used to prevent {@link #addCommittedTStop(TStop)} from
      * building a partial list of {@link #allStops}.
      */
-    private boolean hasCheckedStops = false, hasUnreadStops;
+    private boolean hasCheckedStops, hasUnreadStops;
 
     /**
      * Retrieve all Trips for a Vehicle.
@@ -553,7 +574,8 @@ public class Trip extends RDBRecord
 	if (minId == -1)
 		return null;  // <--- Early return: No trips ---
 
-	final int maxId = db.getRowIntField(TABNAME, "max(_id)", null, (String[]) null, -1);  // has min -> has max
+	// has min -> also has max
+	final int maxId = db.getRowIntField(TABNAME, "max(_id)", null, (String[]) null, -1);
 
 	// start time of earliest trip
 	ret[0] = db.getRowIntField(TABNAME, minId, FIELD_TIME_START, 0);
@@ -965,7 +987,7 @@ public class Trip extends RDBRecord
     private int[] readhighest_ret = null;
 
     /**
-     * For a trip in progress, look at the trip's most recent stops, to calculate the
+     * For a trip in progress, look at the trip's most recent stops to calculate the
      * most current odometer values.
      * Where possible, use the highest trip-odo (more accurate) to drive the total-odo.
      * If the trip has no stops yet, "total" is the starting value and "trip" is 0.
@@ -984,7 +1006,7 @@ public class Trip extends RDBRecord
     }
 
     /**
-     * For a trip in progress, look at the trip's most recent stops, to calculate the
+     * For a trip in progress, look at the trip's most recent stops to calculate the
      * most current odometer values.
      * Where possible, use the highest trip-odo (more accurate) to drive the total-odo.
      * If the trip has no stops yet, "total" is the starting value and "trip" is 0.
@@ -1154,12 +1176,19 @@ public class Trip extends RDBRecord
 		return fv;
 	}
 
+	/** Get this trip's {@link Driver} ID. */
 	public int getDriverID() {
 		return driverid;
 	}
 
+	/**
+	 * Change this trip's {@link Driver} ID.
+	 * @param driver  New driver; not null
+	 * @throws IllegalArgumentException if ! {@link Person#isDriver() driver.isDriver()}
+	 * @throws NullPointerException if {@code driver} is null
+	 */
 	public void setDriverID(Person driver)
-	    throws IllegalArgumentException
+	    throws IllegalArgumentException, NullPointerException
 	{
     	if (! driver.isDriver())
     		throw new IllegalArgumentException("person.isDriver false: " + driver.getName());
@@ -1167,8 +1196,21 @@ public class Trip extends RDBRecord
 		dirty = true;
 	}
 
+	/** Get this trip's {@link Vehicle} ID. */
 	public int getVehicleID() {
 		return vehicleid;
+	}
+
+	/**
+	 * Change this trip's {@link Vehicle} ID.
+	 * @param v  New Vehicle; not null
+	 * @throws NullPointerException if {@code v} is null
+	 */
+	public void setVehicleID(Vehicle v)
+		throws NullPointerException
+	{
+		vehicleid = v.getID();
+		dirty = true;
 	}
 
 	/**
@@ -1208,6 +1250,10 @@ public class Trip extends RDBRecord
 		return odo_end;
 	}
 
+	/**
+	 * Set or clear the ending total-odometer value of this trip; see {@link #getOdo_end()} for description.
+	 * @param odoEnd  New ending total-odometer, or 0 to clear
+	 */
 	public void setOdo_end(int odoEnd)
 	{
 		odo_end = odoEnd;
@@ -1340,15 +1386,13 @@ public class Trip extends RDBRecord
 		dirty = true;
 	}
 
+	/**
+	 * Does this trip logically continue with a different driver?
+	 * For future use; currently always false.
+	 */
 	public boolean hasContinue()
 	{
 		return has_continue;
-	}
-
-	public void setVehicleID(Vehicle v)
-	{
-		vehicleid = v.getID();
-		dirty = true;
 	}
 
 	/**
@@ -1408,7 +1452,7 @@ public class Trip extends RDBRecord
 	}
 
 	/**
-	 * Is this trip a road trip, between 2 {@link GeoArea}s?
+	 * Is this trip a road trip, between 2 or more {@link GeoArea}s?
 	 * @return true if {@link #getRoadtripEndAreaID()} != 0
 	 */
 	public boolean isRoadtrip()

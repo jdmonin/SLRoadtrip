@@ -858,7 +858,12 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 				firstrow[2] = "/";
 				firstrow[3] = Integer.toString((int) (t.getOdo_start() / 10.0f));
 				if (ts_start != null)
+				{
 					firstrow[COL_TSTOP_DESC] = getTStopLocDescr(ts_start, conn);
+					if ((matchSet != null) && (matchLocID != -1)
+					    && (ts_start.getLocationID() == matchLocID))
+						matchSet.add(Integer.valueOf(tText.size()));
+				}
 				tText.addElement(firstrow);
 			} else {
 				firstrow = null;
@@ -917,6 +922,10 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 						// this stop is the starting location
 						ts_start = ts;
 						firstrow[COL_TSTOP_DESC] = getTStopLocDescr(ts, conn);
+						if ((matchSet != null) && (matchLocID != -1)
+						    && (ts.getLocationID() == matchLocID))
+							matchSet.add(Integer.valueOf(tText.size()));
+
 						continue;  // <-- doesn't get its own row, only firstrow --
 					}
 

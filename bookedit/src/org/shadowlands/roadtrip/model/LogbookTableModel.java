@@ -84,7 +84,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	    = { "Date", "Time", "", "Odometer", "Trip-O", "Description", "Via", "Comment" };
 
 	/**
-	 * For columns in standard mode, the TStop Description column number
+	 * For columns in standard mode, the TStop Description (Location) column number
 	 * and index within {@link #COL_HEADINGS}.
 	 * @since 0.9.50
 	 */
@@ -858,7 +858,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 				firstrow[2] = "/";
 				firstrow[3] = Integer.toString((int) (t.getOdo_start() / 10.0f));
 				if (ts_start != null)
-					firstrow[6] = getTStopLocDescr(ts_start, conn);
+					firstrow[COL_TSTOP_DESC] = getTStopLocDescr(ts_start, conn);
 				tText.addElement(firstrow);
 			} else {
 				firstrow = null;
@@ -916,7 +916,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 					{
 						// this stop is the starting location
 						ts_start = ts;
-						firstrow[6] = getTStopLocDescr(ts, conn);
+						firstrow[COL_TSTOP_DESC] = getTStopLocDescr(ts, conn);
 						continue;  // <-- doesn't get its own row, only firstrow --
 					}
 
@@ -1027,7 +1027,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 					if (tr[6] != null)
 						tr[6] = "via " + tr[6];
 
-					// Description
+					// Description, for tr[5 == COL_TSTOP_DESC]
 					StringBuffer desc = new StringBuffer(getTStopLocDescr(ts, conn));
 
 					// Look for a gas tstop

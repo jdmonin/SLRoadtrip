@@ -118,17 +118,17 @@ public class Trip extends RDBRecord
 	private static final String WHERE_TIME_START_BEFORE_AND_VID =
 		"(time_start < ?) and vid = ?";
 
-	/** Where-clause for use in {@link #tripsForLocation(RDBAdapter, int, int, int, boolean)} */
+	/** Where-clause for use in {@link #tripsForLocation(RDBAdapter, int, Vehicle, int, boolean, int, boolean)}. */
 	private static final String WHERE_LOCID =
-		"_id in ( select distinct tripid from tstop where locid = ? order by tripid desc limit ? )";
+		"locid_start = ? OR _id in ( select distinct tripid from tstop where locid = ? order by tripid desc limit ? )";
 
-	/** Where-clause for use in {@link #tripsForLocation(RDBAdapter, int, int, int, boolean)} */
+	/** Where-clause for use in {@link #tripsForLocation(RDBAdapter, int, Vehicle, int, boolean, int, boolean)}. */
 	private static final String WHERE_LOCID_AND_TRIPID_BEFORE =
-		"_id in ( select distinct tripid from tstop where locid = ? and tripid < ? order by tripid desc limit ? )";
+		"locid_start = ? OR _id in ( select distinct tripid from tstop where locid = ? and tripid < ? order by tripid desc limit ? )";
 
-	/** Where-clause for use in {@link #tripsForLocation(RDBAdapter, int, int, int, boolean)} */
+	/** Where-clause for use in {@link #tripsForLocation(RDBAdapter, int, Vehicle, int, boolean, int, boolean)}. */
 	private static final String WHERE_LOCID_AND_TRIPID_AFTER =
-		"_id in ( select distinct tripid from tstop where locid = ? and tripid > ? order by tripid desc limit ? )";
+		"locid_start = ? OR _id in ( select distinct tripid from tstop where locid = ? and tripid > ? order by tripid desc limit ? )";
 
 	private static final int WEEK_IN_SECONDS = 7 * 24 * 60 * 60;
 
@@ -419,20 +419,21 @@ public class Trip extends RDBRecord
 		final String[] whereArgs;  // Length must match number of ? in whereClause
 		if (prevTripID == 0)
 		{
-			whereArgs = new String[ (veh != null) ? 3 : 2 ];
-			// [0] init is below
-			whereArgs[1] = Integer.toString( limit );
-			if (veh != null)
-				whereArgs[2] = Integer.toString( veh.getID() );
-		} else {
 			whereArgs = new String[ (veh != null) ? 4 : 3 ];
-			// [0] init is below
-			whereArgs[1] = Integer.toString( prevTripID );
+			// [0],[1] init are below
 			whereArgs[2] = Integer.toString( limit );
 			if (veh != null)
 				whereArgs[3] = Integer.toString( veh.getID() );
+		} else {
+			whereArgs = new String[ (veh != null) ? 5 : 4 ];
+			// [0],[1] init are below
+			whereArgs[2] = Integer.toString( prevTripID );
+			whereArgs[3] = Integer.toString( limit );
+			if (veh != null)
+				whereArgs[4] = Integer.toString( veh.getID() );
 		}
-		whereArgs[0] = Integer.toString(locID);
+		whereArgs[0] = Integer.toString(locID);  // trip.locid_start
+		whereArgs[1] = whereArgs[0];   // subquery's tstop.locid
 
 		String whereClause;
 		final String orderClause;
@@ -446,12 +447,12 @@ public class Trip extends RDBRecord
 			whereClause = WHERE_LOCID;
 		}
 		if (veh != null) {
-			whereClause = whereClause + " and vid = ?";
+			whereClause = "(" + whereClause + ") and vid = ?";
 			orderClause = "_id";
 		} else {
 			orderClause = FIELD_TIME_START;
 		}
-		sv = db.getRows(TABNAME, whereClause, whereArgs, FIELDS_AND_ID, orderClause, 0);
+		sv = db.getRows(TABNAME, whereClause, whereArgs, FIELDS_AND_ID, orderClause, limit);
 
 		if (sv == null)
 		{

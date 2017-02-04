@@ -65,46 +65,46 @@ import org.shadowlands.roadtrip.model.LogbookTableModel;  // strictly for COL_TS
  */
 public class Trip extends RDBRecord
 {
-    private static final String TABNAME = "trip";
+	private static final String TABNAME = "trip";
 
-    /** The <tt>time_start</tt> db field; a trip's starting time */
-    private static final String FIELD_TIME_START = "time_start";
+	/** The <tt>time_start</tt> db field; a trip's starting time */
+	private static final String FIELD_TIME_START = "time_start";
 
-    /** db table fields.
-     * @see #buildInsertUpdate()
-     */
-    private static final String[] FIELDS =
+	/** db table fields.
+	 * @see #buildInsertUpdate()
+	 */
+	private static final String[] FIELDS =
 	{ "vid", "did", "catid", "odo_start", "odo_end", "aid", "tstopid_start", "locid_start",
-		  FIELD_TIME_START, "time_end", "start_lat", "start_lon", "end_lat", "end_lon",
-		  "freqtripid", "comment", "passengers", "roadtrip_end_aid", "has_continue" };
+	  FIELD_TIME_START, "time_end", "start_lat", "start_lon", "end_lat", "end_lon",
+	  "freqtripid", "comment", "passengers", "roadtrip_end_aid", "has_continue" };
 
-    private static final String[] FIELDS_AND_ID =
+	private static final String[] FIELDS_AND_ID =
 	{ "vid", "did", "catid", "odo_start", "odo_end", "aid", "tstopid_start", "locid_start",
-		  FIELD_TIME_START, "time_end", "start_lat", "start_lon", "end_lat", "end_lon",
-		  "freqtripid", "comment", "passengers", "roadtrip_end_aid", "has_continue", "_id" };
+	  FIELD_TIME_START, "time_end", "start_lat", "start_lon", "end_lat", "end_lon",
+	  "freqtripid", "comment", "passengers", "roadtrip_end_aid", "has_continue", "_id" };
 
-    /**
-     * The two table fields for trip's starting and ending time; {@code time_start} is required (not null),
-     * {@code time_end} is optional.
-     * Used in {@link #getDBEarliestLatestTripTimes(RDBAdapter)}.
-     * @since 0.9.50
-     */
-    private static final String[] FIELDS_TIMES = { "time_start", "time_end" };
+	/**
+	 * The two table fields for trip's starting and ending time; {@code time_start} is required (not null),
+	 * {@code time_end} is optional.
+	 * Used in {@link #getDBEarliestLatestTripTimes(RDBAdapter)}.
+	 * @since 0.9.50
+	 */
+	private static final String[] FIELDS_TIMES = { "time_start", "time_end" };
 
-    /**
-     * Field names/where-clause for use in {@link #recentTripForVehicle(RDBAdapter, Vehicle, boolean, boolean)}.
-     * @since 0.9.50
-     */
-    private static final String WHERE_VID =
-	"_id=(select max(_id) from trip where vid = ?)";
+	/**
+	 * Field names/where-clause for use in {@link #recentTripForVehicle(RDBAdapter, Vehicle, boolean, boolean)}.
+	 * @since 0.9.50
+	 */
+	private static final String WHERE_VID =
+		"_id=(select max(_id) from trip where vid = ?)";
 
-    /** Field names/where-clause for use in {@link #recentTripForVehicle(RDBAdapter, Vehicle, boolean, boolean)}. */
-    private static final String WHERE_VID_AND_NOT_ROADTRIP =
-	"_id=(select max(_id) from trip where vid = ? and roadtrip_end_aid is null)";
+	/** Field names/where-clause for use in {@link #recentTripForVehicle(RDBAdapter, Vehicle, boolean, boolean)}. */
+	private static final String WHERE_VID_AND_NOT_ROADTRIP =
+		"_id=(select max(_id) from trip where vid = ? and roadtrip_end_aid is null)";
 
-    /** Field names/where-clause for use in {@link #recentTripForVehicle(RDBAdapter, Vehicle, boolean, boolean)}. */
-    private static final String WHERE_VID_AND_IS_ROADTRIP =
-	"_id=(select max(_id) from trip where vid = ? and roadtrip_end_aid is not null)";
+	/** Field names/where-clause for use in {@link #recentTripForVehicle(RDBAdapter, Vehicle, boolean, boolean)}. */
+	private static final String WHERE_VID_AND_IS_ROADTRIP =
+		"_id=(select max(_id) from trip where vid = ? and roadtrip_end_aid is not null)";
 
 	/** Where-clause for use in {@link #tripsForVehicle(RDBAdapter, Vehicle, int, int, boolean, boolean, boolean)}. */
 	private static final String WHERE_TIME_START_AND_VID =
@@ -118,176 +118,177 @@ public class Trip extends RDBRecord
 	private static final String WHERE_TIME_START_BEFORE_AND_VID =
 		"(time_start < ?) and vid = ?";
 
-    /** Where-clause for use in {@link #tripsForLocation(RDBAdapter, int, int, int, boolean)} */
-    private static final String WHERE_LOCID =
-    	"_id in ( select distinct tripid from tstop where locid = ? order by tripid desc limit ? )";
+	/** Where-clause for use in {@link #tripsForLocation(RDBAdapter, int, int, int, boolean)} */
+	private static final String WHERE_LOCID =
+		"_id in ( select distinct tripid from tstop where locid = ? order by tripid desc limit ? )";
 
-    /** Where-clause for use in {@link #tripsForLocation(RDBAdapter, int, int, int, boolean)} */
-    private static final String WHERE_LOCID_AND_TRIPID_BEFORE =
-    	"_id in ( select distinct tripid from tstop where locid = ? and tripid < ? order by tripid desc limit ? )";
+	/** Where-clause for use in {@link #tripsForLocation(RDBAdapter, int, int, int, boolean)} */
+	private static final String WHERE_LOCID_AND_TRIPID_BEFORE =
+		"_id in ( select distinct tripid from tstop where locid = ? and tripid < ? order by tripid desc limit ? )";
 
-    /** Where-clause for use in {@link #tripsForLocation(RDBAdapter, int, int, int, boolean)} */
-    private static final String WHERE_LOCID_AND_TRIPID_AFTER =
-    	"_id in ( select distinct tripid from tstop where locid = ? and tripid > ? order by tripid desc limit ? )";
+	/** Where-clause for use in {@link #tripsForLocation(RDBAdapter, int, int, int, boolean)} */
+	private static final String WHERE_LOCID_AND_TRIPID_AFTER =
+		"_id in ( select distinct tripid from tstop where locid = ? and tripid > ? order by tripid desc limit ? )";
 
-    private static final int WEEK_IN_SECONDS = 7 * 24 * 60 * 60;
+	private static final int WEEK_IN_SECONDS = 7 * 24 * 60 * 60;
 
 	/** {@link Vehicle} ID. */
-    private int vehicleid;
+	private int vehicleid;
 
 	/** {@link Driver} ID. */
-    private int driverid;
+	private int driverid;
 
-    /** Optional {@link TripCategory} ID.  0 is empty/unused (null in db). */
-    private int catid;
+	/** Optional {@link TripCategory} ID.  0 is empty/unused (null in db). */
+	private int catid;
 
-    /** Starting odometer, in tenths of a unit */
-    private int odo_start;
+	/** Starting odometer, in tenths of a unit */
+	private int odo_start;
 
-    /** Ending odometer, in tenths of a unit, or 0 if trip is still in progress */
-    private int odo_end;
+	/** Ending odometer, in tenths of a unit, or 0 if trip is still in progress */
+	private int odo_end;
 
-    /** Area ID.  0 is empty/unused. */
-    private int a_id;
+	/** Area ID.  0 is empty/unused. */
+	private int a_id;
 
-    /**
-     * Previous trip's last {@link TStop}, which gives the starting {@link Location} (description and locid)
-     * for this trip. If this field is 0, this trip's first TStop (with lowest {@code TStop._id},
-     * trip odometer 0, and total odometer == {@link #odo_start}) gives the starting location.
-     * @see #locid_start
-     */
-    private int tstopid_start;
+	/**
+	 * Previous trip's last {@link TStop}, which gives the starting {@link Location} (description and locid)
+	 * for this trip. If this field is 0, this trip's first TStop (with lowest {@code TStop._id},
+	 * trip odometer 0, and total odometer == {@link #odo_start}) gives the starting location.
+	 * @see #locid_start
+	 */
+	private int tstopid_start;
 
-    /**
-     * Cached <tt>tstopid_start</tt>, or null; this gives the starting location (descr and locid) for this trip.
-     * This may possibly be the first TStop of this trip, not the last tstop of the previous trip,
-     * if {@link #readStartTStop(boolean) readStartTStop(true)} was called.
-     */
-    private transient TStop tstop_start;
+	/**
+	 * Cached <tt>tstopid_start</tt>, or null; this gives the starting location (descr and locid) for this trip.
+	 * This may possibly be the first TStop of this trip, not the last tstop of the previous trip,
+	 * if {@link #readStartTStop(boolean) readStartTStop(true)} was called.
+	 */
+	private transient TStop tstop_start;
 
-    /**
-     * trip's starting location, or 0 for null/unused. Is set only if {@link #tstopid_start} is set;
-     * otherwise the trip's first {@link TStop} will have the starting location.
-     * This denormalization field helps search for trips by location.
-     *<P>
-     * Added in schema v0961: always null in data of earlier trips.
-     * @since 0.9.61
-     */
-    private int locid_start;
+	/**
+	 * trip's starting location, or 0 for null/unused. Is set only if {@link #tstopid_start} is set;
+	 * otherwise the trip's first {@link TStop} will have the starting location.
+	 * This denormalization field helps search for trips by location.
+	 *<P>
+	 * Added in schema v0961: always null in data of earlier trips.
+	 * @since 0.9.61
+	 */
+	private int locid_start;
 
-    /** optional time field; see sql schema for date fmt. 0 if unused. */
-    private int time_start, time_end;
+	/** optional time field; see sql schema for date fmt. 0 if unused. */
+	private int time_start, time_end;
 
-    /** starting/ending latitude/longitude; declared for future use, currently always null. */
-    private String start_lat, start_lon, end_lat, end_lon;
+	/** starting/ending latitude/longitude; declared for future use, currently always null. */
+	private String start_lat, start_lon, end_lat, end_lon;
 
-    /** This trip's {@link FreqTrip} ID; 0 if unused */
-    private int freqtripid;
+	/** This trip's {@link FreqTrip} ID; 0 if unused */
+	private int freqtripid;
 
-    /** Unused comment field: Comments are entered at {@link TStop}s instead. */
-    private String comment;
+	/** Unused comment field: Comments are entered at {@link TStop}s instead. */
+	private String comment;
 
-    /** This trip's optional passenger count, or -1 if unused */
-    private int passengers = -1;
+	/** This trip's optional passenger count, or -1 if unused */
+	private int passengers = -1;
 
-    /**
-     * Ending area ID if roadtrip, 0 otherwise. If trip in progress, may change.
-     * See {@link #getRoadtripEndAreaID()} for details.
-     */
-    private int roadtrip_end_aid;
+	/**
+	 * Ending area ID if roadtrip, 0 otherwise. If trip in progress, may change.
+	 * See {@link #getRoadtripEndAreaID()} for details.
+	 */
+	private int roadtrip_end_aid;
 
-    /** Does this trip logically continue with a different driver? For future use; currently always false. */
-    private boolean has_continue;
+	/** Does this trip logically continue with a different driver? For future use; currently always false. */
+	private boolean has_continue;
 
-    /**
-     * Cache of this trip's {@link TStops}; null unless {@link #readAllTStops()} called.
-     * @see #hasCheckedStops
-     * @see #hasUnreadStops
-     */
-    private transient Vector<TStop> allStops;
+	/**
+	 * Cache of this trip's {@link TStops}; null unless {@link #readAllTStops()} called.
+	 * @see #hasCheckedStops
+	 * @see #hasUnreadStops
+	 */
+	private transient Vector<TStop> allStops;
 
-    /**
-     * false until first call to {@link #addCommittedTStop(TStop)}
-     * or to {@link #readAllTStops()}.
-     * Used when we've been read from db, but {@link #readAllTStops()} hasn't
-     * been called.  Used to prevent {@link #addCommittedTStop(TStop)} from
-     * building a partial list of {@link #allStops}.
-     */
-    private boolean hasCheckedStops, hasUnreadStops;
+	/**
+	 * false until first call to {@link #addCommittedTStop(TStop)}
+	 * or to {@link #readAllTStops()}.
+	 * Used when we've been read from db, but {@link #readAllTStops()} hasn't
+	 * been called.  Used to prevent {@link #addCommittedTStop(TStop)} from
+	 * building a partial list of {@link #allStops}.
+	 */
+	private boolean hasCheckedStops, hasUnreadStops;
 
-    /**
-     * Retrieve all Trips for a Vehicle.
-     * @param db  db connection
-     * @param veh  vehicle to look for, or null for all trips in database
-     * @param alsoTStops  If true, call {@link #readAllTStops()} for each trip found
-     * @return Trips for this Vehicle, sorted by time_start, or null if none
-     * @throws IllegalStateException if db not open
-     * @see #tripsForVehicle(RDBAdapter, Vehicle, int, int, boolean, boolean, boolean)
-     */
-    public static List<Trip> tripsForVehicle(RDBAdapter db, Vehicle veh, final boolean alsoTStops)
-        throws IllegalStateException
-    {
-    	if (db == null)
-    		throw new IllegalStateException("db null");
-    	Vector<String[]> sv;
-    	if (veh != null)
-    	    sv = db.getRows
-    	    (TABNAME, "vid", Integer.toString(veh.getID()), FIELDS_AND_ID, "_id", 0);
-    	else
-    	    sv = db.getRows
-    	    (TABNAME, null, (String[]) null, FIELDS_AND_ID, "time_start", 0);
-    	if (sv == null)
-    		return null;
+	/**
+	 * Retrieve all Trips for a Vehicle.
+	 * @param db  db connection
+	 * @param veh  vehicle to look for, or null for all trips in database
+	 * @param alsoTStops  If true, call {@link #readAllTStops()} for each trip found
+	 * @return Trips for this Vehicle, sorted by time_start, or null if none
+	 * @throws IllegalStateException if db not open
+	 * @see #tripsForVehicle(RDBAdapter, Vehicle, int, int, boolean, boolean, boolean)
+	 */
+	public static List<Trip> tripsForVehicle(RDBAdapter db, Vehicle veh, final boolean alsoTStops)
+		throws IllegalStateException
+	{
+		if (db == null)
+			throw new IllegalStateException("db null");
 
-	return parseStringsToTrips(db, alsoTStops, sv);
-    }
+		Vector<String[]> sv;
+		if (veh != null)
+		    sv = db.getRows
+			(TABNAME, "vid", Integer.toString(veh.getID()), FIELDS_AND_ID, "_id", 0);
+		else
+		    sv = db.getRows
+			(TABNAME, null, (String[]) null, FIELDS_AND_ID, "time_start", 0);
 
-    /**
-     * Retrieve all Trips within a date range for a Vehicle.
-     * @param db  db connection
-     * @param veh  vehicle to look for; not null
-     * @param timeStart  Starting date/time of trip range, in Unix format
-     * @param weeks   Retrieve this many weeks past timeStart
-     * @param searchBeyondWeeks  If true, and if no trips found within
-     *          <tt>weeks</tt>, keep searching until a trip is found
-     * @param towardsNewer  If true, retrieve <tt>timeStart</tt> and newer;
-     *          otherwise retrieve <tt>timeStart</tt> and older.
-     * @param alsoTStops  If true, call {@link #readAllTStops()} for each trip found
-     * @return Trips for this Vehicle, sorted by time_start, or null if none
-     * @throws IllegalStateException if db not open
-     * @see #tripsForVehicle(RDBAdapter, Vehicle, boolean)
-     */
-    public static TripListTimeRange tripsForVehicle
-    	(RDBAdapter db, Vehicle veh, final int timeStart, final int weeks,
-    	 final boolean searchBeyondWeeks, final boolean towardsNewer, final boolean alsoTStops)
-        throws IllegalStateException
-    {
-    	if (db == null)
-    		throw new IllegalStateException("db null");
+		if (sv == null)
+			return null;
 
-    	// Start and end of time_start search range;
-    	// will expand the range in loop before querying.
-    	int t0 = timeStart, t1 = timeStart;
+		return parseStringsToTrips(db, alsoTStops, sv);
+	}
 
-    	Vector<String[]> sv = null;
-    	final String vIDstr = Integer.toString(veh.getID());
+	/**
+	 * Retrieve all Trips within a date range for a Vehicle.
+	 * @param db  db connection
+	 * @param veh  vehicle to look for; not null
+	 * @param timeStart  Starting date/time of trip range, in Unix format
+	 * @param weeks   Retrieve this many weeks past timeStart
+	 * @param searchBeyondWeeks  If true, and if no trips found within
+	 *          <tt>weeks</tt>, keep searching until a trip is found
+	 * @param towardsNewer  If true, retrieve <tt>timeStart</tt> and newer;
+	 *          otherwise retrieve <tt>timeStart</tt> and older.
+	 * @param alsoTStops  If true, call {@link #readAllTStops()} for each trip found
+	 * @return Trips for this Vehicle, sorted by time_start, or null if none
+	 * @throws IllegalStateException if db not open
+	 * @see #tripsForVehicle(RDBAdapter, Vehicle, boolean)
+	 */
+	public static TripListTimeRange tripsForVehicle
+		(RDBAdapter db, Vehicle veh, final int timeStart, final int weeks,
+		 final boolean searchBeyondWeeks, final boolean towardsNewer, final boolean alsoTStops)
+		throws IllegalStateException
+	{
+		if (db == null)
+			throw new IllegalStateException("db null");
 
-    	/**
-    	 * Search in the range t0 to t1 for trips.
-    	 * If searchBeyondWeeks, try 2 more times
-    	 * by moving further into the past/future.
-    	 */
-    	for (int tries = 0; (sv == null) && (tries <= 2) && searchBeyondWeeks; ++tries)
-    	{
+		// Start and end of time_start search range;
+		// will expand the range in loop before querying.
+		int t0 = timeStart, t1 = timeStart;
+
+		Vector<String[]> sv = null;
+		final String vIDstr = Integer.toString(veh.getID());
+
+		/**
+		 * Search in the range t0 to t1 for trips.
+		 * If searchBeyondWeeks, try 2 more times
+		 * by moving further into the past/future.
+		 */
+		for (int tries = 0; (sv == null) && (tries <= 2) && searchBeyondWeeks; ++tries)
+		{
 			if (towardsNewer)
 				t1 += (weeks * WEEK_IN_SECONDS);
 			else
-				t0 -= (weeks * WEEK_IN_SECONDS);    			
-			final String[] whereArgs = {
-				Integer.toString(t0), Integer.toString(t1), vIDstr
-			};
+				t0 -= (weeks * WEEK_IN_SECONDS);
+			final String[] whereArgs =
+				{ Integer.toString(t0), Integer.toString(t1), vIDstr };
 			sv = db.getRows(TABNAME, WHERE_TIME_START_AND_VID, whereArgs, FIELDS_AND_ID, "_id", 0);
-    	}
+		}
 
 		final boolean searchedBeyond;
 		if ((sv == null) && searchBeyondWeeks)
@@ -299,28 +300,28 @@ public class Trip extends RDBRecord
 			searchedBeyond = false;
 		}
 
-    	if (sv == null)
-    	{
-    		return null;
-    	}
+		if (sv == null)
+		{
+			return null;
+		}
 
-	final List<Trip> trips = parseStringsToTrips(db, alsoTStops, sv);
-	if (trips == null)
-    	{
-    		return null;
-    	} else {
-    		if (searchedBeyond)
-    		{
-    			// Make sure the range covers the actual trip times
-    			if (towardsNewer)
-				t1 = trips.get(trips.size() - 1).readLatestTime();
-    			else
-				t0 = trips.get(0).getTime_start();
-    		}
+		final List<Trip> trips = parseStringsToTrips(db, alsoTStops, sv);
+		if (trips == null)
+		{
+			return null;
+		} else {
+			if (searchedBeyond)
+			{
+				// Make sure the range covers the actual trip times
+				if (towardsNewer)
+					t1 = trips.get(trips.size() - 1).readLatestTime();
+				else
+					t0 = trips.get(0).getTime_start();
+			}
 
-		return new TripListTimeRange(t0, t1, trips);
-    	}
-    }
+			return new TripListTimeRange(t0, t1, trips);
+		}
+	}
 
 	/**
 	 * Search for trips beyond this range.
@@ -360,6 +361,7 @@ public class Trip extends RDBRecord
 		{
 			return null;  // <--- nothing found ---
 		}
+
 		final int timeStart = db.getRowIntField(TABNAME, tripID, FIELD_TIME_START, 0);
 
 		/**
@@ -377,42 +379,42 @@ public class Trip extends RDBRecord
 		final String[] whereArgs = {
 			Integer.toString(t0), Integer.toString(t1), vIDstr
 		};
+
 		Vector<String[]> sv = db.getRows
 			(TABNAME, WHERE_TIME_START_AND_VID, whereArgs, FIELDS_AND_ID, "_id", 0);
-
 		return sv;
 	}
 
-    /**
-     * Retrieve a range of Trips that include a given Location.
-     * @param db  db connection
-     * @param locID  Location to look for
-     * @param veh  vehicle to look for, or null for all vehicles
-     * @param prevTripID  Previous end of trip range: A trip newer or older than the
-     *          ones to load, or 0 to get the latest trips
-     * @param towardsNewer  If true, retrieve newer than <tt>prevTripID</tt>;
-     *          otherwise retrieve older than <tt>prevTripID</tt>.
-     * @param limit  Maximum number of trips to return; cannot be 0, for 'no limit' use a large number.
-     * @param alsoTStops  If true, call {@link #readAllTStops()} for each trip found
-     * @return Trips for this Location, sorted by <tt>time_start</tt>, or null if none
-     * @throws IllegalArgumentException if limit is &lt;= 0,
-     *           or if <tt>towardsNewer</tt> true, but <tt>laterTripID</tt> == 0
-     * @throws IllegalStateException if db not open
-     */
-    public static TripListTimeRange tripsForLocation
-    	(RDBAdapter db, final int locID, final Vehicle veh,
-    	 final int prevTripID, final boolean towardsNewer, final int limit, 
-    	 final boolean alsoTStops)
-        throws IllegalArgumentException, IllegalStateException
-    {
+	/**
+	 * Retrieve a range of Trips that include a given Location.
+	 * @param db  db connection
+	 * @param locID  Location to look for
+	 * @param veh  vehicle to look for, or null for all vehicles
+	 * @param prevTripID  Previous end of trip range: A trip newer or older than the
+	 *          ones to load, or 0 to get the latest trips
+	 * @param towardsNewer  If true, retrieve newer than <tt>prevTripID</tt>;
+	 *          otherwise retrieve older than <tt>prevTripID</tt>.
+	 * @param limit  Maximum number of trips to return; cannot be 0, for 'no limit' use a large number.
+	 * @param alsoTStops  If true, call {@link #readAllTStops()} for each trip found
+	 * @return Trips for this Location, sorted by <tt>time_start</tt>, or null if none
+	 * @throws IllegalArgumentException if limit is &lt;= 0,
+	 *           or if <tt>towardsNewer</tt> true, but <tt>laterTripID</tt> == 0
+	 * @throws IllegalStateException if db not open
+	 */
+	public static TripListTimeRange tripsForLocation
+		(RDBAdapter db, final int locID, final Vehicle veh,
+		 final int prevTripID, final boolean towardsNewer, final int limit,
+		 final boolean alsoTStops)
+		throws IllegalArgumentException, IllegalStateException
+	{
 		if (towardsNewer && (prevTripID == 0))
 			throw new IllegalArgumentException("towardsNewer, prevTripID 0");
-    	if (db == null)
-    		throw new IllegalStateException("db null");
-    	if (limit <= 0)
-    		throw new IllegalArgumentException("limit");
+		if (db == null)
+			throw new IllegalStateException("db null");
+		if (limit <= 0)
+			throw new IllegalArgumentException("limit");
 
-    	Vector<String[]> sv = null;
+		Vector<String[]> sv = null;
 
 		final String[] whereArgs;  // Length must match number of ? in whereClause
 		if (prevTripID == 0)
@@ -451,19 +453,19 @@ public class Trip extends RDBRecord
 		}
 		sv = db.getRows(TABNAME, whereClause, whereArgs, FIELDS_AND_ID, orderClause, 0);
 
-    	if (sv == null)
-    	{
-    		return null;
-    	}
+		if (sv == null)
+		{
+			return null;
+		}
 
-	final List<Trip> trips = parseStringsToTrips(db, alsoTStops, sv);
-	if (trips == null)
-    		return null;
-	else
-    		return new TripListTimeRange(trips, locID);
-    }
+		final List<Trip> trips = parseStringsToTrips(db, alsoTStops, sv);
+		if (trips == null)
+			return null;
+		else
+			return new TripListTimeRange(trips, locID);
+	}
 
-    /** parse String[] to Trips, optionally also call {@link #readAllTStops()} */
+	/** parse String[] to Trips, optionally also call {@link #readAllTStops()} */
 	private static final List<Trip> parseStringsToTrips
 		(RDBAdapter db, final boolean alsoTStops, Vector<String[]> sv)
 	{
@@ -471,471 +473,480 @@ public class Trip extends RDBRecord
 		try
 		{
 			Trip t;
-	    	for (int i = 0; i < sv.size(); ++i)
-	    	{
-	    		t = new Trip(db, sv.elementAt(i));
-	    		if (alsoTStops)
-	    			t.readAllTStops();
-			trips.add(t);
-	    	}
+			for (int i = 0; i < sv.size(); ++i)
+			{
+				t = new Trip(db, sv.elementAt(i));
+				if (alsoTStops)
+					t.readAllTStops();
+				trips.add(t);
+			}
 		} catch (RDBKeyNotFoundException e) { }
 
 		return trips;
 	}
 
-    /**
-     * Get the most recent trip, local trip, or roadtrip for this vehicle, if any.
-     * Does not call {@link #readAllTStops()} on the returned trip.
-     * @param db  db connection
-     * @param veh  vehicle to look for; not null
-     * @param localOnly  If true get most recent local trip, exclude roadtrips
-     * @param roadtripOnly  If true get most recent roadtrip, exclude local trips
-     * @return Most recent Trip for this Vehicle, sorted by _id descending, or null if none
-     * @throws IllegalStateException if db not open
-     * @throws IllegalArgumentException if both {@code localOnly} and {@code roadtripOnly}
-     * @since 0.9.03
-     * @see #recentInDB(RDBAdapter)
-     */
-    public static Trip recentTripForVehicle
-	(RDBAdapter db, Vehicle veh, final boolean localOnly, final boolean roadtripOnly)
-	throws IllegalStateException, IllegalArgumentException
-    {
-    	if (db == null)
-    		throw new IllegalStateException("db null");
-    	if (localOnly && roadtripOnly)
-    		throw new IllegalArgumentException();
-    	final String where =
-		(localOnly) ? WHERE_VID_AND_NOT_ROADTRIP
-			    : (roadtripOnly) ? WHERE_VID_AND_IS_ROADTRIP : WHERE_VID;
+	/**
+	 * Get the most recent trip, local trip, or roadtrip for this vehicle, if any.
+	 * Does not call {@link #readAllTStops()} on the returned trip.
+	 * @param db  db connection
+	 * @param veh  vehicle to look for; not null
+	 * @param localOnly  If true get most recent local trip, exclude roadtrips
+	 * @param roadtripOnly  If true get most recent roadtrip, exclude local trips
+	 * @return Most recent Trip for this Vehicle, sorted by _id descending, or null if none
+	 * @throws IllegalStateException if db not open
+	 * @throws IllegalArgumentException if both {@code localOnly} and {@code roadtripOnly}
+	 * @since 0.9.03
+	 * @see #recentInDB(RDBAdapter)
+	 */
+	public static Trip recentTripForVehicle
+		(RDBAdapter db, Vehicle veh, final boolean localOnly, final boolean roadtripOnly)
+		throws IllegalStateException, IllegalArgumentException
+	{
+		if (db == null)
+			throw new IllegalStateException("db null");
+		if (localOnly && roadtripOnly)
+			throw new IllegalArgumentException();
+		final String where =
+			(localOnly) ? WHERE_VID_AND_NOT_ROADTRIP
+			            : (roadtripOnly) ? WHERE_VID_AND_IS_ROADTRIP : WHERE_VID;
 		// "_id = (select max(_id) from trip where vid = ? and roadtrip_end_aid is null" or similar
 
-    	Vector<String[]> sv = db.getRows
-    		(TABNAME, where, new String[]{ Integer.toString(veh.getID()) }, FIELDS_AND_ID, "_id DESC", 1);
-    		// LIMIT 1
-    	if (sv == null)
-    		return null;
-    	try
-    	{
-    		return new Trip(db, sv.firstElement());
-    	}
-    	catch (RDBKeyNotFoundException e)
-    	{
-		return null;  // not thrown but required by constructor
-    	}
-    }
+		Vector<String[]> sv = db.getRows
+			(TABNAME, where, new String[]{ Integer.toString(veh.getID()) }, FIELDS_AND_ID, "_id DESC", 1);
+			// LIMIT 1
+		if (sv == null)
+			return null;
+		try
+		{
+			return new Trip(db, sv.firstElement());
+		}
+		catch (RDBKeyNotFoundException e)
+		{
+			return null;  // not thrown but required by constructor
+		}
+	}
 
-    /**
-     * Get the most recent trip in the database, if any.
-     * Does not call {@link #readAllTStops()} on the returned trip.
-     * @param db  db connection
-     * @return the newest trip, or null if none in the database
-     * @throws IllegalStateException if db not open
-     * @see #recentTripForVehicle(RDBAdapter, Vehicle, boolean)
-     * @since 0.9.07
-     */
-    public static Trip recentInDB(RDBAdapter db)
+	/**
+	 * Get the most recent trip in the database, if any.
+	 * Does not call {@link #readAllTStops()} on the returned trip.
+	 * @param db  db connection
+	 * @return the newest trip, or null if none in the database
+	 * @throws IllegalStateException if db not open
+	 * @see #recentTripForVehicle(RDBAdapter, Vehicle, boolean)
+	 * @since 0.9.07
+	 */
+	public static Trip recentInDB(RDBAdapter db)
 		throws IllegalStateException
-    {
-    	if (db == null)
-    		throw new IllegalStateException("db null");
-    	final int tripID = db.getRowIntField(TABNAME, "MAX(_id)", null, (String[]) null, 0);
-    	if (tripID == 0)
-    		return null;
-    	try {
+	{
+		if (db == null)
+			throw new IllegalStateException("db null");
+
+		final int tripID = db.getRowIntField(TABNAME, "MAX(_id)", null, (String[]) null, 0);
+		if (tripID == 0)
+			return null;
+
+		try {
 			return new Trip(db, tripID);
 		} catch (RDBKeyNotFoundException e) {
 			return null;  // required by compiler, but we know the ID exists
 		}
-    }
+	}
 
-    /**
-     * Retrieve the earliest and latest trip timestamps in the database.
-     * Uses {@code min(_id), max(_id)} to get earliest and latest trip;
-     * with multiple vehicles and if trip({@code max(_id)}) hasn't finished,
-     * there may be a more recent completed trip. This method is accurate
-     * enough for an overall range of trip dates in the database.
-     * Does not examine {@link TStop} times.
-     * @param db  db connection
-     * @return  The earliest trip's starting time, and the latest trip's ending time
-     *     if available or starting time if not.  If no trips, returns null.
-     *     All timestamps are in Unix format.
-     * @throws IllegalStateException if db not open
-     * @since 0.9.50
-     */
-    public static int[] getDBEarliestLatestTripTimes(RDBAdapter db)
-	throws IllegalStateException
-    {
-	if (db == null)
-		throw new IllegalStateException("db null");
+	/**
+	 * Retrieve the earliest and latest trip timestamps in the database.
+	 * Uses {@code min(_id), max(_id)} to get earliest and latest trip;
+	 * with multiple vehicles and if trip({@code max(_id)}) hasn't finished,
+	 * there may be a more recent completed trip. This method is accurate
+	 * enough for an overall range of trip dates in the database.
+	 * Does not examine {@link TStop} times.
+	 * @param db  db connection
+	 * @return  The earliest trip's starting time, and the latest trip's ending time
+	 *     if available or starting time if not.  If no trips, returns null.
+	 *     All timestamps are in Unix format.
+	 * @throws IllegalStateException if db not open
+	 * @since 0.9.50
+	 */
+	public static int[] getDBEarliestLatestTripTimes(RDBAdapter db)
+		throws IllegalStateException
+	{
+		if (db == null)
+			throw new IllegalStateException("db null");
 
-	int[] ret = new int[2];
+		int[] ret = new int[2];
 
-	final int minId = db.getRowIntField(TABNAME, "min(_id)", null, (String[]) null, -1);
-	if (minId == -1)
-		return null;  // <--- Early return: No trips ---
+		final int minId = db.getRowIntField(TABNAME, "min(_id)", null, (String[]) null, -1);
+		if (minId == -1)
+			return null;  // <--- Early return: No trips ---
 
-	// has min -> also has max
-	final int maxId = db.getRowIntField(TABNAME, "max(_id)", null, (String[]) null, -1);
+		// has min -> also has max
+		final int maxId = db.getRowIntField(TABNAME, "max(_id)", null, (String[]) null, -1);
 
-	// start time of earliest trip
-	ret[0] = db.getRowIntField(TABNAME, minId, FIELD_TIME_START, 0);
+		// start time of earliest trip
+		ret[0] = db.getRowIntField(TABNAME, minId, FIELD_TIME_START, 0);
 
-	// times of latest trip
-	String[] row = db.getRow(TABNAME, maxId, FIELDS_TIMES);
-	if (row[1] != null)
-		ret[1] = Integer.parseInt(row[1]);  // ending time
-	if (ret[1] == 0)
-		ret[1] = Integer.parseInt(row[0]);  // starting time
+		// times of latest trip
+		String[] row = db.getRow(TABNAME, maxId, FIELDS_TIMES);
+		if (row[1] != null)
+			ret[1] = Integer.parseInt(row[1]);  // ending time
+		if (ret[1] == 0)
+			ret[1] = Integer.parseInt(row[0]);  // starting time
 
-	return ret;
-    }
+		return ret;
+	}
 
-    /**
-     * Cancel ending the previous (most recent) trip of the current vehicle.
-     * That trip will again become the vehicle's current trip, and this method
-     * will call {@link #setOdo_end(int) setOdo_end(0)} and commit the trip,
-     * then call {@link #cancelContinueFromTStop() currT.cancelContinueFromTStop()}
-     * to be stopped at the trip's final TStop and location.
-     *<P>
-     * The vehicle must not already have a current trip.
-     * The previous trip will be queried with
-     * {@link #recentTripForVehicle(RDBAdapter, Vehicle, boolean, boolean) recentTripForVehicle(db, currV, false, false)},
-     * not {@link Vehicle#getLastTripID() currV.getLastTripID()}.
-     *<P>
-     * The vehicle must already be the current vehicle, in case db contains data from an old version
-     * and some vehicles don't have {@link VehSettings} entries. Changing the current vehicle
-     * 'upgrades' that vehicle's old data into {@code VehSettings} entries.
-     * @param db  db connection
-     * @return  True if the previous trip's end was cancelled and it's the current trip again;
-     *     false if no trips were found for current vehicle or if
-     *     {@code Settings#getCurrentVehicle(RDBAdapter, boolean)} == null.
-     * @throws IllegalStateException if missing any of the conditions listed above,
-     *     or if null != {@link VehSettings#getCurrentTrip(RDBAdapter, Vehicle, boolean)},
-     *     or if {@code dbConn} is null or not open.
-     * @since 0.9.50
-     */
-    public static boolean cancelEndPreviousTrip(RDBAdapter db)
-	throws IllegalStateException
-    {
-	final Vehicle currV = Settings.getCurrentVehicle(db, false);
-	if (currV == null)
-		return false;
+	/**
+	 * Cancel ending the previous (most recent) trip of the current vehicle.
+	 * That trip will again become the vehicle's current trip, and this method
+	 * will call {@link #setOdo_end(int) setOdo_end(0)} and commit the trip,
+	 * then call {@link #cancelContinueFromTStop() currT.cancelContinueFromTStop()}
+	 * to be stopped at the trip's final TStop and location.
+	 *<P>
+	 * The vehicle must not already have a current trip.
+	 * The previous trip will be queried with
+	 * {@link #recentTripForVehicle(RDBAdapter, Vehicle, boolean, boolean) recentTripForVehicle(db, currV, false, false)},
+	 * not {@link Vehicle#getLastTripID() currV.getLastTripID()}.
+	 *<P>
+	 * The vehicle must already be the current vehicle, in case db contains data from an old version
+	 * and some vehicles don't have {@link VehSettings} entries. Changing the current vehicle
+	 * 'upgrades' that vehicle's old data into {@code VehSettings} entries.
+	 * @param db  db connection
+	 * @return  True if the previous trip's end was cancelled and it's the current trip again;
+	 *     false if no trips were found for current vehicle or if
+	 *     {@code Settings#getCurrentVehicle(RDBAdapter, boolean)} == null.
+	 * @throws IllegalStateException if missing any of the conditions listed above,
+	 *     or if null != {@link VehSettings#getCurrentTrip(RDBAdapter, Vehicle, boolean)},
+	 *     or if {@code dbConn} is null or not open.
+	 * @since 0.9.50
+	 */
+	public static boolean cancelEndPreviousTrip(RDBAdapter db)
+		throws IllegalStateException
+	{
+		final Vehicle currV = Settings.getCurrentVehicle(db, false);
+		if (currV == null)
+			return false;
 
-	if (null != VehSettings.getCurrentTrip(db, currV, false))
-		throw new IllegalStateException("Vehicle " + currV.getID() + " has currT");
+		if (null != VehSettings.getCurrentTrip(db, currV, false))
+			throw new IllegalStateException("Vehicle " + currV.getID() + " has currT");
 
-	// query db for previous trip, in case Vehicle.getLastTripID() is somehow outdated
-	final Trip tr = recentTripForVehicle(db, currV, false, false);
-	if (tr == null)
-		return false;
+		// query db for previous trip, in case Vehicle.getLastTripID() is somehow outdated
+		final Trip tr = recentTripForVehicle(db, currV, false, false);
+		if (tr == null)
+			return false;
 
-	tr.setOdo_end(0);
-	tr.setTime_end(0);
-	tr.commit();
+		tr.setOdo_end(0);
+		tr.setTime_end(0);
+		tr.commit();
 
-	VehSettings.setCurrentTrip(db, currV, tr);
-	tr.cancelContinueFromTStop();  // find and update CURRENT_TSTOP, PREV_LOCATION, etc
+		VehSettings.setCurrentTrip(db, currV, tr);
+		tr.cancelContinueFromTStop();  // find and update CURRENT_TSTOP, PREV_LOCATION, etc
 
-	return true;
-    }
+		return true;
+	}
 
-    /**
-     * Retrieve an existing trip, by id, from the database.
-     *
-     * @param db  db connection
-     * @param id  id field
-     * @throws IllegalStateException if db not open
-     * @throws RDBKeyNotFoundException if cannot retrieve this ID
-     */
-    public Trip(RDBAdapter db, final int id)
-        throws IllegalStateException, RDBKeyNotFoundException
-    {
-    	super(db, id);
-    	String[] rec = db.getRow(TABNAME, id, FIELDS);
-    	if (rec == null)
-    		throw new RDBKeyNotFoundException(id);
+	/**
+	 * Retrieve an existing trip, by id, from the database.
+	 *
+	 * @param db  db connection
+	 * @param id  id field
+	 * @throws IllegalStateException if db not open
+	 * @throws RDBKeyNotFoundException if cannot retrieve this ID
+	 */
+	public Trip(RDBAdapter db, final int id)
+		throws IllegalStateException, RDBKeyNotFoundException
+	{
+		super(db, id);
 
-    	initFields(rec);
-    }
+		String[] rec = db.getRow(TABNAME, id, FIELDS);
+		if (rec == null)
+			throw new RDBKeyNotFoundException(id);
 
-    /**
-     * Existing record: Fill our obj fields from db-record string contents.
-     * @param db  connection
-     * @param rec  Record's field contents, as returned by db.getRows({@link #FIELDS_AND_ID}); last element is _id
-     * @throws RDBKeyNotFoundException not thrown, but required due to super call
-     */
-    private Trip(RDBAdapter db, final String[] rec) throws RDBKeyNotFoundException
-    {
-    	super(db, Integer.parseInt(rec[FIELDS.length]));
-    	initFields(rec);
-    }
+		initFields(rec);
+	}
 
-    /**
-     * Fill our obj fields from db-record string contents.
-     * <tt>id</tt> is not filled; the constructor has filled it already.
-     * @param rec  Record's field contents, as returned by db.getRow({@link #FIELDS}) or db.getRows({@link #FIELDS_AND_ID})
-     */
+	/**
+	 * Existing record: Fill our obj fields from db-record string contents.
+	 * @param db  connection
+	 * @param rec  Record's field contents, as returned by db.getRows({@link #FIELDS_AND_ID}); last element is _id
+	 * @throws RDBKeyNotFoundException not thrown, but required due to super call
+	 */
+	private Trip(RDBAdapter db, final String[] rec) throws RDBKeyNotFoundException
+	{
+		super(db, Integer.parseInt(rec[FIELDS.length]));
+
+		initFields(rec);
+	}
+
+	/**
+	 * Fill our obj fields from db-record string contents.
+	 * <tt>id</tt> is not filled; the constructor has filled it already.
+	 * @param rec  Record's field contents, as returned by db.getRow({@link #FIELDS})
+	 *     or db.getRows({@link #FIELDS_AND_ID})
+	 */
 	private void initFields(String[] rec)
 	{
 		vehicleid = Integer.parseInt(rec[0]);  // FK
-    	driverid = Integer.parseInt(rec[1]);  // FK
-    	if (rec[2] != null)
-    		catid = Integer.parseInt(rec[2]);  // FK
-    	odo_start = Integer.parseInt(rec[3]);
-    	if (rec[4] != null)
-    		odo_end = Integer.parseInt(rec[4]);
-    	if (rec[5] != null)
-    		a_id = Integer.parseInt(rec[5]);
-    	if (rec[6] != null)
-    		tstopid_start = Integer.parseInt(rec[6]);  // FK
-    	if (rec[7] != null)
-    		locid_start = Integer.parseInt(rec[7]);  // FK
-    	if (rec[8] != null)
-    		time_start = Integer.parseInt(rec[8]);
-    	if (rec[9] != null)
-    		time_end = Integer.parseInt(rec[9]);
-    	start_lat = rec[10];
-    	start_lon = rec[11];
-    	end_lat = rec[12];
-    	end_lon = rec[13];
-    	if (rec[14] != null)
-    		freqtripid = Integer.parseInt(rec[14]);  // FK
-    	comment = rec[15];
-    	if (rec[16] != null)
-    		passengers = Integer.parseInt(rec[16]);
-    	else
-    		passengers = -1;
-    	if (rec[17] != null)
-    		roadtrip_end_aid = Integer.parseInt(rec[17]);
-    	has_continue = ("1".equals(rec[18]));
+		driverid = Integer.parseInt(rec[1]);  // FK
+		if (rec[2] != null)
+			catid = Integer.parseInt(rec[2]);  // FK
+		odo_start = Integer.parseInt(rec[3]);
+		if (rec[4] != null)
+			odo_end = Integer.parseInt(rec[4]);
+		if (rec[5] != null)
+			a_id = Integer.parseInt(rec[5]);
+		if (rec[6] != null)
+			tstopid_start = Integer.parseInt(rec[6]);  // FK
+		if (rec[7] != null)
+			locid_start = Integer.parseInt(rec[7]);  // FK
+		if (rec[8] != null)
+			time_start = Integer.parseInt(rec[8]);
+		if (rec[9] != null)
+			time_end = Integer.parseInt(rec[9]);
+		start_lat = rec[10];
+		start_lon = rec[11];
+		end_lat = rec[12];
+		end_lon = rec[13];
+		if (rec[14] != null)
+			freqtripid = Integer.parseInt(rec[14]);  // FK
+		comment = rec[15];
+		if (rec[16] != null)
+			passengers = Integer.parseInt(rec[16]);
+		else
+			passengers = -1;
+		if (rec[17] != null)
+			roadtrip_end_aid = Integer.parseInt(rec[17]);
+		has_continue = ("1".equals(rec[18]));
 	}
 
-    /**
-     * Create a new trip, but don't yet write to the database.
-     * When ready to write (after any changes you make to this object),
-     * call {@link #insert(RDBAdapter)}.
-     *<P>
-     * To set the optional trip category or passenger count,
-     * call {@link #setTripCategoryID(int)} or {@link #setPassengerCount(int)} before <tt>insert</tt>.
-     *
-     * @param veh    Vehicle used on this trip
-     * @param driver Driver for the trip
-     * @param odo_start Starting odometer; required; not 0, unless this vehicle's total odometer really is 0.0.
-     * @param odo_end   Ending odometer, or 0 if still in progress
-     * @param a_id      GeoArea ID, or 0; for roadtrips, the starting area
-     * @param tstop_start  Starting {@link TStop} from end of previous trip, or null;
-     *                     sets {@code tstopid_start} and {@code locid_start} fields.
-     *                     If null, caller should create this trip's starting {@link TStop} soon for
-     *                     data consistency (see schema for its required field contents).
-     * @param time_start  Starting date/time of trip, in Unix format, or 0 if unused
-     * @param time_end    Ending date/time of trip, or 0 if still in progress or unused
-     * @param start_lat  Starting latitude, or null
-     * @param start_lon  Starting longitude, or null
-     * @param end_lat    Ending latitude, or null
-     * @param end_lon    Ending longitude, or null
-     * @param freqtrip  Frequent trip, or null
-     * @param comment    Comment, or null
-     * @param roadtrip_end_aid  For roadtrips, the ending GeoArea ID; 0 for local trips
-     * @param has_continue      Does this trip continue to another trip?
-     *
-     * @throws IllegalArgumentException  if ! driver.isDriver();
-     *         or if tstop_start != null and odo_start != its non-zero getOdo_total().
-     *         If this odo_start problem would happen, but they differ only in the final (tenths) digit,
-     *         the new Trip's odo_start is changed to match tstop.odo_total.
-     */
-    public Trip(Vehicle veh, Person driver, int odo_start, final int odo_end, final int a_id,
+	/**
+	 * Create a new trip, but don't yet write to the database.
+	 * When ready to write (after any changes you make to this object),
+	 * call {@link #insert(RDBAdapter)}.
+	 *<P>
+	 * To set the optional trip category or passenger count,
+	 * call {@link #setTripCategoryID(int)} or {@link #setPassengerCount(int)} before <tt>insert</tt>.
+	 *
+	 * @param veh    Vehicle used on this trip
+	 * @param driver Driver for the trip
+	 * @param odo_start Starting odometer; required; not 0, unless this vehicle's total odometer really is 0.0.
+	 * @param odo_end   Ending odometer, or 0 if still in progress
+	 * @param a_id      GeoArea ID, or 0; for roadtrips, the starting area
+	 * @param tstop_start  Starting {@link TStop} from end of previous trip, or null;
+	 *                     sets {@code tstopid_start} and {@code locid_start} fields.
+	 *                     If null, caller should create this trip's starting {@link TStop} soon for
+	 *                     data consistency (see schema for its required field contents).
+	 * @param time_start  Starting date/time of trip, in Unix format, or 0 if unused
+	 * @param time_end    Ending date/time of trip, or 0 if still in progress or unused
+	 * @param start_lat  Starting latitude, or null
+	 * @param start_lon  Starting longitude, or null
+	 * @param end_lat    Ending latitude, or null
+	 * @param end_lon    Ending longitude, or null
+	 * @param freqtrip  Frequent trip, or null
+	 * @param comment    Comment, or null
+	 * @param roadtrip_end_aid  For roadtrips, the ending GeoArea ID; 0 for local trips
+	 * @param has_continue      Does this trip continue to another trip?
+	 *
+	 * @throws IllegalArgumentException  if ! driver.isDriver();
+	 *         or if tstop_start != null and odo_start != its non-zero getOdo_total().
+	 *         If this odo_start problem would happen, but they differ only in the final (tenths) digit,
+	 *         the new Trip's odo_start is changed to match tstop.odo_total.
+	 */
+	public Trip(Vehicle veh, Person driver, int odo_start, final int odo_end, final int a_id,
 		TStop tstop_start, final int time_start, final int time_end,
 		final String start_lat, final String start_lon, final String end_lat, final String end_lon,
 		final FreqTrip freqtrip, final String comment, final int roadtrip_end_aid, final boolean has_continue)
-        throws IllegalArgumentException
-    {
-    	super();
-    	if (! driver.isDriver())
-    		throw new IllegalArgumentException("person.isDriver false: " + driver.getName());
-
-    	vehicleid = veh.getID();
-    	driverid = driver.getID();
-    	catid = 0;
-        if (tstop_start != null)
-        {
-        	final int ts_odo = tstop_start.getOdo_total();
-        	if ((ts_odo != 0) && (ts_odo != odo_start))
-        	{
-        		if ((ts_odo / 10) == (odo_start / 10))
-        			odo_start = ts_odo;
-        		else
-        			throw new IllegalArgumentException("tstop_start.getOdo_total mismatch: trip odo_start " + odo_start + ", tstop.total " + ts_odo);
-        	}
-        	tstopid_start = tstop_start.getID();
-        	this.tstop_start = tstop_start;
-        	locid_start = tstop_start.getLocationID();
-        }
-        this.odo_start = odo_start;
-        this.odo_end = odo_end;
-        this.a_id = a_id;
-        this.time_start = time_start;
-        this.time_end = time_end;
-        this.start_lat = start_lat;
-        this.start_lon = start_lon;
-        this.end_lat = end_lat;
-        this.end_lon = end_lon;
-        if (freqtrip != null)
-        	freqtripid = freqtrip.getID();
-        else
-        	freqtripid = 0;
-    	this.comment = comment;
-        this.roadtrip_end_aid = roadtrip_end_aid;
-        this.has_continue = has_continue;
-        hasCheckedStops = true;  // since it's a new trip,
-        hasUnreadStops = false;  // we know there are no stops.
-    }
-
-    /**
-     * Retrieve all stops for this Trip.
-     * Cached after the first read.
-     * Also sets <tt>tstop_start</tt>.
-     *<P>
-     * Note that {@link #readStartTStop(boolean) readStartTStop(false)} is called and cached,
-     * but is not added to the list returned here.
-     * Call that method to get the starting TStop if needed.
-     *<P>
-     * If you add a new TStop to this Trip after calling this
-     * method, please call {@link #addCommittedTStop(TStop)} to
-     * keep the cached list consistent.
-     *
-     * @return  ordered list of stops, or null if none
-     * @throws IllegalStateException if the db connection is closed
-     * @see #readAllTStops(boolean, boolean)
-     * @see #isStartTStopFromPrevTrip()
-     */
-    public Vector<TStop> readAllTStops()
-        throws IllegalStateException
-    {
-	return readAllTStops(false, false);
-    }
-
-    /**
-     * Retrieve all stops for this Trip, except possibly the one
-     * at the destination which ends the trip.
-     * Cached after the first read, unless <tt>ignoreTripEndStop</tt> is true.
-     * Also sets <tt>tstop_start</tt>.
-     *<P>
-     * If this trip didn't continue from the previous trip's end location,
-     * the starting TStop will be first item in the list returned.
-     * Its odo_total matches the trip's {@link Trip#getOdo_start()},
-     * and its odo_trip is 0.
-     *<P>
-     * Note that {@link #readStartTStop(boolean)} is called and cached,
-     * but is not added to the list returned here.
-     * Call that method to get the starting TStop if needed.
-     *<P>
-     * If you add a new TStop to this Trip after calling this
-     * method, please call {@link #addCommittedTStop(TStop)} to
-     * keep the cached list consistent.
-     *
-     * @param  ignoreTripEndStop  If true, and {@link #isEnded()} is true,
-     *         don't include the TStop at the destination which ends the trip.
-     * @param  bypassCache  If true, ignore the previously cached list of
-     *         the trip's TStops, and don't cache the new result.
-     *         (added in v0.9.50)
-     * @return  ordered list of stops, or null if none
-     * @throws IllegalStateException if the db connection is closed
-     * @see #hasIntermediateTStops()
-     */
-    public Vector<TStop> readAllTStops(boolean ignoreTripEndStop, final boolean bypassCache)
-	    throws IllegalStateException
+		throws IllegalArgumentException
 	{
-    	if (! isEnded())
-    		ignoreTripEndStop = false;
+		super();
+		if (! driver.isDriver())
+			throw new IllegalArgumentException("person.isDriver false: " + driver.getName());
 
-    	if (bypassCache || (allStops == null) || ignoreTripEndStop)
-    	{
-	    	if (dbConn == null)
-	    		throw new IllegalStateException("dbConn null");
-	    	Vector<TStop> ts = TStop.stopsForTrip(dbConn, this);
-	    	if (! ignoreTripEndStop)
-	    	{
-			if (! bypassCache)
+		vehicleid = veh.getID();
+		driverid = driver.getID();
+		catid = 0;
+		if (tstop_start != null)
+		{
+			final int ts_odo = tstop_start.getOdo_total();
+			if ((ts_odo != 0) && (ts_odo != odo_start))
 			{
-				allStops = ts;    // cache it
-				hasCheckedStops = true;
-				hasUnreadStops = false;
+				if ((ts_odo / 10) == (odo_start / 10))
+					odo_start = ts_odo;
+				else
+					throw new IllegalArgumentException
+						("tstop_start.getOdo_total mismatch: trip odo_start "
+						 + odo_start + ", tstop.total " + ts_odo);
 			}
-	    	} else {
-	    		// Remove that ending stop
-	    		if ((ts != null) && ! ts.isEmpty())
-	    		{
-	    			TStop fin = ts.lastElement();
-	    			if ((odo_end != 0) && (odo_end == fin.getOdo_total()))
-	    			{
-	    				ts.removeElementAt(ts.size() - 1);
-	    				if (ts.isEmpty())
-	    					ts = null;
-	    			}
-	    		}
-	    	}
-	    	readStartTStop(false);  // sets the field
-	    	return ts;
-    	} else {
-    		return allStops;
-    	}
-    }
+			tstopid_start = tstop_start.getID();
+			this.tstop_start = tstop_start;
+			locid_start = tstop_start.getLocationID();
+		}
+		this.odo_start = odo_start;
+		this.odo_end = odo_end;
+		this.a_id = a_id;
+		this.time_start = time_start;
+		this.time_end = time_end;
+		this.start_lat = start_lat;
+		this.start_lon = start_lon;
+		this.end_lat = end_lat;
+		this.end_lon = end_lon;
+		if (freqtrip != null)
+			freqtripid = freqtrip.getID();
+		else
+			freqtripid = 0;
+		this.comment = comment;
+		this.roadtrip_end_aid = roadtrip_end_aid;
+		this.has_continue = has_continue;
+		hasCheckedStops = true;  // since it's a new trip,
+		hasUnreadStops = false;  // we know there are no stops.
+	}
 
-    /**
-     * If this trip's starting stop is from the previous trip,
-     * get its ID. Note package access, not public; intended for tstop.startingStopWithinTrip.
-     * @return the <tt>tstop_start</tt> id, or 0
-     * @see #readStartTStop(boolean)
-     * @see #isStartTStopFromPrevTrip()
-     */
-    int getStartTStopID() { return tstopid_start; }
+	/**
+	 * Retrieve all stops for this Trip.
+	 * Cached after the first read.
+	 * Also sets <tt>tstop_start</tt>.
+	 *<P>
+	 * Note that {@link #readStartTStop(boolean) readStartTStop(false)} is called and cached,
+	 * but is not added to the list returned here.
+	 * Call that method to get the starting TStop if needed.
+	 *<P>
+	 * If you add a new TStop to this Trip after calling this
+	 * method, please call {@link #addCommittedTStop(TStop)} to
+	 * keep the cached list consistent.
+	 *
+	 * @return  ordered list of stops, or null if none
+	 * @throws IllegalStateException if the db connection is closed
+	 * @see #readAllTStops(boolean, boolean)
+	 * @see #isStartTStopFromPrevTrip()
+	 */
+	public Vector<TStop> readAllTStops()
+		throws IllegalStateException
+	{
+		return readAllTStops(false, false);
+	}
 
-    /**
-     * Does this trip continue from the previous trip's
-     * location, and from that trip's ending {@link TStop}?
-     * @return true if continues from previous trip, false if the
-     *         trip starts from a different location
-     * @see #readStartTStop(boolean)
-     */
-    public boolean isStartTStopFromPrevTrip() { return (tstopid_start != 0); }
+	/**
+	 * Retrieve all stops for this Trip, except possibly the one
+	 * at the destination which ends the trip.
+	 * Cached after the first read, unless <tt>ignoreTripEndStop</tt> is true.
+	 * Also sets <tt>tstop_start</tt>.
+	 *<P>
+	 * If this trip didn't continue from the previous trip's end location,
+	 * the starting TStop will be first item in the list returned.
+	 * Its odo_total matches the trip's {@link Trip#getOdo_start()},
+	 * and its odo_trip is 0.
+	 *<P>
+	 * Note that {@link #readStartTStop(boolean)} is called and cached,
+	 * but is not added to the list returned here.
+	 * Call that method to get the starting TStop if needed.
+	 *<P>
+	 * If you add a new TStop to this Trip after calling this
+	 * method, please call {@link #addCommittedTStop(TStop)} to
+	 * keep the cached list consistent.
+	 *
+	 * @param  ignoreTripEndStop  If true, and {@link #isEnded()} is true,
+	 *         don't include the TStop at the destination which ends the trip.
+	 * @param  bypassCache  If true, ignore the previously cached list of
+	 *         the trip's TStops, and don't cache the new result.
+	 *         (added in v0.9.50)
+	 * @return  ordered list of stops, or null if none
+	 * @throws IllegalStateException if the db connection is closed
+	 * @see #hasIntermediateTStops()
+	 */
+	public Vector<TStop> readAllTStops(boolean ignoreTripEndStop, final boolean bypassCache)
+		throws IllegalStateException
+	{
+		if (! isEnded())
+			ignoreTripEndStop = false;
 
-    /**
-     * Retrieve this Trip's starting stop which is from the previous trip, if any.
-     * This gives the starting location (descr and locid) for this trip.
-     *<P>
-     * Cached after the first read.  The cache ignores whether <tt>orFirstTStop</tt>
-     * was true during the first read.
-     *<P>
-     * Note that if a TStop with _id = tstopid_start isn't found in the database,
-     * the field is cleared and {@link #isDirty()} is set.
-     *
-     * @param  orFirstTStop  if true, and if <tt>tstopid_start</tt> is empty,
-     *     then the trip's starting stop will be selected from the TStop
-     *     table (<tt>tripid</tt> matches, <tt>trip_odo</tt> == 0).
-     * @return  that stop, or null if this trip didn't begin where the
-     *     vehicle's previous trip ended
-     * @throws IllegalStateException if the db connection is closed
-     * @see #readAllTStops()
-     * @see #readLatestTStop()
-     * @see #isStartTStopFromPrevTrip()
-     */
-    public TStop readStartTStop(final boolean orFirstTStop)
-        throws IllegalStateException
-    {
-    	if (tstop_start != null)
-    	{
-    		// cached
-    		if (orFirstTStop)
-    			return tstop_start;  // might be from this or previous trip
-    		else
-    			return (tstopid_start != 0) ? tstop_start : null;
-    	}
+		if (bypassCache || (allStops == null) || ignoreTripEndStop)
+		{
+			if (dbConn == null)
+				throw new IllegalStateException("dbConn null");
+			Vector<TStop> ts = TStop.stopsForTrip(dbConn, this);
+			if (! ignoreTripEndStop)
+			{
+				if (! bypassCache)
+				{
+					allStops = ts;    // cache it
+					hasCheckedStops = true;
+					hasUnreadStops = false;
+				}
+			} else {
+				// Remove that ending stop
+				if ((ts != null) && ! ts.isEmpty())
+				{
+					TStop fin = ts.lastElement();
+					if ((odo_end != 0) && (odo_end == fin.getOdo_total()))
+					{
+						ts.removeElementAt(ts.size() - 1);
+						if (ts.isEmpty())
+							ts = null;
+					}
+				}
+			}
 
-    	if (tstopid_start != 0)
-    	{
-	    	if (dbConn == null)
-	    		throw new IllegalStateException("dbConn null");
-	    	try {
+			readStartTStop(false);  // sets the field
+			return ts;
+		} else {
+			return allStops;
+		}
+	}
+
+	/**
+	 * If this trip's starting stop is from the previous trip,
+	 * get its ID. Note package access, not public; intended for tstop.startingStopWithinTrip.
+	 * @return the <tt>tstop_start</tt> id, or 0
+	 * @see #readStartTStop(boolean)
+	 * @see #isStartTStopFromPrevTrip()
+	 */
+	int getStartTStopID() { return tstopid_start; }
+
+	/**
+	 * Does this trip continue from the previous trip's
+	 * location, and from that trip's ending {@link TStop}?
+	 * @return true if continues from previous trip, false if the
+	 *         trip starts from a different location
+	 * @see #readStartTStop(boolean)
+	 */
+	public boolean isStartTStopFromPrevTrip() { return (tstopid_start != 0); }
+
+	/**
+	 * Retrieve this Trip's starting stop which is from the previous trip, if any.
+	 * This gives the starting location (descr and locid) for this trip.
+	 *<P>
+	 * Cached after the first read.  The cache ignores whether <tt>orFirstTStop</tt>
+	 * was true during the first read.
+	 *<P>
+	 * Note that if a TStop with _id = tstopid_start isn't found in the database,
+	 * the field is cleared and {@link #isDirty()} is set.
+	 *
+	 * @param  orFirstTStop  if true, and if <tt>tstopid_start</tt> is empty,
+	 *     then the trip's starting stop will be selected from the TStop
+	 *     table (<tt>tripid</tt> matches, <tt>trip_odo</tt> == 0).
+	 * @return  that stop, or null if this trip didn't begin where the
+	 *     vehicle's previous trip ended
+	 * @throws IllegalStateException if the db connection is closed
+	 * @see #readAllTStops()
+	 * @see #readLatestTStop()
+	 * @see #isStartTStopFromPrevTrip()
+	 */
+	public TStop readStartTStop(final boolean orFirstTStop)
+		throws IllegalStateException
+	{
+		if (tstop_start != null)
+		{
+			// cached
+			if (orFirstTStop)
+				return tstop_start;  // might be from this or previous trip
+			else
+				return (tstopid_start != 0) ? tstop_start : null;
+		}
+
+		if (tstopid_start != 0)
+		{
+			if (dbConn == null)
+				throw new IllegalStateException("dbConn null");
+
+			try {
 				tstop_start = new TStop(dbConn, tstopid_start);
 			} catch (RDBKeyNotFoundException e) {
 				tstopid_start = 0;  // bad key or inconsistency
@@ -947,198 +958,200 @@ public class Trip extends RDBRecord
 
 				return tstop_start;
 			}
-    	}
- 
-    	// Assert: tstopid_start == 0.
-    	if (! orFirstTStop)
-    		return null;
+		}
 
-    	// orFirstTStop is true.
-    	// Look it up by matching trip ID, trip_odo==0.
-    	// Don't set locid_start, because tstopid_start == 0.
-    	tstop_start = TStop.readStartingStopWithinTrip(dbConn, this);
-    	return tstop_start;
-    }
+		// Assert: tstopid_start == 0.
+		if (! orFirstTStop)
+			return null;
 
-    /**
-     * Retrieve this Trip's latest stop (or its ending TStop), if any.
-     *<P>
-     * If the trip has no intermediate stops yet:
-     *<UL>
-     *<LI> If the trip started at the previous trip's final TStop, null is returned.
-     *<LI> Otherwise, this trip's starting point will be returned.
-     *</UL>
-     * If the trip {@link #isEnded() is completed}, it will have an ending TStop,
-     * and that will be the one returned.
-     *
-     * @return that stop, or null if none yet on this trip
-     * @throws IllegalStateException if the db connection is closed
-     * @see #readAllTStops()
-     * @see #readStartTStop(boolean)
-     * @see TStop#latestStopForTrip(RDBAdapter, int, boolean)
-     */
-    public TStop readLatestTStop()
-        throws IllegalStateException
-    {
-    	return TStop.latestStopForTrip(dbConn, id, false);
-    }
-
-    /** Array to fill and return from readHighestOdometer. */
-    private int[] readhighest_ret = null;
-
-    /**
-     * For a trip in progress, look at the trip's most recent stops to calculate the
-     * most current odometer values.
-     * Where possible, use the highest trip-odo (more accurate) to drive the total-odo.
-     * If the trip has no stops yet, "total" is the starting value and "trip" is 0.
-     * To read the total odometer without calculation, use {@link #readHighestOdoTotal()} instead.
-     *<P>
-     * Uses and re-uses an array which is private to the trip; not thread-safe when sharing the same
-     * Trip object, but safe when different threads use different Trips.
-     *
-     * @return array of [total,trip] odometer; the array is reused,
-     *     so copy out the values before calling this again.
-     * @see #readHighestOdometers(TStop)
-     */
-    public int[] readHighestOdometers()
-    {
-    	return readHighestOdometers(null);
-    }
-
-    /**
-     * For a trip in progress, look at the trip's most recent stops to calculate the
-     * most current odometer values.
-     * Where possible, use the highest trip-odo (more accurate) to drive the total-odo.
-     * If the trip has no stops yet, "total" is the starting value and "trip" is 0.
-     * To read the total odometer without calculation, use {@link #readHighestOdoTotal()} instead.
-     *<P>
-     * Uses and re-uses an array which is private to the trip; not thread-safe when sharing the same
-     * Trip object, but safe when different threads use different Trips.
-     *
-     * @param ignoreStop  a TStop to ignore if found, or null;
-     *     this allows the latest stop (for example) to be ignored during the calculation.
-     * @return array of [total,trip] odometer; the array is reused,
-     *     so copy out the values before calling this again.
-     * @see #readHighestOdometers()
-     */
-    public int[] readHighestOdometers(final TStop ignoreStop)
-    {
-    	int oTrip = 0, oTotal;
-
-    	Vector<TStop> stops = readAllTStops();
-    	if (stops != null)
-    	{
-    		oTotal = 0;
-    		int i = stops.size();  // at least 1, because stops != null
-    		TStop ts;
-    		do
-    		{
-    			--i;
-    			ts = stops.elementAt(i);
-    			if ((ignoreStop != null) && (ignoreStop.id == ts.id))
-    				continue;
-	    		oTotal = ts.getOdo_total();
-	    		oTrip = ts.getOdo_trip();
-    		} while ((oTotal == 0) && (oTrip == 0) && (i > 0));
-    		if (oTotal == 0)
-    			oTotal = odo_start + oTrip;  // if oTrip==0 too, that's ok
-    		else if (oTrip == 0)
-    			oTrip = oTotal - odo_start;
-    		// else, they're both nonzero already.
-    	} else {
-    		oTotal = odo_start;
-    	}
-
-    	if (readhighest_ret == null)
-    		readhighest_ret = new int[2];
-    	readhighest_ret[0] = oTotal;
-    	readhighest_ret[1] = oTrip;
-    	return readhighest_ret;
-    }
-
-    /**
-     * Retrieve this Trip's maximum recorded odo_total within a stop.
-     * If no TStops on this trip yet with a recorded odo_total, returns odo_start.
-     * Unlike {@link #readHighestOdometers()}, no odo_trip addition is done if latest tstops are missing odo_total.
-     * @return that total-odometer value, in tenths of a unit
-     * @throws IllegalStateException if the db connection is closed
-     * @see TStop#readHighestTStopOdoTotalWithinTrip(RDBAdapter, int)
-     * @since 0.9.07
-     */
-    public int readHighestOdoTotal()
-    	throws IllegalStateException
-	{
-    	final int totalFromOdo = TStop.readHighestTStopOdoTotalWithinTrip(dbConn, id);
-    	if (totalFromOdo != 0)
-    		return totalFromOdo;
-    	else
-    		return odo_start;
+		// orFirstTStop is true.
+		// Look it up by matching trip ID, trip_odo==0.
+		// Don't set locid_start, because tstopid_start == 0.
+		tstop_start = TStop.readStartingStopWithinTrip(dbConn, this);
+		return tstop_start;
 	}
 
-    /**
-     * Read the latest timestamp of this trip.
-     * Look in this order of availability:
-     *<UL>
-     *<LI> Trip's ending time
-     *<LI> Trip's latest stop having a continue time
-     *     or (if missing continue time) a stop time
-     *<LI> Trip's starting time
-     *</UL>
-     * @return that time
-     * @throws IllegalStateException if the db connection is closed
-     */
-    public int readLatestTime()
-        throws IllegalStateException
-    {
-    	if (time_end != 0)
-    		return time_end;  // trip's ending time
+	/**
+	 * Retrieve this Trip's latest stop (or its ending TStop), if any.
+	 *<P>
+	 * If the trip has no intermediate stops yet:
+	 *<UL>
+	 *<LI> If the trip started at the previous trip's final TStop, null is returned.
+	 *<LI> Otherwise, this trip's starting point will be returned.
+	 *</UL>
+	 * If the trip {@link #isEnded() is completed}, it will have an ending TStop,
+	 * and that will be the one returned.
+	 *
+	 * @return that stop, or null if none yet on this trip
+	 * @throws IllegalStateException if the db connection is closed
+	 * @see #readAllTStops()
+	 * @see #readStartTStop(boolean)
+	 * @see TStop#latestStopForTrip(RDBAdapter, int, boolean)
+	 */
+	public TStop readLatestTStop()
+		throws IllegalStateException
+	{
+		return TStop.latestStopForTrip(dbConn, id, false);
+	}
 
-    	final Vector<TStop> stops = readAllTStops(false, true);  // ignore allStops cache & don't cache this query
-    	if (stops == null)
-    		return time_start;  // no stops yet: trip's starting time
+	/** Array to fill and return from readHighestOdometer. */
+	private int[] readhighest_ret = null;
 
-    	for (int i = stops.size() - 1; i >= 0; --i)
-    	{
-    		final TStop ts = stops.elementAt(i);
-    		int t = ts.getTime_continue();
-    		if (t == 0)
-    			t = ts.getTime_stop();
+	/**
+	 * For a trip in progress, look at the trip's most recent stops to calculate the
+	 * most current odometer values.
+	 * Where possible, use the highest trip-odo (more accurate) to drive the total-odo.
+	 * If the trip has no stops yet, "total" is the starting value and "trip" is 0.
+	 * To read the total odometer without calculation, use {@link #readHighestOdoTotal()} instead.
+	 *<P>
+	 * Uses and re-uses an array which is private to the trip; not thread-safe when sharing the same
+	 * Trip object, but safe when different threads use different Trips.
+	 *
+	 * @return array of [total,trip] odometer; the array is reused,
+	 *     so copy out the values before calling this again.
+	 * @see #readHighestOdometers(TStop)
+	 */
+	public int[] readHighestOdometers()
+	{
+		return readHighestOdometers(null);
+	}
 
-    		if (t != 0)
-    			return t;
-    	}
+	/**
+	 * For a trip in progress, look at the trip's most recent stops to calculate the
+	 * most current odometer values.
+	 * Where possible, use the highest trip-odo (more accurate) to drive the total-odo.
+	 * If the trip has no stops yet, "total" is the starting value and "trip" is 0.
+	 * To read the total odometer without calculation, use {@link #readHighestOdoTotal()} instead.
+	 *<P>
+	 * Uses and re-uses an array which is private to the trip; not thread-safe when sharing the same
+	 * Trip object, but safe when different threads use different Trips.
+	 *
+	 * @param ignoreStop  a TStop to ignore if found, or null;
+	 *     this allows the latest stop (for example) to be ignored during the calculation.
+	 * @return array of [total,trip] odometer; the array is reused,
+	 *     so copy out the values before calling this again.
+	 * @see #readHighestOdometers()
+	 */
+	public int[] readHighestOdometers(final TStop ignoreStop)
+	{
+		int oTrip = 0, oTotal;
 
-    	// no stops with times yet: trip's starting time
-    	return time_start;
-    }
+		Vector<TStop> stops = readAllTStops();
+		if (stops != null)
+		{
+			oTotal = 0;
+			int i = stops.size();  // at least 1, because stops != null
+			TStop ts;
+			do
+			{
+				--i;
+				ts = stops.elementAt(i);
+				if ((ignoreStop != null) && (ignoreStop.id == ts.id))
+					continue;
+				oTotal = ts.getOdo_total();
+				oTrip = ts.getOdo_trip();
+			} while ((oTotal == 0) && (oTrip == 0) && (i > 0));
 
-    /**
-     * Insert a new record based on field and value.
+			if (oTotal == 0)
+				oTotal = odo_start + oTrip;  // if oTrip==0 too, that's ok
+			else if (oTrip == 0)
+				oTrip = oTotal - odo_start;
+			// else, they're both nonzero already.
+		} else {
+			oTotal = odo_start;
+		}
+
+		if (readhighest_ret == null)
+			readhighest_ret = new int[2];
+		readhighest_ret[0] = oTotal;
+		readhighest_ret[1] = oTrip;
+		return readhighest_ret;
+	}
+
+	/**
+	 * Retrieve this Trip's maximum recorded odo_total within a stop.
+	 * If no TStops on this trip yet with a recorded odo_total, returns odo_start.
+	 * Unlike {@link #readHighestOdometers()}, no odo_trip addition is done if latest tstops are missing odo_total.
+	 * @return that total-odometer value, in tenths of a unit
+	 * @throws IllegalStateException if the db connection is closed
+	 * @see TStop#readHighestTStopOdoTotalWithinTrip(RDBAdapter, int)
+	 * @since 0.9.07
+	 */
+	public int readHighestOdoTotal()
+		throws IllegalStateException
+	{
+		final int totalFromOdo = TStop.readHighestTStopOdoTotalWithinTrip(dbConn, id);
+		if (totalFromOdo != 0)
+			return totalFromOdo;
+		else
+			return odo_start;
+	}
+
+	/**
+	 * Read the latest timestamp of this trip.
+	 * Look in this order of availability:
+	 *<UL>
+	 *<LI> Trip's ending time
+	 *<LI> Trip's latest stop having a continue time
+	 *     or (if missing continue time) a stop time
+	 *<LI> Trip's starting time
+	 *</UL>
+	 * @return that time
+	 * @throws IllegalStateException if the db connection is closed
+	 */
+	public int readLatestTime()
+		throws IllegalStateException
+	{
+		if (time_end != 0)
+			return time_end;  // trip's ending time
+
+		final Vector<TStop> stops = readAllTStops(false, true);  // ignore allStops cache & don't cache this query
+		if (stops == null)
+			return time_start;  // no stops yet: trip's starting time
+
+		for (int i = stops.size() - 1; i >= 0; --i)
+		{
+			final TStop ts = stops.elementAt(i);
+			int t = ts.getTime_continue();
+			if (t == 0)
+				t = ts.getTime_stop();
+
+			if (t != 0)
+				return t;
+		}
+
+		// no stops with times yet: trip's starting time
+		return time_start;
+	}
+
+	/**
+	 * Insert a new record based on field and value.
 	 * Clears dirty field; sets id and dbConn fields.
-     * @return new record's primary key (_id)
-     * @throws IllegalStateException if the insert fails
-     */
-    public int insert(RDBAdapter db)
-        throws IllegalStateException
-    {
-    	id = db.insert(TABNAME, FIELDS, buildInsertUpdate(), true);
+	 * @return new record's primary key (_id)
+	 * @throws IllegalStateException if the insert fails
+	 */
+	public int insert(RDBAdapter db)
+		throws IllegalStateException
+	{
+		id = db.insert(TABNAME, FIELDS, buildInsertUpdate(), true);
 		dirty = false;
-    	dbConn = db;
-    	return id;
-    }
+		dbConn = db;
 
-    /**
+		return id;
+	}
+
+	/**
 	 * Commit changes to an existing record.
 	 * Commits to the database; clears dirty field.
 	 *<P>
 	 * For new records, <b>do not call commit</b>:
 	 * use {@link #insert(RDBAdapter)} instead.
-     * @throws IllegalStateException if the update fails
-     * @throws NullPointerException if dbConn was null because
-     *     this is a new record, not an existing one
+	 * @throws IllegalStateException if the update fails
+	 * @throws NullPointerException if dbConn was null because
+	 *     this is a new record, not an existing one
 	 */
 	public void commit()
-        throws IllegalStateException, NullPointerException
+		throws IllegalStateException, NullPointerException
 	{
 		dbConn.update(TABNAME, id, FIELDS, buildInsertUpdate());
 		dirty = false;
@@ -1147,15 +1160,15 @@ public class Trip extends RDBRecord
 	/**
 	 * Fill the db fields into an array with same
 	 * contents/order as {@link #FIELDS}.
-	 * @return field contents, ready for db update via insert() or commit() 
+	 * @return field contents, ready for db update via insert() or commit()
 	 */
 	private String[] buildInsertUpdate()
 	{
 		/*
-    private static final String[] FIELDS =
-        { "vid", "did", "catid", "odo_start", "odo_end", "aid", "tstopid_start", "locid_start",
-          FIELD_TIME_START, "time_end", "start_lat", "start_lon", "end_lat", "end_lon",
-          "freqtripid", "comment", "passengers", "roadtrip_end_aid", "has_continue" };
+	private static final String[] FIELDS =
+	{ "vid", "did", "catid", "odo_start", "odo_end", "aid", "tstopid_start", "locid_start",
+	 FIELD_TIME_START, "time_end", "start_lat", "start_lon", "end_lat", "end_lon",
+	 "freqtripid", "comment", "passengers", "roadtrip_end_aid", "has_continue" };
 		 */
 		String[] fv =
 		    {
@@ -1173,6 +1186,7 @@ public class Trip extends RDBRecord
 			(roadtrip_end_aid != 0 ? Integer.toString(roadtrip_end_aid) : null),
 			(has_continue ? "1" : "0")
 		    };
+
 		return fv;
 	}
 
@@ -1188,10 +1202,11 @@ public class Trip extends RDBRecord
 	 * @throws NullPointerException if {@code driver} is null
 	 */
 	public void setDriverID(Person driver)
-	    throws IllegalArgumentException, NullPointerException
+		throws IllegalArgumentException, NullPointerException
 	{
-    	if (! driver.isDriver())
-    		throw new IllegalArgumentException("person.isDriver false: " + driver.getName());
+		if (! driver.isDriver())
+			throw new IllegalArgumentException("person.isDriver false: " + driver.getName());
+
 		driverid = driver.getID();
 		dirty = true;
 	}
@@ -1229,6 +1244,7 @@ public class Trip extends RDBRecord
 	{
 		if (catid == newCatID)
 			return;
+
 		catid = newCatID;
 		dirty = true;
 	}
@@ -1487,6 +1503,7 @@ public class Trip extends RDBRecord
 	{
 		if (newID == freqtripid)
 			return;
+
 		freqtripid = newID;
 		dirty = true;
 	}
@@ -1557,6 +1574,7 @@ public class Trip extends RDBRecord
 	{
 		if (passengers == newPax)
 			return;
+
 		passengers = newPax;
 		dirty = true;
 	}
@@ -1564,11 +1582,11 @@ public class Trip extends RDBRecord
 	/**
 	 * Delete an existing record.
 	 *
-     * @throws NullPointerException if dbConn was null because
-     *     this is a new record, not an existing one
+	 * @throws NullPointerException if dbConn was null because
+	 *     this is a new record, not an existing one
 	 */
 	public void delete()
-	    throws NullPointerException
+		throws NullPointerException
 	{
 		dbConn.delete(TABNAME, id);
 		deleteCleanup();

@@ -1196,7 +1196,6 @@ public class LogbookShow extends Activity
 			});
 
 			AlertDialog.Builder alert = new AlertDialog.Builder(fromActivity);
-			alert.setTitle(R.string.logbook_show__trips_to_location);
 			alert.setMessage(R.string.logbook_show__enter_location_to_search_trips);
 			alert.setView(askItems);
 			alert.setPositiveButton(android.R.string.search_go, new DialogInterface.OnClickListener() {

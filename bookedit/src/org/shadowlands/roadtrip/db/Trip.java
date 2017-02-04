@@ -124,11 +124,11 @@ public class Trip extends RDBRecord
 
 	/** Where-clause for use in {@link #tripsForLocation(RDBAdapter, int, Vehicle, int, boolean, int, boolean)}. */
 	private static final String WHERE_LOCID_AND_TRIPID_BEFORE =
-		"locid_start = ? OR _id in ( select distinct tripid from tstop where locid = ? and tripid < ? order by tripid desc limit ? )";
+		"(locid_start = ? and _id < ?) OR _id in ( select distinct tripid from tstop where locid = ? and tripid < ? order by tripid desc limit ? )";
 
 	/** Where-clause for use in {@link #tripsForLocation(RDBAdapter, int, Vehicle, int, boolean, int, boolean)}. */
 	private static final String WHERE_LOCID_AND_TRIPID_AFTER =
-		"locid_start = ? OR _id in ( select distinct tripid from tstop where locid = ? and tripid > ? order by tripid desc limit ? )";
+		"(locid_start = ? and _id > ?) OR _id in ( select distinct tripid from tstop where locid = ? and tripid > ? order by tripid desc limit ? )";
 
 	private static final int WEEK_IN_SECONDS = 7 * 24 * 60 * 60;
 
@@ -420,20 +420,21 @@ public class Trip extends RDBRecord
 		if (prevTripID == 0)
 		{
 			whereArgs = new String[ (veh != null) ? 4 : 3 ];
-			// [0],[1] init are below
-			whereArgs[2] = Integer.toString( limit );
+			whereArgs[0] = Integer.toString(locID);  // trip.locid_start
+			whereArgs[1] = whereArgs[0];   // subquery's tstop.locid
+			whereArgs[2] = Integer.toString(limit);
 			if (veh != null)
 				whereArgs[3] = Integer.toString( veh.getID() );
 		} else {
-			whereArgs = new String[ (veh != null) ? 5 : 4 ];
-			// [0],[1] init are below
-			whereArgs[2] = Integer.toString( prevTripID );
-			whereArgs[3] = Integer.toString( limit );
+			whereArgs = new String[ (veh != null) ? 6 : 5 ];
+			whereArgs[0] = Integer.toString(locID);  // trip.locid_start
+			whereArgs[1] = Integer.toString(prevTripID);  // exclude already-shown trips
+			whereArgs[2] = whereArgs[0];   // subquery's tstop.locid
+			whereArgs[3] = whereArgs[1];   // subquery exclude already-shown trips
+			whereArgs[4] = Integer.toString(limit);
 			if (veh != null)
-				whereArgs[4] = Integer.toString( veh.getID() );
+				whereArgs[5] = Integer.toString( veh.getID() );
 		}
-		whereArgs[0] = Integer.toString(locID);  // trip.locid_start
-		whereArgs[1] = whereArgs[0];   // subquery's tstop.locid
 
 		String whereClause;
 		final String orderClause;

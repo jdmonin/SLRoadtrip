@@ -209,7 +209,7 @@ public class TStop extends RDBRecord
 
 	private int tripid;  // FK
 
-	/** may be blank (0) */
+	/** Odometer at stop; fixed-point with 1 decimal place.  0 is blank/unused. */
 	private int odo_total, odo_trip;
 
 	/**
@@ -227,7 +227,7 @@ public class TStop extends RDBRecord
 	/** GeoArea ID.  0 is empty/unused.  See {@link #getAreaID()} javadoc. */
 	private int areaid;
 
-	/** may be null */
+	/** starting/ending latitude/longitude; declared for future use, currently always null. */
 	private String geo_lat, geo_lon;
 
 	/**
@@ -239,7 +239,7 @@ public class TStop extends RDBRecord
 	 */
 	private int flag_sides;
 
-	/** location text ('<tt>descr</tt>' field); will be null if {@link #locid} is used instead. */
+	/** location text ('<tt>descr</tt>' field); likely null, {@link #locid} has been used instead since v0.9.05. */
 	private String locat;
 
 	/** route string; likely null, {@link #via_id} has been used instead since v0.8.13. */
@@ -754,6 +754,7 @@ public class TStop extends RDBRecord
 		    || ((origComment != null) && ! origComment.equals(comment));
 	}
 
+	/** Get this stop's {@link Trip} ID. */
 	public int getTripID()
 	{
 		return tripid;
@@ -1008,6 +1009,11 @@ public class TStop extends RDBRecord
 		return via_route;
 	}
 
+	/**
+	 * Since v0.8.13, call {@link #setVia_id(int)} instead of this method.
+	 * @param via  New Via text description for a TStop from old data
+	 * @deprecated
+	 */
 	public void setVia_route(final String via)
 	{
 		if ((via == via_route)

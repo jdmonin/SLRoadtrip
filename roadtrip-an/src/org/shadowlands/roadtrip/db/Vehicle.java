@@ -746,15 +746,17 @@ public class Vehicle extends RDBRecord
 	 * {@link #expense_curr_sym}, {@link #expense_curr_deci}.
 	 * @param sb  Use this stringbuilder; if null, a new one is created and returned.
 	 * @param deciAmt Amount to format, as from {@link TStop#getExpense_total()} or {@link TStopGas#price_total}
+	 * @param withSymbol  If true include {@link #expense_curr_sym}, not only the amount, in formatting
 	 * @return the stringbuilder with {@link #expense_curr_sym} and formatted currency amount appended
 	 * @since 0.9.61
 	 */
-	public StringBuilder formatCurrFixedDeci(StringBuilder sb, final int deciAmt)
+	public StringBuilder formatCurrFixedDeci(StringBuilder sb, final int deciAmt, final boolean withSymbol)
 	{
 		if (sb == null)
 			sb = new StringBuilder();
 
-		sb.append(expense_curr_sym);
+		if (withSymbol)
+			sb.append(expense_curr_sym);
 		sb.append(RDBSchema.formatFixedDec(deciAmt, expense_curr_deci));
 
 		return sb;

@@ -1086,8 +1086,8 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 							desc.append(" [");
 							if (expense_gas != 0)
 								desc.append("total ");  // TODO i18n
-							veh.formatCurrFixedDeci(desc, expense_tot);
-							desc.append("]");
+							veh.formatCurrFixedDeci(desc, expense_tot, true);
+							desc.append(']');
 						}
 					}
 

@@ -102,12 +102,12 @@ public class TStop extends RDBRecord
 	private static final String[] FIELDS =
 	{ FIELD_TRIPID, FIELD_ODO_TOTAL, "odo_trip", FIELD_TIME_STOP, FIELD_TIME_CONTINUE,
 	  FIELD_LOCID, "a_id", "geo_lat", "geo_lon", "flag_sides",
-	  "descr", "via_route", "via_id", FIELD_COMMENT };
+	  "descr", "via_route", "via_id", FIELD_COMMENT, "expense_total" };
 
 	private static final String[] FIELDS_AND_ID =
 	{ FIELD_TRIPID, FIELD_ODO_TOTAL, "odo_trip", FIELD_TIME_STOP, "time_continue",
 	  FIELD_LOCID, "a_id", "geo_lat", "geo_lon", "flag_sides",
-	  "descr", "via_route", "via_id", FIELD_COMMENT, "_id" };
+	  "descr", "via_route", "via_id", FIELD_COMMENT, "expense_total", "_id" };
 
 	private final static String[] FIELD_TIME_CONTINUE_ARR = { "time_continue" };
 
@@ -270,6 +270,15 @@ public class TStop extends RDBRecord
 	 * @since 0.8.13
 	 */
 	private int via_id;
+
+	/**
+	 * Optional total expenses paid at this stop, or 0 if null/unused; fixed-point decimal.
+	 * For details see {@link #getExpense_total()}.
+	 *<P>
+	 * Added in v0.9.61: Null in data of earlier {@code TStop}s.
+	 * @since 0.9.61
+	 */
+	private int expense_total;
 
 	/**
 	 * Cached contents of some fields as string.
@@ -558,9 +567,11 @@ public class TStop extends RDBRecord
 			via_id = Integer.parseInt(rec[12]);
 		comment = rec[13];
 		recalcIsCommentSetInDB();
+		if (rec[14] != null)
+			expense_total = Integer.parseInt(rec[14]);
 
-		if (rec.length == 15)
-			id = Integer.parseInt(rec[14]);
+		if (rec.length == 16)
+			id = Integer.parseInt(rec[15]);
 	}
 
 	/**
@@ -701,7 +712,7 @@ public class TStop extends RDBRecord
 	private static final String[] FIELDS =
 	{ "tripid", "odo_total", "odo_trip", "time_stop", "time_continue",
 	  "locid", "a_id", "geo_lat", "geo_lon", "flag_sides",
-	  "descr", "via_route", "via_id", "comment" };
+	  "descr", "via_route", "via_id", "comment", "expense_total" };
 		 */
 		String tripOdo;
 		if (odo_trip_0_beginTrip)
@@ -722,7 +733,8 @@ public class TStop extends RDBRecord
 			Integer.toString(flag_sides),
 			locat, via_route,
 			(via_id != 0 ? Integer.toString(via_id) : null),
-			comment
+			comment,
+			(expense_total != 0 ? Integer.toString(expense_total) : null)
 		    };
 
 		return fv;
@@ -1075,6 +1087,25 @@ public class TStop extends RDBRecord
 		}
 
 		return v;
+	}
+
+	/**
+	 * Get the optional total expenses paid at this stop, if any.
+	 * Like {@link TStopGas#price_total}, this field is fixed-point decimal
+	 * with the number of decimal digits taken from the trip vehicle's
+	 * {@link Vehicle#expense_curr_deci} (default 2).
+	 *<P>
+	 * If this stop also includes a {@link TStopGas}, the {@code expense_total} amount includes
+	 * that gas's {@code price_total} and anything else paid besides gas.
+	 *<P>
+	 * Added in v0.9.61: Unused in data of earlier {@code TStop}s, even those having {@link TStopGas}.
+	 *
+	 * @return  This stop's total expenses, or 0 if null/unused
+	 * @since 0.9.61
+	 */
+	public int getExpense_total()
+	{
+		return expense_total;
 	}
 
 	/**

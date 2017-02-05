@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2011,2013-2015 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2011,2013-2015,2017 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -192,7 +192,7 @@ public class LogbookRecentGas extends Activity
 
 				final int L = gstop.size();
 				gasRows = new ArrayList<String>(L);
-				StringBuffer sb = new StringBuffer();
+				StringBuilder sb = new StringBuilder();
 				for (int i = 0; i < L; ++i)
 				{
 					final TStopGas tsg = gstop.elementAt(i);
@@ -212,7 +212,7 @@ public class LogbookRecentGas extends Activity
 							catch (Throwable th) {}
 						}
 						if (grade != null)
-							tsg.gas_brandgrade = grade;  // for toStringBuffer's use
+							tsg.gas_brandgrade = grade;  // for toStringBuilder's use
 					}
 
 					final TStop ts = tsg.getTStop();
@@ -220,7 +220,7 @@ public class LogbookRecentGas extends Activity
 					sb.append(ts.getOdo_total() / 10);
 					sb.append(' ');
 
-					sb.append(tsg.toStringBuffer(ve));  // quant @ price-per [totalprice] [gas_brandgrade]
+					sb.append(tsg.toStringBuilder(ve));  // quant @ price-per [totalprice] [gas_brandgrade]
 					if (gradeID != 0)
 						tsg.gas_brandgrade = null;  // clear the reference
 
@@ -242,9 +242,9 @@ public class LogbookRecentGas extends Activity
 					{
 						// TODO pref to specify format: mpg, g/100mi, L/100km, km/L
 						sb.append("\n");
-						tsg.efficToStringBuffer(false, sb, ve);
+						tsg.efficToStringBuilder(false, sb, ve);
 						sb.append(" mpg, ");
-						tsg.efficToStringBuffer(true, sb, ve);
+						tsg.efficToStringBuilder(true, sb, ve);
 						sb.append(" gal/100mi");
 					}
 

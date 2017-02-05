@@ -681,6 +681,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 			tData.insertElementAt(ttr, 0);
 
 		addRowsFromTrips(ttr, conn);
+
 		getValue_RangeRow0 = -1;  // row#s changing, so reset getValue_* vars
 		getValue_RangeRowN = -1;
 		return ttr.tText.size();
@@ -1039,7 +1040,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 						tr[6] = "via " + tr[6];
 
 					// Description, for tr[5 == COL_TSTOP_DESC]
-					StringBuffer desc = new StringBuffer(getTStopLocDescr(ts, conn));
+					StringBuilder desc = new StringBuilder(getTStopLocDescr(ts, conn));
 
 					// Look for a gas tstop
 					if (ts.isSingleFlagSet(TStop.FLAG_GAS))
@@ -1061,10 +1062,10 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 									catch (Throwable th) {}
 								}
 								if (grade != null)
-									tsg.gas_brandgrade = grade;  // for toStringBuffer's use
+									tsg.gas_brandgrade = grade;  // for toStringBuilder's use
 							}
-							StringBuffer gsb = new StringBuffer("* Gas: ");
-							gsb.append(tsg.toStringBuffer(veh));
+							StringBuilder gsb = new StringBuilder("* Gas: ");
+							gsb.append(tsg.toStringBuilder(veh));
 							if (gradeID != 0)
 								tsg.gas_brandgrade = null;  // clear the reference
 							if (desc.length() > 0)

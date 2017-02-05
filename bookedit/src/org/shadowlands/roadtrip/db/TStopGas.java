@@ -28,7 +28,7 @@ import java.util.Vector;
  * {@link TStop#FLAG_GAS} set.
  *<P>
  * Several fields here ({@link #quant}, etc) are fixed-point decimal but stored as integers;
- * use {@link #toStringBuffer(Vehicle)} for user-friendly formatting.
+ * use {@link #toStringBuilder(Vehicle)} for user-friendly formatting.
  * {@link #quant}, {@link #price_per}, and {@link #price_total} fields' number of decimal digits
  * could in future be different per vehicle; different installations or
  * different vehicles in the same db could use different decimal places or units.
@@ -92,7 +92,7 @@ public class TStopGas extends RDBRecord
 	/**
 	 * Fuel quantity added at this stop.
 	 * Units: fixed-point decimal (3 places, from {@link Vehicle#fuel_qty_deci})
-	 * @see #toStringBuffer(Vehicle)
+	 * @see #toStringBuilder(Vehicle)
 	 */
 	public int quant;
 
@@ -106,7 +106,7 @@ public class TStopGas extends RDBRecord
 	 * Total actual cost paid for fuel at this stop,
 	 * calculated by vendor based on {@link #price_per} * {@link #quant}.
 	 * Units: fixed-point decimal (2 places, from {@link Vehicle#expense_curr_deci}).
-	 * @see #toStringBuffer(Vehicle)
+	 * @see #toStringBuilder(Vehicle)
 	 */
 	public int price_total;
 
@@ -123,7 +123,7 @@ public class TStopGas extends RDBRecord
 	public int gas_brandgrade_id;
 
 	/**
-	 * Convenience field, not stored in database; used in {@link #toStringBuffer(Vehicle)}.
+	 * Convenience field, not stored in database; used in {@link #toStringBuilder(Vehicle)}.
 	 * If not <tt>null</tt>, its ID must == {@link #gas_brandgrade_id}.
 	 */
 	public transient GasBrandGrade gas_brandgrade;
@@ -168,7 +168,7 @@ public class TStopGas extends RDBRecord
 	 * @param limit  maximum number of gas stops to return, or 0 for no limit
 	 * @return Gas stops for this vehicle, most recent first, or null if none
 	 * @throws IllegalStateException if db is null or not open, or if an unexpected result parse error occurs
-	 * @see #efficToStringBuffer(boolean, StringBuffer, Vehicle)
+	 * @see #efficToStringBuilder(boolean, StringBuilder, Vehicle)
 	 */
 	public static Vector<TStopGas> recentGasForVehicle
 		(RDBAdapter db, final Vehicle veh, final int limit)
@@ -463,24 +463,29 @@ public class TStopGas extends RDBRecord
 	}
 
 	/**
-	 * Calculate the efficiency and add to this stringbuffer, if available
+	 * Calculate the efficiency and add to this stringbuilder, if data available
 	 * and calculated by {@link #recentGasForVehicle(RDBAdapter, Vehicle, int)}.
 	 * Format is "##.#" for mpg, or "##.##" for L/100km.
-	 * @param sb  Use this stringbuffer; if null, a new one is created and returned
+	 *<P>
+	 * Before v0.9.61, this method was {@code efficToStringBuffer(..)}.
+	 *
+	 * @param sb  Use this stringbuilder; if null, a new one is created and returned
 	 *     unless {@link #effic_dist} is 0 or {@link #effic_quant} is 0.
 	 * @param v  used for number of decimal places, currency symbol
 	 * @param fmtPer100  Calculate as L/100km or gal/100mi, not mpg or km/L
-	 * @return  the stringbuffer with efficiency number appended,
-	 *     or do nothing if {@link #effic_dist} or {@link #effic_quant} is 0.
-	 * @see #toStringBuffer(Vehicle)
+	 * @return  the stringbuilder with efficiency number appended,
+	 *     or if {@link #effic_dist} or {@link #effic_quant} is 0,
+	 *     do nothing and return the unchanged {@code sb} parameter.
+	 * @see #toStringBuilder(Vehicle)
+	 * @since 0.9.61
 	 */
-	public StringBuffer efficToStringBuffer(final boolean fmtPer100, StringBuffer sb, Vehicle v)
+	public StringBuilder efficToStringBuilder(final boolean fmtPer100, StringBuilder sb, Vehicle v)
 	{
 		if ((effic_dist == 0) || (effic_quant == 0))
 			return sb;
 
 		if (sb == null)
-			sb = new StringBuffer();
+			sb = new StringBuilder();
 		float dist = effic_dist / 10f;  // Convert from 10ths
 		float quant = effic_quant * (float) Math.pow(10, -v.fuel_qty_deci);
 		float effic;
@@ -500,14 +505,17 @@ public class TStopGas extends RDBRecord
 	 *<P>
 	 * If {@link #gas_brandgrade} != <tt>null</tt> and its ID matches {@link #gas_brandgrade_id},
 	 * the brand/grade name will be placed into the string buffer.
+	 *<P>
+	 * Before v0.9.61, this method was {@code toStringBuffer(Vehicle)}.
 	 *
 	 * @param v  Vehicle taking the Trip containing this TStopGas;
 	 *     used for number of decimal places, currency symbol
-	 * @see #efficToStringBuffer(boolean, StringBuffer, Vehicle)
+	 * @see #efficToStringBuilder(boolean, StringBuilder, Vehicle)
+	 * @since 0.9.61
 	 */
-	public StringBuffer toStringBuffer(Vehicle v)
+	public StringBuilder toStringBuilder(Vehicle v)
 	{
-		StringBuffer sb = new StringBuffer();
+		StringBuilder sb = new StringBuilder();
 
 		if (! fillup)
 			sb.append("partial: ");

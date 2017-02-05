@@ -1335,7 +1335,7 @@ public class TStop extends RDBRecord
 		if ((toString_descr != null) && ((via_id == 0) || ! lookupVia))
 			return toString_descr;
 
-		StringBuffer sb = new StringBuffer();
+		StringBuilder sb = new StringBuilder();
 		if (odo_trip != 0)
 		{
 		    sb.append('(');

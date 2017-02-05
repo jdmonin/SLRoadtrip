@@ -579,6 +579,10 @@ public class TStop extends RDBRecord
 	 * When ready to write (after any changes you make to this object),
 	 * call {@link #insert(RDBAdapter)}.
 	 *<P>
+	 * Some infrequently-used fields aren't included in this constructor;
+	 * call them on the new object ({@link #setExpense_total(int)}, etc)
+	 * before calling {@link #insert(RDBAdapter)}.
+	 *<P>
 	 * If this TStop is to begin a new trip (with <tt>trip_odo</tt> == 0),
 	 * call {@link #TStop(Trip, int, int, Location, String, String)}
 	 * instead of this constructor.
@@ -639,6 +643,10 @@ public class TStop extends RDBRecord
 	 *<P>
 	 * When ready to write (after any changes you make to this object),
 	 * call {@link #insert(RDBAdapter)}.
+	 *<P>
+	 * Some infrequently-used fields aren't included in this constructor;
+	 * call them on the new object ({@link #setExpense_total(int)}, etc)
+	 * before calling {@link #insert(RDBAdapter)}.
 	 *
 	 * @param trip   Trip containing this stop
 	 * @param odo_total  Total odometer, not 0
@@ -1101,11 +1109,27 @@ public class TStop extends RDBRecord
 	 * Added in v0.9.61: Unused in data of earlier {@code TStop}s, even those having {@link TStopGas}.
 	 *
 	 * @return  This stop's total expenses, or 0 if null/unused
+	 * @see #setExpense_total(int)
 	 * @since 0.9.61
 	 */
 	public int getExpense_total()
 	{
 		return expense_total;
+	}
+
+	/**
+	 * Set or clear the optional total expenses paid at this stop.
+	 * See {@link #getExpense_total()} for format.
+	 * @param tot  New total, or 0 to clear
+	 * @since 0.9.61
+	 */
+	public void setExpense_total(final int tot)
+	{
+		if (tot == expense_total)
+			return;
+
+		expense_total = tot;
+		dirty = true;
 	}
 
 	/**

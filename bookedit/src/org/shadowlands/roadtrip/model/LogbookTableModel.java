@@ -1043,11 +1043,14 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 					StringBuilder desc = new StringBuilder(getTStopLocDescr(ts, conn));
 
 					// Look for a gas tstop
+					int expense_gas = 0;
 					if (ts.isSingleFlagSet(TStop.FLAG_GAS))
 					{
 						try
 						{
 							TStopGas tsg = new TStopGas(conn, ts.getID());
+							expense_gas = tsg.price_total;
+
 							final int gradeID = tsg.gas_brandgrade_id;
 							if (gradeID != 0)
 							{
@@ -1064,7 +1067,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 								if (grade != null)
 									tsg.gas_brandgrade = grade;  // for toStringBuilder's use
 							}
-							StringBuilder gsb = new StringBuilder("* Gas: ");
+							StringBuilder gsb = new StringBuilder("* Gas: ");  // TODO i18n
 							gsb.append(tsg.toStringBuilder(veh));
 							if (gradeID != 0)
 								tsg.gas_brandgrade = null;  // clear the reference
@@ -1073,6 +1076,19 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 							desc.insert(0, gsb);
 						}
 						catch (Throwable th) {}
+					}
+
+					// Append tstop expenses, if any
+					{
+						final int expense_tot = ts.getExpense_total();
+						if ((expense_tot != 0) && (expense_tot != expense_gas))
+						{
+							desc.append(" [");
+							if (expense_gas != 0)
+								desc.append("total ");  // TODO i18n
+							veh.formatCurrFixedDeci(desc, expense_tot);
+							desc.append("]");
+						}
 					}
 
 					// If it's the very last stop, Arrow to indicate that
@@ -1333,8 +1349,11 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 
 	/**
 	 * Read this TStop's location description from text or from its associated Location.
+	 * Does not include {@link TStop#getExpense_total()}, because that would prevent
+	 * combining that field with any TStopGas's formatting.
+	 *<P>
 	 * Attempts to read or fill {@link #locCache}.
-	 * A copy of this method is in org.shadowlands.roadtrip.android.LogbookRecentGas.
+	 * A modified copy of this method is in org.shadowlands.roadtrip.android.LogbookRecentGas.
 	 *<P>
 	 * Since this method is for display only, not further processing, it tries to give
 	 * a human-readable message if the location data is missing (db inconsistency).

@@ -19,6 +19,8 @@
 
 package org.shadowlands.roadtrip.android;
 
+import java.text.NumberFormat;
+import java.text.ParseException;
 import java.util.Calendar;
 
 import org.shadowlands.roadtrip.AndroidStartup;
@@ -552,6 +554,15 @@ public class TripTStopEntry extends Activity
 	///////////////////////////////
 	// End of calculator fields
 	///////////////////////////////
+
+	/**
+	 * Decimal parser, in user's locale because String.format will use that locale.
+	 * Same setup is used in {@link TripTStopGas}. The locale might have ',' as the
+	 * decimal separator; Float.parseFloat can't parse that format.
+	 * Our layout also uses android:digits="0123456789,." for decimal EditTexts
+	 * per comments in http://code.google.com/p/android/issues/detail?id=2626 .
+	 */
+	private NumberFormat parseDF = NumberFormat.getNumberInstance();
 
 	/** Called when the activity is first created.
 	 * See {@link #updateTextAndButtons()} for remainder of init work,
@@ -1720,6 +1731,16 @@ public class TripTStopEntry extends Activity
 		setEditText(currTS.readLocationText(), R.id.trip_tstop_loc);
 		setEditText(currTS_via_text, R.id.trip_tstop_via);  // if via_id, sets in updateViaRouteAutocomplete()
 		setEditText(currTS.getComment(), R.id.trip_tstop_comment);  // not read-only unless isViewTScurrTS
+		if (currTS.getExpense_total() != 0)
+		{
+			setEditText
+				(currV.formatCurrFixedDeci(null, currTS.getExpense_total(), viewTS != null).toString(),
+				 R.id.trip_tstop_expense);
+			// TODO check expenses from gas: text in status row
+		} else if (viewTS != null) {
+			// if 0, hide expense row in read-only mode
+			findViewById(R.id.trip_tstop_row_expense).setVisibility(View.GONE);
+		}
 
 		// Set or hide Comment Status field
 		TextView tv = (TextView) findViewById(R.id.trip_tstop_comment_status_txt);
@@ -2137,6 +2158,27 @@ public class TripTStopEntry extends Activity
 				 R.string.please_check_the_total_odometer,
 				 Toast.LENGTH_SHORT).show();
 			return;  // <--- Early return: missing required field ---
+		}
+
+		int expense_total = 0;
+		// TODO check for tstopGas and its cost, which should be auto-included in expense_total
+		{
+			String expense_total_txt = textIfEntered(R.id.trip_tstop_expense);
+			if (expense_total_txt != null)
+			{
+				try
+				{
+					float exp_user = parseDF.parse(expense_total_txt).floatValue();
+					expense_total = (int) Math.round(exp_user * Math.pow(10, currV.expense_curr_deci));
+				} catch (ParseException e) {
+					findViewById(R.id.trip_tstop_expense).requestFocus();
+					Toast.makeText
+						(this, R.string.please_check_the_expense_total,
+						 Toast.LENGTH_SHORT).show();
+					return;  // <--- Early return: Can't parse ---
+				}
+				// TODO if tstopGas, toast unless total >= that amount
+			}
 		}
 
 		final boolean mkFreqTrip;
@@ -2678,6 +2720,7 @@ public class TripTStopEntry extends Activity
 			}
 			TStop newStop = new TStop
 			  (currT, odoTotal, odoTrip, stopTimeSec, 0, locID, areaID, null, null, flags, viaID, comment);
+			newStop.setExpense_total(expense_total);
 			tsid = newStop.insert(db);
 			currT.addCommittedTStop(newStop);  // update the Trip's cached TStop list, if any
 			if (saveOnly || ! stopEndsTrip)
@@ -2713,6 +2756,7 @@ public class TripTStopEntry extends Activity
 			currTS.setLocationID(locID);
 			currTS.setVia_id(viaID);
 			currTS.setComment(comment, false, false);
+			currTS.setExpense_total(expense_total);
 			if ((currT.isRoadtrip() || wantsConvertLocalToRoadtrip)
 			    && (areaLocs_areaID >= ((stopEndsTrip && ! saveOnly) ? 1 : 0)))
 				currTS.setAreaID(areaLocs_areaID);

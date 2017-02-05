@@ -79,6 +79,7 @@
 <string name="end_trip">End Trip</string>
 <string name="enter_stop">Enter Stop</string>
 <string name="error">Error</string>
+<string name="expenses">Expenses</string>
 <string name="export">Export</string>
 <string name="filename">Filename</string>
 <string name="fillup">Fill-up</string>
@@ -119,6 +120,7 @@
 <string name="other_vehicle">Other vehicle...</string>
 <string name="passengers">Passengers</string>
 <string name="passengers_hint">(not including driver)</string>
+<string name="please_check_the_expense_total">Please check the expense total.</string>
 <string name="please_check_the_total_odometer">Please check the total odometer.</string>
 <string name="please_check_the_trip_odometer">Please check the trip odometer.</string>
 <string name="please_choose_existing_location">Please choose an existing location.</string>

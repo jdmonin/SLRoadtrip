@@ -523,8 +523,7 @@ public class TStopGas extends RDBRecord
 		sb.append(" @ ");
 		sb.append(RDBSchema.formatFixedDec(price_per, v.fuel_curr_deci));
 		sb.append(" [");
-		sb.append(v.expense_curr_sym);
-		sb.append(RDBSchema.formatFixedDec(price_total, v.expense_curr_deci));
+		v.formatCurrFixedDeci(sb, price_total);
 		sb.append("]");
 		if ((gas_brandgrade_id != 0) && (gas_brandgrade != null) && (gas_brandgrade.id == gas_brandgrade_id))
 		{

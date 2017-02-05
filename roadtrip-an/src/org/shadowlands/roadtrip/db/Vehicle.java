@@ -741,6 +741,25 @@ public class Vehicle extends RDBRecord
 		dirty = true;
 	}
 
+	/**
+	 * Format a fixed-decimal currency amount, using this Vehicle's currency settings:
+	 * {@link #expense_curr_sym}, {@link #expense_curr_deci}.
+	 * @param sb  Use this stringbuilder; if null, a new one is created and returned.
+	 * @param deciAmt Amount to format, as from {@link TStop#getExpense_total()} or {@link TStopGas#price_total}
+	 * @return the stringbuilder with {@link #expense_curr_sym} and formatted currency amount appended
+	 * @since 0.9.61
+	 */
+	public StringBuilder formatCurrFixedDeci(StringBuilder sb, final int deciAmt)
+	{
+		if (sb == null)
+			sb = new StringBuilder();
+
+		sb.append(expense_curr_sym);
+		sb.append(RDBSchema.formatFixedDec(deciAmt, expense_curr_deci));
+
+		return sb;
+	}
+
 	/** format is: "[ nickname - ] year [model or make]" */
 	public String toString()
 	{

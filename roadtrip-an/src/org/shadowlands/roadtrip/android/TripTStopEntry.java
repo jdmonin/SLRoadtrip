@@ -19,8 +19,6 @@
 
 package org.shadowlands.roadtrip.android;
 
-import java.text.NumberFormat;
-import java.text.ParseException;
 import java.util.Calendar;
 
 import org.shadowlands.roadtrip.AndroidStartup;
@@ -34,6 +32,7 @@ import org.shadowlands.roadtrip.db.Location;
 import org.shadowlands.roadtrip.db.Person;
 import org.shadowlands.roadtrip.db.RDBAdapter;
 import org.shadowlands.roadtrip.db.RDBKeyNotFoundException;
+import org.shadowlands.roadtrip.db.RDBSchema;
 import org.shadowlands.roadtrip.db.Settings;
 import org.shadowlands.roadtrip.db.TStop;
 import org.shadowlands.roadtrip.db.TStopGas;
@@ -554,15 +553,6 @@ public class TripTStopEntry extends Activity
 	///////////////////////////////
 	// End of calculator fields
 	///////////////////////////////
-
-	/**
-	 * Decimal parser, in user's locale because String.format will use that locale.
-	 * Same setup is used in {@link TripTStopGas}. The locale might have ',' as the
-	 * decimal separator; Float.parseFloat can't parse that format.
-	 * Our layout also uses android:digits="0123456789,." for decimal EditTexts
-	 * per comments in http://code.google.com/p/android/issues/detail?id=2626 .
-	 */
-	private NumberFormat parseDF = NumberFormat.getNumberInstance();
 
 	/** Called when the activity is first created.
 	 * See {@link #updateTextAndButtons()} for remainder of init work,
@@ -2163,19 +2153,17 @@ public class TripTStopEntry extends Activity
 		int expense_total = 0;
 		// TODO check for tstopGas and its cost, which should be auto-included in expense_total
 		{
-			String expense_total_txt = textIfEntered(R.id.trip_tstop_expense);
+			final String expense_total_txt = textIfEntered(R.id.trip_tstop_expense);
 			if (expense_total_txt != null)
 			{
-				try
+				expense_total = RDBSchema.parseFixedDecOr0(expense_total_txt, currV.expense_curr_deci);
+				if (expense_total <= 0)
 				{
-					float exp_user = parseDF.parse(expense_total_txt).floatValue();
-					expense_total = (int) Math.round(exp_user * Math.pow(10, currV.expense_curr_deci));
-				} catch (ParseException e) {
 					findViewById(R.id.trip_tstop_expense).requestFocus();
 					Toast.makeText
 						(this, R.string.please_check_the_expense_total,
 						 Toast.LENGTH_SHORT).show();
-					return;  // <--- Early return: Can't parse ---
+					return;  // <--- Early return: Can't parse, or < 0 ---
 				}
 				// TODO if tstopGas, toast unless total >= that amount
 			}
@@ -3115,6 +3103,21 @@ public class TripTStopEntry extends Activity
 			  ((bundleGas != null) ? android.R.drawable.presence_online
 			   : android.R.drawable.presence_invisible,
 			  0, 0, 0);
+			if (bundleGas != null)
+			{
+				// TODO before onClick_BtnGas call: chk what expense_total line was, gas total was
+				final String expense_total_txt = textIfEntered(R.id.trip_tstop_expense);
+				final int expense_total = RDBSchema.parseFixedDecOr0
+					(expense_total_txt, currV.expense_curr_deci);
+				final int bundle_total = RDBSchema.parseFixedDecOr0
+					(bundleGas.getCharSequence(TripTStopGas.EXTRAS_FIELD_TOTALCOST),
+					 currV.expense_curr_deci);
+				if (expense_total < bundle_total)
+					// set from bundle_total:
+					((TextView) findViewById(R.id.trip_tstop_expense)).setText
+						(currV.formatCurrFixedDeci(null, bundle_total, false));
+				// TODO need to adj if was nonzero before call
+			}
 			break;
 
 		case R.id.main_btn_begin_freqtrip:  // TripTStopChooseFreq

@@ -59,10 +59,16 @@ public class TripTStopGas extends Activity
 
 	private static final String EXTRAS_FIELD_QUANT = "quant",
 		EXTRAS_FIELD_PERUNIT = "perunit",
-		EXTRAS_FIELD_TOTALCOST = "totalcost",
 		EXTRAS_FIELD_ISFILLUP = "isfillup",
 		EXTRAS_FIELD_VEH_ID = "vid",
 		EXTRAS_FIELD_CALC_FLAGS = "calc";
+
+	/**
+	 * Bundle key to temporarily store the gas expense total cost, as a CharSequence.
+	 *<P>
+	 * This field was private before v0.9.61.
+	 */
+	static final String EXTRAS_FIELD_TOTALCOST = "totalcost";
 
 	/**
 	 * Bundle keys related to {@link GasBrandGrade}.

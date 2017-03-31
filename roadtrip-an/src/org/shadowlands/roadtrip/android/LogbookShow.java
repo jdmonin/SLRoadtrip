@@ -26,6 +26,7 @@ import java.util.List;
 
 import org.shadowlands.roadtrip.R;
 import org.shadowlands.roadtrip.android.util.DBExport;
+import org.shadowlands.roadtrip.db.AppInfo;
 import org.shadowlands.roadtrip.db.GeoArea;
 import org.shadowlands.roadtrip.db.Location;
 import org.shadowlands.roadtrip.db.RDBAdapter;
@@ -127,6 +128,13 @@ public class LogbookShow extends Activity
 	 * Requires {@link #EXTRAS_DATE}.
 	 */
 	public static final String EXTRAS_VEHICLE_ID = "LogbookShow.vid";
+
+	/**
+	 * After validating db structure, if it's been this long (10 days)
+	 * since the last backup, ask the user if they would like to run a backup now.
+	 * @since 0.9.61
+	 */
+	private static final int BACKUP_ASK_TIME_AGO_DAYS = 10;
 
 	/** tag for android logging */
 	private static final String TAG = "RTR.LogbookShow";
@@ -1050,12 +1058,43 @@ public class LogbookShow extends Activity
 			if (dia.isShowing())
 				dia.dismiss();
 
-			new AlertDialog.Builder(LogbookShow.this)
-				.setMessage( (ok)
+			boolean shouldAskBkup = false;
+			int bkupDaysAgo = 0;
+			if (ok)
+			{
+				try {
+					final AppInfo bktime_rec = new AppInfo(db, AppInfo.KEY_DB_BACKUP_THISTIME);
+					final int bktime = Integer.parseInt(bktime_rec.getValue());
+					final int now = (int) (System.currentTimeMillis() / 1000);
+					bkupDaysAgo = (now - bktime) / 86400;
+					shouldAskBkup = (bkupDaysAgo >= BACKUP_ASK_TIME_AGO_DAYS);
+				}
+				catch (RDBKeyNotFoundException e) { }
+				catch (NumberFormatException e) { }
+			}
+
+			AlertDialog.Builder b = new AlertDialog.Builder(LogbookShow.this);
+			if (! shouldAskBkup)
+			{
+				b.setMessage( (ok)
 					? R.string.logbook_show__validation_no_problems
 					: R.string.logbook_show__validation_failed )
-				.setNeutralButton(android.R.string.ok, null)
-				.show();
+				.setNeutralButton(android.R.string.ok, null);
+			} else {
+				b.setMessage(getResources().getString
+					(R.string.logbook_show__validation_backup_ago_ask, bkupDaysAgo))
+				.setNegativeButton(R.string.no, null)
+				.setPositiveButton(R.string.go, new DialogInterface.OnClickListener()
+				{
+					@Override
+					public void onClick(DialogInterface dialog, int which)
+					{
+						Intent i = new Intent(LogbookShow.this, BackupsMain.class);
+						LogbookShow.this.startActivity(i);
+					}
+				});
+			}
+			b.show();
 		}
 	}
 

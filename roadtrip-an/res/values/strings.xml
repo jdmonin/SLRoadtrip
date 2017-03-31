@@ -88,6 +88,7 @@
 <string name="from__colon">From:</string>
 <string name="gas__colon_sp">Gas: </string>
 <string name="gas__dots">Gas...</string>
+<string name="go">Go</string>
 <string name="historical">Historical</string>
 <string name="home_area">Home area</string>
 <string name="internal__current_notfound_area_driver_veh_trip">Internal error: Current area/driver/vehicle/trip not found in db</string>
@@ -198,6 +199,7 @@
 <string name="logbook_show__search_via_routes__via">Via %1$s</string>
 <string name="logbook_show__search_via_routes__via_after_mileage">%1$.1f %2$s via %3$s</string>
 <string name="logbook_show__validating_db">Validating DB</string>
+<string name="logbook_show__validation_backup_ago_ask">Validation complete, no problems found.\nLast backup was %1$d days ago, go to Backup screen now?</string>
 <string name="logbook_show__validation_failed">Validation failed</string>
 <string name="logbook_show__validation_no_problems">Validation complete, no problems found.</string>
 <string name="logbook_show_popup_export_filename">CSV Filename:</string>

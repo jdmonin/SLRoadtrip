@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010-2011,2013-2016 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2011,2013-2017 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -131,7 +131,7 @@ public class BackupsMain extends Activity
 
 	/**
 	 * Set {@link #isSDCardWritable}, {@link #readDBLastBackupTime(RDBAdapter, int)},
-	 * {@link #populateBackupsList(boolean)}, etc.
+	 * call {@link #populateBackupsList(boolean)}, etc.
 	 */
 	@Override
 	public void onResume()
@@ -294,17 +294,21 @@ public class BackupsMain extends Activity
 	/**
 	 * List the backups currently on the SD card, or at {@link #restoreFromDirectory} if not null.
 	 * If the card is not readable, just put a dummy entry to that effect.
-	 * Sets the activity titlebar if browsing in a different folder than the default.
+	 * Sets the activity titlebar based on whether browsing in a different folder than the default.
 	 * @param isSDCardReadable as determined from {@link Environment#getExternalStorageState()}
 	 */
 	private void populateBackupsList(final boolean isSDCardReadable) {
 		String[] bklist;
+		String restoreDir = null;  // actual dir; restoreFromDirectory is null for default
 		if (! isSDCardReadable)
 		{
 			bklist = new String[1];
 			bklist[0] = getResources().getString(R.string.sdcard_not_mounted);
 		} else {
-			ArrayList<String> bkfiles = DBBackup.getBkFiles(this, restoreFromDirectory);
+			restoreDir = restoreFromDirectory;
+			if (restoreDir == null)
+				restoreDir = DBBackup.getDBBackupPath(this);
+			ArrayList<String> bkfiles = DBBackup.getBkFiles(this, restoreDir);
 			if (bkfiles == null)
 			{
 				bklist = new String[1];
@@ -321,7 +325,11 @@ public class BackupsMain extends Activity
 			final String backups = getResources().getString(R.string.backups);
 			setTitle(backups + ": " + restoreFromDirectory);
 		} else {
-			setTitle(R.string.backups_main_title);
+			if ((restoreDir == null) || ! isSDCardReadable)
+				setTitle(R.string.backups_main_title);
+			else
+				setTitle
+					(getResources().getString(R.string.backups_main_title) + ": " + restoreDir);
 		}
 	}
 

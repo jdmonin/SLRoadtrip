@@ -299,6 +299,7 @@ c34c351	0.9.60	2017-01-30	Improvements and bugfixes since 0.9.50
 				SLRoadtrip android app:
 				- Logbook validation dialog: If successful and more than 10 days since last backup,
 				  ask user if they would like to go to the Backups screen
+				- Backups: Always show directory path in activity title
 				Database schema and model:
 				- LogbookTableModel location search: Also find trips starting from the location,
 				  not only those with TStops there

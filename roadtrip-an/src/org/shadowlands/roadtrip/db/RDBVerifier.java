@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2011,2013,2015 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2011,2013,2015,2019 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -564,7 +564,9 @@ public class RDBVerifier
 			Vector<TStop> vts = tr.readAllTStops();
 			if (vts == null)
 				continue;
-			for (int i = vts.size() - 1; i >= 0; --i)
+			final int L = vts.size();
+			TStop tsPrev = null;
+			for (int i = 0; i < L; ++i)
 			{
 				TStop ts = vts.elementAt(i);
 
@@ -582,8 +584,22 @@ public class RDBVerifier
 				if ((id != 0) && (null == getGeoArea(id)))
 					return false;  // TODO could recover this from ts.locid.a_id
 				id = ts.getVia_id();
-				if ((id != 0) && (null == getViaRoute(id)))
-					return false;
+				if (id != 0)
+				{
+					ViaRoute via = getViaRoute(id);
+					if (null == via)
+						return false;
+					if (via.getLocID_To() != ts.getLocationID())
+						return false;
+					if (tsPrev != null)
+					{
+						if ((ts.getTime_stop() != tsPrev.getTime_stop())  // ignore duplicate here
+						    && (via.getLocID_From() != tsPrev.getLocationID()))
+							return false;
+						// TODO also validate for first tstop, when tsPrev == null
+						//      because previous location is stored in previous trip
+					}
+				}
 				if (ts.isSingleFlagSet(TStop.FLAG_GAS))
 				{
 					try
@@ -597,6 +613,8 @@ public class RDBVerifier
 					}
 					catch (Throwable th) { return false; }
 				}
+
+				tsPrev = ts;
 			}
 		}
 		return true;

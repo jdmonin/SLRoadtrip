@@ -164,6 +164,7 @@ public class Main
 		public StartupChoiceFrame()
 		{
 			super("BookEdit: Choose File or Backup");
+
 			btns = new JPanel();
 			btns.setLayout(new BoxLayout(btns, BoxLayout.PAGE_AXIS));
 			btns.setBorder(BorderFactory.createEmptyBorder(3,3,3,3));
@@ -178,6 +179,14 @@ public class Main
 
 			getContentPane().add(btns);
 			getRootPane().setDefaultButton(bOpen);
+			setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
+			addWindowListener(new java.awt.event.WindowAdapter()
+			{
+				public void windowClosing(java.awt.event.WindowEvent e)
+				{
+					clickedExit(false);
+				}
+			});
 
 			userPrefs = Preferences.userNodeForPackage(Main.class);
 			tryGetPrevOpenedDir();
@@ -231,8 +240,21 @@ public class Main
 			}
 			else if (src == bExit)
 			{
-				System.exit(0);
+				clickedExit(true);
 			}
+		}
+
+		/**
+		 * Handle a click on the "Exit" button, or the {@link StartupChoiceFrame} window's Close button.
+		 * Currently exits the program, but should review open logbooks for unsaved changes first.
+		 * @param isFromButton  True from "Exit" button, false from window Close button
+		 * @since 0.9.62
+		 */
+		public void clickedExit(final boolean isFromButton)
+		{
+			// TODO review any open logbooks for unsaved changes
+
+			System.exit(0);
 		}
 
 		/**

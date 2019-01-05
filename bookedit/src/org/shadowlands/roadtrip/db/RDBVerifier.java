@@ -19,6 +19,7 @@
 
 package org.shadowlands.roadtrip.db;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
 
@@ -27,7 +28,7 @@ import gnu.trove.TIntObjectIterator;
 
 /**
  * Structural verifier for an open {@link RDBAdapter RDB SQLite database}.
- * See {@link #verify(int)} for the available levels of verification.
+ * See {@link #verify(int)} for details on the available levels of verification.
  */
 public class RDBVerifier
 {
@@ -40,6 +41,7 @@ public class RDBVerifier
 	/**
 	 * Validate master data consistency (vehicles, drivers, geoareas,
 	 * locations, etc), after the {@link #LEVEL_PHYS} checks.
+	 * Includes {@link FreqTrip} and their {@link FreqTripTStop}s.
 	 */
 	public static final int LEVEL_MDATA = 2;
 
@@ -49,6 +51,13 @@ public class RDBVerifier
 	 */
 	public static final int LEVEL_TDATA = 3;
 
+	/**
+	 * Maximum number of items to allow to fail before refusing to continue the current level of validation.
+	 * Default is 100.
+	 * @since 0.9.62
+	 */
+	public static int MAX_FAILURE_ITEMS = 100;
+
 	private RDBAdapter db;
 
 	/**
@@ -56,6 +65,56 @@ public class RDBVerifier
 	 * last call if it was successful.
 	 */
 	private int successfulVerifyLevel = 0;
+
+	/**
+	 * Any items which failed validation during {@link #verify(int)}.
+	 * Max expected length is {@link #MAX_FAILURE_ITEMS}.
+	 * From outside the class, treat as read-only.
+	 * @since 0.9.62
+	 */
+	public final List<FailedItem> failedItems = new ArrayList<FailedItem>();
+
+	///////////////////////////////////////////////////////////
+	// List of failed items
+	///////////////////////////////////////////////////////////
+
+	/** Add a {@link FailedItem} to {@link #failedItems}. */
+	private boolean addFailedItem(int id, String desc)
+	{
+		return _impl_addFailedItem(id, null, null, desc);
+	}
+
+	/** Add a {@link FailedItem} to {@link #failedItems}. */
+	private boolean addFailedItem(int id, RDBRecord failedRel, String desc)
+	{
+		return _impl_addFailedItem(id, null, failedRel, desc);
+	}
+
+	/** Add a {@link FailedItem} to {@link #failedItems}. */
+	private boolean addFailedItem(RDBRecord data, String desc)
+	{
+		return _impl_addFailedItem(0, data, null, desc);
+	}
+
+	/** Add a {@link FailedItem} to {@link #failedItems}. */
+	private boolean addFailedItem(RDBRecord data, RDBRecord failedRel, String desc)
+	{
+		return _impl_addFailedItem(0, data, failedRel, desc);
+	}
+
+	/**
+	 * Add a {@link FailedItem} to {@link #failedItems}.
+	 * Same params and exceptions as {@link FailedItem#FailedItem(int, RDBRecord, RDBRecord, String)}.
+	 */
+	private boolean _impl_addFailedItem(int id, RDBRecord data, RDBRecord failedRel, String desc)
+		throws IllegalArgumentException
+	{
+		if (failedItems.size() >= MAX_FAILURE_ITEMS)
+			return false;
+
+		failedItems.add(new FailedItem(id, data, failedRel, desc));
+		return true;
+	}
 
 	///////////////////////////////////////////////////////////
 	// Caches for LEVEL_MDATA, LEVEL_TDATA
@@ -137,6 +196,9 @@ public class RDBVerifier
 	 * <tt>verify({@link #LEVEL_MDATA})</tt>, then calling <tt>verify({@link #LEVEL_TDATA}}</tt>
 	 * won't re-verify the master data.  It's important to not allow
 	 * changes to the data between iterative calls.
+	 *<P>
+	 * If verification fails at {@link #LEVEL_MDATA} or higher, the failed data items
+	 * are added to {@link #failedItems} until too many have failed ({@link #MAX_FAILURE_ITEMS}).
 	 *
 	 * @param level  Verify to this level:
 	 *     <UL>
@@ -334,7 +396,7 @@ public class RDBVerifier
 	 * Verify to {@link #LEVEL_MDATA}.
 	 * Assumes already verified at {@link #LEVEL_PHYS}.
 	 * Checks foreign keys of the Vehicle, Location, FreqTrip and FreqTripTStop tables.
-	 * @return true if consistent, false if problems found.
+	 * @return true if consistent, false if problems found (see {@link #failedItems} for details).
 	 * @throws IllegalStateException  if db is closed
 	 */
 	private boolean verify_mdata()
@@ -366,22 +428,30 @@ public class RDBVerifier
 	/**
 	 * Verify the {@link Vehicle}s as part of {@link #verify_mdata()}.
 	 * Verify the driverid and makeid.
-	 * @return true if OK, false if inconsistencies
+	 * @return true if OK, false if too many inconsistencies
 	 */
 	private boolean verify_mdata_vehicle()
 	{
 		final Vehicle[] all = Vehicle.getAll(db, 0);
 		if (all == null)
+		{
+			addFailedItem(0, "0 vehicles in DB");
 			return false;  // there must be vehicles
+		}
+
 		for (int i = 0; i < all.length; ++i)
 		{
 			Vehicle v = all[i];
 			vehCache.put(v.id, v);
 
-			if (null == getVehicleMake(v.getMakeID()))
-				return false;
-			if (null == getPerson(v.getDriverID()))
-				return false;
+			int id = v.getMakeID();
+			if (null == getVehicleMake(id))
+				if (! addFailedItem(id, v, "Can't load VehicleMake"))
+					return false;
+			id = v.getDriverID();
+			if (null == getPerson(id))
+				if (! addFailedItem(id, v, "Can't load Person for driver"))
+					return false;
 		}
 
 		return true;
@@ -390,13 +460,14 @@ public class RDBVerifier
 	/**
 	 * Verify the {@link Location}s as part of {@link #verify_mdata()}.
 	 * Verify the geoarea and latest_gas_brandgrade_id.
-	 * @return true if OK, false if inconsistencies
+	 * @return true if OK, false if any inconsistencies
 	 */
 	private boolean verify_mdata_location()
 	{
 		final Location[] all = Location.getAll(db, -1);
 		if (all == null)
 			return true;
+
 		for (int i = 0; i < all.length; ++i)
 		{
 			Location lo = all[i];
@@ -404,95 +475,141 @@ public class RDBVerifier
 
 			final int aid = lo.getAreaID();
 			if ((aid != 0) && (null == getGeoArea(aid)))
-				return false;
+			{
+				if (! addFailedItem(aid, lo, "Can't load GeoArea"))
+					return false;
+			}
 			final int gbg = lo.getLatestGasBrandGradeID();
 			if ((gbg != 0) && (null == getGasBrandGrade(gbg)))
-				return false;
+			{
+				if (! addFailedItem(gbg, lo, "Can't load GasBrandGrade"))
+					return false;
+			}
 		}
 
-		return true;
+		return failedItems.isEmpty();
 	}
 
 	/**
 	 * Verify the {@link ViaRoute}s as part of {@link #verify_mdata()}.
 	 * Verify the locid_from and locid_to.
-	 * @return true if OK, false if inconsistencies
+	 * @return true if OK, false if any inconsistencies
 	 */
 	private boolean verify_mdata_viaroute()
 	{
 		final ViaRoute[] all = ViaRoute.getAll(db, -1, -1);
 		if (all == null)
 			return true;
+
 		for (int i = 0; i < all.length; ++i)
 		{
 			ViaRoute via = all[i];
 			viaCache.put(via.id, via);
 
-			if (null == getLocation(via.getLocID_From()))
-				return false;
-			if (null == getLocation(via.getLocID_To()))
-				return false;
+			int lid = via.getLocID_From();
+			if (null == getLocation(lid))
+			{
+				if (! addFailedItem(lid, via, "Can't load LocID_From"))
+					return false;
+			}
+			lid = via.getLocID_To();
+			if (null == getLocation(lid))
+			{
+				if (! addFailedItem(lid, via, "Can't load LocID_To"))
+					return false;
+			}
 		}
 
-		return true;
+		return failedItems.isEmpty();
 	}
 
 	/**
 	 * Verify the {@link FreqTrip}s as part of {@link #verify_mdata()}.
 	 * Verify the start_locid and end_locid, start_aid and end_aid_roadtrip.
-	 * @return true if OK, false if inconsistencies
+	 * @return true if OK, false if any inconsistencies
 	 */
 	private boolean verify_mdata_freqtrip()
 	{
 		final Vector<FreqTrip> all = FreqTrip.getAll(db, false);
 		if (all == null)
 			return true;
+
 		for (int i = all.size() - 1; i >= 0; --i)
 		{
 			FreqTrip ft = all.elementAt(i);
 			ftCache.put(ft.id, ft);
 
-			if (null == getGeoArea(ft.getStart_aID()))
-				return false;
-			if (null == getLocation(ft.getStart_locID()))
-				return false;
-			if (null == getLocation(ft.getEnd_locID()))
-				return false;
-			int id = ft.getEnd_aID_roadtrip();
+			int id = ft.getStart_aID();
+			if (null == getGeoArea(id))
+			{
+				if (! addFailedItem(id, ft, "Can't load GeoArea"))
+					return false;
+			}
+			id = ft.getStart_locID();
+			if (null == getLocation(id))
+			{
+				if (! addFailedItem(id, ft, "Can't load Start_Location"))
+					return false;
+			}
+			id = ft.getEnd_locID();
+			if (null == getLocation(id))
+			{
+				if (! addFailedItem(id, ft, "Can't load End_Location"))
+					return false;
+			}
+			id = ft.getEnd_aID_roadtrip();
 			if ((id != 0) && (null == getGeoArea(id)))
-				return false;
+			{
+				if (! addFailedItem(id, ft, "Can't load End_GeoArea"))
+					return false;
+			}
 			id = ft.getEnd_ViaRouteID();
 			if ((id != 0) && (null == getViaRoute(id)))
-				return false;
+			{
+				if (! addFailedItem(id, ft, "Can't load ViaRoute"))
+					return false;
+			}
 		}
 
-		return true;
+		return failedItems.isEmpty();
 	}
 
 	/**
 	 * Verify the {@link FreqTripTStop}s as part of {@link #verify_mdata()}.
 	 * Verify the freqtripid and locid.
-	 * @return true if OK, false if inconsistencies
+	 * @return true if OK, false if any inconsistencies
 	 */
 	private boolean verify_mdata_freqtrip_tstop()
 	{
 		final Vector<FreqTripTStop> all = FreqTripTStop.stopsForTrip(db, null);
 		if (all == null)
 			return true;
+
 		for (int i = all.size() - 1; i >= 0; --i)
 		{
 			FreqTripTStop fts = all.elementAt(i);
 
-			if (null == getFreqTrip(fts.getFreqTripID()))
-				return false;
-			if (null == getLocation(fts.getLocationID()))
-				return false;
-			int id = fts.getViaID();
+			int id = fts.getFreqTripID();
+			if (null == getFreqTrip(id))
+			{
+				if (! addFailedItem(id, fts, "Can't load FreqTrip"))
+					return false;
+			}
+			id = fts.getLocationID();
+			if (null == getLocation(id))
+			{
+				if (! addFailedItem(id, fts, "Can't load Location"))
+					return false;
+			}
+			id = fts.getViaID();
 			if ((id != 0) && (null == getViaRoute(id)))
-				return false;
+			{
+				if (! addFailedItem(id, fts, "Can't load ViaRoute"))
+					return false;
+			}
 		}
 
-		return true;
+		return failedItems.isEmpty();
 	}
 
 	///////////////////////////////////////////////////////////
@@ -502,7 +619,7 @@ public class RDBVerifier
 	/**
 	 * Verify to {@link #LEVEL_TDATA}.
 	 * Assumes already verified at {@link #LEVEL_MDATA}.
-	 * @return true if consistent, false if problems found.
+	 * @return true if consistent, false if problems found (see {@link #failedItems} for details).
 	 * @throws IllegalStateException  if db is closed
 	 */
 	private boolean verify_tdata()
@@ -521,30 +638,48 @@ public class RDBVerifier
 	/**
 	 * Verify the {@link Trip}s as part of {@link #verify_tdata()}.
 	 * Verify the vid, did, aid, tstopid_start, freqtripid, and roadtrip_end_aid.
-	 * @return true if OK, false if inconsistencies
+	 * @return true if OK, false if any inconsistencies
 	 */
 	private boolean verify_tdata_trip()
 	{
 		final List<Trip> all = Trip.tripsForVehicle(db, null, true);
 		if (all == null)
 			return true;
+
 		for (int i = all.size() - 1; i >= 0; --i)
 		{
 			final Trip tr = all.get(i);
 			trCache.put(tr.id, tr);
 
-			if (null == getVehicle(tr.getVehicleID()))
-				return false;
-			if (null == getPerson(tr.getDriverID()))
-				return false;
-			if (null == getGeoArea(tr.getAreaID()))
-				return false;
-			int id = tr.getFreqTripID();
+			int id = tr.getVehicleID();
+			if (null == getVehicle(id))
+			{
+				if (! addFailedItem(id, tr, "Can't load Vehicle"))
+					return false;
+			}
+			id = tr.getDriverID();
+			if (null == getPerson(id))
+			{
+				if (! addFailedItem(id, tr, "Can't load Person for driver"))
+					return false;
+			}
+			id = tr.getAreaID();
+			if (null == getGeoArea(id))
+			{
+				if (! addFailedItem(id, tr, "Can't load GeoArea"))
+					return false;
+			}
+			id = tr.getFreqTripID();
 			if ((id != 0) && (null == getFreqTrip(id)))
-				return false;
+			{
+				if (! addFailedItem(id, tr, "Can't load FreqTrip"))
+					return false;
+			}
 			id = tr.getRoadtripEndAreaID();
 			if ((id != 0) && (null == getGeoArea(id)))
+			{
 				return false;
+			}
 			id = tr.getStartTStopID();
 			if (id != 0)
 			{
@@ -552,19 +687,21 @@ public class RDBVerifier
 				{
 					@SuppressWarnings("unused")
 					TStop ts = new TStop(db, id);
+				} catch (Throwable th) {
+					if (! addFailedItem(id, tr, "Can't load Start_TStop"))
+						return false;
 				}
-				catch (Throwable th) { return false; }
 			}
 		}
 
-		return true;
+		return failedItems.isEmpty();
 	}
 
 	/**
 	 * Verify the {@link TStop}s as part of {@link #verify_tdata()}.
 	 * Verify the locid a_id via_id ; flag_sides.
 	 * When flag_sides indicates tstop_gas, verify vid and gas_brandgrade_id.
-	 * @return true if OK, false if inconsistencies
+	 * @return true if OK, false if any inconsistencies
 	 */
 	private boolean verify_tdata_tstop()
 	{
@@ -576,38 +713,58 @@ public class RDBVerifier
 			Vector<TStop> vts = tr.readAllTStops();
 			if (vts == null)
 				continue;
+
 			final int L = vts.size();
 			TStop tsPrev = null;
 			for (int i = 0; i < L; ++i)
 			{
-				TStop ts = vts.elementAt(i);
+				final TStop ts = vts.elementAt(i);
 
 				int id = ts.getLocationID();
 				if (id != 0)
 				{
 					if (null == getLocation(id))
-						return false;
+					{
+						if (! addFailedItem(id, ts, "Can't load Location"))
+							return false;
+					}
 				} else {
 					String loc = ts.getLocationDescr();
 					if ((loc == null) || (loc.length() == 0))
-						return false;
+					{
+						if (! addFailedItem(ts, "LocationDescr null or empty"))
+							return false;
+					}
 				}
 				id = ts.getAreaID();
 				if ((id != 0) && (null == getGeoArea(id)))
-					return false;  // TODO could recover this from ts.locid.a_id
+				{
+					if (! addFailedItem(id, ts, "Can't load GeoArea"))
+						return false;  // TODO could recover this from ts.locid.a_id
+				}
 				id = ts.getVia_id();
 				if (id != 0)
 				{
 					ViaRoute via = getViaRoute(id);
 					if (null == via)
-						return false;
+					{
+						if (! addFailedItem(id, ts, "Can't load ViaRoute"))
+							return false;
+					}
 					if (via.getLocID_To() != ts.getLocationID())
-						return false;
+					{
+						if (! addFailedItem(via, ts, "TStop's LocID_To != Via's Location"))
+							return false;
+					}
 					if (tsPrev != null)
 					{
 						if ((ts.getTime_stop() != tsPrev.getTime_stop())  // ignore duplicate here
 						    && (via.getLocID_From() != tsPrev.getLocationID()))
-							return false;
+						{
+							if (! addFailedItem(via, ts, "TStop's LocID_From != Via's Location"))
+								return false;
+						}
+
 						// TODO also validate for first tstop, when tsPrev == null
 						//      because previous location is stored in previous trip
 					}
@@ -618,19 +775,84 @@ public class RDBVerifier
 					{
 						TStopGas tsg = new TStopGas(db, ts.id);
 						if (tsg.vid != tr.getVehicleID())
-							return false;
+						{
+							if (! addFailedItem(tsg, ts, "TStopGas's Vehicle != TStop's Vehicle"))
+								return false;
+						}
 						int gbg = tsg.gas_brandgrade_id;
 						if ((gbg != 0) && (null == getGasBrandGrade(gbg)))
+						{
+							if (! addFailedItem(gbg, tsg, "Can't load GasBrandGrade"))
+								return false;
+						}
+					} catch (Throwable th) {
+						if (! addFailedItem(ts.id, ts, "Can't load TStopGas"))
 							return false;
 					}
-					catch (Throwable th) { return false; }
 				}
 
 				tsPrev = ts;
 			}
 		}
 
-		return true;
+		return failedItems.isEmpty();
+	}
+
+	/**
+	 * Details about a data item which failed validation in {@link RDBVerifier#verify(int)}.
+	 * Validation failures for overall conditions (like no vehicles in DB) will have {@link #id} == 0
+	 * and {@link #data} == {@code null}.
+	 * @since 0.9.62
+	 */
+	public static final class FailedItem
+	{
+		/**
+		 * 0, or the ID of the data record which failed validation;
+		 * used only if record couldn't be loaded into {@link #data}.
+		 * If used, {@link #failedRelData} might still be != {@code null}.
+		 */
+		public final int id;
+
+		/**
+		 * The record which failed validation, if it could be loaded.
+		 * Otherwise {@code null}, and {@link #id} is set instead.
+		 * If {@code null}, {@link #failedRelData} might still be != {@code null}.
+		 */
+		public final RDBRecord data;
+
+		/**
+		 * The related record, if any, to the {@link #data} having failed validation.
+		 * Otherwise {@code null}.
+		 *<H5>Examples:</H5>
+		 * If a {@link VehicleMake} can't be loaded, this field holds its {@link Vehicle}.
+		 * If a {@link ViaRoute}'s location isn't its referring {@link TStop}'s location,
+		 * this field holds the TStop.
+		 */
+		public final RDBRecord failedRelData;
+
+		/** Failure description, in English for now (not localized), or "?" if none; never {@code null} */
+		public final String desc;
+
+		/**
+		 * Construct a FailedItem.
+		 * @param id {@link #id}
+		 * @param data {@link #data}
+		 * @param failedRel {@link #failedRelData}, if any
+		 * @param desc  {@link #desc}; if null, "?" will be used
+		 * @throws IllegalArgumentException if both {@code data} and {@code id} are set
+		 */
+		public FailedItem(int id, RDBRecord data, RDBRecord failedRel, String desc)
+			throws IllegalArgumentException
+		{
+			if ((id != 0) && (data != null))
+				throw new IllegalArgumentException("both id and data");
+			if (desc == null)
+				desc = "?";
+			this.id = id;
+			this.data = data;
+			this.failedRelData = failedRel;
+			this.desc = desc;
+		}
 	}
 
 }

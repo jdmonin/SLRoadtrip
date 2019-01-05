@@ -309,7 +309,9 @@ d577e7e	0.9.61	2017-04-02	Improvements and bugfixes since 0.9.60
 				SLRoadtrip android app:
 				- If a backup fails validation and can't be restored, show which level it failed at
 				Database schema and model:
-				- RDBVerifier: Also validate TStops' ViaRoute from/to locations
+				- RDBVerifier:
+					- Give details about failures, keep going up to 100 failures
+					- Also validate TStops' ViaRoute from/to locations
 
 Also see doc/hist/*.sql for previous schema updates.
 

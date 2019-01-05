@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010,2012,2014-2015 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010,2012,2014-2015,2019 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -230,6 +230,17 @@ public abstract class RDBRecord
 			throw new IllegalArgumentException("null RDBAdapter");
 		if (! db.hasSameOwner(rec.dbConn))
 			throw new IllegalArgumentException("Wrong dbConn in RDBRecord");
+	}
+
+	/**
+	 * Get this record's class (table name) and {@link #id} (primary key).
+	 * Calls {@link Class#getSimpleName()}.
+	 * @return a string of the form "ViaRoute id 3959"
+	 * @since 0.9.62
+	 */
+	public final String getClassAndID()
+	{
+		return getClass().getSimpleName() + " id " + id;
 	}
 
 }  // public abstract class RDBRecord

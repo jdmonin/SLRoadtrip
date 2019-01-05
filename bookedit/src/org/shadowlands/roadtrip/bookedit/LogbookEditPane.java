@@ -334,8 +334,23 @@ public class LogbookEditPane extends JPanel implements ActionListener, WindowLis
 			optionPaneMsg = "Validation complete, no problems found.";
 			optionPaneLevel = JOptionPane.INFORMATION_MESSAGE;
 		} else {
-			optionPaneMsg = "Validation failed (return code " + vResult + ").";
+			optionPaneMsg = "Validation failed (in level " + vResult + "). See console output.";
 			optionPaneLevel = JOptionPane.ERROR_MESSAGE;
+
+			// TODO show in GUI as copyable text
+			System.err.println("--- db validation failures: ---");
+			for (RDBVerifier.FailedItem i : verif.failedItems)
+			{
+				if (i.failedRelData != null)
+					System.err.print("For " + i.failedRelData.getClassAndID() + ": ");
+				if (i.data != null)
+					System.err.print(i.data.getClassAndID() + ": ");
+				System.err.print(i.desc);
+				if (i.id != 0)
+					System.err.print(" (id " + i.id + ")");
+				System.err.println();
+			}
+			System.err.println("-------------------------------");
 		}
 
 		JOptionPane.showMessageDialog(lbef,

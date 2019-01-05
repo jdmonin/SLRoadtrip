@@ -2,7 +2,7 @@
 <!--
  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
 
- This file Copyright (C) 2010-2017 Jeremy D Monin (jdmonin@nand.net)
+ This file Copyright (C) 2010-2017,2019 Jeremy D Monin (jdmonin@nand.net)
 
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
@@ -252,8 +252,15 @@
 <string name="backups_restore_too_old_beta">This backup file is an early beta version too old to restore.</string>
 <string name="backups_restore_trip_dates">"Trip dates "</string>
 <string name="backups_restore_validating_file">Validating file...</string>
-<string name="backups_restore_validation_error">Error in file validation.</string>
+<string name="backups_restore_validation_error">Error in file validation at level %1$d (%2$s).</string>
+<string name="backups_restore_validation_fail_moreinfo"><![CDATA[To see what data failed validation, you can download the SLRoadtrip-BookEdit java app onto a computer from <A href="https://github.com/jdmonin/SLRoadtrip/releases">https://github.com/jdmonin/SLRoadtrip/releases</A> and validate the file there.]]></string>
 <string name="backups_restore_validation_ok">File validated.</string>
+<string-array name="backups_restore_validation_levels">
+	<item></item><!-- 0 is unused -->
+	<item>Physical</item>
+	<item>MasterData</item>
+	<item>TripData</item>
+</string-array>
 <string name="backups_restore__title">Restore from Backup</string>
 <string name="settings_hide_freqtrip">Hide "Frequent Trip" buttons</string>
 <string name="settings_hide_trip_pax">Hide trip "Passengers" entry field</string>

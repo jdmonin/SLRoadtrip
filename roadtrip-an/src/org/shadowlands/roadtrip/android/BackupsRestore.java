@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2011,2013-2015 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2011,2013-2015,2019 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -44,7 +44,9 @@ import android.content.Intent;
 import android.content.res.Resources;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.text.Html;
 import android.text.format.DateFormat;
+import android.text.method.LinkMovementMethod;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
@@ -115,7 +117,21 @@ public class BackupsRestore
 	private int tripEarliest, tripLatest;
 
 	private boolean alreadyValidated = false;
+
+	/**
+	 * If true, validation was ran and completed successfully.
+	 * @see #validationFailedLevel
+	 */
 	private boolean validatedOK = false;
+
+	/**
+	 * If nonzero, validation was ran and failed at this level.
+	 * See {@link RDBVerifier#verify(int)} for range of values.
+	 * @see #validatedOK
+	 * @since 0.9.62
+	 */
+	private int validationFailedLevel = 0;
+
 	private ValidateDBTask validatingTask = null;
 
 	private Button btnRestore; // , btnRestoreCancel;
@@ -589,6 +605,7 @@ public class BackupsRestore
 			Log.d(TAG, "verify: rc = " + rc);
 
 			validatedOK = ok;
+			validationFailedLevel = rc;
 			alreadyValidated = true;
 			return ok ? Boolean.TRUE : Boolean.FALSE;
 		}
@@ -603,9 +620,34 @@ public class BackupsRestore
 			if (vfield != null)
 			{
 				if (validatedOK)
+				{
 					vfield.setText(R.string.backups_restore_validation_ok);
-				else
-					vfield.setText(R.string.backups_restore_validation_error);
+				} else {
+					final Resources res = getResources();
+					String levelStr = "?";
+					try
+					{
+						levelStr = res.getStringArray(R.array.backups_restore_validation_levels)
+							[validationFailedLevel];
+					}
+					catch (Exception e) {}
+					vfield.setText(res.getString
+						(R.string.backups_restore_validation_error,
+						 validationFailedLevel, levelStr));
+						// "Error in file validation at level 3 (TripData)"
+
+					if (validationFailedLevel >= RDBVerifier.LEVEL_MDATA)
+					{
+						vfield = (TextView) findViewById(R.id.backups_restore_validation_fail_moreinfo);
+						if (vfield != null)
+						{
+							vfield.setText(Html.fromHtml(res.getString
+								(R.string.backups_restore_validation_fail_moreinfo)));
+							vfield.setMovementMethod(LinkMovementMethod.getInstance());  // has URL
+							vfield.setVisibility(View.VISIBLE);
+						}
+					}
+				}
 			}
 
 			btnRestore.setEnabled(validatedOK);

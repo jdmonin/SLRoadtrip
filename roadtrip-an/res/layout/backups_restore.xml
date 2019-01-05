@@ -4,7 +4,7 @@
 
  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
 
- This file Copyright (C) 2011,2015 Jeremy D Monin (jdmonin@nand.net)
+ This file Copyright (C) 2011,2015,2019 Jeremy D Monin (jdmonin@nand.net)
 
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
@@ -90,6 +90,12 @@
     android:textSize="18sp"
     android:textStyle="bold"
     android:text="@string/backups_restore_validating_file"
+    />
+<TextView android:id="@+id/backups_restore_validation_fail_moreinfo"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:paddingBottom="12dp"
+    android:visibility="invisible"
     />
 <LinearLayout
     android:orientation="horizontal"

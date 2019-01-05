@@ -295,7 +295,7 @@ c34c351	0.9.60	2017-01-30	Improvements and bugfixes since 0.9.50
 				  including new flags FLAG_COMMENT_ADDED, FLAG_COMMENT_EDITED, FLAG_COMMENT_REMOVED
 				- Trip.TLTR.getTripRowsTabbed: Don't append trailing tabs when final columns are blank
 				- VehSettings: During roadtrips, update CURRENT_AREA when new TStop is in a different area
-	0.9.61			Being developed now; improvements and bugfixes since 0.9.60
+d577e7e	0.9.61	2017-04-02	Improvements and bugfixes since 0.9.60
 				SLRoadtrip android app:
 				- Logbook validation dialog: If successful and more than 10 days since last backup,
 				  ask user if they would like to go to the Backups screen
@@ -305,6 +305,9 @@ c34c351	0.9.60	2017-01-30	Improvements and bugfixes since 0.9.50
 				  not only those with TStops there
 				- Trip: New field so trips' starting location can be searchable
 				- TStop: New optional field for total expenses paid at the stop
+	0.9.62			Being developed now; improvements and bugfixes since 0.9.61
+				Database schema and model:
+				- RDBVerifier: Also validate TStops' ViaRoute from/to locations
 
 Also see doc/hist/*.sql for previous schema updates.
 

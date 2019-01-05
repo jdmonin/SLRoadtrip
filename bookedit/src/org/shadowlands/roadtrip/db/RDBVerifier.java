@@ -28,8 +28,6 @@ import gnu.trove.TIntObjectIterator;
 /**
  * Structural verifier for an open {@link RDBAdapter RDB SQLite database}.
  * See {@link #verify(int)} for the available levels of verification.
- *
- * @author jdmonin
  */
 public class RDBVerifier
 {
@@ -205,6 +203,7 @@ public class RDBVerifier
 			}
 			catch (Throwable th) {}
 		}
+
 		return v;
 	}
 
@@ -221,6 +220,7 @@ public class RDBVerifier
 			}
 			catch (Throwable th) {}
 		}
+
 		return p;
 	}
 
@@ -237,6 +237,7 @@ public class RDBVerifier
 			}
 			catch (Throwable th) {}
 		}
+
 		return vm;
 	}
 
@@ -253,6 +254,7 @@ public class RDBVerifier
 			}
 			catch (Throwable th) {}
 		}
+
 		return ga;
 	}
 
@@ -269,6 +271,7 @@ public class RDBVerifier
 			}
 			catch (Throwable th) {}
 		}
+
 		return lo;
 	}
 
@@ -285,6 +288,7 @@ public class RDBVerifier
 			}
 			catch (Throwable th) {}
 		}
+
 		return via;
 	}
 
@@ -301,6 +305,7 @@ public class RDBVerifier
 			}
 			catch (Throwable th) {}
 		}
+
 		return gbg;
 	}
 
@@ -317,6 +322,7 @@ public class RDBVerifier
 			}
 			catch (Throwable th) {}
 		}
+
 		return ft;
 	}
 
@@ -377,6 +383,7 @@ public class RDBVerifier
 			if (null == getPerson(v.getDriverID()))
 				return false;
 		}
+
 		return true;
 	}
 
@@ -402,6 +409,7 @@ public class RDBVerifier
 			if ((gbg != 0) && (null == getGasBrandGrade(gbg)))
 				return false;
 		}
+
 		return true;
 	}
 
@@ -425,6 +433,7 @@ public class RDBVerifier
 			if (null == getLocation(via.getLocID_To()))
 				return false;
 		}
+
 		return true;
 	}
 
@@ -456,6 +465,7 @@ public class RDBVerifier
 			if ((id != 0) && (null == getViaRoute(id)))
 				return false;
 		}
+
 		return true;
 	}
 
@@ -481,6 +491,7 @@ public class RDBVerifier
 			if ((id != 0) && (null == getViaRoute(id)))
 				return false;
 		}
+
 		return true;
 	}
 
@@ -545,6 +556,7 @@ public class RDBVerifier
 				catch (Throwable th) { return false; }
 			}
 		}
+
 		return true;
 	}
 
@@ -617,6 +629,7 @@ public class RDBVerifier
 				tsPrev = ts;
 			}
 		}
+
 		return true;
 	}
 

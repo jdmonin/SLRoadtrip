@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010-2017 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2017,2019 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -286,7 +286,10 @@ public class LogbookShow extends Activity
 
 		/** Cached verifier object, for successive level calls */
 		if (verifCache == null)
+		{
+			RDBVerifier.FAILURES_HAVE_DESCRIPTIONS = false;
 			verifCache = new RDBVerifier(db);
+		}
 
 		// do "quick validation" levels (below LEVEL_TDATA) first
 		int chkLevel;
@@ -305,6 +308,7 @@ public class LogbookShow extends Activity
 		if (chkLevel == RDBVerifier.LEVEL_TDATA)
 		{
 			// completed all "quick" levels successfully
+			// Now finish the slow parts in a separate task
 			new ValidateDBTDataTask().execute();
 
 			return;  // <--- Early return: Verify DB in bg task ---

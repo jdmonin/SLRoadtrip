@@ -53,10 +53,19 @@ public class RDBVerifier
 
 	/**
 	 * Maximum number of items to allow to fail before refusing to continue the current level of validation.
-	 * Default is 100.
+	 * Default is 100. Sets the max length of {@link #failedItems} at the time validation was ran.
 	 * @since 0.9.62
 	 */
 	public static int MAX_FAILURE_ITEMS = 100;
+
+	/**
+	 * If true, store failure detail description text in {@link #failedItems}.
+	 * If false, discard; useful for runs on a device where the detail text
+	 * won't be shown to the user.
+	 * Default is {@code true}.
+	 * @since 0.0.62
+	 */
+	public static boolean FAILURES_HAVE_DESCRIPTIONS = true;
 
 	private RDBAdapter db;
 
@@ -112,7 +121,7 @@ public class RDBVerifier
 		if (failedItems.size() >= MAX_FAILURE_ITEMS)
 			return false;
 
-		failedItems.add(new FailedItem(id, data, failedRel, desc));
+		failedItems.add(new FailedItem(id, data, failedRel, (FAILURES_HAVE_DESCRIPTIONS) ? desc : null));
 		return true;
 	}
 
@@ -830,7 +839,10 @@ public class RDBVerifier
 		 */
 		public final RDBRecord failedRelData;
 
-		/** Failure description, in English for now (not localized), or "?" if none; never {@code null} */
+		/**
+		 * Failure description, in English for now (not localized), or "?" if none; never {@code null}.
+		 * Always "?" when {@link RDBVerifier#FAILURES_HAVE_DESCRIPTIONS} is {@code false}.
+		 */
 		public final String desc;
 
 		/**

@@ -89,6 +89,13 @@ public class BackupsRestore
 	/** tag for Log debugs */
 	private static final String TAG = "Roadtrip.BackupsRestore";
 
+	/**
+	 * Stop validating a backup after this many failures.
+	 * Overrides {@link RDBVerifier#MAX_FAILURE_ITEMS}.
+	 * @since 0.9.62
+	 */
+	private static final int VALIDATION_MAX_FAILURE_ITEMS = 25;
+
 	private String bkupFullPath = null;
 
 	/** if true, delete the temp-copy at finish */
@@ -578,6 +585,8 @@ public class BackupsRestore
 			}
 			// TODO else, something's missing from the backup.
 
+			RDBVerifier.MAX_FAILURE_ITEMS = VALIDATION_MAX_FAILURE_ITEMS;
+			RDBVerifier.FAILURES_HAVE_DESCRIPTIONS = false;
 			RDBVerifier v = new RDBVerifier(bkupDB);
 			int rc = v.verify(RDBVerifier.LEVEL_MDATA);
 			if (rc == 0)

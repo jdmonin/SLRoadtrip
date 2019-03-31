@@ -54,7 +54,7 @@ public class RDBVerifier
 	/**
 	 * Maximum number of items to allow to fail before refusing to continue the current level of validation.
 	 * Default is 100. Sets the max length of {@link #failedItems} at the time validation was ran.
-	 * @since 0.9.62
+	 * @since 0.9.70
 	 */
 	public static int MAX_FAILURE_ITEMS = 100;
 
@@ -79,7 +79,7 @@ public class RDBVerifier
 	 * Any items which failed validation during {@link #verify(int)}.
 	 * Max expected length is {@link #MAX_FAILURE_ITEMS}.
 	 * From outside the class, treat as read-only.
-	 * @since 0.9.62
+	 * @since 0.9.70
 	 */
 	public final List<FailedItem> failedItems = new ArrayList<FailedItem>();
 
@@ -811,7 +811,7 @@ public class RDBVerifier
 	 * Details about a data item which failed validation in {@link RDBVerifier#verify(int)}.
 	 * Validation failures for overall conditions (like no vehicles in DB) will have {@link #id} == 0
 	 * and {@link #data} == {@code null}.
-	 * @since 0.9.62
+	 * @since 0.9.70
 	 */
 	public static final class FailedItem
 	{

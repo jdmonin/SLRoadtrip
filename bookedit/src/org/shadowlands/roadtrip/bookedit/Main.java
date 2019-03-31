@@ -50,14 +50,14 @@ public class Main
 	 * @see #APP_VERSION_STRING
 	 * @since 0.9.07
 	 */
-	public static final int APP_VERSION_CODE = 962;
+	public static final int APP_VERSION_CODE = 970;
 
 	/**
 	 * Application version as a human-readable string; changes with each point release.
 	 * @see #APP_VERSION_CODE
 	 * @since 0.9.07
 	 */
-	public static final String APP_VERSION_STRING = "0.9.62";
+	public static final String APP_VERSION_STRING = "0.9.70";
 
 	/**
 	 * For GUI adjustments as needed, detect if we're running on Mac OS X.
@@ -248,7 +248,7 @@ public class Main
 		 * Handle a click on the "Exit" button, or the {@link StartupChoiceFrame} window's Close button.
 		 * Currently exits the program, but should review open logbooks for unsaved changes first.
 		 * @param isFromButton  True from "Exit" button, false from window Close button
-		 * @since 0.9.62
+		 * @since 0.9.70
 		 */
 		public void clickedExit(final boolean isFromButton)
 		{

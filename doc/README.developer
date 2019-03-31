@@ -305,7 +305,7 @@ d577e7e	0.9.61	2017-04-02	Improvements and bugfixes since 0.9.60
 				  not only those with TStops there
 				- Trip: New field so trips' starting location can be searchable
 				- TStop: New optional field for total expenses paid at the stop
-	0.9.62			Being developed now; improvements and bugfixes since 0.9.61
+	0.9.70			Being developed now; improvements and bugfixes since 0.9.61
 				SLRoadtrip android app:
 				- If a backup fails validation and can't be restored, show which level it failed at
 				BookEdit desktop utility app:

@@ -92,7 +92,7 @@ public class BackupsRestore
 	/**
 	 * Stop validating a backup after this many failures.
 	 * Overrides {@link RDBVerifier#MAX_FAILURE_ITEMS}.
-	 * @since 0.9.62
+	 * @since 0.9.70
 	 */
 	private static final int VALIDATION_MAX_FAILURE_ITEMS = 25;
 
@@ -135,7 +135,7 @@ public class BackupsRestore
 	 * If nonzero, validation was ran and failed at this level.
 	 * See {@link RDBVerifier#verify(int)} for range of values.
 	 * @see #validatedOK
-	 * @since 0.9.62
+	 * @since 0.9.70
 	 */
 	private int validationFailedLevel = 0;
 

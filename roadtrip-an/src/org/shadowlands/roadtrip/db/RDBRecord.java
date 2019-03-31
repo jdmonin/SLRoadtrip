@@ -236,7 +236,7 @@ public abstract class RDBRecord
 	 * Get this record's class (table name) and {@link #id} (primary key).
 	 * Calls {@link Class#getSimpleName()}.
 	 * @return a string of the form "ViaRoute id 3959"
-	 * @since 0.9.62
+	 * @since 0.9.70
 	 */
 	public final String getClassAndID()
 	{

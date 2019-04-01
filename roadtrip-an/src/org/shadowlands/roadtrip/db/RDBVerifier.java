@@ -762,7 +762,7 @@ public class RDBVerifier
 					}
 					if (via.getLocID_To() != ts.getLocationID())
 					{
-						if (! addFailedItem(via, ts, "TStop's LocID_To != Via's Location"))
+						if (! addFailedItem(via, ts, "TStop's Location != Via's LocID_To"))
 							return false;
 					}
 					if (tsPrev != null)
@@ -770,7 +770,7 @@ public class RDBVerifier
 						if ((ts.getTime_stop() != tsPrev.getTime_stop())  // ignore duplicate here
 						    && (via.getLocID_From() != tsPrev.getLocationID()))
 						{
-							if (! addFailedItem(via, ts, "TStop's LocID_From != Via's Location"))
+							if (! addFailedItem(via, tsPrev, "TStop's Location != Via's LocID_From"))
 								return false;
 						}
 

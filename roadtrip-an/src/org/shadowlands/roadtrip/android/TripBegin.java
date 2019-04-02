@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010-2016 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2016,2019 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -50,8 +50,6 @@ import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.text.Editable;
-import android.text.TextWatcher;
 import android.text.format.DateFormat;
 import android.view.View;
 import android.widget.AdapterView;
@@ -62,8 +60,6 @@ import android.widget.Button;
 import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.ListAdapter;
-import android.widget.RadioButton;
-import android.widget.RadioGroup;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.TimePicker;
@@ -103,7 +99,7 @@ import android.widget.Toast;
  * @author jdmonin
  */
 public class TripBegin extends Activity
-	implements TextWatcher, OnDateSetListener, OnItemClickListener
+	implements OnDateSetListener, OnItemClickListener
 {
 	/**
 	 * Flag for beginning a trip based on a previously defined frequent trip, for
@@ -196,23 +192,14 @@ public class TripBegin extends Activity
 	/** Listener for {@link #etGeoArea} to update {@link #destAreaObj}. */
 	private GeoAreaOnItemClickListener etGeoAreaListener;
 
-	/** continue from prev, or enter a new, location. This and {@link #tvLocContinue} are shown/hidden together. */
-	private RadioGroup rbLocGroup;
-	/** continue from prev location. Part of {@link #rbLocGroup}. */
-	private RadioButton rbLocContinue;
 	/**
-	 * previous-location textview. If no previous trip, this and {@link #rbLocGroup} are hidden.
-	 * Call {@link #realignTVLocContinueHeight()} to update this field's height if other layout elements change,
-	 * to keep location radios and text fields in visual alignment.
+	 * Starting-location textfield. Tapping its autocomplete suggestions sets {@link #locObj}.
 	 */
-	private TextView tvLocContinue;
-	/**
-	 * new-location textfield. Typing here calls {@link #afterTextChanged(Editable)}.
-	 * Call {@link #realignTVLocContinueHeight()} to update related field alignment if other layout elements change.
-	 */
-	private AutoCompleteTextView etLocNew;
+	private AutoCompleteTextView etLoc;
+
 	/** starting date-time */
 	private Calendar startTime;
+
 	/** value of {@link #startTime} as set by Activity, not by user, in milliseconds;
 	 *  used to determine whether to leave {@link #startTime} unchanged */
 	private long startTimeAtCreate;
@@ -222,6 +209,7 @@ public class TripBegin extends Activity
 	 * initialized once in {@link #updateStartDateButton()}.
 	 */
 	private StringBuffer fmt_dow_shortdate;
+
 	private Button btnStartDate;
 	private TimePicker tpStartTime;  // TODO on hour wraparound: Chg date
 	/** optional passenger count */
@@ -233,23 +221,34 @@ public class TripBegin extends Activity
 	private Vehicle currV;
 	private Person currD;
 	private int prevVId, prevDId;
-	/** Location to start from, as determined from previous trip */
+
+	/**
+	 * Location to start from, as determined from previous trip, for {@link #locObj}.
+	 * Set by {@link #updateDriverVehTripTextAndButtons()} based on {@link #startingPrevTStop}.
+	 */
 	private Location locObjOrig;
-	/** Location to start from, possibly null or selected from dropdown */
+
+	/** Location to start from, possibly null or selected from {@link #etLoc} dropdown; see {@link #locObjOrig} */
 	private Location locObj;
+
 	/**
 	 * Roadtrip destination geoarea.
 	 * Set in {@link #updateETGeoArea(int, int)} and {@link GeoAreaOnItemClickListener}.
 	 */
 	private GeoArea destAreaObj;
+
 	/** If freqtrip, the chosen freqtrip, or null */
 	private FreqTrip wantsFT;
 
 	/**
-	 * If not null, a prev trip's final TStop, that we can continue from.
-	 * To use this, the starting odometer must be the same as this TStop's;
-	 * otherwise there's a gap in this vehicle's history, and startingPrevTStop
-	 * should be null to keep the data consistent.
+	 * If not null, the vehicle's previous trip's final TStop that we can continue from.
+	 * Set by {@link #updateDriverVehTripTextAndButtons()} along with {@link #locObjOrig}.
+	 *<P>
+	 * To use this TStop, its {@link TStop#getLocationID() getLocationID()} must equal
+	 * {@link #locObj}.{@link Location#getID() getID()}, and the starting odometer must be
+	 * the same as this TStop's; otherwise there's a gap in this vehicle's history, and 
+	 * {@code startingPrevTStop} should be null to keep the data consistent.
+	 * If this TStop can't be used, a new TStop will be created to begin the new Trip.
 	 */
 	private TStop startingPrevTStop;
 
@@ -279,11 +278,7 @@ public class TripBegin extends Activity
 		tvCurrentSet = (TextView) findViewById(R.id.trip_begin_text_current);
 		odo = (OdometerNumberPicker) findViewById(R.id.trip_begin_odometer);
 		odo.setTenthsVisibility(false);
-		rbLocGroup = (RadioGroup) findViewById(R.id.trip_begin_radio_loc_group);
-		rbLocContinue = (RadioButton) findViewById(R.id.trip_begin_radio_loc_cont);
-		tvLocContinue = (TextView) findViewById(R.id.trip_begin_loc_cont_text);
-		etLocNew = (AutoCompleteTextView) findViewById(R.id.trip_begin_loc_new);
-		etLocNew.addTextChangedListener(this);  // for related radiobutton R.id.trip_begin_radio_loc_new
+		etLoc = (AutoCompleteTextView) findViewById(R.id.trip_begin_location);
 		if (isRoadtrip)
 			etGeoArea = (AutoCompleteTextView) findViewById(R.id.trip_begin_roadtrip_desti);
 		btnStartDate = (Button) findViewById(R.id.trip_begin_btn_start_date);
@@ -330,10 +325,6 @@ public class TripBegin extends Activity
 			rtr_row.setVisibility(View.GONE);
 		}
 
-		// Update height of starting-location textview to match
-		// the radio buttons, once those have been drawn.
-		realignLocTextsHeight();
-
 		// all this will be set, checked in updateDriverVehTripTextAndButtons():
 		prevVId = 0;
 		prevDId = 0;
@@ -374,10 +365,10 @@ public class TripBegin extends Activity
 			Location[] areaLocs = Location.getAll(db, aID);
 			if (areaLocs != null)
 			{
-				etLocNew.setAdapter(new ArrayAdapter<Location>(this, R.layout.list_item, areaLocs));
-				etLocNew.setOnItemClickListener(this);
+				etLoc.setAdapter(new ArrayAdapter<Location>(this, R.layout.list_item, areaLocs));
+				etLoc.setOnItemClickListener(this);
 			} else {
-				etLocNew.setAdapter((ArrayAdapter<Location>) null);
+				etLoc.setAdapter((ArrayAdapter<Location>) null);
 			}
 			prevA = currA;
 
@@ -478,28 +469,8 @@ public class TripBegin extends Activity
 				}
 			}
 
-			if (startingPrevTStop == null)
-			{
-				// disable "continue from"; we'll use "new location"
-				rbLocContinue.setEnabled(false);
-				rbLocGroup.check(R.id.trip_begin_radio_loc_new);
-				rbLocGroup.setVisibility(View.GONE);
-				tvLocContinue.setVisibility(View.GONE);
-				// rbLocNew.setChecked(true);
-			} else {
-				final boolean isRBHidden = (rbLocGroup.getVisibility() != View.VISIBLE);
-				if (isRBHidden)
-					rbLocGroup.setVisibility(View.VISIBLE);
-				rbLocContinue.setEnabled(true);
-				rbLocGroup.check(R.id.trip_begin_radio_loc_cont);
-				// rbLocContinue.setChecked(true);
-				tvLocContinue.setVisibility(View.VISIBLE);
-				tvLocContinue.setText
-					(getResources().getString(R.string.continue_from_colon)
-					 + " " + startingPrevTStop.readLocationText());
-				if (isRBHidden)
-					realignLocTextsHeight();
-			}
+			if (startingPrevTStop != null)
+				etLoc.setText(startingPrevTStop.readLocationText());
 
 			// How recent was that vehicle's most recent trip? (Historical Mode)
 			{
@@ -542,28 +513,6 @@ public class TripBegin extends Activity
 		prevDId = dID;
 
 		updateStartDateButton();
-	}
-
-	/**
-	 * Update height of starting-location textview to match the radio buttons again
-	 * after a change to layout contents/element visibility.  Required in order to
-	 * prevent {@link #tvLocContinue} shrinking smaller which causes {@link #etLocNew}
-	 * to slide up, losing alignment next to its radio button.
-	 *<P>
-	 * Update is queued using {@link #rbLocContinue}.{@link View#post(Runnable) post(Runnable)}
-	 * so it will occur after other pending changes take effect.
-	 */
-	private void realignLocTextsHeight()
-	{
-		rbLocContinue.post(new Runnable()
-		{
-			public void run() {
-				final int rbHeight = rbLocContinue.getHeight(),
-				          tvHeight = tvLocContinue.getHeight();
-				if (tvHeight < rbHeight)
-					tvLocContinue.setHeight(rbHeight);
-			}
-		});
 	}
 
 	/**
@@ -689,12 +638,6 @@ public class TripBegin extends Activity
 			etGeoArea.showDropDown();
 	}
 
-	/** When the 'continue from' text is clicked, select that radio button. */
-	public void onClick_chooseContRadio(View v)
-	{
-		rbLocGroup.check(R.id.trip_begin_radio_loc_cont);
-	}
-
 	/**
 	 * Read fields, and record start of the trip in the database.
 	 * Finish this Activity.
@@ -726,27 +669,18 @@ public class TripBegin extends Activity
 
 		// Check for required starting-location:
 
-		final TStop startingPrevOrig = startingPrevTStop;  // in case we need to revert to it here
-
-		if (! rbLocContinue.isChecked())
-			startingPrevTStop = null;
-
-		String startloc = null;
-		if (startingPrevTStop == null)
+		String startloc = etLoc.getText().toString().trim();
+		if (startloc.length() == 0)
 		{
-			startloc = etLocNew.getText().toString().trim();
-			if (startloc.length() == 0)
-			{
-				etLocNew.requestFocus();
-				Toast.makeText(getApplicationContext(),
-					getResources().getString(R.string.trip_tstart_loc_prompt),
-					Toast.LENGTH_SHORT).show();
-				return;  // <--- Early return: etLocNew contents ---
-			}
-
-			if ((locObj != null) && ! locObj.getLocation().equalsIgnoreCase(startloc))
-				locObj = null;  // locObj outdated: text doesn't match
+			etLoc.requestFocus();
+			Toast.makeText(getApplicationContext(),
+				getResources().getString(R.string.trip_tstart_loc_prompt),
+				Toast.LENGTH_SHORT).show();
+			return;  // <--- Early return: etLoc contents ---
 		}
+
+		if ((locObj != null) && ! locObj.getLocation().equalsIgnoreCase(startloc))
+			locObj = null;  // locObj outdated: text doesn't match
 
 		// check location vs frequent trip:
 		if ((wantsFT != null) &&
@@ -774,14 +708,7 @@ public class TripBegin extends Activity
 				  public void onClick(DialogInterface dialog, int whichButton)
 				  {
 					locObj = locObjOrig;
-					if (startingPrevOrig != null)
-					{
-						startingPrevTStop = startingPrevOrig;
-						rbLocGroup.check(R.id.trip_begin_radio_loc_cont);
-						etLocNew.setText("");
-					} else {
-						etLocNew.setText(locObj.getLocation());
-					}
+					etLoc.setText(locObj.getLocation());
 				  }
 				});
 
@@ -805,6 +732,7 @@ public class TripBegin extends Activity
 				odo.setCurrent10d(startOdo, false);
 			} else {
 				// visually different
+
 				if (startOdo < prevOdo)
 				{
 					odo.requestFocus();
@@ -818,24 +746,12 @@ public class TripBegin extends Activity
 					// if odo increases, there's a gap in this vehicle's
 					// history, so we need to not "continue from previous stop"
 					// to keep the data consistent.
-					if ((locObj == null) || (locObj.getID() != startingPrevTStop.getLocationID()))
-					{
-						try
-						{
-							final int id = startingPrevTStop.getLocationID();
-							if (id != 0)
-								locObj = new Location(db, id);
-						} catch (RDBKeyNotFoundException e)
-						{
-							locObj = null;
-						}
-					}
 					startingPrevTStop = null;
 				}
 			}
 		}
 
-		// Check for required trip category:
+		// Check for trip category if required:
 		final int tripCat = ((TripCategory) (spTripCat.getSelectedItem())).getID();
 		if ((Settings.getBoolean(db, Settings.REQUIRE_TRIPCAT, false))
 		    && (tripCat <= 0))
@@ -879,6 +795,31 @@ public class TripBegin extends Activity
 			}
 		}
 
+		if (locObj == null)
+			// search for existing; avoid creating 2 locations with same name
+			locObj = Location.getByDescr(db, currA.getID(), startloc);
+
+		if (locObj == null)
+		{
+			locObj = new Location(currA.getID(), null, null, startloc);
+			locObj.insert(db);
+		}
+
+		// can we use startingPrevTStop, or do we have a new starting location?
+		if (startingPrevTStop != null)
+		{
+			final int locid = startingPrevTStop.getLocationID();
+			if (locid != 0)
+			{
+				if (locid != locObj.getID())
+					startingPrevTStop = null;
+			}
+			else if (! startloc.equalsIgnoreCase(startingPrevTStop.readLocationText()))
+			{
+				startingPrevTStop = null;
+			}
+		}
+
 		Trip t = new Trip(currV, currD, startOdo, 0, currA.getID(),
 			startingPrevTStop, startTimeSec, 0,
 			(String) null, (String) null, (String) null, (String) null,
@@ -913,27 +854,9 @@ public class TripBegin extends Activity
 
 		if (startingPrevTStop == null)
 		{
-			if (locObj == null)
-				// search the table, avoid creating 2 locations with same name
-				locObj = Location.getByDescr(db, currA.getID(), startloc);
-
-			if (locObj == null)
-			{
-				locObj = new Location(currA.getID(), null, null, startloc);
-				locObj.insert(db);
-			}
 			TStop ts = new TStop(t, startOdo, startTimeSec, locObj, null, null);
 			ts.insert(db);
 			t.addCommittedTStop(ts);
-		}
-		else if (locObj == null)
-		{
-			try
-			{
-				int id = startingPrevTStop.getLocationID();
-				if (id != 0)
-					locObj = new Location(db, id);
-			} catch (RDBKeyNotFoundException e) {}
 		}
 
 		VehSettings.setPreviousLocation(db, currV, locObj);  // PREV_LOCATION
@@ -1069,9 +992,6 @@ public class TripBegin extends Activity
 					etGeoArea = (AutoCompleteTextView) findViewById(R.id.trip_begin_roadtrip_desti);
 				if (etGeoArea != null)
 					updateETGeoArea(wantsFT.getEnd_aID_roadtrip(), -1);
-
-				// realign required after layout visibility change
-				realignLocTextsHeight();
 			}
 
 			return;
@@ -1085,27 +1005,10 @@ public class TripBegin extends Activity
 
 	}
 
-	/**
-	 * If new-location text is typed into {@link #etLocNew}, ensure the related radiobutton
-	 * {@code R.id.trip_begin_radio_loc_new} is marked, not {@link #rbLocContinue}.
-	 * (for addTextChangedListener / {@link TextWatcher})
-	 */
-	public void afterTextChanged(Editable arg0)
-	{
-		if (arg0.length() > 0)
-			rbLocGroup.check(R.id.trip_begin_radio_loc_new);
-	}
-
-	/** required stub for {@link TextWatcher} */
-	public void beforeTextChanged(CharSequence arg0, int arg1, int arg2, int arg3) {}
-
-	/** required stub for {@link TextWatcher} */
-	public void onTextChanged(CharSequence arg0, int arg1, int arg2, int arg3) {}
-
 	/** For Location autocomplete, the callback for {@link OnItemClickListener} */
 	public void onItemClick(AdapterView<?> parent, View clickedOn, int position, long rowID)
 	{
-		ListAdapter la = etLocNew.getAdapter();
+		ListAdapter la = etLoc.getAdapter();
 		if (la == null)
 			return;
 		locObj = (Location) la.getItem(position);

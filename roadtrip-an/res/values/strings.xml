@@ -57,7 +57,6 @@
 <string name="choose_a_stop">Choose a stop:</string>
 <string name="close">Close</string>
 <string name="confirm">Confirm</string>
-<string name="continue_from_colon">Continue from:</string>
 <string name="create">Create</string>
 <string name="current_driver">Current driver</string>
 <string name="current_driver_veh_not_found">Current driver/vehicle not found in db</string>

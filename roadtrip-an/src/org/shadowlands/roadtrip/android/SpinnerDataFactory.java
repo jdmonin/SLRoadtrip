@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010-2015,2017 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2015,2017,2019 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -36,7 +36,8 @@ import android.widget.Spinner;
 /**
  * Fill the data in spinners of data-backed object types,
  * such as {@link Vehicle} or {@link Person} (driver).
- * Also contains helper class {@link SpinnerItemSelectedListener}
+ * Also contains helper methods like {@link #selectRecord(Spinner, int)}
+ * and helper class {@link SpinnerItemSelectedListener}
  * for use in dialogs and activities.
  *<P>
  *<H5>I18N:<H5>
@@ -61,7 +62,7 @@ public class SpinnerDataFactory
 	 * @param sp  spinner to fill with the drivers
 	 * @param currentID  If not -1, the driver _id to select in the Spinner. 
 	 * @return true on success, false if could not populate from database
-	 * @see #selectDriver(Spinner, int)
+	 * @see #selectRecord(Spinner, int)
 	 */
 	public static boolean setupDriversSpinner(RDBAdapter db, Context ctx, Spinner sp, final int currentID)
 	{
@@ -87,20 +88,24 @@ public class SpinnerDataFactory
 	}
 
 	/**
-	 * Set the selected driver in a spinner previously set up with
-	 * {@link #setupDriversSpinner(RDBAdapter, Context, Spinner, int)}.
-	 * If the spinner is any other type, the spinner's current selection is not changed.
-	 * @param sp  A driver spinner.  This spinner's {@code getItemAtPosition(int)} should always
-	 *     return a {@link Person}. Any other item type is ignored.
-	 * @param currentID  Current driver ID to select; if nothing matches, the spinner's current selection is not changed.
+	 * Set the selected record in a spinner previously set up to contain {@link RDBRecord} items
+	 * (such as {@link Vehicle}s or {@link GeoArea}s).
+	 * If the spinner's items are any other type, the spinner's current selection is not changed.
+	 *<P>
+	 * Before v0.9.70 this method was {@code selectDriver}.
+	 *
+	 * @param sp  The spinner to work with. Its {@link Spinner#getItemAtPosition(int)} should always
+	 *     return an {@link RDBRecord}. Any other item type is ignored.
+	 * @param currentID  Current record ID to select; if no spinner item has this {@link RDBRecord#getID()},
+	 *     the spinner's current selection is not changed.
 	 * @since 0.9.40
 	 */
-	public static void selectDriver(Spinner sp, final int currentID)
+	public static void selectRecord(final Spinner sp, final int currentID)
 	{
 		for (int i = sp.getCount() - 1; i >= 0; --i)
 		{
-			Object itm = sp.getItemAtPosition(i);
-			if ((itm instanceof Person) && (((Person) itm).getID() == currentID))
+			final Object itm = sp.getItemAtPosition(i);
+			if ((itm instanceof RDBRecord) && (((RDBRecord) itm).getID() == currentID))
 			{
 				if (sp.getSelectedItemPosition() != i)
 					sp.setSelection(i, false);
@@ -117,6 +122,7 @@ public class SpinnerDataFactory
 	 * @param sp  spinner to fill with the areas
 	 * @param currentID  If not -1, the area _id to select in the Spinner
 	 * @param withNone  If true, include a GeoArea "(none)" with id 0 as the first item: {@link GeoArea#GEOAREA_NONE}
+	 * @param exceptID  If not -1, a geoarea to exclude from the list
 	 * @return true on success, false if could not populate from database
 	 */
 	public static boolean setupGeoAreasSpinner
@@ -205,7 +211,7 @@ public class SpinnerDataFactory
 	 * @param db  connection to use
 	 * @param ctx  context; ignored unless <tt>withNone</tt>; used for strings for withNone
 	 * @param withNone  If true, include "(none)" as first entry; its id is 0
-	 * @param exceptID  IF not -1, a geoarea to exclude from the list
+	 * @param exceptID  If not -1, a geoarea to exclude from the list
 	 * @return array of areas, or null
 	 */
 	private static GeoArea[] populateGeoAreasList
@@ -297,7 +303,7 @@ public class SpinnerDataFactory
 	 * <PRE>
 	 *  SpinnerItemSelectedListener spinListener = new SpinnerItemSelectedListener(defaultID)
 	 *	{
-	 *		public void onItemSelected(AdapterView<?> parent, View v, int pos, long pos_long)
+	 *		public void onItemSelected(AdapterView<?> spinner, View itemv, int pos, long unusedViewID)
 	 *		{
 	 *			...
 	 *			if (someCondition)
@@ -338,7 +344,7 @@ public class SpinnerDataFactory
 			this.itemID_default = itemID_default;
 		}
 
-		/** required stub, so subclass doesn't need to declare it */
+		/** This stub ignores de-select, to keep the currently selected object. */
 		public void onNothingSelected(AdapterView<?> parentView) {}
 
 		// let subclass implement onItemSelected

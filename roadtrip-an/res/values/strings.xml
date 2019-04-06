@@ -319,6 +319,7 @@
 <string name="trip_tstop_gas_prompt">Enter the gas stop details.</string>
 <string name="trip_tstop_gas__title">Trip Stop: Gas</string>
 <string name="vehicle_entry_current_geo_area">Current\ngeo area</string>
+<!-- this GeoArea prompt is also used in TripBegin: -->
 <string name="vehicle_entry_geoarea_prompt">Please enter the vehicle\'s starting geographic area.</string>
 <string name="vehicle_entry_hint_nickname">Optional nickname or color</string>
 <string name="vehicle_entry_hint_year">Model year</string>

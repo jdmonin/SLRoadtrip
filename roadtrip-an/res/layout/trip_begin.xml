@@ -42,6 +42,26 @@
     android:layout_width="fill_parent" 
     android:layout_height="wrap_content"    
     />
+<LinearLayout
+    android:orientation="horizontal"
+    android:layout_width="wrap_content"
+    android:layout_height="fill_parent"
+    >
+	<TextView
+	    android:text="@string/area__colon"
+	    android:layout_width="wrap_content"
+	    android:layout_height="wrap_content"
+	    android:gravity="top"
+	    android:layout_gravity="center"
+	    android:paddingRight="2dp" />
+	<Spinner android:id="@+id/trip_begin_geoarea"
+	    android:layout_weight="1"
+	    android:layout_gravity="center"
+	    android:layout_width="0dp"
+	    android:layout_height="wrap_content"
+	    android:paddingTop="2dp"
+	    android:paddingBottom="2dp" />
+</LinearLayout>
 <AutoCompleteTextView
     android:id="@+id/trip_begin_location"
     android:layout_width="fill_parent"

@@ -85,6 +85,9 @@ import android.widget.Toast;
  * The method handling the Begin Trip button that finishes
  * this Activity is {@link #onClick_BtnBeginTrip(View)}.
  *<P>
+ * User can choose a different GeoArea than the vehicle's previous recorded trip,
+ * in case there've been unrecorded roadtrips in between.
+ *
  *<H5>Historical Mode:</H5>
  * To make it easier to add trips which occurred in the past, if either of the
  * following conditions are true, when this activity starts it will ask if the
@@ -180,7 +183,13 @@ public class TripBegin extends Activity
 	 */
 	private boolean isFrequent;
 
-	/** Current driver and vehicle. Updated in {@link #updateDriverVehTripTextAndButtons()}. */
+	/**
+	 * True if {@link #checkCurrentDriverVehicleSettings()} has been called at least once.
+	 * @since 0.9.70
+	 */
+	private boolean hasCalledCheckCurrent;
+
+	/** Shows name of current driver and vehicle. Updated in {@link #updateDriverVehTripTextAndButtons()}. */
 	private TextView tvCurrentSet;
 
 	/**
@@ -212,18 +221,42 @@ public class TripBegin extends Activity
 
 	private Button btnStartDate;
 	private TimePicker tpStartTime;  // TODO on hour wraparound: Chg date
+
 	/** optional passenger count */
 	private EditText etPax;
+
 	/** optional {@link TripCategory} */
 	private Spinner spTripCat;
 
-	private GeoArea currA, prevA;
+	/**
+	 * View or change vehicle's current {@link GeoArea} ({@link #currA}).
+	 * Selection Listener is added during first call to {@link #checkCurrentDriverVehicleSettings()}.
+	 * @since 0.9.70
+	 */
+	private Spinner spGeoArea;
+
+	/**
+	 * Vehicle's GeoArea; user can change with {@link #spGeoArea}.
+	 * Updated by calling {@link #setCurrentArea(GeoArea, boolean)}
+	 * in {@link #checkCurrentDriverVehicleSettings()}
+	 * and {@link #spGeoArea}'s {@link AdapterView.OnItemSelectedListener}.
+	 * @see #prevA
+	 */
+	private GeoArea currA;
+
+	/**
+	 * Value of {@link #currA} previously set up in {@link #checkCurrentDriverVehicleSettings()}
+	 * or {@link #setCurrentArea(GeoArea, boolean)}. Prevents unneeded work when changing to a
+	 * vehicle with same GeoArea as previous one.
+	 */
+	private GeoArea prevA;
+
 	private Vehicle currV;
 	private Person currD;
 	private int prevVId, prevDId;
 
 	/**
-	 * Location to start from, as determined from previous trip, for {@link #locObj}.
+	 * Location to start from, null or as determined from previous trip, for {@link #locObj}.
 	 * Set by {@link #updateDriverVehTripTextAndButtons()} based on {@link #startingPrevTStop}.
 	 */
 	private Location locObjOrig;
@@ -296,6 +329,12 @@ public class TripBegin extends Activity
 			if (vrow != null)
 				vrow.setVisibility(View.GONE);
 		}
+
+		spGeoArea = (Spinner) findViewById(R.id.trip_begin_geoarea);
+		SpinnerDataFactory.setupGeoAreasSpinner(db, this, spGeoArea, -1, false, -1);
+			// currA won't be known until onResume() calls checkCurrentDriverVehicleSettings(),
+			// which will also update the current GeoArea in the spinner.
+
 		spTripCat = (Spinner) findViewById(R.id.trip_begin_category);
 		SpinnerDataFactory.setupTripCategoriesSpinner(db, this, spTripCat, -1);
 
@@ -340,6 +379,8 @@ public class TripBegin extends Activity
 	 * Check settings tables for {@link Settings#CURRENT_VEHICLE CURRENT_VEHICLE},
 	 * {@link VehSettings#CURRENT_DRIVER CURRENT_DRIVER}.
 	 * Set {@link #currV} and {@link #currD} activity fields.
+	 * Sets {@link #hasCalledCheckCurrent} flag at end of method.
+	 *<P>
 	 * If there's an inconsistency between settings and Vehicle/Person tables, delete the settings entry.
 	 * {@code currV} and {@code currD} will be null unless they're set consistently in db settings.
 	 *
@@ -359,6 +400,49 @@ public class TripBegin extends Activity
 			currA.insert(db);
 			VehSettings.setCurrentArea(db, currV, currA);
 		}
+		setCurrentArea(currA, true);
+
+		if (! hasCalledCheckCurrent)
+		{
+			spGeoArea.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener()
+			{
+				/** If area changes, call {@link TripBegin#setCurrentArea(GeoArea, boolean)} */
+				public void onItemSelected
+					(final AdapterView<?> spinner, final View itemv, final int pos, final long unusedViewID)
+				{
+					Object obj = spinner.getItemAtPosition(pos);
+					if ((obj == null) || ! (obj instanceof GeoArea))
+						return;  // just in case
+					final GeoArea selA = (GeoArea) obj;
+					if (selA != currA)
+						setCurrentArea(selA, false);
+				}
+
+				/** Ignore, keep current GeoArea */
+				public void onNothingSelected(AdapterView<?> spinner) {}
+			});
+		}
+
+		currD = VehSettings.getCurrentDriver(db, currV, true);
+
+		hasCalledCheckCurrent = true;
+
+		return (currD != null);
+	}
+
+	/**
+	 * Set value of {@link #currA}, and update related widgets if different from {@link #prevA}:
+	 * {@link #etLoc}, {@link #etGeoArea}, maybe {@link #spGeoArea}. Also updates {@link #prevA}.
+	 *<P>
+	 * Before v0.9.70 this code was part of {@link #checkCurrentDriverVehicleSettings()}.
+	 *
+	 * @param geo  New GeoArea to use, or {@code null}
+	 * @param setSPGeoArea  If true and updating widgets, select {@code geo} in {@link #spGeoArea} if not {@code null}
+	 * @since 0.9.70
+	 */
+	private void setCurrentArea(final GeoArea geo, final boolean setSPGeoArea)
+	{
+		this.currA = geo;
 		if (currA != prevA)
 		{
 			final int aID = (currA != null) ? currA.getID() : -1;
@@ -372,12 +456,21 @@ public class TripBegin extends Activity
 			}
 			prevA = currA;
 
+			if (setSPGeoArea && (aID > 0))
+				SpinnerDataFactory.selectRecord(spGeoArea, aID);
+
 			if (isRoadtrip)
 				updateETGeoArea(-1, aID);
+
+			if ((locObj != null) && (aID != locObj.getAreaID()))
+			{
+				if (etLoc.getText().toString().trim().equalsIgnoreCase(locObj.getLocation()))
+					etLoc.setText("");
+
+				locObj = null;
+			}
 		}
 
-		currD = VehSettings.getCurrentDriver(db, currV, true);
-		return (currD != null);
 	}
 
 	/**
@@ -641,8 +734,7 @@ public class TripBegin extends Activity
 	/**
 	 * Read fields, and record start of the trip in the database.
 	 * Finish this Activity.
-	 * If new starting location radio is checked, but not typed in,
-	 * prompt for that and don't finish yet.
+	 * If starting location field is blank, prompt for that and don't finish yet.
 	 */
 	public void onClick_BtnBeginTrip(View v)
 	{
@@ -668,6 +760,17 @@ public class TripBegin extends Activity
 		}
 
 		// Check for required starting-location:
+
+		if (currA == null)
+		{
+			// unlikely to happen, but easy to check
+			spGeoArea.requestFocus();
+			Toast.makeText(getApplicationContext(),
+				getResources().getString(R.string.vehicle_entry_geoarea_prompt),
+				Toast.LENGTH_SHORT).show();
+				// "Please enter the vehicle's starting geographic area."
+			return;  // <--- Early return: geoarea somehow not chosen ---
+		}
 
 		String startloc = etLoc.getText().toString().trim();
 		if (startloc.length() == 0)
@@ -805,6 +908,18 @@ public class TripBegin extends Activity
 			locObj.insert(db);
 		}
 
+		// Are we in a different GeoArea from vehicle's previous recorded trip?
+		// If so, there are probably unrecorded trips in between.
+		final int currAID = currA.getID();
+		{
+			final GeoArea vCurrA = VehSettings.getCurrentArea(db, currV, false);
+			if ((vCurrA == null) || (vCurrA.getID() != currAID))
+			{
+				VehSettings.setCurrentArea(db, currV, currA);
+				startingPrevTStop = null;
+			}
+		}
+
 		// can we use startingPrevTStop, or do we have a new starting location?
 		if (startingPrevTStop != null)
 		{
@@ -820,7 +935,7 @@ public class TripBegin extends Activity
 			}
 		}
 
-		Trip t = new Trip(currV, currD, startOdo, 0, currA.getID(),
+		Trip t = new Trip(currV, currD, startOdo, 0, currAID,
 			startingPrevTStop, startTimeSec, 0,
 			(String) null, (String) null, (String) null, (String) null,
 			wantsFT, null,

@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010-2016 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2016,2019 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -429,7 +429,7 @@ public class ChangeDriverOrVehicle
 		{
 			// must change selected driver to new vehicle's
 
-			SpinnerDataFactory.selectDriver(driver, dID);
+			SpinnerDataFactory.selectRecord(driver, dID);
 			final String msg =
 				getResources().getString(R.string.change_driver_vehicle_curr_trip_driv, vDriv);
 				// "New vehicle is on a trip; its current driver is %1s."
@@ -449,7 +449,7 @@ public class ChangeDriverOrVehicle
 		alert.setMessage(msg);
 		alert.setPositiveButton(btnTextChange, new DialogInterface.OnClickListener() {
 			public void onClick(DialogInterface dialog, int whichButton) {
-				SpinnerDataFactory.selectDriver(driver, dID);
+				SpinnerDataFactory.selectRecord(driver, dID);
 			}
 		  });
 	    	alert.setNegativeButton(btnTextKeep, null);

@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010-2017 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2017,2019 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -373,6 +373,8 @@ public class TripTStopEntry extends Activity
 	 * If {@code null} because of a missing {@link VehSettings}, ViaRoutes can't be created or autocompleted,
 	 * but causes no other problems: Make sure code checks != {@code null} before using {@code prevLocObj}.
 	 *<P>
+	 * Is set in onCreate via {@link #updateTextAndButtons()}.
+	 *<P>
 	 * Is {@code null} when <tt>{@link #viewTS viewTS} != null</tt>.
 	 */
 	private Location prevLocObj;
@@ -382,7 +384,14 @@ public class TripTStopEntry extends Activity
 	 * Used for {@link #loc} and {@link #viaRouteObj}.
 	 * Changing {@link #loc}'s text clears {@link #locObj},
 	 * unless <tt>locObj</tt> was created for this stop
-	 * ({@link #locObjCreatedHere} is true).
+	 * ({@link #locObjCreatedHere} != null).
+	 *<P>
+	 * Is set in onCreate via {@link #updateTextAndButtons()}.
+	 *<P>
+	 * When {@code locObj} changes, should call
+	 * {@link #updateViaRouteAutocomplete(ViaRoute, boolean)},
+	 * or instead set {@code locObj} by calling
+	 * {@link #setLocObjUpdateVias(Location, ViaRoute, boolean)}.
 	 */
 	private Location locObj;
 
@@ -1563,13 +1572,13 @@ public class TripTStopEntry extends Activity
 	 * <tt>CURRENT_TRIP</tt>.
 	 * Set {@link #currA}, {@link #currD}, {@link #currV} and {@link #currT}.
 	 * Set {@link #currTS} if <tt>CURRENT_TSTOP</tt> is set.
-	 * Set {#link {@link #prevLocObj}} if <tt>PREV_LOCATION</tt> is set.
+	 * Set {@link #prevLocObj} if <tt>PREV_LOCATION</tt> is set.
 	 * Check for and set {@link #isViewTScurrTS} if {@link #viewTS} is set.
 	 *<P>
 	 * If there's an inconsistency between Settings and GeoArea/Vehicle/Person tables, don't fix it
 	 * in those tables, but don't load objects either.  The current GeoArea setting may be updated if missing.
 	 *<P>
-	 * If {@link #viewTS != null} when called, those fields will all be set from viewTS
+	 * If {@link #viewTS} != null when called, those fields will all be set from {@code viewTS}
 	 * instead of current settings. If a record is missing, will return false.
 	 *
 	 * @return true if settings exist and are OK, false otherwise.
@@ -1626,6 +1635,8 @@ public class TripTStopEntry extends Activity
 
 	/**
 	 * Update the text about current driver, vehicle and trip;
+	 * update fields like {@link #locObj}, {@link #locObjCreatedHere},
+	 * {@link #viaRouteObj}, and {@link #stopGas};
 	 * update odometers from {@link Trip#readHighestOdometers()}.
 	 * If <tt>{@link #currTS} != null</tt>, fill fields from that instead.
 	 * Called as an ending part of {@link #onCreate(Bundle)}.
@@ -3360,9 +3371,9 @@ public class TripTStopEntry extends Activity
 	{
 		if (locObj == null)
 			return;
+
 		final String newText = arg0.toString().trim();
-		final int newLen = newText.length();
-		if ((newLen == 0) || ! locObj.toString().equalsIgnoreCase(newText))
+		if ((newText.length() == 0) || ! locObj.toString().equalsIgnoreCase(newText))
 		{
 			// Mismatch: object no longer matches typed location
 			locObj = null;

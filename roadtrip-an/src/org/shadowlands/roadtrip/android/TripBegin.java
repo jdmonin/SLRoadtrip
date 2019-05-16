@@ -443,34 +443,34 @@ public class TripBegin extends Activity
 	private void setCurrentArea(final GeoArea geo, final boolean setSPGeoArea)
 	{
 		this.currA = geo;
-		if (currA != prevA)
+		if (currA == prevA)
+			return;
+
+		final int aID = (currA != null) ? currA.getID() : -1;
+		Location[] areaLocs = Location.getAll(db, aID);
+		if (areaLocs != null)
 		{
-			final int aID = (currA != null) ? currA.getID() : -1;
-			Location[] areaLocs = Location.getAll(db, aID);
-			if (areaLocs != null)
-			{
-				etLoc.setAdapter(new ArrayAdapter<Location>(this, R.layout.list_item, areaLocs));
-				etLoc.setOnItemClickListener(this);
-			} else {
-				etLoc.setAdapter((ArrayAdapter<Location>) null);
-			}
-			prevA = currA;
-
-			if (setSPGeoArea && (aID > 0))
-				SpinnerDataFactory.selectRecord(spGeoArea, aID);
-
-			if (isRoadtrip)
-				updateETGeoArea(-1, aID);
-
-			if ((locObj != null) && (aID != locObj.getAreaID()))
-			{
-				if (etLoc.getText().toString().trim().equalsIgnoreCase(locObj.getLocation()))
-					etLoc.setText("");
-
-				locObj = null;
-			}
+			etLoc.setAdapter(new ArrayAdapter<Location>(this, R.layout.list_item, areaLocs));
+			etLoc.setOnItemClickListener(this);
+		} else {
+			etLoc.setAdapter((ArrayAdapter<Location>) null);
 		}
+		prevA = currA;
 
+		if (setSPGeoArea && (aID > 0))
+			SpinnerDataFactory.selectRecord(spGeoArea, aID);
+
+		if (isRoadtrip)
+			updateETGeoArea(-1, aID);
+
+		if ((locObj != null) && (aID != locObj.getAreaID()))
+		{
+			// clear locObj text from etLoc, unless text's been changed since selection
+			if (etLoc.getText().toString().trim().equalsIgnoreCase(locObj.getLocation()))
+				etLoc.setText("");
+
+			locObj = null;
+		}
 	}
 
 	/**

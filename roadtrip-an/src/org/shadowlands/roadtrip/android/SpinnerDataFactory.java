@@ -344,7 +344,12 @@ public class SpinnerDataFactory
 			this.itemID_default = itemID_default;
 		}
 
-		/** This stub ignores de-select, to keep the currently selected object. */
+		/**
+		 * This stub ignores de-select, instead keeps the currently selected object.
+		 * {@code onNothingSelected} can be called when the user scrolls through the spinner and
+		 * the selection disappears off screen, but in that case {@code onItemSelected} will be called
+		 * whey they touch a list item or the spinner loses focus.
+		 */
 		public void onNothingSelected(AdapterView<?> parentView) {}
 
 		// let subclass implement onItemSelected

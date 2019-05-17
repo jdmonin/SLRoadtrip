@@ -116,7 +116,9 @@ d577e7e	0.9.61	2017-04-02	Improvements and bugfixes since 0.9.60
 				- TStop: New optional field for total expenses paid at the stop
 	0.9.70			Being developed now; improvements and bugfixes since 0.9.61
 				SLRoadtrip android app:
-				- When starting a trip, can change vehicle's GeoArea
+				- When starting a trip:
+					- Can change vehicle's GeoArea
+					- Removed redundant "Continue From" row, to de-clutter layout
 				- If a backup fails validation and can't be restored, show which level it failed at
 				BookEdit desktop utility app:
 				- If validation fails, show technical details of failed data items in case they can be triaged or corrected

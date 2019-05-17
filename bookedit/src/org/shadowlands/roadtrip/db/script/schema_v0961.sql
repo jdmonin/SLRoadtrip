@@ -17,7 +17,7 @@ PRAGMA user_version = 0961;
 
 -- This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
 --
---  This file Copyright (C) 2010-2015,2017 Jeremy D Monin (jdmonin@nand.net)
+--  This file Copyright (C) 2010-2015,2017,2019 Jeremy D Monin (jdmonin@nand.net)
 --
 --  This program is free software: you can redistribute it and/or modify
 --  it under the terms of the GNU General Public License as published by
@@ -215,8 +215,9 @@ create table tstop ( _id integer PRIMARY KEY AUTOINCREMENT not null, tripid int 
 	--         during a roadtrip. The schema and Model didn't have that limitation.)
 	--         For stops geographically between geoareas (displayed as area "None")
 	--         like highway rest areas, a_id is null in the tstop and location.
-	-- via_route, via_id are the route from the previous tstop's location;
+	-- via_id is the route from the previous tstop's location; via_route is the obsolete free-text version of via_id;
 	--    they are ignored for the tstop which starts a trip. (via_id goes to the via_route table)
+	--    via_route will be null except for very early schema versions (before app v0.8.13).
 	-- comment is the user's optional comment text for this stop.
 	-- descr is null for all new rows (starting with app version 0.9.05), because the separate
 	--    location record (locid) stores the description.  Older data may use descr.

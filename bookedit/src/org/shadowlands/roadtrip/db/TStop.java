@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010-2017 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2017,2019 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -1020,6 +1020,7 @@ public class TStop extends RDBRecord
 
 	/**
 	 * Get the via route text, or null if unused.
+	 * Will be null except for very early schema versions:
 	 * Since v0.8.13 {@link #getVia_id()} should be used instead.
 	 * @see #getVia_id()
 	 * @see #readVia()

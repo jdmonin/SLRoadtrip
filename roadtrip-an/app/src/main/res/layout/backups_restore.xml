@@ -109,7 +109,7 @@
 	    android:layout_weight="1"
 	    android:onClick="onClick_BtnRestore" />
 	<Button android:id="@+id/backups_restore_btn_cancel"
-	    android:text="@android:R/string/cancel"
+	    android:text="@android:string/cancel"
 	    android:layout_width="fill_parent" 
 	    android:layout_height="fill_parent"
 	    android:layout_weight="1"

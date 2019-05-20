@@ -2,7 +2,7 @@
 <!--
  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
 
- This file Copyright (C) 2011,2014 Jeremy D Monin (jdmonin@nand.net)
+ This file Copyright (C) 2011,2014,2019 Jeremy D Monin (jdmonin@nand.net)
 
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
   xmlns:android="http://schemas.android.com/apk/res/android">
 <item android:id="@+id/menu_logbook_gas_otherv"
 	android:title="@string/other_vehicle"
-	android:icon="@android:R/drawable/ic_menu_set_as"
+	android:icon="@android:drawable/ic_menu_set_as"
 	android:showAsAction="ifRoom"
 	/>
 </menu>

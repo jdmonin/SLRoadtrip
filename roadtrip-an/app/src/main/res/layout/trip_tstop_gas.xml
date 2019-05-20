@@ -7,7 +7,7 @@
  this activity's numeric input fields use android:digits="0123456789,."
  per comments in http://code.google.com/p/android/issues/detail?id=2626 .
 
- This file Copyright (C) 2010-2012,2015 Jeremy D Monin (jdmonin@nand.net)
+ This file Copyright (C) 2010-2012,2015,2019 Jeremy D Monin (jdmonin@nand.net)
 
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
@@ -143,13 +143,13 @@
     android:layout_height="wrap_content"
     >
 	<Button android:id="@+id/trip_tstopgas_btn_enter"
-	    android:text="@android:R/string/ok"
+	    android:text="@android:string/ok"
 	    android:layout_width="fill_parent" 
 	    android:layout_height="fill_parent"
 	    android:layout_weight="1"
 	    android:onClick="onClick_BtnOK" />
 	<Button android:id="@+id/trip_tstopgas_btn_cancel"
-	    android:text="@android:R/string/cancel"
+	    android:text="@android:string/cancel"
 	    android:layout_width="fill_parent" 
 	    android:layout_height="fill_parent"
 	    android:layout_weight="1"

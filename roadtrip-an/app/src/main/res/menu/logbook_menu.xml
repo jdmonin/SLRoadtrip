@@ -2,7 +2,7 @@
 <!--
  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
 
- This file Copyright (C) 2011-2012,2014,2016 Jeremy D Monin (jdmonin@nand.net)
+ This file Copyright (C) 2011-2012,2014,2016,2019 Jeremy D Monin (jdmonin@nand.net)
 
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
@@ -23,20 +23,20 @@
   xmlns:android="http://schemas.android.com/apk/res/android">
 <item android:id="@+id/menu_logbook_recent_gas"
 	android:title="@string/logbook_show__recent_gas"
-	android:icon="@android:R/drawable/ic_menu_recent_history"
+	android:icon="@android:drawable/ic_menu_recent_history"
 	/>
 <item android:id="@+id/menu_logbook_filter_location"
 	android:title="@string/logbook_show__menu_location"
-	android:icon="@android:R/drawable/ic_menu_search"
+	android:icon="@android:drawable/ic_menu_search"
 	android:showAsAction="ifRoom"
 	/>
 <item android:id="@+id/menu_logbook_go_to_date"
 	android:title="@string/logbook_show__go_to_date"
-	android:icon="@android:R/drawable/ic_menu_month"
+	android:icon="@android:drawable/ic_menu_month"
 	/>
 <item android:id="@+id/menu_logbook_other_veh"
 	android:title="@string/logbook_show__other_vehicle"
-	android:icon="@android:R/drawable/ic_menu_set_as"
+	android:icon="@android:drawable/ic_menu_set_as"
 	android:showAsAction="ifRoom"
 	/>
 <item android:id="@+id/menu_logbook_search_vias"

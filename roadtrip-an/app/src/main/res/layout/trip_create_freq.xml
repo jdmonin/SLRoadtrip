@@ -2,7 +2,7 @@
 <!--
  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
 
- This file Copyright (C) 2010,2012 Jeremy D Monin (jdmonin@nand.net)
+ This file Copyright (C) 2010,2012,2019 Jeremy D Monin (jdmonin@nand.net)
 
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
@@ -112,7 +112,7 @@
 	        android:layout_width="fill_parent"
 	        android:layout_weight=".5"
 	        android:layout_height="wrap_content"
-	        android:text="@android:R/string/cancel"
+	        android:text="@android:string/cancel"
 	        android:onClick="onClick_BtnCancel" />
 	</LinearLayout>
 </LinearLayout></ScrollView>

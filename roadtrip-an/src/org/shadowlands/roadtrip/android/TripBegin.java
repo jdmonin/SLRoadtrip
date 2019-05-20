@@ -312,6 +312,30 @@ public class TripBegin extends Activity
 		odo = (OdometerNumberPicker) findViewById(R.id.trip_begin_odometer);
 		odo.setTenthsVisibility(false);
 		etLoc = (AutoCompleteTextView) findViewById(R.id.trip_begin_location);
+
+		// Because this is the first edittext in the layout, it will have focus when the activity starts.
+		// updateDriverVehTripTextAndButtons will have filled it in from locObj, with more characters than
+		// the threshold. Some Android versions will then "helpfully" show the autocomplete dropdown,
+		// which only obscures other parts of the activity. (Seen on android 4.1, 5.0)
+		// So, hide the dropdown when gaining focus if text contents are locObj:
+		// Doesn't always work, but should reduce frequency.
+		etLoc.setOnFocusChangeListener(new View.OnFocusChangeListener()
+		{
+			public void onFocusChange(View v, boolean hasFocus)
+			{
+				if (! hasFocus)
+					return;
+
+				if ((locObj != null) && etLoc.getText().toString().equals(locObj.toString()))
+				{
+					etLoc.postDelayed(new Runnable()
+					{
+						public void run() { etLoc.dismissDropDown(); }
+					}, 250);
+				}
+			}
+		});
+
 		if (isRoadtrip)
 			etGeoArea = (AutoCompleteTextView) findViewById(R.id.trip_begin_roadtrip_desti);
 		btnStartDate = (Button) findViewById(R.id.trip_begin_btn_start_date);
@@ -563,7 +587,13 @@ public class TripBegin extends Activity
 			}
 
 			if (startingPrevTStop != null)
+			{
 				etLoc.setText(startingPrevTStop.readLocationText());
+				etLoc.postDelayed(new Runnable()
+				{
+					public void run() { etLoc.dismissDropDown(); }
+				}, 250);
+			}
 
 			// How recent was that vehicle's most recent trip? (Historical Mode)
 			{

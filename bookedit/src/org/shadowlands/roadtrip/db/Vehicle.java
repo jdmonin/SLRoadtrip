@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010-2015,2017 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2015,2017,2019 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -108,6 +108,70 @@ public class Vehicle extends RDBRecord
      */
     public static final int FLAG_WITH_OTHER = 0x4;
 
+    // Defaults for currency/decimal fields:
+
+    /**
+     * Default value for {@code distance_storage} field: "MI" in DB
+     * @since 0.9.70
+     */
+    public static final String DISTANCE_STORAGE_DEFAULT = "MI";
+
+    /**
+     * Default value for {@code distance_storage} field: 'M' in object field
+     * @since 0.9.70
+     */
+    public static final char DISTANCE_STORAGE_DEFAULT_CHAR = 'M';
+
+    /**
+     * Default value for {@code expense_currency} field: "USD"
+     * @since 0.9.70
+     */
+    public static final String EXPENSE_CURRENCY_DEFAULT = "USD";
+
+    /**
+     * Default value for {@code expense_curr_sym} field: "$"
+     * @since 0.9.70
+     */
+    public static final String EXPENSE_CURR_SYM_DEFAULT = "$";
+
+    /**
+     * Default value for {@code expense_curr_deci} field: 2
+     * @since 0.9.70
+     */
+    public static final int EXPENSE_CURR_DECI_DEFAULT = 2;
+
+    /**
+     * Default value for {@code fuel_curr_deci} field: 3
+     * @since 0.9.70
+     */
+    public static final int FUEL_CURR_DECI_DEFAULT = 3;
+
+    /**
+     * Default value for {@code fuel_type} field: "G"
+     * @since 0.9.70
+     */
+    public static final char FUEL_TYPE_DEFAULT = 'G';
+
+    /**
+     * Default value for {@code fuel_qty_unit} field: "ga" in DB
+     * @since 0.9.70
+     */
+    public static final String FUEL_QTY_UNIT_DEFAULT = "ga";
+
+    /**
+     * Default value for {@code fuel_qty_unit} field: 'G' in object field
+     * @since 0.9.70
+     */
+    public static final char FUEL_QTY_UNIT_DEFAULT_CHAR = 'G';
+
+    /**
+     * Default value for {@code fuel_qty_deci} field: 3
+     * @since 0.9.70
+     */
+    public static final int FUEL_QTY_DECI_DEFAULT = 3;
+
+    // Per-record fields
+
     /** optional nickname or color */
     private String nickname;
 
@@ -140,29 +204,29 @@ public class Vehicle extends RDBRecord
     /** 0 for empty/unused */
     private int last_tripid;
 
-    /** 'M' for miles, 'K' for km */
-	public char distance_storage;
+	/** 'M' for miles, 'K' for km; DB field uses "MI" or "KM" */
+	public char distance_storage = DISTANCE_STORAGE_DEFAULT_CHAR;
 
 	/** 'USD', 'CAD', etc */
-	public String expense_currency;
+	public String expense_currency = EXPENSE_CURRENCY_DEFAULT;
 
 	/** '$', etc */
-	public String expense_curr_sym;
+	public String expense_curr_sym = EXPENSE_CURR_SYM_DEFAULT;
 
 	/** decimal digits for expenses, default 2; used in {@link TStopGas} */
-	public int expense_curr_deci;
+	public int expense_curr_deci = EXPENSE_CURR_DECI_DEFAULT;
 
 	/** decimal digits for fuel per-unit cost, default 3; used in {@link TStopGas} */
-	public int fuel_curr_deci;
+	public int fuel_curr_deci = FUEL_CURR_DECI_DEFAULT;
 
 	/** 'G' for gas, 'D' for diesel */
-	public char fuel_type;
+	public char fuel_type = FUEL_TYPE_DEFAULT;
 
-	/** 'G' for gallon, 'L' for liter */
-	public char fuel_qty_unit;
+	/** 'G' for gallon, 'L' for liter; DB field uses "ga" or "L" */
+	public char fuel_qty_unit = FUEL_QTY_UNIT_DEFAULT_CHAR;
 
 	/** decimal digits for fuel quantity, default 3; used in {@link TStopGas} */
-	public int fuel_qty_deci;
+	public int fuel_qty_deci = FUEL_QTY_DECI_DEFAULT;
 
 	/** license plate/tag, or null */
 	private String plate;
@@ -337,7 +401,7 @@ public class Vehicle extends RDBRecord
     	expense_curr_deci = Integer.parseInt(rec[14]);
     	fuel_curr_deci = Integer.parseInt(rec[15]);
     	fuel_type = rec[16].charAt(0);
-    	fuel_qty_unit = (rec[17].equals("GA") ? 'G' : 'L');
+    	fuel_qty_unit = (rec[17].equals("ga") ? 'G' : 'L');
     	fuel_qty_deci = Integer.parseInt(rec[18]);
     	comment = rec[19];
     	is_active = rec[20].equals("1");
@@ -472,12 +536,21 @@ public class Vehicle extends RDBRecord
     		  model, Integer.toString(year), dte_f, dte_t, vin,
     		  Integer.toString(odo_orig), Integer.toString(odo_curr), last_tid,
     		  // TODO construc/gui, not hardcoded, for these:  (also getters/setters/commit)
-    		  //    "distance_storage", "expense_currency", "expense_curr_sym", "expense_curr_deci", "fuel_curr_deci", "fuel_type", "fuel_qty_unit", "fuel_qty_deci"
-    		  "MI", "USD", "$", "2", "3", "G", "ga", "3",
+    		  //    "distance_storage", "expense_currency", "expense_curr_sym", "expense_curr_deci", "fuel_curr_deci",
+    		  //    "fuel_type", "fuel_qty_unit", "fuel_qty_deci"
+    		  DISTANCE_STORAGE_DEFAULT,  // "MI"
+    		  EXPENSE_CURRENCY_DEFAULT,  // "USD"
+    		  EXPENSE_CURR_SYM_DEFAULT,  // "$"
+    		  Integer.toString(EXPENSE_CURR_DECI_DEFAULT),  // "2"
+    		  Integer.toString(FUEL_CURR_DECI_DEFAULT), // "3"
+    		  Character.toString(FUEL_TYPE_DEFAULT),    // "G"
+    		  FUEL_QTY_UNIT_DEFAULT,     // "ga"
+    		  Integer.toString(FUEL_QTY_DECI_DEFAULT),  // "3"
     		  comment, (is_active ? "1" : "0"), dte_a, plate };
     	id = db.insert(TABNAME, FIELDS, fv, true);
-		dirty = false;
+    	dirty = false;
     	dbConn = db;
+
     	return id;
     }
 

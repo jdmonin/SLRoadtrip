@@ -162,7 +162,7 @@ bookedit's version is kept in org/shadowlands/roadtrip/bookedit/Main.java.
 More info about the SQLite versions and features available in Android is found
 by comparing the version numbers in http://www.sqlite.org/changes.html against
 those in http://stackoverflow.com/questions/2421189/version-of-sqlite-used-in-android
-As of June 2016, that table is summarized as:
+As of May 2019, that table is summarized as:
 	1.6 Cupcake, 2.1 Eclair:       3.5.9   2008-05-14
 	2.2 Froyo, 2.3 Gingerbread:    3.6.22  2010-01-06
 	3.0 Honeycomb, 4.0 ICS:        3.7.4   2010-12-08
@@ -170,6 +170,10 @@ As of June 2016, that table is summarized as:
 	5.0 Lollipop:                  3.8.4.3 2014-04-03
 	5.1 Lollipop:                  3.8.6   2014-08-15
 	6.0 Marshmallow:               3.8.10.2 2015-05-20
+	7.x Nougat:                    3.9.2   2015-11-02
+	8.0 Oreo:                      3.18.2  2017-06-17
+	8.1 Oreo:                      3.19.4 ~2017-08-18
+	9.0 Pie:                       3.22.0  2018-01-22
 	(dates from http://www.sqlite.org/changes.html)
 
 
@@ -204,8 +208,9 @@ Future plans / feature roadmap:
 
 After v1.0:
 - More logbook search options
-- Logbook viewer: Ability to correct typos (comments, location names, via routes, etc)
+- Logbook viewer: Ability to correct typos (location names, via routes, cost, etc)
 - General schema for new event types at stop (vehicle service, restaurant, movie, etc)
+- Edit list of vehicle makes, trip categories, GeoAreas, etc
 - "pass-through" TStop (rest area, toll, etc): Not a destination, just something on the way
 	At next tstop or end of trip, also write ViaRoutes from before this stop to the following one
 - Frequent Trips GUI to reduce per-trip data entry (to grocery store, to work, etc)

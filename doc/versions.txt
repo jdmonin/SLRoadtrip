@@ -123,6 +123,9 @@ d577e7e	0.9.61	2017-04-02	Improvements and bugfixes since 0.9.60
 				BookEdit desktop utility app:
 				- If validation fails, show technical details of failed data items in case they can be triaged or corrected
 				Database schema and model:
+				- Vehicle:
+					- To use a new vehicle immediately, give currency/unit fields their
+					  default values in object, not just in DB record
 				- RDBVerifier:
 					- Give details about failures, keep going up to 100 failures
 					- Also validate TStops' ViaRoute from/to locations

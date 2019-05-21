@@ -1,5 +1,5 @@
 # gitignores for roadtrip-an
-# This file Copyright (C) 2019 Jeremy D Monin (jdmonin@nand.net)
+# This file Copyright (C) 2019 Jeremy D Monin (jdmonin@nand.net). License: GPLv3
 
 # android studio / intellij idea
 .idea

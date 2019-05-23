@@ -29,11 +29,16 @@ updated to list the released version's release date and commit hash.
 
 2010-10-15
 
+- Android TripBegin: Optional Historical Mode, if previous trip was more than a few days ago
+- Bookedit viewer: Add vehicle dropdown
+- Add schema fields for vehicle distance/currency units/decimal places (US defaults)
+
 # 0.8.09
 
 2010-10-26
 
 - Location table, CURRENT_VEHICLE setting
+- Check settings at AndroidStartup, recover if missing
 
 # 0.8.12
 
@@ -67,9 +72,13 @@ updated to list the released version's release date and commit hash.
 - TripTStopEntry during trip: more lenient odometer checks
 - LogbookShow, bookedit: query and load trips a few weeks at a time
 
+# 0.9.06.1
+
 2011-02-19: 281a1fe/r25
 
 - TripTStopEntry: keep data when device rotates
+
+# 0.9.06.2
 
 2011-04-18: e70bca8/r64
 
@@ -80,6 +89,8 @@ Android improvements:
 - TripBegin: Fix exception when continue from previous location when odometer increases (Gap in vehicle history)
 - Add list of recent gas stops
 - Allow cancel current trip if no tstops yet
+
+# 0.9.07 betas (unreleased):
 
 2011-07-21: 5e8890c/r118
 

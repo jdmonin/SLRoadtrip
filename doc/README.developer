@@ -139,7 +139,7 @@ manually edit res/raw/gitversion.txt to contain the commit hash, then refresh
 that file in Eclipse. This is always done before releasing a version, so that
 the About box for the app in the APK will display the final build info.
 Never check in the updated gitversion.txt contents: the contents of
-gitversion.txt (or svnversion.txt) in the repo should always be "?".
+gitversion.txt in the repo should always be "?".
 
 In the bookedit source, the android directories are empty or missing.
 In the android source, the bookedit and jdbc directories are empty or missing.
@@ -197,7 +197,7 @@ In SQLite you can specify this with orderBy = "fieldname COLLATE NOCASE".
 
 Version history:
 
-See versions.txt for released versions. See doc/hist/*.sql for previous schema updates.
+See versions.md for released versions. See doc/hist/*.sql for previous schema updates.
 
 The project repo was migrated from subversion to git on 2015-05-03,
 for details see roadtrip-svn2git.sh comments.

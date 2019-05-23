@@ -31,32 +31,46 @@ The app uses newer features such as ActionBar if available.
 
 How to build:
 
-These instructions are for Eclipse; instructions for Android Studio are TBD.
+Most of these instructions are for Eclipse; full instructions for Android Studio are TBD soon.
+- The Android app is roadtrip-an, currently developed in Android Studio.
+- bookedit is the Java program for viewing SLRoadtrip backup files on your computer,
+  currently developed in Eclipse.
 
-You can use the standard Java Eclipse, although after installing that it can be
-useful to go to go to Add Software and download the Data Tools Platform from
-Java EE (J2EE) to use the data browser. To develop for Android, get the ADT
-plugin and use it to download the Android SDK and at least one android version's
-platform.  Currently SLRoadtrip's android project targets 3.0 (API level 11).
-
-Once your Eclipse is set up for Android, there are 2 projects to add to your
-workspace: bookedit is the Java program for viewing SLRoadtrip backup files
-on your computer, and roadtrip-an is the Android app.
-
-Make a local clone or fork of the SLRoadtrip git repo.  If you're starting from
+Start by making a local clone or fork of the SLRoadtrip git repo.  If you're starting from
 a previous released version (not the latest commit), you can start a new branch
 from the version's tag with:
 	git checkout -b branch_0941 release-0.9.41
 Otherwise just use:
 	git checkout master
 
+Quick instructions for Android Studio 3.4.1 (for Android app):
+- Import project (gradle)
+  - Browse to select the roadtrip-an directory within the SLRoadtrip repo
+  - Open
+- Build menu -> Make project
+  - Some android components or dependencies might automatically download
+  - Should successfully sync
+- Preferences -> editor -> code style -> line separator: unix (\n)
+- Start an emulator, then run "app" there
+  - You may need to download an android emulator image first;
+    Current minimum SDK version is very low: 8
+  - In a moment you should see the Shadowlands Roadtrip welcome screen
+  - Either start to enter some test data, or restore a backup you've sent into the emulator's Downloads folder
+  - Once a driver and vehicle are created or restored, the app will start up at its main menu
+
+Full instructions for Eclipse (for BookEdit utility):
+
+You can use the standard Java Eclipse, although after installing that it can be
+useful to go to go to Add Software and download the Data Tools Platform from
+Java EE (J2EE) to use the data browser.
+
 You'll probably also want to download a SQLite jdbc driver jar to use with bookedit.
 See https://bitbucket.org/xerial/sqlite-jdbc -> Downloads.
 
-In Eclipse we'll first add the bookedit project, which is simpler than roadtrip-an:
-- In the Eclipse menu, File -> New -> Project... -> Java -> From Exiting Ant Buildfile
+In Eclipse add the bookedit project:
+- File menu -> New -> Project... -> Java -> From Exiting Ant Buildfile
 - Ant buildfile: Within the checked-out copy from git, browse to build.xml in the bookedit folder
-- Project name: slroadtrip-bookedit [or another name if you prefer]
+- Project name: slroadtrip-bookedit  [or another name if you prefer]
 - Javac declaration: Hilight the sole javac task
 - Set this checkbox: Link to the buildfile in the file system
 - Click Finish
@@ -92,37 +106,6 @@ Copy the sqlite jar into the same folder as slroadtrip-bookedit.jar and
 rename it to sqlite-jdbc.jar (without any version number). At this point
 you can run slroadtrip-bookedit.jar and view db backup files.
 
-Now add the android project to your workspace:
-- In the Eclipse menu, File -> New -> Project...
-	Android -> Android project from existing code
-- Project Root Directory: Within the checked-out copy from git, browse to the
-  roadtrip-an folder which contains the AndroidManifest.xml and .project files
-- In the list of Projects to Import, roadtrip-an should appear with a checkmark
-- Don't check the "copy projects into workspace" checkbox
-- Click Finish
-
-This should add roadtrip-an to the workspace list of projects (Package Explorer).
-Right-click it there and go to its Properties.  Under Android, be sure to choose
-a Build Target from the platform versions you've downloaded, 3.0 (API level 11)
-or higher.  On OS X, please also check Project Properties -> Resource -> Text
-file encoding, which needs to be UTF-8 and not MacRoman or any other value.
-
-Go to the Project menu -> Build Project.  After the build, check for any errors
-in the Problems pane and red X icons in the Package Explorer. Typically there
-will be no errors.  Some errors can be resolved by right-clicking the project
-and choosing Android Tools -> Fix Project Properties.
-
-Before running roadtrip-an for the first time, create an android emulated device
-(AVD) if you don't already have one with version 3.0 (API level 11) or higher.
-
-To run roadtrip-an, start the emulator, then in Package Explorer right-click
-roadtrip-an and choose Run As -> Android Application.  This also adds
-"roadtrip-an" to your eclipse Run button dropdown.  In a moment you should
-see the Shadowlands Roadtrip welcome screen.  Exit that, or start to enter some
-test data or restore a backup you've sent into the emulator's Downloads folder.
-Once a driver and vehicle are created or restored, the app will start at its
-main menu.
-
 At this point you're ready to work on developing BookEdit or roadtrip-an.
 
 
@@ -135,9 +118,9 @@ database API so the android app and BookEdit (JDBC) can use, update, and upgrade
 the roadtrip database consistently.
 
 Android: If you want the commit hash to show in the About box: Before building,
-manually edit res/raw/gitversion.txt to contain the commit hash, then refresh
-that file in Eclipse. This is always done before releasing a version, so that
-the About box for the app in the APK will display the final build info.
+manually edit res/raw/gitversion.txt to contain the commit hash.
+This is always done before releasing a version, so that the About box for
+the app in the APK will display the final build info.
 Never check in the updated gitversion.txt contents: the contents of
 gitversion.txt in the repo should always be "?".
 

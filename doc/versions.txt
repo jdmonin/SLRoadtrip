@@ -114,7 +114,8 @@ d577e7e	0.9.61	2017-04-02	Improvements and bugfixes since 0.9.60
 				  not only those with TStops there
 				- Trip: New field so trips' starting location can be searchable
 				- TStop: New optional field for total expenses paid at the stop
-	0.9.70			Being developed now; improvements and bugfixes since 0.9.61
+
+e4bf4f5	0.9.70	2019-05-20	Improvements and bugfixes since 0.9.61
 				SLRoadtrip android app:
 				- When starting a trip:
 					- Can change vehicle's GeoArea
@@ -129,6 +130,7 @@ d577e7e	0.9.61	2017-04-02	Improvements and bugfixes since 0.9.60
 				- RDBVerifier:
 					- Give details about failures, keep going up to 100 failures
 					- Also validate TStops' ViaRoute from/to locations
+
 	0.9.80			Being developed now; improvements and bugfixes since 0.9.70
 				SLRoadtrip android app:
 				- Development: Convert project to Android Studio/Gradle from Eclipse ADT

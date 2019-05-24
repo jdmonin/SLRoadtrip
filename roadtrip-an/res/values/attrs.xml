@@ -22,7 +22,7 @@
 <resources>
 	<!-- 
 		rtr_theme_type: Useful for debugging what theme was chosen at runtime by Android.
-		See res/values*/themes.xml
+		See res/values/themes.xml, res-values-11/themes.xml
 
 		Example usage:
 		TypedValue outValue = new TypedValue();

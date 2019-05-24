@@ -26,30 +26,30 @@ import android.util.AttributeSet;
 import android.widget.NumberPicker;
 
 /**
- * Part of {@link OdometerNumberPicker}. Holds whole-number portion.
+ * Part of {@link OdometerNumberPicker}. Holds whole-number or tenths-digit portion.
  * Sole purpose is to have a public onSaveInstanceState and onRestoreInstanceState
- * (not protected) for OdometerNumberPicker can call.
+ * (not protected) for OdometerNumberPicker to call.
  *<P>
  * This is a top-level class, because otherwise the LayoutInflater and
  * class loader doesn't find it properly when setting up the Activity.
  */
-public class OdometerNumberPickerWhole
+public class OdometerNumberPickerStateful
 	extends NumberPicker
 {
 
-    public OdometerNumberPickerWhole(Context context) {
+    public OdometerNumberPickerStateful(Context context) {
         super(context);
     }
 
-    public OdometerNumberPickerWhole(Context context, AttributeSet attrs) {
+    public OdometerNumberPickerStateful(Context context, AttributeSet attrs) {
         super(context, attrs);
     }
 
-    public OdometerNumberPickerWhole(Context context, AttributeSet attrs, int defStyle) {
+    public OdometerNumberPickerStateful(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
     }
 
-    public OdometerNumberPickerWhole(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
+    public OdometerNumberPickerStateful(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
         this(context, attrs, defStyleAttr);  // TODO 4-param constructor added to superclass in API 21 (5.0)
     }
 

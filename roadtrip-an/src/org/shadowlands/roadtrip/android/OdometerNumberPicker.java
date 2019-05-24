@@ -53,10 +53,10 @@ public class OdometerNumberPicker
 	public static final int RANGE_MAX_WHOLE = 9999999;
 
     /** The integer part of the odometer */
-    private OdometerNumberPickerWhole mWholeNum;
+    private OdometerNumberPickerStateful mWholeNum;
 
     /** The tenths part of the odometer */
-    private OdometerNumberPickerTenths mTenths;
+    private OdometerNumberPickerStateful mTenths;
 
     /** when the user changes mWholeNum or mTenths, check this box. */
     private CheckBox checkOnChanges;
@@ -116,7 +116,7 @@ public class OdometerNumberPicker
 
         try
         {
-        	mWholeNum = (OdometerNumberPickerWhole) findViewById(R.id.org_shadowlands_rtr_odometer_wholenum);
+        	mWholeNum = (OdometerNumberPickerStateful) findViewById(R.id.org_shadowlands_rtr_odometer_wholenum);
         }
         catch (ClassCastException e)
         {
@@ -137,12 +137,14 @@ public class OdometerNumberPicker
 
         try
         {
-        	mTenths = (OdometerNumberPickerTenths) findViewById(R.id.org_shadowlands_rtr_odometer_tenths);
+        	mTenths = (OdometerNumberPickerStateful) findViewById(R.id.org_shadowlands_rtr_odometer_tenths);
         }
         catch (ClassCastException e) { }
         if (mTenths != null)
         {
-	        mTenths.setParentOdoPicker(this);
+	        mTenths.setMinValue(0);
+	    	mTenths.setMaxValue(9);
+	    	mTenths.setWrapSelectorWheel(true);
 	        mTenths.setValue(0);
 	        mTenths.setOnValueChangedListener(this);
         }
@@ -313,12 +315,10 @@ public class OdometerNumberPicker
     	{
 	    	if (relatedOdoOnChanges != null)
 	    	{
-	    		relatedOdoOnChanges.mTenths.setRelatedOdoPicker(null);
 	    		relatedOdoOnChanges.controllingRelatedOdoUntilChangedDirectly = null;
 	    	}
 
 	    	relatedOdoOnChanges = related;
-	    	relatedOdoOnChanges.mTenths.setRelatedOdoPicker(this);
 
 	    	if (relatedCB == null)
 	    		relatedOdoOnChanges.controllingRelatedOdoUntilChangedDirectly = this;
@@ -338,6 +338,10 @@ public class OdometerNumberPicker
      * Potentially check our related checkbox.
      * Potentially adjust related odometer, depending on related odo's checkbox.
      * (If related odo has no checkbox, always adjust it.)
+     *<P>
+     * While NumberPicker is being spun, this seems to be called for every change,
+     * not just at the end after spinning has stopped.
+     *
      * @see #setCheckboxOnChanges(CheckBox)
      * @see #setRelatedUncheckedOdoOnChanges(OdometerNumberPicker, CheckBox)
      */
@@ -351,6 +355,20 @@ public class OdometerNumberPicker
 			// user changed it directly here, so un-link that
 			controllingRelatedOdoUntilChangedDirectly.relatedOdoOnChanges = null;
 			controllingRelatedOdoUntilChangedDirectly = null;
+		}
+
+		// If tenths wraps around, change our whole too and maybe relatedOdoOnChanges.
+		// Because this is called during the spin, checking only for 0 -> 9 and 9 -> 0
+		// is good enough; don't also need to check 1 -> 9, 8 -> 1, etc.
+		if (picker == mTenths)
+		{
+			if (newVal == 0 && oldVal == 9) {
+				if (incrementWhole() && (relatedOdoOnChanges != null))
+					relatedOdoOnChanges.changeCurrentWhole(+1, true);
+			} else if (newVal == 9 && oldVal == 0) {
+				if (decrementWhole() && (relatedOdoOnChanges != null))
+					relatedOdoOnChanges.changeCurrentWhole(-1, true);
+			}
 		}
 
 		if ((relatedOdoOnChanges == null)

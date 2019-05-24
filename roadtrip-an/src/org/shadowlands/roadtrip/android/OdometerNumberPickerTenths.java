@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  Copyright (C) 2010-2012 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2012,2019 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -22,45 +22,71 @@ package org.shadowlands.roadtrip.android;
 import android.content.Context;
 import android.util.AttributeSet;
 
-import com.quietlycoding.android.picker.NumberPicker;
+import android.widget.NumberPicker;
 
 /**
  * Part of {@link OdometerNumberPicker}.
  * Holds tenths; when increment/decrement past 9/0, increment the whole one.
- * You must point this at the whole, by calling {@link #setMatchingWholePicker(NumberPicker)}.
+ * You must point this at the overall picker, by calling {@link #setParentOdoPicker(OdometerNumberPicker)}.
  *<P>
  * This is a top-level class, because otherwise the LayoutInflater and
  * class loader doesn't find it properly when setting up the Activity.
  */
-public class OdometerNumberPickerTenths extends NumberPicker
+public class OdometerNumberPickerTenths
+	extends NumberPicker implements NumberPicker.OnValueChangeListener
 {
-	/** Within a single {@link OdometerNumberPicker}, the whole-number part that matches this tenths odometer. */
-	private NumberPicker matchingWholePicker;
+	private static final int TENTHS_MIN = 0, TENTHS_MAX = 9;
+
+	/**
+	 * Within a single {@link OdometerNumberPicker}, the whole-number part that matches this tenths odometer.
+	 * Before v0.9.71, {@code matchingWholePicker} was instead used directly.
+	 * @since 0.9.71
+	 */
+	private OdometerNumberPicker parentOdoPicker;
 
 	/** Related {@link OdometerNumberPicker}, for changing its whole-number part. */
 	private OdometerNumberPicker relatedOdoPicker;
 
     public OdometerNumberPickerTenths(Context context) {
-        this(context, null, 0);
+        super(context);
+    	init();
     }
 
     public OdometerNumberPickerTenths(Context context, AttributeSet attrs) {
-        this(context, attrs, 0);
+        super(context, attrs);
+    	init();
     }
 
-    public OdometerNumberPickerTenths(Context context, AttributeSet attrs, int defStyle)
-    {
+    public OdometerNumberPickerTenths(Context context, AttributeSet attrs, int defStyle) {
     	super(context, attrs, defStyle);
-    	setRange(0, 9);
+    	init();
     }
 
     /**
+     * Handle common constructor init, after calling super.
+     * Unless each NumberPicker constructor calls its own super constructor, falls back to using wrong theme/style.
+     * @since 0.9.71
+     */
+    private void init() {
+    	setMinValue(TENTHS_MIN);
+    	setMaxValue(TENTHS_MAX);
+    	setWrapSelectorWheel(true);
+    	setOnValueChangedListener(this);
+    }
+
+    public OdometerNumberPickerTenths(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
+        this(context, attrs, defStyleAttr);  // TODO 4-param constructor added to superclass in API 21 (5.0)
+    }
+
+    /**
+     * Set this tenths picker's parent (with whole-number part and tenths part) odometer number picker.
      * Within a single {@link OdometerNumberPicker}, set the whole-number part that matches this tenths odometer.
      * When this tenths picker wraps around (0 to 9, or 9 to 0), increment or decrement the whole-number picker.
+     * @since 0.9.71
      */
-    public void setWholePicker(NumberPicker whole)
+    public void setParentOdoPicker(OdometerNumberPicker parent)
     {
-    	matchingWholePicker = whole;
+        parentOdoPicker = parent;
     }
 
     /**
@@ -80,26 +106,25 @@ public class OdometerNumberPickerTenths extends NumberPicker
      * If we wrap around the values, don't just go past the end,
      * also increment/decrement the related whole-number picker.
      */
-    protected void changeCurrent(int current)
+    public void onValueChange(NumberPicker self, final int oldValue, final int newValue)
     {
-    	if (matchingWholePicker != null) {
-            if (current > mEnd) {
+    	if (parentOdoPicker == null)
+    		return;
 
-            	if (! matchingWholePicker.increment())
+    	if (newValue == TENTHS_MIN && oldValue == TENTHS_MAX) {
+
+            	if (! parentOdoPicker.incrementWhole())
             		return;  // don't wrap us around
             	else if (relatedOdoPicker != null)
             		relatedOdoPicker.changeCurrentWhole(+1, true);
 
-            } else if (current < mStart) {
+            } else if (newValue == TENTHS_MAX && oldValue == TENTHS_MIN) {
 
-            	if (! matchingWholePicker.decrement())
+            	if (! parentOdoPicker.decrementWhole())
             		return;  // don't wrap us around
             	else if (relatedOdoPicker != null)
             		relatedOdoPicker.changeCurrentWhole(-1, true);
-
-            }
     	}
-        super.changeCurrent(current);
     }
 
 }

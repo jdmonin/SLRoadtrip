@@ -5,7 +5,7 @@
  Note that android:Theme.Light isn't guaranteed to be usable or consistent,
  depending on vendor skin, so we'll just go with the dark default theme on 2.x.
 
- This file Copyright (C) 2014 Jeremy D Monin (jdmonin@nand.net)
+ This file Copyright (C) 2014,2019 Jeremy D Monin (jdmonin@nand.net)
 
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
@@ -23,6 +23,7 @@
  -->
 <resources>
 	<style name="RTRTheme" parent="android:Theme">
+		<item name="rtr_theme_type">android2</item>
 		<!-- Currently no customizations -->
 	</style>
 </resources>

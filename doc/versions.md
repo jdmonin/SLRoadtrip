@@ -90,7 +90,7 @@ Android improvements:
 - Add list of recent gas stops
 - Allow cancel current trip if no tstops yet
 
-# 0.9.07 betas (unreleased):
+# 0.9.07 betas (unreleased)
 
 2011-07-21: 5e8890c/r118
 
@@ -153,11 +153,11 @@ First version released as an APK
 - LogbookShow add search for locations in geoarea "(none)"
 - Move DB validation to background task
 
-# 0.9.20b
+# 0.9.20b (beta)
 
 2013-01-15: 879acb3/r315
 
-Beta.
+Beta to distribute for testing.
 - Allow save without continuing from stop
 - At startup, button to restore backup
 - Schema: Vehicle +plate/tag#; trip +#passengers
@@ -187,7 +187,6 @@ Beta.
 
 2015-04-27: 06a4508/r428
 
-Minor improvements and bugfixes since 0.9.40:
 - Less clutter in vehicle dropdowns: Show only Active or Inactive vehicles, with "Other..." entry
   to switch, in Bookedit and in android Logbook and Recent Gas.
 - New Vehicle activity asks for GeoArea, instead of using the current vehicle's current area.

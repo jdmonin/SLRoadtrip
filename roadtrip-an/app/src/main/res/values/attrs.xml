@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
- values-v11/themes.xml: App theme when running on android 3.0 or newer.
+ values/attrs.xml: rtr_theme_type attribute, to look up currently-resolved theme from code.
 
- This file Copyright (C) 2014,2019 Jeremy D Monin (jdmonin@nand.net)
+ This file Copyright (C) 2019 Jeremy D Monin (jdmonin@nand.net)
 
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
@@ -20,8 +20,17 @@
 
  -->
 <resources>
-	<style name="RTRTheme" parent="android:Theme.Holo.Light">
-		<item name="rtr_theme_type">holo</item>
-		<!-- Currently no customizations -->
-	</style>
+	<!-- 
+		rtr_theme_type: Useful for debugging what theme was chosen at runtime by Android.
+		See res/values/themes.xml, res-values-11/themes.xml
+
+		Example usage:
+		TypedValue outValue = new TypedValue();
+		getTheme().resolveAttribute(R.attr.rtr_theme_type, outValue, true);
+		Log.i(TAG, "current theme: " + outValue.string);
+
+		Based on marmor ans 2012-09-04 to
+		https://stackoverflow.com/questions/7267852/android-how-to-obtain-the-resource-id-of-the-current-theme
+	 -->
+	<attr name="rtr_theme_type" format="string" />
 </resources>

@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010-2015 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2015,2019 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -21,8 +21,7 @@ package org.shadowlands.roadtrip.android;
 
 import org.shadowlands.roadtrip.R;
 
-import com.quietlycoding.android.picker.NumberPicker;
-import com.quietlycoding.android.picker.NumberPicker.OnChangedListener;
+import android.widget.NumberPicker;
 
 import android.content.Context;
 import android.os.Bundle;
@@ -45,23 +44,27 @@ import android.widget.LinearLayout;
  *
  * @author jdmonin
  */
-public class OdometerNumberPicker extends LinearLayout implements OnChangedListener
+public class OdometerNumberPicker
+	extends LinearLayout implements NumberPicker.OnValueChangeListener
 {
 	/**
 	 * Whole-number maximum value (not including 10ths).
 	 */
 	public static final int RANGE_MAX_WHOLE = 9999999;
 
-	/** The integer part of the odometer */
-	private NumberPicker mWholeNum;
+    /** The integer part of the odometer */
+    private OdometerNumberPickerStateful mWholeNum;
 
     /** The tenths part of the odometer */
-    private OdometerNumberPickerTenths mTenths;
+    private OdometerNumberPickerStateful mTenths;
 
     /** when the user changes mWholeNum or mTenths, check this box. */
     private CheckBox checkOnChanges;
 
-    /** if false, {@link #mTenths} has been hidden */
+    /**
+     * if false, {@link #mTenths} has been hidden.
+     * @see #setTenthsVisibility(boolean)
+     */
     private boolean tenthsVisible = true;
 
     /**
@@ -110,9 +113,10 @@ public class OdometerNumberPicker extends LinearLayout implements OnChangedListe
         // mHandler = new Handler();
         // InputFilter inputFilter = new NumberPickerInputFilter();
         // mNumberInputFilter = new NumberRangeKeyListener();
+
         try
         {
-        	mWholeNum = (NumberPicker) findViewById(R.id.org_shadowlands_rtr_odometer_wholenum);
+        	mWholeNum = (OdometerNumberPickerStateful) findViewById(R.id.org_shadowlands_rtr_odometer_wholenum);
         }
         catch (ClassCastException e)
         {
@@ -124,21 +128,25 @@ public class OdometerNumberPicker extends LinearLayout implements OnChangedListe
         if (mWholeNum != null)
         {
 	        // May be null in eclipse Layout Editor.
-	        mWholeNum.setRange(0, RANGE_MAX_WHOLE);  // expand the range
-	        mWholeNum.setCurrent(0);
-	        mWholeNum.setWraparound(false);
-	        mWholeNum.setOnChangeListener(this);
+        	mWholeNum.setMinValue(0);
+	        mWholeNum.setMaxValue(RANGE_MAX_WHOLE);  // expand the range
+	        mWholeNum.setWrapSelectorWheel(false);
+	        mWholeNum.setValue(0);
+	        mWholeNum.setOnValueChangedListener(this);
         }
+
         try
         {
-        	mTenths = (OdometerNumberPickerTenths) findViewById(R.id.org_shadowlands_rtr_odometer_tenths);
+        	mTenths = (OdometerNumberPickerStateful) findViewById(R.id.org_shadowlands_rtr_odometer_tenths);
         }
         catch (ClassCastException e) { }
         if (mTenths != null)
         {
-	        mTenths.setWholePicker(mWholeNum);
-	        mTenths.setCurrent(0);
-	        mTenths.setOnChangeListener(this);
+	        mTenths.setMinValue(0);
+	    	mTenths.setMaxValue(9);
+	    	mTenths.setWrapSelectorWheel(true);
+	        mTenths.setValue(0);
+	        mTenths.setOnValueChangedListener(this);
         }
 
         if (!isEnabled()) {
@@ -153,8 +161,8 @@ public class OdometerNumberPicker extends LinearLayout implements OnChangedListe
      */
     public int getCurrent10d()
     {
-    	int whole = mWholeNum.getCurrent();
-    	int tenths = mTenths.getCurrent();  // even if not tenthsVisible
+    	final int whole = mWholeNum.getValue(),
+    	          tenths = mTenths.getValue();  // even if not tenthsVisible
     	return (whole * 10) + tenths;
     }
 
@@ -176,10 +184,10 @@ public class OdometerNumberPicker extends LinearLayout implements OnChangedListe
     {
     	final int whole = (int) (newValue / 10);
     	if (setMinimumToo)
-    		mWholeNum.setRange(whole, RANGE_MAX_WHOLE);
-    	mWholeNum.setCurrent(whole);
+    		mWholeNum.setMinValue(whole);
+    	mWholeNum.setValue(whole);
     	final int tenths = (int) (newValue % 10);
-    	mTenths.setCurrent(tenths);
+    	mTenths.setValue(tenths);
     	if (tenthsCleared && (tenths != 0) && ! tenthsVisible)
     		tenthsCleared = false;
     }
@@ -221,10 +229,10 @@ public class OdometerNumberPicker extends LinearLayout implements OnChangedListe
     	if (onlyIfUnchecked && (checkOnChanges != null) && checkOnChanges.isChecked())
     		return;
 
-    	mWholeNum.setCurrent(mWholeNum.getCurrent() + wholeChange);
+    	mWholeNum.setValue(mWholeNum.getValue() + wholeChange);
     	if (! (tenthsVisible || tenthsCleared))
     	{
-    		mTenths.setCurrent(0);
+    		mTenths.setValue(0);
     		tenthsCleared = true;
     	}
     }
@@ -241,18 +249,52 @@ public class OdometerNumberPicker extends LinearLayout implements OnChangedListe
      */
     public void changeCurrentTenths(final int tenthsChange)
     {
-    	final int oldTenths = mTenths.getCurrent();
+    	final int oldTenths = mTenths.getValue();
     	final int newTenths = oldTenths + tenthsChange;
 
     	if ((newTenths >= 0) && (newTenths <= 9))
     	{
-    		mTenths.setCurrent(newTenths);
+    		mTenths.setValue(newTenths);
     	} else {
     		final int newEntire
-    		    = (mWholeNum.getCurrent() * 10)
+    		    = (mWholeNum.getValue() * 10)
     		    + oldTenths + tenthsChange;
     		setCurrent10d(newEntire, false);
     	}
+    }
+
+    /**
+     * If whole-part spinner is less than its maximum, increment.
+     * @return  True if could increment, false if was already at max
+     * @since 0.9.80
+     * @see #decrementWhole()
+     * @see #changeCurrentWhole(int, boolean)
+     */
+    public boolean incrementWhole()
+    {
+        final int curr = mWholeNum.getValue();
+        if (curr >= mWholeNum.getMaxValue())
+            return false;
+
+        mWholeNum.setValue(curr + 1);
+        return true;
+    }
+
+    /**
+     * If whole-part spinner is more than its maximum, decrement.
+     * @return  True if could decrement, false if was already at min
+     * @since 0.9.80
+     * @see #incrementWhole()
+     * @see #changeCurrentWhole(int, boolean)
+     */
+    public boolean decrementWhole()
+    {
+        final int curr = mWholeNum.getValue();
+        if (curr <= mWholeNum.getMinValue())
+            return false;
+
+        mWholeNum.setValue(curr - 1);
+        return true;
     }
 
     /**
@@ -273,12 +315,10 @@ public class OdometerNumberPicker extends LinearLayout implements OnChangedListe
     	{
 	    	if (relatedOdoOnChanges != null)
 	    	{
-	    		relatedOdoOnChanges.mTenths.setRelatedOdoPicker(null);
 	    		relatedOdoOnChanges.controllingRelatedOdoUntilChangedDirectly = null;
 	    	}
 
 	    	relatedOdoOnChanges = related;
-	    	relatedOdoOnChanges.mTenths.setRelatedOdoPicker(this);
 
 	    	if (relatedCB == null)
 	    		relatedOdoOnChanges.controllingRelatedOdoUntilChangedDirectly = this;
@@ -298,10 +338,14 @@ public class OdometerNumberPicker extends LinearLayout implements OnChangedListe
      * Potentially check our related checkbox.
      * Potentially adjust related odometer, depending on related odo's checkbox.
      * (If related odo has no checkbox, always adjust it.)
+     *<P>
+     * While NumberPicker is being spun, this seems to be called for every change,
+     * not just at the end after spinning has stopped.
+     *
      * @see #setCheckboxOnChanges(CheckBox)
      * @see #setRelatedUncheckedOdoOnChanges(OdometerNumberPicker, CheckBox)
      */
-	public void onChanged(NumberPicker picker, int oldVal, int newVal)
+	public void onValueChange(NumberPicker picker, int oldVal, int newVal)
 	{
 		if (checkOnChanges != null)
 			checkOnChanges.setChecked(true);
@@ -311,6 +355,20 @@ public class OdometerNumberPicker extends LinearLayout implements OnChangedListe
 			// user changed it directly here, so un-link that
 			controllingRelatedOdoUntilChangedDirectly.relatedOdoOnChanges = null;
 			controllingRelatedOdoUntilChangedDirectly = null;
+		}
+
+		// If tenths wraps around, change our whole too and maybe relatedOdoOnChanges.
+		// Because this is called during the spin, checking only for 0 -> 9 and 9 -> 0
+		// is good enough; don't also need to check 1 -> 9, 8 -> 1, etc.
+		if (picker == mTenths)
+		{
+			if (newVal == 0 && oldVal == 9) {
+				if (incrementWhole() && (relatedOdoOnChanges != null))
+					relatedOdoOnChanges.changeCurrentWhole(+1, true);
+			} else if (newVal == 9 && oldVal == 0) {
+				if (decrementWhole() && (relatedOdoOnChanges != null))
+					relatedOdoOnChanges.changeCurrentWhole(-1, true);
+			}
 		}
 
 		if ((relatedOdoOnChanges == null)
@@ -324,7 +382,7 @@ public class OdometerNumberPicker extends LinearLayout implements OnChangedListe
 			//   see getLowest javadoc for details.  The checks against 0 are because
 			//   getLowest() starts high and will already be the new value (1 or more), not 0.
 
-			final int lowest = mWholeNum.getLowest();
+			final int lowest = mWholeNum.getMinValue();
 			if (((newVal >= lowest) && ((oldVal == 0) || (oldVal >= lowest)))
 			    || ((newVal != 0) && (relatedOdoOnChanges.getCurrent10d() == 0)))
 				relatedOdoOnChanges.changeCurrentWhole(delta, false);
@@ -336,11 +394,13 @@ public class OdometerNumberPicker extends LinearLayout implements OnChangedListe
 	/**
 	 * Show or hide the tenths portion; will use {@link View#VISIBLE} or {@link View#GONE}.
 	 * Hiding the tenths keeps its value, but that value can't be changed by the user.
+	 * By default, tenths is visible.
 	 */
 	public void setTenthsVisibility(final boolean newVis)
 	{
 		if (tenthsVisible == newVis)
 			return;
+
 		tenthsVisible = newVis;
 		tenthsCleared = false;
 		final int vis = newVis ? View.VISIBLE : View.GONE;
@@ -363,8 +423,9 @@ public class OdometerNumberPicker extends LinearLayout implements OnChangedListe
 	/**
 	 * Save our state before an Android pause or stop;
 	 * to be called from a parent view's <tt>onSaveInstanceState</tt>.
-	 * @param outState  bundle to save into
-	 * @param prefix  unique prefix for bundle keys for this odo, or null
+	 * @param outState  bundle to save into; does nothing if null
+	 * @param prefix  unique prefix for bundle keys for this odo,
+	 *     if parent view has multiple odometers, or null
 	 * @see #onRestoreInstanceState(Bundle, String)
 	 */
 	public void onSaveInstanceState(Bundle outState, String prefix)
@@ -373,9 +434,10 @@ public class OdometerNumberPicker extends LinearLayout implements OnChangedListe
 			return;
 		if (prefix == null)
 			prefix = "";
+
     	Parcelable bWhole = mWholeNum.onSaveInstanceState();
     	outState.putParcelable(prefix+"OW", bWhole);
-    	outState.putInt(prefix+"OT", mTenths.getCurrent());
+    	outState.putInt(prefix+"OT", mTenths.getValue());
     	outState.putBoolean(prefix+"OV", tenthsVisible);
 	}
 
@@ -384,8 +446,9 @@ public class OdometerNumberPicker extends LinearLayout implements OnChangedListe
 	 * to be called from a parent view's <tt>onRestoreInstanceState</tt>.
 	 * Happens here (and not <tt>onCreate</tt>) to ensure the
 	 * initialization is complete before this method is called.
-	 * @param inState  bundle to restore from
-	 * @param prefix  unique prefix for bundle keys for this odo, or null
+	 * @param inState  bundle to restore from; does nothing if null
+	 * @param prefix  unique prefix for bundle keys for this odo,
+	 *     if parent view has multiple odometers, or null
 	 * @see #onSaveInstanceState(Bundle, String)
 	 */
 	public void onRestoreInstanceState(Bundle inState, String prefix)
@@ -394,9 +457,10 @@ public class OdometerNumberPicker extends LinearLayout implements OnChangedListe
 			return;
 		if (prefix == null)
 			prefix = "";
+
 		Parcelable bWhole = inState.getParcelable(prefix+"OW");
 		mWholeNum.onRestoreInstanceState(bWhole);
-		mTenths.setCurrent(inState.getInt(prefix+"OT"));
+		mTenths.setValue(inState.getInt(prefix+"OT"));
 		tenthsVisible = inState.getBoolean(prefix+"OV", true);
 	}
 

@@ -3,7 +3,7 @@
 <!--
  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
 
- This file Copyright (C) 2010,2012 Jeremy D Monin (jdmonin@nand.net)
+ This file Copyright (C) 2010,2012,2019 Jeremy D Monin (jdmonin@nand.net)
 
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
@@ -25,7 +25,7 @@
     android:layout_height="fill_parent" >
 
    <!-- wholenum must be wide enough for 6 or 7 digits  -->
-   <com.quietlycoding.android.picker.NumberPicker
+   <org.shadowlands.roadtrip.android.OdometerNumberPickerStateful
         android:id="@+id/org_shadowlands_rtr_odometer_wholenum"
         android:minWidth="120sp"
 	    android:layout_width="wrap_content" 
@@ -38,8 +38,10 @@
 	    android:text="."
 	    android:textStyle="bold"
 	    android:gravity="center"
+	    android:layout_marginLeft="3dp"
+	    android:layout_marginRight="3dp"
 	    />
-    <org.shadowlands.roadtrip.android.OdometerNumberPickerTenths
+    <org.shadowlands.roadtrip.android.OdometerNumberPickerStateful
         android:id="@+id/org_shadowlands_rtr_odometer_tenths"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content" />

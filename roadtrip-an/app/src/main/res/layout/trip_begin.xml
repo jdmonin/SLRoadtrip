@@ -107,34 +107,45 @@
 	    android:text="@string/starting_odometer"
 	    android:layout_width="wrap_content" 
 	    android:layout_height="wrap_content"
+	    android:layout_gravity="center_vertical"
 	    />
 	<org.shadowlands.roadtrip.android.OdometerNumberPicker
 	    android:id="@+id/trip_begin_odometer"
 	    android:layout_weight="1"
-		android:layout_width="0dp"
-		android:layout_height="wrap_content" />
+	    android:layout_marginLeft="6dp"
+	    android:layout_width="0dp"
+	    android:layout_height="wrap_content" />
 </LinearLayout>
-<!-- starting date,time -->
-<TextView
-    android:layout_width="fill_parent" 
-    android:layout_height="wrap_content" 
-    android:text="@string/starting_time"
-    />
+<!-- starting date, time; needs marginTop/marginBottom because of TimePicker's too-big padding -->
 <LinearLayout
     android:orientation="horizontal"
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
     >
-    <Button android:id="@+id/trip_begin_btn_start_date"
+    <RelativeLayout
         android:layout_width="wrap_content"
+        android:layout_height="fill_parent"
+	android:layout_gravity="center"
+        >
+        <Button android:id="@+id/trip_begin_btn_start_date"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:layout_centerVertical="true"
+            android:onClick="onClick_BtnStartDate" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentTop="true"
+            android:layout_marginTop="21dp"
+            android:text="@string/starting_time" />
+    </RelativeLayout>
+    <TimePicker android:id="@+id/trip_begin_start_time"
+        android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:gravity="center"
-        android:onClick="onClick_BtnStartDate" />
-	<TimePicker
-	    android:id="@+id/trip_begin_start_time"
-		android:layout_width="fill_parent"
-		android:layout_height="wrap_content" />
+        android:layout_marginTop="-6dp"
+        android:layout_marginBottom="-6dp" />
 </LinearLayout>
 <!-- Row for Passengers visible only if Settings.SHOW_TRIP_PAX -->
 <LinearLayout android:id="@+id/trip_begin_row_pax"

@@ -61,7 +61,6 @@
 <string name="current_driver">Current driver</string>
 <string name="current_driver_veh_not_found">Current driver/vehicle not found in db</string>
 <string name="current_odometer">Current\nodometer</string>
-<string name="current_total_odometer">Current\ntotal\nodometer</string>
 <string name="current_vehicle">Current vehicle</string>
 <string name="comment">Comment</string>
 <string name="continu">Continue</string>

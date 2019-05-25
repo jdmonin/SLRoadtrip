@@ -4,7 +4,7 @@
  Layout for stop during trip / resume trip / end trip; default title label is stop_during_a_trip.
  See TripTStopEntry class.
 
- This file Copyright (C) 2010-2012,2015,2017 Jeremy D Monin (jdmonin@nand.net)
+ This file Copyright (C) 2010-2012,2015,2017,2019 Jeremy D Monin (jdmonin@nand.net)
 
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
@@ -225,11 +225,13 @@
 	    android:paddingBottom="12sp"
 	    android:paddingTop="12sp"
 	    android:layout_width="wrap_content"
-	    android:layout_height="wrap_content" />
+	    android:layout_height="fill_parent"
+	    android:layout_gravity="center_vertical" />
 	<LinearLayout
 	    android:orientation="vertical"
 	    android:layout_width="wrap_content"
 	    android:layout_height="fill_parent"
+            android:gravity="center_vertical"
 	    android:padding="0dp">
 		<TextView
 		    android:layout_width="wrap_content"
@@ -263,11 +265,13 @@
 	    android:paddingBottom="12sp"
 	    android:paddingTop="12sp"
 	    android:layout_width="wrap_content"
-	    android:layout_height="wrap_content" />
+	    android:layout_height="fill_parent"
+	    android:layout_gravity="center_vertical" />
 	<LinearLayout
 	    android:orientation="vertical"
 	    android:layout_width="wrap_content"
 	    android:layout_height="fill_parent"
+	    android:gravity="center_vertical"
 	    android:padding="0dp">
 		<!-- "Current Total Odometer", or "Total Odometer" in View Previous TStop mode -->
 		<TextView android:id="@+id/trip_tstop_odo_total_calc_lbl"
@@ -367,7 +371,8 @@
 			android:layout_height="wrap_content"
 			android:layout_weight="1"
 			android:maxLength="2000"
-			android:minLines="2" />
+			android:minLines="2"
+			android:inputType="text" />
 	</TableRow>
 </TableLayout>
 <!-- View Previous TStop mode: Comment status flags (added, edited, etc) -->

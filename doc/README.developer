@@ -50,7 +50,13 @@ Quick instructions for Android Studio 3.4.1 (for Android app):
 - Build menu -> Make project
   - Some android components or dependencies might automatically download
   - Should successfully sync
-- Preferences -> editor -> code style -> line separator: unix (\n)
+- Preferences -> editor -> code style
+  - Scheme: Project
+  - Line separator: unix (\n)
+  -> Java, XML -> Tab size: 8
+  -> Other file types
+    - Tab size: 8
+    - [X] Use tab character
 - Start an emulator, then run "app" there
   - You may need to download an android emulator image first;
     current minimum SDK version is very low: 11 (3.0 Honeycomb)

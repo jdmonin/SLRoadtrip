@@ -40,6 +40,7 @@
 <!-- Stop-At Time and its checkbox, laid out like:
 		chkbox   label    time
 		date-btn         picker
+     Needs marginTop/marginBottom because of TimePicker's too-big padding.
      Hidden in View Previous TStop mode.
   -->
 <RelativeLayout android:id="@+id/trip_tstop_time_stop_row"
@@ -48,8 +49,9 @@
 	>
 	<CheckBox android:id="@+id/trip_tstop_time_stop_chk"
 		android:checked="true"
-		android:paddingBottom="12sp"
+		android:layout_marginTop="21dp"
 		android:paddingTop="0sp"
+		android:paddingBottom="12sp"
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content" />
 	<TextView android:id="@+id/trip_tstop_time_stop_label"
@@ -58,19 +60,20 @@
 		android:layout_height="wrap_content"
 		android:layout_toRightOf="@+id/trip_tstop_time_stop_chk"
 		android:layout_alignParentTop="true"
-		android:layout_gravity="right" />
+		android:layout_marginTop="21dp" />
 	<Button android:id="@+id/trip_tstop_btn_stop_date"
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
-		android:layout_below="@+id/trip_tstop_time_stop_chk"
-		android:layout_gravity="center"
+		android:layout_centerVertical="true"
 		android:gravity="center"
 		android:onClick="onClick_BtnStopDate" />
 	<TimePicker android:id="@+id/trip_tstop_time_stop"
-		android:layout_toRightOf="@+id/trip_tstop_time_stop_label"
+		android:layout_toRightOf="@+id/trip_tstop_btn_stop_date"
 		android:layout_alignParentTop="true"
 		android:layout_width="fill_parent"
-		android:layout_height="wrap_content" />
+		android:layout_height="wrap_content"
+		android:layout_marginTop="-6dp"
+		android:layout_marginBottom="-6dp" />
 </RelativeLayout>
 <!-- Table with 2 columns: Everything above odometers. Remember stretchColumns is 0-based. -->
 <TableLayout
@@ -313,8 +316,9 @@
 	>
 	<CheckBox android:id="@+id/trip_tstop_time_cont_chk"
 		android:checked="true"
-		android:paddingBottom="12sp"
+		android:layout_marginTop="21dp"
 		android:paddingTop="0sp"
+		android:paddingBottom="12sp"
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content" />
 	<TextView android:id="@+id/trip_tstop_time_cont_label"
@@ -323,19 +327,20 @@
 		android:layout_height="wrap_content"
 		android:layout_toRightOf="@+id/trip_tstop_time_cont_chk"
 		android:layout_alignParentTop="true"
-		android:layout_gravity="right" />
+		android:layout_marginTop="21dp" />
 	<Button android:id="@+id/trip_tstop_btn_cont_date"
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
-		android:layout_below="@+id/trip_tstop_time_cont_chk"
-		android:layout_gravity="center"
+		android:layout_centerVertical="true"
 		android:gravity="center"
 		android:onClick="onClick_BtnContDate" />
 	<TimePicker android:id="@+id/trip_tstop_time_cont"
-		android:layout_toRightOf="@+id/trip_tstop_time_cont_label"
+		android:layout_toRightOf="@+id/trip_tstop_btn_cont_date"
 		android:layout_alignParentTop="true"
 		android:layout_width="fill_parent"
-		android:layout_height="wrap_content" />
+		android:layout_height="wrap_content"
+		android:layout_marginTop="-6dp"
+		android:layout_marginBottom="-6dp" />
 </RelativeLayout>
 <!-- Table with 2 columns: Below continue-time -->
 <TableLayout

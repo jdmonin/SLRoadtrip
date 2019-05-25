@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010-2012,2014-2015,2017 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2012,2014-2015,2017,2019 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -298,6 +298,8 @@ public class Main extends Activity
 
 				aboutBuilder.setTitle(title);
 				dialog = aboutBuilder.create();
+				// override default 0 spacing between text and edge of dialog
+				((AlertDialog) dialog).setView(tv_about_text, 9, 9, 9, 9);
 			}
 			break;
 

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
- values/attrs.xml: rtr_theme_type attribute, to look up currently-resolved theme from code.
+ values/attrs.xml: attributes to set in themes.
 
  This file Copyright (C) 2019 Jeremy D Monin (jdmonin@nand.net)
 
@@ -20,7 +20,7 @@
 
  -->
 <resources>
-	<!-- 
+	<!--
 		rtr_theme_type: Useful for debugging what theme was chosen at runtime by Android.
 		See res/values/themes.xml, res-values-11/themes.xml
 
@@ -33,4 +33,15 @@
 		https://stackoverflow.com/questions/7267852/android-how-to-obtain-the-resource-id-of-the-current-theme
 	 -->
 	<attr name="rtr_theme_type" format="string" />
+
+	<!--
+		rtr_activity_padding: Standard padding for all activities' and dialogs' overall layouts.
+		By default it's 0 and everything looks too crowded at the edge of the screen.
+		See res/values/themes.xml, res-values-11/themes.xml
+
+		Example usage: (lightly edited because this is an xml comment)
+		LinearLayout android:padding="?rtr_activity_padding" ...
+	 -->
+	<attr name="rtr_activity_padding" format="dimension" />
+
 </resources>

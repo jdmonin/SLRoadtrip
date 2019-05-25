@@ -333,6 +333,6 @@ Being developed now; improvements and bugfixes since 0.9.70
 
 ## SLRoadtrip android app:
 - Development: Convert project to Android Studio/Gradle from Eclipse ADT
-
-
+- Add padding at screen edges for all activities, adjust odometer/time-picker spacing
+- Standardize odometer style to NumberPicker
 

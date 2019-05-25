@@ -25,6 +25,7 @@
     android:orientation="vertical"
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
+    android:padding="?rtr_activity_padding"
     >
 <!-- current driver and vehicle -->
 <TextView

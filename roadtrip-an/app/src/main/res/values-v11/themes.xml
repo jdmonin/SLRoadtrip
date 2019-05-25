@@ -22,6 +22,6 @@
 <resources>
 	<style name="RTRTheme" parent="android:Theme.Holo.Light">
 		<item name="rtr_theme_type">holo</item>
-		<!-- Currently no customizations -->
+		<item name="rtr_activity_padding">4sp</item>
 	</style>
 </resources>

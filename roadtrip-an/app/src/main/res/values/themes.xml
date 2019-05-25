@@ -24,6 +24,6 @@
 <resources>
 	<style name="RTRTheme" parent="android:Theme">
 		<item name="rtr_theme_type">android2</item>
-		<!-- Currently no customizations -->
+		<item name="rtr_activity_padding">4sp</item>
 	</style>
 </resources>

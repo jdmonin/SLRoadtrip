@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
  logbook_show_popup_date_veh.xml - LogbookShow activity's popup for going to date & vehicle.
+ (sw600dp: 7" tablet, android 3.2 (api 13) or newer)
 
  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
 
- Copyright (C) 2011 Jeremy D Monin (jdmonin@nand.net)
+ This file Copyright (C) 2011,2019 Jeremy D Monin (jdmonin@nand.net)
 
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
@@ -23,6 +24,7 @@
     android:orientation="vertical"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
+    android:padding="?rtr_activity_padding"
     >
     <DatePicker android:id="@+id/logbook_show_popup_date_picker"
 	    android:layout_width="fill_parent"

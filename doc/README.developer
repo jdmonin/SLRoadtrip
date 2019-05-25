@@ -14,6 +14,7 @@ Contents:
 - Before testing, reminder how to back up / export data
 - Coding style
 - Version history
+- Release testing / Android new-version testing
 - Future plans / feature roadmap
 - Other source included (libraries), and software licenses
 
@@ -190,6 +191,14 @@ See versions.md for released versions. See doc/hist/*.sql for previous schema up
 
 The project repo was migrated from subversion to git on 2015-05-03,
 for details see roadtrip-svn2git.sh comments.
+
+
+
+Release testing / Android new-version testing:
+
+See release-testing.md for the outline of things to cover.
+Used for release testing, and also for a new target API level
+or new android version on an emulator or device.
 
 
 

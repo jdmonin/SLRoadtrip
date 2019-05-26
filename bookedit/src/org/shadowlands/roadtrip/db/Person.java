@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010-2012,2014-2015 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2012,2014-2015,2019 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -35,61 +35,62 @@ public class Person extends RDBRecord
 		{ "is_driver", "name", "contact_uri", "is_active", "date_added", "comment", "_id" };
 	// If you add or change fields, remember to update initFields and other methods.
 
-    private boolean is_driver;
-    private boolean is_active;
-    private String name;
+	private boolean is_driver;
+	private boolean is_active;
+	private String name;
 
-    /**
-     * Date this person was added, or 0 if empty/null.
-     * @since 0.9.43
-     */
-    private int date_added;
+	/**
+	 * Date this person was added, or 0 if empty/null.
+	 * @since 0.9.43
+	 */
+	private int date_added;
 
-    /** contact info; may be null */
-    private String contact_uri;
-    /** comment; may be null */
-    private String comment;
+	/** contact info; may be null */
+	private String contact_uri;
 
-    /**
-     * Get the Persons (drivers or all) currently in the database.
-     * @param db  database connection
-     * @param driversOnly  Only drivers, not all Persons
-     * @return an array of Person objects from the database, ordered by name, or null if none
-     * @see #getMostRecent(RDBAdapter, boolean)
-     * @throws IllegalStateException if db not open
-     */
-    public static Person[] getAll(RDBAdapter db, final boolean driversOnly)
-	throws IllegalStateException
-    {
-	final Vector<String[]> names;
+	/** comment; may be null */
+	private String comment;
 
-	if (driversOnly)
-    	{
-    		String kf = "is_driver", kv = "1";
-    		names = db.getRows(TABNAME, kf, kv, FIELDS_AND_ID, "name COLLATE NOCASE", 0);
-    	} else {
-    		names = db.getRows(TABNAME, null, (String[]) null, FIELDS_AND_ID, "name COLLATE NOCASE", 0);
-    	}
-    	if (names == null)
-    		return null;
-
-    	final int L = names.size();
-    	Person[] rv = new Person[L];
-	try
+	/**
+	 * Get the Persons (drivers or all) currently in the database.
+	 * @param db  database connection
+	 * @param driversOnly  Only drivers, not all Persons
+	 * @return an array of Person objects from the database, ordered by name, or null if none
+	 * @see #getMostRecent(RDBAdapter, boolean)
+	 * @throws IllegalStateException if db not open
+	 */
+	public static Person[] getAll(RDBAdapter db, final boolean driversOnly)
+		throws IllegalStateException
 	{
-		for (int i = 0; i < L; ++i)
-			rv[i] = new Person(db, names.elementAt(i));
-	} catch (RDBKeyNotFoundException e) {
-		return null;  // catch is req'd but won't happen; record came from db.
-	}
+		final Vector<String[]> names;
 
-	return rv;
-    }
+		if (driversOnly)
+		{
+			String kf = "is_driver", kv = "1";
+			names = db.getRows(TABNAME, kf, kv, FIELDS_AND_ID, "name COLLATE NOCASE", 0);
+		} else {
+			names = db.getRows(TABNAME, null, (String[]) null, FIELDS_AND_ID, "name COLLATE NOCASE", 0);
+		}
+		if (names == null)
+			return null;
+
+		final int L = names.size();
+		Person[] rv = new Person[L];
+		try
+		{
+			for (int i = 0; i < L; ++i)
+				rv[i] = new Person(db, names.elementAt(i));
+		} catch (RDBKeyNotFoundException e) {
+			return null;  // catch is req'd but won't happen; record came from db.
+		}
+
+		return rv;
+	}
 
 	/**
 	 * Get the most recently entered Person (or driver) in the database.
 	 * @param db  database connection
-	 * @param driversOnly  Only drivers, not all Persons
+	 * @param driversOnly  If true search only drivers, not all Persons
 	 * @return The most recent person or driver, by {@code _id}, or null if none
 	 * @throws IllegalStateException if db not open
 	 * @since 0.9.40
@@ -111,70 +112,71 @@ public class Person extends RDBRecord
 		}
 	}
 
-    /**
-     * Retrieve an existing person, by id, from the database.
-     *
-     * @param db  db connection
-     * @param id  id field
-     * @throws IllegalStateException if db not open
-     * @throws RDBKeyNotFoundException if cannot retrieve this ID
-     */
-    public Person(RDBAdapter db, final int id)
-        throws IllegalStateException, RDBKeyNotFoundException
-    {
-    	super(db, id);
-    	String[] rec = db.getRow(TABNAME, id, FIELDS_AND_ID);
-    	if (rec == null)
-    		throw new RDBKeyNotFoundException(id);
+	/**
+	 * Retrieve an existing person, by id, from the database.
+	 *
+	 * @param db  db connection
+	 * @param id  id field
+	 * @throws IllegalStateException if db not open
+	 * @throws RDBKeyNotFoundException if cannot retrieve this ID
+	 */
+	public Person(RDBAdapter db, final int id)
+		throws IllegalStateException, RDBKeyNotFoundException
+	{
+		super(db, id);
+		String[] rec = db.getRow(TABNAME, id, FIELDS_AND_ID);
+		if (rec == null)
+			throw new RDBKeyNotFoundException(id);
 
-	initFields(rec);
-    }
+		initFields(rec);
+	}
 
-    /**
-     * Create a new person, but don't yet write to the database.
-     * When ready to write (after any changes you make to this object),
-     * call {@link #insert(RDBAdapter)}.
-     *<P>
-     * {@link #getDateAdded()}'s field will be set to the current time using {@link System#currentTimeMillis()}.
-     *
-     * @param name  Person's name; cannot be null
-     * @param isDriver  Driver, or only a friend or passenger?
-     * @param contactURI  Contact info, or null
-     * @param commment  Comment, or null
-     * @throws IllegalArgumentException  if name is null
-     */
-    public Person(String name, boolean isDriver, String contactURI, String comment)
-    {
-    	this(name, isDriver, true, contactURI, comment);
-    }
+	/**
+	 * Create a new person, but don't yet write to the database.
+	 * When ready to write (after any changes you make to this object),
+	 * call {@link #insert(RDBAdapter)}.
+	 *<P>
+	 * {@link #getDateAdded()}'s field will be set to the current time using {@link System#currentTimeMillis()}.
+	 *
+	 * @param name  Person's name; cannot be null
+	 * @param isDriver  Driver, or only a friend or passenger?
+	 * @param contactURI  Contact info, or null
+	 * @param commment  Comment, or null
+	 * @throws IllegalArgumentException  if name is null
+	 */
+	public Person(String name, boolean isDriver, String contactURI, String comment)
+	{
+		this(name, isDriver, true, contactURI, comment);
+	}
 
-    /**
-     * Create a new person, but don't yet write to the database.
-     * When ready to write (after any changes you make to this object),
-     * call {@link #insert(RDBAdapter)}.
-     *<P>
-     * {@link #getDateAdded()}'s field will be set to the current time using {@link System#currentTimeMillis()}.
-     *
-     * @param name  Person's name; cannot be null
-     * @param isDriver  Driver, or only a friend or passenger?
-     * @param isActive  Actively used?
-     * @param contactURI  Contact info, or null
-     * @param commment  Comment, or null
-     * @throws IllegalArgumentException  if name is null
-     */
-    public Person(String name, boolean isDriver, boolean isActive, String contactURI, String comment)
-    	throws IllegalArgumentException
-    {
-    	super();
-    	if (name == null)
-    		throw new IllegalArgumentException("null name");
-    	this.name = name;
-    	is_driver = isDriver;
-    	is_active = isActive;
-    	contact_uri = contactURI;
-    	this.comment = comment;
-	date_added = (int) (System.currentTimeMillis() / 1000L);
-    }
+	/**
+	 * Create a new person, but don't yet write to the database.
+	 * When ready to write (after any changes you make to this object),
+	 * call {@link #insert(RDBAdapter)}.
+	 *<P>
+	 * {@link #getDateAdded()}'s field will be set to the current time using {@link System#currentTimeMillis()}.
+	 *
+	 * @param name  Person's name; cannot be null
+	 * @param isDriver  Driver, or only a friend or passenger?
+	 * @param isActive  Actively used?
+	 * @param contactURI  Contact info, or null
+	 * @param commment  Comment, or null
+	 * @throws IllegalArgumentException  if name is null
+	 */
+	public Person(String name, boolean isDriver, boolean isActive, String contactURI, String comment)
+		throws IllegalArgumentException
+	{
+		super();
+		if (name == null)
+			throw new IllegalArgumentException("null name");
+
+		this.name = name;
+		is_driver = isDriver;
+		is_active = isActive;
+		contact_uri = contactURI;
+		this.comment = comment;
+		date_added = (int) (System.currentTimeMillis() / 1000L);
+	}
 
 	/**
 	 * Existing record: Fill our obj fields from db-record string contents.
@@ -203,6 +205,7 @@ public class Person extends RDBRecord
 	{
 		if (rec.length < 6)
 			throw new IllegalArgumentException("length < 6: " + rec.length);
+
 		is_driver = ("1".equals(rec[0]));
 		name = rec[1];
 		contact_uri = rec[2];
@@ -212,12 +215,12 @@ public class Person extends RDBRecord
 		comment = rec[5];
 	}
 
-    public boolean isDriver()
-    {
+	public boolean isDriver()
+	{
 		return is_driver;
 	}
 
-    public void setIsDriver(boolean isDriver)
+	public void setIsDriver(boolean isDriver)
 	{
 		if (isDriver == is_driver)
 			return;
@@ -225,12 +228,12 @@ public class Person extends RDBRecord
 		dirty = true;
 	}
 
-    public boolean isActive()
-    {
+	public boolean isActive()
+	{
 		return is_active;
 	}
 
-    public void setActive(boolean isActive)
+	public void setActive(boolean isActive)
 	{
 		if (isActive == is_active)
 			return;
@@ -248,7 +251,7 @@ public class Person extends RDBRecord
 		return date_added;
 	}
 
-    public String getName()
+	public String getName()
 	{
 		return name;
 	}
@@ -265,6 +268,7 @@ public class Person extends RDBRecord
 			throw new IllegalArgumentException("null name");
 		if (name.equals(this.name))
 			return;
+
 		this.name = name;
 		dirty = true;
 	}
@@ -292,39 +296,39 @@ public class Person extends RDBRecord
 	}
 
 	/**
-     * Insert a new record with the current field values of this object.
+	 * Insert a new record with the current field values of this object.
 	 * Clears dirty field; sets id and dbConn fields.
-     * @return new record's primary key (_id)
-     * @throws IllegalStateException if the insert fails
-     */
-    public int insert(RDBAdapter db)
-        throws IllegalStateException
-    {
-	final String dateAdded_str = (date_added != 0) ? Integer.toString(date_added) : null;
-    	String[] fv =
-            { is_driver ? "1" : "0", name, contact_uri, is_active ? "1" : "0", dateAdded_str, comment };
-    	id = db.insert(TABNAME, FIELDS, fv, true);
+	 * @return new record's primary key (_id)
+	 * @throws IllegalStateException if the insert fails
+	 */
+	public int insert(RDBAdapter db)
+		throws IllegalStateException
+	{
+		final String dateAdded_str = (date_added != 0) ? Integer.toString(date_added) : null;
+		String[] fv =
+			{ is_driver ? "1" : "0", name, contact_uri, is_active ? "1" : "0", dateAdded_str, comment };
+		id = db.insert(TABNAME, FIELDS, fv, true);
 		dirty = false;
-    	dbConn = db;
-    	return id;
-    }
+		dbConn = db;
+		return id;
+	}
 
-    /**
+	/**
 	 * Commit changes to an existing record.
 	 * Commits to the database; clears dirty field.
 	 *<P>
 	 * For new records, <b>do not call commit</b>:
 	 * use {@link #insert(RDBAdapter)} instead.
-     * @throws IllegalStateException if the update fails
-     * @throws NullPointerException if dbConn was null because
-     *     this is a new record, not an existing one
+	 * @throws IllegalStateException if the update fails
+	 * @throws NullPointerException if dbConn was null because
+	 *     this is a new record, not an existing one
 	 */
 	public void commit()
-        throws IllegalStateException, NullPointerException
+		throws IllegalStateException, NullPointerException
 	{
-	final String dateAdded_str = (date_added != 0) ? Integer.toString(date_added) : null;
-    	String[] fv =
-            { is_driver ? "1" : "0", name, contact_uri, is_active ? "1" : "0", dateAdded_str, comment };
+		final String dateAdded_str = (date_added != 0) ? Integer.toString(date_added) : null;
+		String[] fv =
+			{ is_driver ? "1" : "0", name, contact_uri, is_active ? "1" : "0", dateAdded_str, comment };
 		dbConn.update(TABNAME, id, FIELDS, fv);
 		dirty = false;
 	}
@@ -332,11 +336,11 @@ public class Person extends RDBRecord
 	/**
 	 * Delete an existing record.
 	 *
-     * @throws NullPointerException if dbConn was null because
-     *     this is a new record, not an existing one
+	 * @throws NullPointerException if dbConn was null because
+	 *     this is a new record, not an existing one
 	 */
 	public void delete()
-	    throws NullPointerException
+		throws NullPointerException
 	{
 		dbConn.delete(TABNAME, id);
 		deleteCleanup();

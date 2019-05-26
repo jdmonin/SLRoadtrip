@@ -31,7 +31,7 @@ import java.util.Vector;
  * Final is implied, but can't be declared because of strict java syntax checks.
  *<P>
  * To reduce the write frequency, please wait until the end of a trip
- * before you update the vehicle's current odometer and last trip ID,  
+ * before you update the vehicle's current odometer and last trip ID,
  * instead of each trip stop: Call {@link #setOdometerCurrentAndLastTrip(int, Trip, boolean)}
  * only when the trip ends.
  *<P>
@@ -52,157 +52,157 @@ import java.util.Vector;
  */
 public class Vehicle extends RDBRecord
 {
-    private static final String TABNAME = "vehicle";
+	private static final String TABNAME = "vehicle";
 
-    private static final String[] FIELDS =
-        { "nickname", "driverid", "makeid", "model", "year", "date_from", "date_to", "vin", "odo_orig", "odo_curr",
-	  "last_tripid", "distance_storage", "expense_currency", "expense_curr_sym", "expense_curr_deci", "fuel_curr_deci",
-	  "fuel_type", "fuel_qty_unit", "fuel_qty_deci", "comment", "is_active", "date_added", "plate" };
-    private static final String[] FIELDS_AND_ID =
-    	{ "nickname", "driverid", "makeid", "model", "year", "date_from", "date_to", "vin", "odo_orig", "odo_curr",
-	  "last_tripid", "distance_storage", "expense_currency", "expense_curr_sym", "expense_curr_deci", "fuel_curr_deci",
-	  "fuel_type", "fuel_qty_unit", "fuel_qty_deci", "comment", "is_active", "date_added", "plate", "_id" };
-    // If you add or change fields, remember to update initFields and other methods.
+	private static final String[] FIELDS =
+	    { "nickname", "driverid", "makeid", "model", "year", "date_from", "date_to", "vin", "odo_orig", "odo_curr",
+	      "last_tripid", "distance_storage", "expense_currency", "expense_curr_sym", "expense_curr_deci", "fuel_curr_deci",
+	      "fuel_type", "fuel_qty_unit", "fuel_qty_deci", "comment", "is_active", "date_added", "plate" };
+	private static final String[] FIELDS_AND_ID =
+	    { "nickname", "driverid", "makeid", "model", "year", "date_from", "date_to", "vin", "odo_orig", "odo_curr",
+	      "last_tripid", "distance_storage", "expense_currency", "expense_curr_sym", "expense_curr_deci", "fuel_curr_deci",
+	      "fuel_type", "fuel_qty_unit", "fuel_qty_deci", "comment", "is_active", "date_added", "plate", "_id" };
+	// If you add or change fields, remember to update initFields and other methods.
 
-    /**
-     * Basic fields only, for {@link #commit()}.  Omits:
-     * "distance_storage", "expense_currency", "expense_curr_sym", "expense_curr_deci", "fuel_curr_deci", "fuel_type", "fuel_qty_unit", "fuel_qty_deci"
-     */
-    private static final String[] FIELDS_BASIC =
-    	{ "nickname", "driverid", "makeid", "model", "year", "date_from", "date_to", "vin", "odo_orig", "odo_curr",
-	  "last_tripid", "comment", "is_active", "date_added", "plate" };
-    private static final String[] FIELDS_ODO_LASTTRIP =
-    	{ "odo_curr", "last_tripid" }; 
+	/**
+	 * Basic fields only, for {@link #commit()}.  Omits: "distance_storage", "expense_currency", "expense_curr_sym",
+	 * "expense_curr_deci", "fuel_curr_deci", "fuel_type", "fuel_qty_unit", "fuel_qty_deci"
+	 */
+	private static final String[] FIELDS_BASIC =
+	    { "nickname", "driverid", "makeid", "model", "year", "date_from", "date_to", "vin", "odo_orig", "odo_curr",
+	      "last_tripid", "comment", "is_active", "date_added", "plate" };
+	private static final String[] FIELDS_ODO_LASTTRIP =
+	    { "odo_curr", "last_tripid" };
 
-    /**
-     * Placeholder for "Other" entry in {@link #getAll(RDBAdapter, int)},
-     * to move from showing Active to Inactive ones.
-     *<P>
-     * <B>I18N:</B> The "Other..." text is kept in the Model field. To localize
-     * this and any other static text, call {@link RDBRecord#localizeStatics(String, String)}.
-     *
-     * @since 0.9.41
-     */
-    public static final Vehicle OTHER_VEHICLE = new Vehicle
-	(null, new Person("", true, null, null), -1, "Other...", 0, 0, 0, null, null, 0, 0, null);
+	/**
+	 * Placeholder for "Other" entry in {@link #getAll(RDBAdapter, int)},
+	 * to move from showing Active to Inactive ones.
+	 *<P>
+	 * <B>I18N:</B> The "Other..." text is kept in the Model field. To localize
+	 * this and any other static text, call {@link RDBRecord#localizeStatics(String, String)}.
+	 *
+	 * @since 0.9.41
+	 */
+	public static final Vehicle OTHER_VEHICLE = new Vehicle
+	    (null, new Person("", true, null, null), -1, "Other...", 0, 0, 0, null, null, 0, 0, null);
 
-    /**
-     * Flag to retrieve only active vehicles in {@link #getAll(RDBAdapter, int)}
-     * @since 0.9.41
-     * @see #FLAG_ONLY_INACTIVE
-     * @see #FLAG_WITH_OTHER
-     */
-    public static final int FLAG_ONLY_ACTIVE = 0x1;
+	/**
+	 * Flag to retrieve only active vehicles in {@link #getAll(RDBAdapter, int)}
+	 * @since 0.9.41
+	 * @see #FLAG_ONLY_INACTIVE
+	 * @see #FLAG_WITH_OTHER
+	 */
+	public static final int FLAG_ONLY_ACTIVE = 0x1;
 
-    /**
-     * Flag to retrieve only inactive vehicles in {@link #getAll(RDBAdapter, int)}.
-     * @since 0.9.41
-     * @see #FLAG_ONLY_ACTIVE
-     */
-    public static final int FLAG_ONLY_INACTIVE = 0x2;
+	/**
+	 * Flag to retrieve only inactive vehicles in {@link #getAll(RDBAdapter, int)}.
+	 * @since 0.9.41
+	 * @see #FLAG_ONLY_ACTIVE
+	 */
+	public static final int FLAG_ONLY_INACTIVE = 0x2;
 
-    /**
-     * Flag to add "Other..." ({@link #OTHER_VEHICLE} placeholder) to {@link #getAll(RDBAdapter, int)} results.
-     * @since 0.9.41
-     * @see #FLAG_ONLY_ACTIVE
-     */
-    public static final int FLAG_WITH_OTHER = 0x4;
+	/**
+	 * Flag to add "Other..." ({@link #OTHER_VEHICLE} placeholder) to {@link #getAll(RDBAdapter, int)} results.
+	 * @since 0.9.41
+	 * @see #FLAG_ONLY_ACTIVE
+	 */
+	public static final int FLAG_WITH_OTHER = 0x4;
 
-    // Defaults for currency/decimal fields:
+	// Defaults for currency/decimal fields:
 
-    /**
-     * Default value for {@code distance_storage} field: "MI" in DB
-     * @since 0.9.70
-     */
-    public static final String DISTANCE_STORAGE_DEFAULT = "MI";
+	/**
+	 * Default value for {@code distance_storage} field: "MI" in DB
+	 * @since 0.9.70
+	 */
+	public static final String DISTANCE_STORAGE_DEFAULT = "MI";
 
-    /**
-     * Default value for {@code distance_storage} field: 'M' in object field
-     * @since 0.9.70
-     */
-    public static final char DISTANCE_STORAGE_DEFAULT_CHAR = 'M';
+	/**
+	 * Default value for {@code distance_storage} field: 'M' in object field
+	 * @since 0.9.70
+	 */
+	public static final char DISTANCE_STORAGE_DEFAULT_CHAR = 'M';
 
-    /**
-     * Default value for {@code expense_currency} field: "USD"
-     * @since 0.9.70
-     */
-    public static final String EXPENSE_CURRENCY_DEFAULT = "USD";
+	/**
+	 * Default value for {@code expense_currency} field: "USD"
+	 * @since 0.9.70
+	 */
+	public static final String EXPENSE_CURRENCY_DEFAULT = "USD";
 
-    /**
-     * Default value for {@code expense_curr_sym} field: "$"
-     * @since 0.9.70
-     */
-    public static final String EXPENSE_CURR_SYM_DEFAULT = "$";
+	/**
+	 * Default value for {@code expense_curr_sym} field: "$"
+	 * @since 0.9.70
+	 */
+	public static final String EXPENSE_CURR_SYM_DEFAULT = "$";
 
-    /**
-     * Default value for {@code expense_curr_deci} field: 2
-     * @since 0.9.70
-     */
-    public static final int EXPENSE_CURR_DECI_DEFAULT = 2;
+	/**
+	 * Default value for {@code expense_curr_deci} field: 2
+	 * @since 0.9.70
+	 */
+	public static final int EXPENSE_CURR_DECI_DEFAULT = 2;
 
-    /**
-     * Default value for {@code fuel_curr_deci} field: 3
-     * @since 0.9.70
-     */
-    public static final int FUEL_CURR_DECI_DEFAULT = 3;
+	/**
+	 * Default value for {@code fuel_curr_deci} field: 3
+	 * @since 0.9.70
+	 */
+	public static final int FUEL_CURR_DECI_DEFAULT = 3;
 
-    /**
-     * Default value for {@code fuel_type} field: "G"
-     * @since 0.9.70
-     */
-    public static final char FUEL_TYPE_DEFAULT = 'G';
+	/**
+	 * Default value for {@code fuel_type} field: "G"
+	 * @since 0.9.70
+	 */
+	public static final char FUEL_TYPE_DEFAULT = 'G';
 
-    /**
-     * Default value for {@code fuel_qty_unit} field: "ga" in DB
-     * @since 0.9.70
-     */
-    public static final String FUEL_QTY_UNIT_DEFAULT = "ga";
+	/**
+	 * Default value for {@code fuel_qty_unit} field: "ga" in DB
+	 * @since 0.9.70
+	 */
+	public static final String FUEL_QTY_UNIT_DEFAULT = "ga";
 
-    /**
-     * Default value for {@code fuel_qty_unit} field: 'G' in object field
-     * @since 0.9.70
-     */
-    public static final char FUEL_QTY_UNIT_DEFAULT_CHAR = 'G';
+	/**
+	 * Default value for {@code fuel_qty_unit} field: 'G' in object field
+	 * @since 0.9.70
+	 */
+	public static final char FUEL_QTY_UNIT_DEFAULT_CHAR = 'G';
 
-    /**
-     * Default value for {@code fuel_qty_deci} field: 3
-     * @since 0.9.70
-     */
-    public static final int FUEL_QTY_DECI_DEFAULT = 3;
+	/**
+	 * Default value for {@code fuel_qty_deci} field: 3
+	 * @since 0.9.70
+	 */
+	public static final int FUEL_QTY_DECI_DEFAULT = 3;
 
-    // Per-record fields
+	// Per-record fields
 
-    /** optional nickname or color */
-    private String nickname;
+	/** optional nickname or color */
+	private String nickname;
 
-    /** usual driver, a {@link Person} ID */
-    private int driverid;
+	/** usual driver, a {@link Person} ID */
+	private int driverid;
 
-    /**
-     * {@link VehicleMake} ID.
-     * @see #makeidName
-     */
-    private int makeid;
+	/**
+	 * {@link VehicleMake} ID.
+	 * @see #makeidName
+	 */
+	private int makeid;
 
-    private String model;
+	private String model;
 
-    /** model year, or 0 if unknown */
-    private int year;
+	/** model year, or 0 if unknown */
+	private int year;
 
-    /**
-     * From/to dates of vehicle in use. see sql schema for date fmt.
-     * 0 is empty/unused (null).
-     * @see #date_added
-     */
-    private int date_from, date_to;
+	/**
+	 * From/to dates of vehicle in use. see sql schema for date fmt.
+	 * 0 is empty/unused (null).
+	 * @see #date_added
+	 */
+	private int date_from, date_to;
 
-    /** optional VIN */
-    private String vin;
+	/** optional VIN */
+	private String vin;
 
-    private int odo_orig, odo_curr;
+	private int odo_orig, odo_curr;
 
-    /** 0 for empty/unused */
-    private int last_tripid;
+	/** 0 for empty/unused */
+	private int last_tripid;
 
 	/** 'M' for miles, 'K' for km; DB field uses "MI" or "KM" */
 	public char distance_storage = DISTANCE_STORAGE_DEFAULT_CHAR;
@@ -249,65 +249,65 @@ public class Vehicle extends RDBRecord
 	private transient String makeidName;
 
 	/** null unless {@link #readAllTrips(boolean)} called */
-    private transient List<Trip> allTrips;
+	private transient List<Trip> allTrips;
 
-    /**
-     * Get the Vehicles currently in the database.
-     * @param db  database connection
-     * @param activeSubsetFlags  0 for all vehicles, or flags to include only active or inactive and optionally
-     *     include the {@link #OTHER_VEHICLE} placeholder at the end of the results.
-     *     The active/inactive flags are {@link #FLAG_ONLY_ACTIVE} and {@link #FLAG_ONLY_INACTIVE},
-     *     caller can set {@link #FLAG_WITH_OTHER} with either one.
-     * @return an array of Vehicle objects from the database, ordered by name, or null if none.
-     *     If {@link #FLAG_WITH_OTHER} is set and the database contains vehicles with the other status
-     *     (inactive/active), the {@link #OTHER_VEHICLE} placeholder will be at the end of the array.
-     * @throws IllegalArgumentException if conflicting flags {@link #FLAG_ONLY_ACTIVE} and {@link #FLAG_ONLY_INACTIVE}
-     *     are both set in {@code activeSubsetFlags}
-     * @throws IllegalStateException if db connection has been closed
-     * @see #getMostRecent(RDBAdapter)
-     */
-    public static Vehicle[] getAll(final RDBAdapter db, final int activeSubsetFlags)
-	throws IllegalArgumentException, IllegalStateException
-    {
-	if ((FLAG_ONLY_ACTIVE | FLAG_ONLY_INACTIVE) == (activeSubsetFlags & (FLAG_ONLY_ACTIVE | FLAG_ONLY_INACTIVE)))
-		throw new IllegalArgumentException();
+	/**
+	 * Get the Vehicles currently in the database.
+	 * @param db  database connection
+	 * @param activeSubsetFlags  0 for all vehicles, or flags to include only active or inactive and optionally
+	 *     include the {@link #OTHER_VEHICLE} placeholder at the end of the results.
+	 *     The active/inactive flags are {@link #FLAG_ONLY_ACTIVE} and {@link #FLAG_ONLY_INACTIVE},
+	 *     caller can set {@link #FLAG_WITH_OTHER} with either one.
+	 * @return an array of Vehicle objects from the database, ordered by name, or null if none.
+	 *     If {@link #FLAG_WITH_OTHER} is set and the database contains vehicles with the other status
+	 *     (inactive/active), the {@link #OTHER_VEHICLE} placeholder will be at the end of the array.
+	 * @throws IllegalArgumentException if conflicting flags {@link #FLAG_ONLY_ACTIVE} and {@link #FLAG_ONLY_INACTIVE}
+	 *     are both set in {@code activeSubsetFlags}
+	 * @throws IllegalStateException if db connection has been closed
+	 * @see #getMostRecent(RDBAdapter)
+	 */
+	public static Vehicle[] getAll(final RDBAdapter db, final int activeSubsetFlags)
+		throws IllegalArgumentException, IllegalStateException
+	{
+		if ((FLAG_ONLY_ACTIVE | FLAG_ONLY_INACTIVE) == (activeSubsetFlags & (FLAG_ONLY_ACTIVE | FLAG_ONLY_INACTIVE)))
+			throw new IllegalArgumentException();
 
-	final String activesSQL;
-	if (0 != (activeSubsetFlags & FLAG_ONLY_ACTIVE))
-		activesSQL = "is_active = 1";
-	else if (0 != (activeSubsetFlags & FLAG_ONLY_INACTIVE))
-		activesSQL = "is_active = 0";
-	else
-		activesSQL = null;
+		final String activesSQL;
+		if (0 != (activeSubsetFlags & FLAG_ONLY_ACTIVE))
+			activesSQL = "is_active = 1";
+		else if (0 != (activeSubsetFlags & FLAG_ONLY_INACTIVE))
+			activesSQL = "is_active = 0";
+		else
+			activesSQL = null;
 
-	Vector<String[]> ves = db.getRows
-		(TABNAME, activesSQL, (String[]) null, FIELDS_AND_ID, "nickname COLLATE NOCASE", 0);
-    	if (ves == null)
-    		return null;
+		Vector<String[]> ves = db.getRows
+			(TABNAME, activesSQL, (String[]) null, FIELDS_AND_ID, "nickname COLLATE NOCASE", 0);
+		if (ves == null)
+			return null;
 
-    	// If requested, see if any others exist (inactive/active)
-    	final boolean hasOthers;
-    	if ((activesSQL != null) && (0 != (activeSubsetFlags & FLAG_WITH_OTHER)))
-    	{
-    		final int otherValue = (0 != (activeSubsetFlags & FLAG_ONLY_ACTIVE)) ? 0 : 1;
-    		final int count = db.getCount(TABNAME, "is_active", otherValue);
-    		hasOthers = (count > 0);
-    	} else {
-    		hasOthers = false;
-    	}
+		// If requested, see if any others exist (inactive/active)
+		final boolean hasOthers;
+		if ((activesSQL != null) && (0 != (activeSubsetFlags & FLAG_WITH_OTHER)))
+		{
+			final int otherValue = (0 != (activeSubsetFlags & FLAG_ONLY_ACTIVE)) ? 0 : 1;
+			final int count = db.getCount(TABNAME, "is_active", otherValue);
+			hasOthers = (count > 0);
+		} else {
+			hasOthers = false;
+		}
 
-    	Vehicle[] rv = new Vehicle[ves.size() + ((hasOthers) ? 1 : 0)];
+		Vehicle[] rv = new Vehicle[ves.size() + ((hasOthers) ? 1 : 0)];
 		try {
-	    	for (int i = ves.size() - 1; i >= 0; --i)
+			for (int i = ves.size() - 1; i >= 0; --i)
 				rv[i] = new Vehicle(db, ves.elementAt(i));
-	    	if (hasOthers)
-	    		rv[rv.length - 1] = OTHER_VEHICLE;
+			if (hasOthers)
+				rv[rv.length - 1] = OTHER_VEHICLE;
 
-	    	return rv;
+			return rv;
 		} catch (RDBKeyNotFoundException e) {
 			return null;  // catch is req'd but won't happen; record came from db.
 		}
-    }
+	}
 
 	/**
 	 * Get the most recently added active vehicle in the database, if any.
@@ -334,258 +334,246 @@ public class Vehicle extends RDBRecord
 		}
 	}
 
-    /**
-     * Retrieve an existing vehicle, by id, from the database.
-     *
-     * @param db  db connection
-     * @param id  id field
-     * @throws IllegalStateException if db not open
-     * @throws RDBKeyNotFoundException if cannot retrieve this ID
-     */
-    public Vehicle(RDBAdapter db, final int id)
-        throws IllegalStateException, RDBKeyNotFoundException
-    {
-    	super(db, id);
-    	String[] rec = db.getRow(TABNAME, id, FIELDS);
-    	if (rec == null)
-    		throw new RDBKeyNotFoundException(id);
+	/**
+	 * Retrieve an existing vehicle, by id, from the database.
+	 *
+	 * @param db  db connection
+	 * @param id  id field
+	 * @throws IllegalStateException if db not open
+	 * @throws RDBKeyNotFoundException if cannot retrieve this ID
+	 */
+	public Vehicle(RDBAdapter db, final int id)
+		throws IllegalStateException, RDBKeyNotFoundException
+	{
+		super(db, id);
+		String[] rec = db.getRow(TABNAME, id, FIELDS);
+		if (rec == null)
+			throw new RDBKeyNotFoundException(id);
 
-    	initFields(rec);
-    }
+		initFields(rec);
+	}
 
-    /**
-     * Existing record: Fill our obj fields from db-record string contents.
-     * @param db  connection
-     * @param rec  Record's field contents, as returned by db.getRows({@link #FIELDS_AND_ID}); last element is _id
-     * @throws RDBKeyNotFoundException not thrown, but required due to super call
-     * @throws IllegalArgumentException if rec.length is too short
-     */
-    private Vehicle(RDBAdapter db, final String[] rec)
-        throws RDBKeyNotFoundException, IllegalArgumentException
-    {
-    	super(db, Integer.parseInt(rec[FIELDS.length]));
-    	initFields(rec);
-    }
+	/**
+	 * Existing record: Fill our obj fields from db-record string contents.
+	 * @param db  connection
+	 * @param rec  Record's field contents, as returned by db.getRows({@link #FIELDS_AND_ID}); last element is _id
+	 * @throws RDBKeyNotFoundException not thrown, but required due to super call
+	 * @throws IllegalArgumentException if rec.length is too short
+	 */
+	private Vehicle(RDBAdapter db, final String[] rec)
+		throws RDBKeyNotFoundException, IllegalArgumentException
+	{
+		super(db, Integer.parseInt(rec[FIELDS.length]));
+		initFields(rec);
+	}
 
-    /**
-     * Fill our obj fields from db-record string contents.
-     * {@code _id} is not filled here; the constructor has filled it already.
-     * @param rec  Record's field contents, as returned by db.getRow({@link #FIELDS})
-     *     or db.getRows({@link #FIELDS_AND_ID})
-     * @throws IllegalArgumentException if rec.length is too short
-     */
+	/**
+	 * Fill our obj fields from db-record string contents.
+	 * {@code _id} is not filled here; the constructor has filled it already.
+	 * @param rec  Record's field contents, as returned by db.getRow({@link #FIELDS})
+	 *     or db.getRows({@link #FIELDS_AND_ID})
+	 * @throws IllegalArgumentException if rec.length is too short
+	 */
 	private void initFields(final String[] rec)
-	    throws IllegalArgumentException
+		throws IllegalArgumentException
 	{
 		if (rec.length < 23)
 			throw new IllegalArgumentException("length < 23: " + rec.length);
 		nickname = rec[0];
-    	driverid = Integer.parseInt(rec[1]);  // FK
-    	makeid = Integer.parseInt(rec[2]);  // FK
-    	model = rec[3];
-    	year = Integer.parseInt(rec[4]);
-    	if (rec[5] != null)
-    		date_from = Integer.parseInt(rec[5]);
-    	if (rec[6] != null)
-    		date_to = Integer.parseInt(rec[6]);
-    	vin = rec[7];
-    	odo_orig = Integer.parseInt(rec[8]);
-    	odo_curr = Integer.parseInt(rec[9]);
-    	if (rec[10] != null)
-    		last_tripid = Integer.parseInt(rec[10]);
-    	else
-    		last_tripid = 0;
-    	distance_storage = (rec[11].equals("MI") ? 'M' : 'K');
-    	expense_currency = rec[12];
-    	expense_curr_sym = rec[13];
-    	expense_curr_deci = Integer.parseInt(rec[14]);
-    	fuel_curr_deci = Integer.parseInt(rec[15]);
-    	fuel_type = rec[16].charAt(0);
-    	fuel_qty_unit = (rec[17].equals("ga") ? 'G' : 'L');
-    	fuel_qty_deci = Integer.parseInt(rec[18]);
-    	comment = rec[19];
-    	is_active = rec[20].equals("1");
-	if (rec[21] != null)
-		date_added = Integer.parseInt(rec[21]);
-    	plate = rec[22];
+		driverid = Integer.parseInt(rec[1]);  // FK
+		makeid = Integer.parseInt(rec[2]);  // FK
+		model = rec[3];
+		year = Integer.parseInt(rec[4]);
+		if (rec[5] != null)
+			date_from = Integer.parseInt(rec[5]);
+		if (rec[6] != null)
+			date_to = Integer.parseInt(rec[6]);
+		vin = rec[7];
+		odo_orig = Integer.parseInt(rec[8]);
+		odo_curr = Integer.parseInt(rec[9]);
+		if (rec[10] != null)
+			last_tripid = Integer.parseInt(rec[10]);
+		else
+			last_tripid = 0;
+		distance_storage = (rec[11].equals("MI") ? 'M' : 'K');
+		expense_currency = rec[12];
+		expense_curr_sym = rec[13];
+		expense_curr_deci = Integer.parseInt(rec[14]);
+		fuel_curr_deci = Integer.parseInt(rec[15]);
+		fuel_type = rec[16].charAt(0);
+		fuel_qty_unit = (rec[17].equals("ga") ? 'G' : 'L');
+		fuel_qty_deci = Integer.parseInt(rec[18]);
+		comment = rec[19];
+		is_active = rec[20].equals("1");
+		if (rec[21] != null)
+			date_added = Integer.parseInt(rec[21]);
+		plate = rec[22];
 	}
 
-    /**
-     * Create a new vehicle, but don't yet write to the database.
-     * When ready to write (after any changes you make to this object),
-     * call {@link #insert(RDBAdapter)}.
-     *<P>
-     * <tt>last_tripid</tt> will be null, because this new vehicle
-     * hasn't been on any trips yet.
-     * <tt>is_active</tt> will be true.
-     * {@link #getDate_added()}'s field will be set to the current time using {@link System#currentTimeMillis()}.
-     *
-     * @param nickname  Nickname or color, or null; used in {@link #toString()}
-     * @param driver    Vehicle's usual driver or owner
-     * @param makeid    Vehicle make, an ID from {@link VehicleMake} table (unchecked foreign key)
-     * @param model     Model name; used in {@link #toString()}
-     * @param year      Model year, or 0 if unknown
-     * @param datefrom  Used starting at this date, or 0 if field is unused.
-     *     Date format is Unix-time integer, like {@link System#currentTimeMillis()} / 1000.
-     * @param dateto    Used until this date, or 0 if field is unused
-     * @param vin       VIN or null
-     * @param plate     License plate or tag, or null
-     * @param odo_orig  Original odometer, including tenths
-     * @param odo_curr  Current odometer, including tenths
-     * @param comment   Comment or null
-     * @throws IllegalArgumentException  if ! {@link Person#isDriver() driver.isDriver()}
-     */
-    public Vehicle
-        (String nickname, Person driver, int makeid, String model, int year,
-         int datefrom, int dateto, String vin, String plate, int odo_orig, int odo_curr, String comment)
-        throws IllegalArgumentException
-    {
-    	super();
-    	if (! driver.isDriver())
-    		throw new IllegalArgumentException("person.isDriver false: " + driver.getName());
+	/**
+	 * Create a new vehicle, but don't yet write to the database.
+	 * When ready to write (after any changes you make to this object),
+	 * call {@link #insert(RDBAdapter)}.
+	 *<P>
+	 * <tt>last_tripid</tt> will be null, because this new vehicle
+	 * hasn't been on any trips yet.
+	 * <tt>is_active</tt> will be true.
+	 * {@link #getDate_added()}'s field will be set to the current time using {@link System#currentTimeMillis()}.
+	 *
+	 * @param nickname  Nickname or color, or null; used in {@link #toString()}
+	 * @param driver    Vehicle's usual driver or owner
+	 * @param makeid    Vehicle make, an ID from {@link VehicleMake} table (unchecked foreign key)
+	 * @param model     Model name; used in {@link #toString()}
+	 * @param year      Model year, or 0 if unknown
+	 * @param datefrom  Used starting at this date, or 0 if field is unused.
+	 *     Date format is Unix-time integer, like {@link System#currentTimeMillis()} / 1000.
+	 * @param dateto    Used until this date, or 0 if field is unused
+	 * @param vin       VIN or null
+	 * @param plate     License plate or tag, or null
+	 * @param odo_orig  Original odometer, including tenths
+	 * @param odo_curr  Current odometer, including tenths
+	 * @param comment   Comment or null
+	 * @throws IllegalArgumentException  if ! {@link Person#isDriver() driver.isDriver()}
+	 */
+	public Vehicle
+		(String nickname, Person driver, int makeid, String model, int year,
+		 int datefrom, int dateto, String vin, String plate, int odo_orig, int odo_curr, String comment)
+		throws IllegalArgumentException
+	{
+		super();
+		if (! driver.isDriver())
+			throw new IllegalArgumentException("person.isDriver false: " + driver.getName());
 
-    	this.nickname = nickname;
-    	driverid = driver.getID();
-    	this.makeid = makeid;  // FK
-    	this.model = model;
-    	this.year = year;
-    	date_from = datefrom;    	
-    	date_to = dateto;
-    	this.vin = vin;
-    	this.plate = plate;
-    	this.odo_orig = odo_orig;
-    	this.odo_curr = odo_curr;
-    	last_tripid = 0;
-    	this.comment = comment;
-    	this.is_active = true;
-	date_added = (int) (System.currentTimeMillis() / 1000L);
-    }
-
-    /**
-     * Retrieve all Trips for this Vehicle.
-     * Cached after the first read, even if <tt>alsoTStops</tt> is different on the next call.
-     * @param alsoTStops  If true, call {@link Trip#readAllTStops()} for each trip found
-     * @return  ordered list of trips (sorted by time_start), or null if none
-     * @throws IllegalStateException if the db connection is closed
-     * @see Trip#tripsForVehicle(RDBAdapter, Vehicle, int, int, boolean, boolean, boolean)
-     */
-    public List<Trip> readAllTrips(final boolean alsoTStops)
-        throws IllegalStateException
-    {
-    	if (allTrips == null)
-    	{
-	    	if (dbConn == null)
-	    		throw new IllegalStateException("dbConn null");
-	    	allTrips = Trip.tripsForVehicle(dbConn, this, alsoTStops);
-    	}
-    	return allTrips;
-    }
-
-    /**
-     * Retrieve the most recent time of a trip or tstop for this Vehicle.
-     * If the vehicle is currently on a trip, pass that current trip as <tt>tr</tt>.
-     * Assumes no current TStop, because you could use that TStop's time instead.
-     * @param tr  The vehicle's current trip, if one is in progress, or null.
-     *          tr's dbConn should be valid (not closed).
-     * @return the time, or 0 if no completed trips for this vehicle
-     * @throws IllegalStateException if the db connection is closed
-     */
-    public int readLatestTime(Trip tr)
-        throws IllegalStateException
-    {
-    	if (tr == null)
-    	{
-    		if (last_tripid == 0)
-    			return 0;
-    		try
-    		{
-    			tr = new Trip(dbConn, last_tripid);
-    		} catch (RDBKeyNotFoundException e) {
-    			return 0;
-    		}
-    	}
-    	return tr.readLatestTime();
-    }
+		this.nickname = nickname;
+		driverid = driver.getID();
+		this.makeid = makeid;  // FK
+		this.model = model;
+		this.year = year;
+		date_from = datefrom;
+		date_to = dateto;
+		this.vin = vin;
+		this.plate = plate;
+		this.odo_orig = odo_orig;
+		this.odo_curr = odo_curr;
+		last_tripid = 0;
+		this.comment = comment;
+		this.is_active = true;
+		date_added = (int) (System.currentTimeMillis() / 1000L);
+	}
 
 	/**
-     * Insert a new Vehicle record with the current field values of this object.
+	 * Retrieve all Trips for this Vehicle.
+	 * Cached after the first read, even if <tt>alsoTStops</tt> is different on the next call.
+	 * @param alsoTStops  If true, call {@link Trip#readAllTStops()} for each trip found
+	 * @return  ordered list of trips (sorted by time_start), or null if none
+	 * @throws IllegalStateException if the db connection is closed
+	 * @see Trip#tripsForVehicle(RDBAdapter, Vehicle, int, int, boolean, boolean, boolean)
+	 */
+	public List<Trip> readAllTrips(final boolean alsoTStops)
+		throws IllegalStateException
+	{
+		if (allTrips == null)
+		{
+			if (dbConn == null)
+				throw new IllegalStateException("dbConn null");
+			allTrips = Trip.tripsForVehicle(dbConn, this, alsoTStops);
+		}
+
+		return allTrips;
+	}
+
+	/**
+	 * Retrieve the most recent time of a trip or tstop for this Vehicle.
+	 * If the vehicle is currently on a trip, pass that current trip as <tt>tr</tt>.
+	 * Assumes no current TStop, because you could use that TStop's time instead.
+	 * @param tr  The vehicle's current trip, if one is in progress, or null.
+	 *          tr's dbConn should be valid (not closed).
+	 * @return the time, or 0 if no completed trips for this vehicle
+	 * @throws IllegalStateException if the db connection is closed
+	 */
+	public int readLatestTime(Trip tr)
+		throws IllegalStateException
+	{
+		if (tr == null)
+		{
+			if (last_tripid == 0)
+				return 0;
+
+			try
+			{
+				tr = new Trip(dbConn, last_tripid);
+			} catch (RDBKeyNotFoundException e) {
+				return 0;
+			}
+		}
+
+		return tr.readLatestTime();
+	}
+
+	/**
+	 * Insert a new Vehicle record with the current field values of this object.
 	 * Clears dirty field; sets id and dbConn fields.
-     * @return new record's primary key (_id)
-     * @throws IllegalStateException if the insert fails
-     */
-    public int insert(RDBAdapter db)
-        throws IllegalStateException
-    {
-    	String dte_f, dte_t, last_tid;
-	final String dte_a = (date_added != 0) ? Integer.toString(date_added) : null;
-    	if (date_from != 0)
-    		dte_f = Integer.toString(date_from);
-    	else
-    		dte_f = null;
-    	if (date_to != 0)
-    		dte_t = Integer.toString(date_to);
-    	else
-    		dte_t = null;
-    	if (last_tripid != 0)
-    		last_tid = Integer.toString(last_tripid);
-    	else
-    		last_tid = null;
+	 * @return new record's primary key (_id)
+	 * @throws IllegalStateException if the insert fails
+	 */
+	public int insert(RDBAdapter db)
+		throws IllegalStateException
+	{
+		String dte_f, dte_t, last_tid;
+		final String dte_a = (date_added != 0) ? Integer.toString(date_added) : null;
+		dte_f = (date_from != 0) ? Integer.toString(date_from) : null;
+		dte_t = (date_to != 0) ? Integer.toString(date_to) : null;
+		last_tid = (last_tripid != 0) ? Integer.toString(last_tripid) : null;
 
-    	String[] fv =
-            { nickname, Integer.toString(driverid), Integer.toString(makeid),
-    		  model, Integer.toString(year), dte_f, dte_t, vin,
-    		  Integer.toString(odo_orig), Integer.toString(odo_curr), last_tid,
-    		  // TODO construc/gui, not hardcoded, for these:  (also getters/setters/commit)
-    		  //    "distance_storage", "expense_currency", "expense_curr_sym", "expense_curr_deci", "fuel_curr_deci",
-    		  //    "fuel_type", "fuel_qty_unit", "fuel_qty_deci"
-    		  DISTANCE_STORAGE_DEFAULT,  // "MI"
-    		  EXPENSE_CURRENCY_DEFAULT,  // "USD"
-    		  EXPENSE_CURR_SYM_DEFAULT,  // "$"
-    		  Integer.toString(EXPENSE_CURR_DECI_DEFAULT),  // "2"
-    		  Integer.toString(FUEL_CURR_DECI_DEFAULT), // "3"
-    		  Character.toString(FUEL_TYPE_DEFAULT),    // "G"
-    		  FUEL_QTY_UNIT_DEFAULT,     // "ga"
-    		  Integer.toString(FUEL_QTY_DECI_DEFAULT),  // "3"
-    		  comment, (is_active ? "1" : "0"), dte_a, plate };
-    	id = db.insert(TABNAME, FIELDS, fv, true);
-    	dirty = false;
-    	dbConn = db;
+		String[] fv =
+		    { nickname, Integer.toString(driverid), Integer.toString(makeid),
+		      model, Integer.toString(year), dte_f, dte_t, vin,
+		      Integer.toString(odo_orig), Integer.toString(odo_curr), last_tid,
+		      // TODO construc/gui, not hardcoded, for these:  (also getters/setters/commit)
+		      //    "distance_storage", "expense_currency", "expense_curr_sym", "expense_curr_deci", "fuel_curr_deci",
+		      //    "fuel_type", "fuel_qty_unit", "fuel_qty_deci"
+		      DISTANCE_STORAGE_DEFAULT,  // "MI"
+		      EXPENSE_CURRENCY_DEFAULT,  // "USD"
+		      EXPENSE_CURR_SYM_DEFAULT,  // "$"
+		      Integer.toString(EXPENSE_CURR_DECI_DEFAULT),  // "2"
+		      Integer.toString(FUEL_CURR_DECI_DEFAULT), // "3"
+		      Character.toString(FUEL_TYPE_DEFAULT),    // "G"
+		      FUEL_QTY_UNIT_DEFAULT,     // "ga"
+		      Integer.toString(FUEL_QTY_DECI_DEFAULT),  // "3"
+		      comment, (is_active ? "1" : "0"), dte_a, plate
+		    };
+		id = db.insert(TABNAME, FIELDS, fv, true);
+		dirty = false;
+		dbConn = db;
 
-    	return id;
-    }
+		return id;
+	}
 
-    /**
+	/**
 	 * Commit changes to an existing Vehicle record.
 	 * Commits to the database; clears dirty field.
 	 *<P>
 	 * For new records, <b>do not call commit</b>:
 	 * use {@link #insert(RDBAdapter)} instead.
-     * @throws IllegalStateException if the update fails
-     * @throws NullPointerException if dbConn was null because
-     *     this is a new record, not an existing one
+	 * @throws IllegalStateException if the update fails
+	 * @throws NullPointerException if dbConn was null because
+	 *     this is a new record, not an existing one
 	 */
 	public void commit()
-        throws IllegalStateException, NullPointerException
+		throws IllegalStateException, NullPointerException
 	{
-    	String dte_f, dte_t, l_tripid;
-	final String dte_a = (date_added != 0) ? Integer.toString(date_added) : null;
-    	if (date_from != 0)
-    		dte_f = Integer.toString(date_from);
-    	else
-    		dte_f = null;
-    	if (date_to != 0)
-    		dte_t = Integer.toString(date_to);
-    	else
-    		dte_t = null;
-    	if (last_tripid != 0)
-    		l_tripid = Integer.toString(last_tripid);
-    	else
-    		l_tripid = null;
-    	String[] fv =
-            { nickname, Integer.toString(driverid), Integer.toString(makeid),
-    		  model, Integer.toString(year), dte_f, dte_t, vin,
-    		  Integer.toString(odo_orig), Integer.toString(odo_curr), l_tripid,
-    		  comment, (is_active ? "1" : "0"), dte_a, plate };
+		String dte_f, dte_t, l_tripid;
+		final String dte_a = (date_added != 0) ? Integer.toString(date_added) : null;
+		dte_f = (date_from != 0) ? Integer.toString(date_from) : null;
+		dte_t = (date_to != 0) ? Integer.toString(date_to) :  null;
+		l_tripid = (last_tripid != 0) ? Integer.toString(last_tripid) : null;
+		String[] fv =
+		    {
+			nickname, Integer.toString(driverid), Integer.toString(makeid),
+			model, Integer.toString(year), dte_f, dte_t, vin,
+			Integer.toString(odo_orig), Integer.toString(odo_curr), l_tripid,
+			comment, (is_active ? "1" : "0"), dte_a, plate
+		    };
 		dbConn.update(TABNAME, id, FIELDS_BASIC, fv);
 		dirty = false;
 	}
@@ -613,7 +601,7 @@ public class Vehicle extends RDBRecord
 	 * @throws NullPointerException  if {@code driver} is null
 	 */
 	public void setDriverID(Person driver)
-	    throws IllegalArgumentException, NullPointerException
+		throws IllegalArgumentException, NullPointerException
 	{
 		if (! driver.isDriver())
 			throw new IllegalArgumentException("person.isDriver false: " + driver.getName());
@@ -762,7 +750,7 @@ public class Vehicle extends RDBRecord
 		} catch (RDBKeyNotFoundException e) {
 			return null;
 		}
-		
+
 		return (tr.getOdo_end() == 0) ? tr : null;
 	}
 
@@ -807,15 +795,14 @@ public class Vehicle extends RDBRecord
 		dirty = true;
 	}
 
-    public boolean isActive()
-    {
+	public boolean isActive() {
 		return is_active;
 	}
 
-    public void setActive(final boolean isActive)
-	{
+	public void setActive(final boolean isActive) {
 		if (isActive == is_active)
 			return;
+
 		is_active = isActive;
 		dirty = true;
 	}
@@ -881,6 +868,7 @@ public class Vehicle extends RDBRecord
 
 		if (sb.length() == 0)
 			sb.append("(Vehicle, all fields empty)");  // fallback, GUI enforces fields; can skip I18N
+
 		return sb.toString();
 	}
 
@@ -892,7 +880,7 @@ public class Vehicle extends RDBRecord
 	 *     this is a new record, not an existing one
 	 */
 	public void delete()
-	    throws NullPointerException
+		throws NullPointerException
 	{
 		VehSettings.deleteAll(dbConn, this);  // remove related records before Vehicle
 		dbConn.delete(TABNAME, id);

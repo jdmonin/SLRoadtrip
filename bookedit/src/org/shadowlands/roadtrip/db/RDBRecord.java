@@ -31,7 +31,7 @@ package org.shadowlands.roadtrip.db;
  *      then call {@link #commit()}.
  * <LI> For searches and queries, most subclasses support one or more
  *      static methods which return several objects, or {@code null} if none match.
- * An example might be: <BR> 
+ * An example might be: <BR>
  * <tt>static Vector&lt;ClassName> getAll({@link RDBAdapter}, <em>criteria</em>)</tt>
  * <BR>
  *  or: <BR>
@@ -44,7 +44,7 @@ package org.shadowlands.roadtrip.db;
  * If your records will appear in output to the user (GUI or text),
  * don't forget to override <tt>toString()</tt>.
  *
- * @author JM 
+ * @author jdmonin
  */
 public abstract class RDBRecord
 {
@@ -107,6 +107,7 @@ public abstract class RDBRecord
 	{
 		if (db == null)
 			throw new IllegalArgumentException("db null");
+
 		dbConn = db;
 		this.id = id;
 		dirty = false;
@@ -138,12 +139,13 @@ public abstract class RDBRecord
 	 * @throws IllegalArgumentException if new <tt>id</tt> is -1, or <tt>db</tt> null
 	 */
 	protected void isCleanFromDB(RDBAdapter db, final int id)
-	    throws IllegalStateException, IllegalArgumentException
+		throws IllegalStateException, IllegalArgumentException
 	{
 		if (this.id != -1)
 			throw new IllegalStateException("old id was not -1");
 		if ((id == -1) || (db == null))
 			throw new IllegalArgumentException("bad new id or db conn");
+
 		this.id = id;
 		dbConn = db;
 		dirty = false;
@@ -154,10 +156,10 @@ public abstract class RDBRecord
 	 * Clears dirty field; sets id and dbConn fields.
 	 * @param db connection to use
 	 * @return id field of newly created record
-     * @throws IllegalStateException if the insert fails
+	 * @throws IllegalStateException if the insert fails
 	 */
 	public abstract int insert(RDBAdapter db)
-        throws IllegalStateException;
+		throws IllegalStateException;
 
 	/**
 	 * Commit changes to an existing record.
@@ -165,28 +167,28 @@ public abstract class RDBRecord
 	 *<P>
 	 * For new records, <b>do not call commit</b>:
 	 * use {@link #insert(RDBAdapter)} instead.
-     * @throws IllegalStateException if the update fails
-     * @throws NullPointerException if dbConn was null because
-     *     this is a new record, not an existing one
+	 * @throws IllegalStateException if the update fails
+	 * @throws NullPointerException if dbConn was null because
+	 *     this is a new record, not an existing one
 	 */
 	public abstract void commit()
-        throws IllegalStateException, NullPointerException;
+		throws IllegalStateException, NullPointerException;
 
 	/**
 	 * Delete an existing record.
 	 * After your subclass deletes it at the database level, please call
 	 * {@link #deleteCleanup()} to clear common fields.
 	 *
-     * @throws NullPointerException if dbConn was null because
-     *     this is a new record, not an existing one
-     * @throws UnsupportedOperationException if this table doesn't
-     *     allow deletion. Some tables never allow it, some tables
-     *     only allow deletion if the row isn't referenced by other tables.
-     *     If this exception may be thrown, this must be explained
-     *     in the javadoc for that table object's delete method.
+	 * @throws NullPointerException if dbConn was null because
+	 *     this is a new record, not an existing one
+	 * @throws UnsupportedOperationException if this table doesn't
+	 *     allow deletion. Some tables never allow it, some tables
+	 *     only allow deletion if the row isn't referenced by other tables.
+	 *     If this exception may be thrown, this must be explained
+	 *     in the javadoc for that table object's delete method.
 	 */
 	public abstract void delete()
-	    throws NullPointerException, UnsupportedOperationException;
+		throws NullPointerException, UnsupportedOperationException;
 
 	/**
 	 * Convenience method for your subclass {@link #delete()} to call.

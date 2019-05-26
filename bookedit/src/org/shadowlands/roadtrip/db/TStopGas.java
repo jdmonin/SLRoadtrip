@@ -391,7 +391,7 @@ public class TStopGas extends RDBRecord
 	 * contents/order as {@link #FIELDS} or {@link #FIELDS_AND_ID}.
 	 * @param withID  For insert, also include the current ID (from {@link #FIELDS_AND_ID}};
 	 *                  the ID is the same as our TStop's ID.
-	 * @return field contents, ready for db update via insert() or commit() 
+	 * @return field contents, ready for db update via insert() or commit()
 	 */
 	private String[] buildInsertUpdate(final boolean withID)
 	{

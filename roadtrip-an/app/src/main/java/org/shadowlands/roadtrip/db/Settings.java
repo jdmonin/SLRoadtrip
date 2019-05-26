@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010-2015 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2015,2019 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -90,24 +90,24 @@ public class Settings extends RDBRecord
 	private static final String[] VALFIELDS_AND_ID = { VALFIELD_STR, VALFIELD_INT, "_id" };
 
 	/** Setting name (key) */
-    private String sfield;
+	private String sfield;
 
-    /** String value, or null */
-    private String svalue;
+	/** String value, or null */
+	private String svalue;
 
-    /** Int value, ignored unless svalue null */
-    private int ivalue;
+	/** Int value, ignored unless svalue null */
+	private int ivalue;
 
-    /**
-     * Check existence of a Setting from the database.
-     * @param db  connection to use
-     * @param settname field to retrieve
-     * @return whether this setting exists in the database
-     * @throws NullPointerException if db null
-     */
-    public static boolean exists(RDBAdapter db, final String settname)
-    	throws NullPointerException
-    {
+	/**
+	 * Check existence of a Setting from the database.
+	 * @param db  connection to use
+	 * @param settname field to retrieve
+	 * @return whether this setting exists in the database
+	 * @throws NullPointerException if db null
+	 */
+	public static boolean exists(RDBAdapter db, final String settname)
+		throws NullPointerException
+	{
 		try
 		{
 			String[] fv = db.getRow(TABNAME, KEYFIELD, settname, VALFIELDS);
@@ -115,45 +115,45 @@ public class Settings extends RDBRecord
 		} catch (Exception e) {
 			return false;
 		}
-    }
-
-    /**
-     * Create or update a Setting in the database.
-     * If the Setting already exists with a string (not int) value,
-     * that string value will be cleared to null.
-     *
-     * @param db  connection to use
-     * @param settname field to create or update
-     * @param ivalue  int value to set
-     * @throws IllegalArgumentException if db null
-     * @throws IllegalStateException if db not open
-     * @see #setBoolean(RDBAdapter, String, boolean)
-     */
-    public static void insertOrUpdate(RDBAdapter db, final String settname, final int ivalue)
-    	throws IllegalArgumentException, IllegalStateException
-	{
-    	insertOrUpdate(db, settname, ivalue, null);
 	}
 
-    /**
-     * Create or update a Setting in the database.
-     * If the Setting already exists with an int (not string) value,
-     * that int value will be cleared to 0.
-     *
-     * @param db  connection to use
-     * @param settname field to create or update
-     * @param svalue  string value to set; "" will be stored as null.
-     * @throws IllegalArgumentException if db null
-     * @throws IllegalStateException if db not open
-     * @see #setBoolean(RDBAdapter, String, boolean)
-     */
-    public static void insertOrUpdate(RDBAdapter db, final String settname, final String svalue)
-    	throws IllegalArgumentException, IllegalStateException
+	/**
+	 * Create or update a Setting in the database.
+	 * If the Setting already exists with a string (not int) value,
+	 * that string value will be cleared to null.
+	 *
+	 * @param db  connection to use
+	 * @param settname field to create or update
+	 * @param ivalue  int value to set
+	 * @throws IllegalArgumentException if db null
+	 * @throws IllegalStateException if db not open
+	 * @see #setBoolean(RDBAdapter, String, boolean)
+	 */
+	public static void insertOrUpdate(RDBAdapter db, final String settname, final int ivalue)
+		throws IllegalArgumentException, IllegalStateException
 	{
-    	insertOrUpdate(db, settname, 0, svalue);
+		insertOrUpdate(db, settname, ivalue, null);
 	}
 
-    private static void insertOrUpdate(RDBAdapter db, final String settname, final int ivalue, String svalue)
+	/**
+	 * Create or update a Setting in the database.
+	 * If the Setting already exists with an int (not string) value,
+	 * that int value will be cleared to 0.
+	 *
+	 * @param db  connection to use
+	 * @param settname field to create or update
+	 * @param svalue  string value to set; "" will be stored as null.
+	 * @throws IllegalArgumentException if db null
+	 * @throws IllegalStateException if db not open
+	 * @see #setBoolean(RDBAdapter, String, boolean)
+	 */
+	public static void insertOrUpdate(RDBAdapter db, final String settname, final String svalue)
+		throws IllegalArgumentException, IllegalStateException
+	{
+		insertOrUpdate(db, settname, 0, svalue);
+	}
+
+	private static void insertOrUpdate(RDBAdapter db, final String settname, final int ivalue, String svalue)
 		throws IllegalArgumentException, IllegalStateException
 	{
 		Settings s = null;
@@ -179,36 +179,36 @@ public class Settings extends RDBRecord
 		}
 	}
 
-    /**
-     * Clear this setting's value, if it exists in the database.
-     * If not, do nothing (don't create the setting).
-     * The string value will become null, and the int value 0.
-     *
-     * @param db  connection to use
-     * @param settname field to create or update
-     * @throws IllegalArgumentException if db null
-     * @throws IllegalStateException if db not open
-     * @see #clearIfExists(RDBAdapter, String, int)
-     */
-    public static void clearIfExists(RDBAdapter db, final String settname)
-    	throws IllegalArgumentException, IllegalStateException
-    {
-    	clearIfExists(db, settname, 0);
-    }
+	/**
+	 * Clear this setting's value, if it exists in the database.
+	 * If not, do nothing (don't create the setting).
+	 * The string value will become null, and the int value 0.
+	 *
+	 * @param db  connection to use
+	 * @param settname field to create or update
+	 * @throws IllegalArgumentException if db null
+	 * @throws IllegalStateException if db not open
+	 * @see #clearIfExists(RDBAdapter, String, int)
+	 */
+	public static void clearIfExists(RDBAdapter db, final String settname)
+		throws IllegalArgumentException, IllegalStateException
+	{
+		clearIfExists(db, settname, 0);
+	}
 
-    /**
-     * Clear this setting's value, if it exists in the database.
-     * If not, do nothing (don't create the setting).
-     * The string value will become null, and the int value 0.
-     *
-     * @param db  connection to use
-     * @param settname field to create or update
-     * @throws IllegalArgumentException if db null
-     * @throws IllegalStateException if db not open
-     * @see #clearIfExists(RDBAdapter, String)
-     */
-    public static void clearIfExists(RDBAdapter db, final String settname, final int ivalue_clear)
-    	throws IllegalArgumentException, IllegalStateException
+	/**
+	 * Clear this setting's value, if it exists in the database.
+	 * If not, do nothing (don't create the setting).
+	 * The string value will become null, and the int value 0.
+	 *
+	 * @param db  connection to use
+	 * @param settname field to create or update
+	 * @throws IllegalArgumentException if db null
+	 * @throws IllegalStateException if db not open
+	 * @see #clearIfExists(RDBAdapter, String)
+	 */
+	public static void clearIfExists(RDBAdapter db, final String settname, final int ivalue_clear)
+		throws IllegalArgumentException, IllegalStateException
 	{
 		Settings s = null;
 
@@ -225,59 +225,59 @@ public class Settings extends RDBRecord
 		s.commit();
 	}
 
-    /**
-     * Get this boolean setting from the database.
-     * Booleans are int settings with ivalue 1 or 0.
-     * @param db  connection to use
-     * @param settname   field to read
-     * @param settdefault  default value if not found
-     * @return  Setting's value (true if != 0), or <tt>settdefault</tt> if not found
-     * @throws IllegalArgumentException  if db null
-     * @throws IllegalStateException if db not open
-     * @see #setBoolean(RDBAdapter, String, boolean)
-     * @see #getInt(RDBAdapter, String, int)
-     * @since 0.9.12
-     */
-    public static boolean getBoolean(RDBAdapter db, final String settname, final boolean settdefault)
-    	throws IllegalArgumentException, IllegalStateException
-    {
+	/**
+	 * Get this boolean setting from the database.
+	 * Booleans are int settings with ivalue 1 or 0.
+	 * @param db  connection to use
+	 * @param settname   field to read
+	 * @param settdefault  default value if not found
+	 * @return  Setting's value (true if != 0), or <tt>settdefault</tt> if not found
+	 * @throws IllegalArgumentException  if db null
+	 * @throws IllegalStateException if db not open
+	 * @see #setBoolean(RDBAdapter, String, boolean)
+	 * @see #getInt(RDBAdapter, String, int)
+	 * @since 0.9.12
+	 */
+	public static boolean getBoolean(RDBAdapter db, final String settname, final boolean settdefault)
+		throws IllegalArgumentException, IllegalStateException
+	{
 		return (0 != getInt(db, settname, (settdefault ? 1 : 0)));
-    }
+	}
 
-    /**
-     * Set this boolean setting in the database.
-     * Booleans are int settings with ivalue 1 or 0.
-     * @param db  connection to use
-     * @param settname   field to write
-     * @param settvalue  value to write
-     * @throws IllegalArgumentException  if db null
-     * @throws IllegalStateException if db not open
-     * @see #getBoolean(RDBAdapter, String, boolean)
-     * @see #setInt(RDBAdapter, String, int)
-     * @see #insertOrUpdate(RDBAdapter, String, int)
-     * @since 0.9.12
-     */
-    public static void setBoolean(RDBAdapter db, final String settname, final boolean settvalue)
-    	throws IllegalArgumentException, IllegalStateException
-    {
-    	setInt(db, settname, settvalue ? 1 : 0);
-    }
+	/**
+	 * Set this boolean setting in the database.
+	 * Booleans are int settings with ivalue 1 or 0.
+	 * @param db  connection to use
+	 * @param settname   field to write
+	 * @param settvalue  value to write
+	 * @throws IllegalArgumentException  if db null
+	 * @throws IllegalStateException if db not open
+	 * @see #getBoolean(RDBAdapter, String, boolean)
+	 * @see #setInt(RDBAdapter, String, int)
+	 * @see #insertOrUpdate(RDBAdapter, String, int)
+	 * @since 0.9.12
+	 */
+	public static void setBoolean(RDBAdapter db, final String settname, final boolean settvalue)
+		throws IllegalArgumentException, IllegalStateException
+	{
+		setInt(db, settname, settvalue ? 1 : 0);
+	}
 
-    /**
-     * Get this int setting from the database.
-     * @param db  connection to use
-     * @param settname   field to read
-     * @param settdefault  default value if not found
-     * @return  Setting's value, or <tt>settdefault</tt> if not found
-     * @throws IllegalArgumentException  if db null
-     * @throws IllegalStateException if db not open
-     * @see #setInt(RDBAdapter, String, int)
-     * @see #getBoolean(RDBAdapter, String, boolean)
-     * @since 0.9.12
-     */
-    public static int getInt(RDBAdapter db, final String settname, final int settdefault)
-    	throws IllegalArgumentException, IllegalStateException
-    {
+	/**
+	 * Get this int setting from the database.
+	 * @param db  connection to use
+	 * @param settname   field to read
+	 * @param settdefault  default value if not found
+	 * @return  Setting's value, or <tt>settdefault</tt> if not found
+	 * @throws IllegalArgumentException  if db null
+	 * @throws IllegalStateException if db not open
+	 * @see #setInt(RDBAdapter, String, int)
+	 * @see #getBoolean(RDBAdapter, String, boolean)
+	 * @since 0.9.12
+	 */
+	public static int getInt(RDBAdapter db, final String settname, final int settdefault)
+		throws IllegalArgumentException, IllegalStateException
+	{
 		Settings s = null;
 
 		try {
@@ -288,23 +288,23 @@ public class Settings extends RDBRecord
 			return settdefault;
 
 		return s.ivalue;
-    }
+	}
 
-    /**
-     * Set this int setting in the database.
-     * @param db  connection to use
-     * @param settname   field to write
-     * @param ivalue  value to write
-     * @throws IllegalArgumentException  if db null
-     * @throws IllegalStateException if db not open
-     * @see #getInt(RDBAdapter, String, int)
-     * @see #setBoolean(RDBAdapter, String, boolean)
-     * @see #insertOrUpdate(RDBAdapter, String, int)
-     * @since 0.9.12
-     */
-    public static void setInt(RDBAdapter db, final String settname, final int ivalue)
-    	throws IllegalArgumentException, IllegalStateException
-    {
+	/**
+	 * Set this int setting in the database.
+	 * @param db  connection to use
+	 * @param settname   field to write
+	 * @param ivalue  value to write
+	 * @throws IllegalArgumentException  if db null
+	 * @throws IllegalStateException if db not open
+	 * @see #getInt(RDBAdapter, String, int)
+	 * @see #setBoolean(RDBAdapter, String, boolean)
+	 * @see #insertOrUpdate(RDBAdapter, String, int)
+	 * @since 0.9.12
+	 */
+	public static void setInt(RDBAdapter db, final String settname, final int ivalue)
+		throws IllegalArgumentException, IllegalStateException
+	{
 		Settings s = null;
 
 		try {
@@ -323,147 +323,147 @@ public class Settings extends RDBRecord
 		}
 	}
 
-    /**
-     * Look up a Setting from the database.
-     * @param db  db connection
-     * @param settname field to retrieve
-     * @throws IllegalArgumentException  if db null
-     * @throws IllegalStateException if db not open
-     * @throws RDBKeyNotFoundException if settname not found in database
-     * @see #getBoolean(RDBAdapter, String, boolean)
-     */
-    public Settings(RDBAdapter db, String settname)
-        throws IllegalStateException, IllegalArgumentException, RDBKeyNotFoundException
-    {
-    	super(db, -1);  // checks db != null
-    	sfield = settname;
-    	String[] fv = db.getRow(TABNAME, KEYFIELD, settname, VALFIELDS_AND_ID);
-    	if (fv == null)
-    		throw new RDBKeyNotFoundException(settname);
+	/**
+	 * Look up a Setting from the database.
+	 * @param db  db connection
+	 * @param settname field to retrieve
+	 * @throws IllegalArgumentException  if db null
+	 * @throws IllegalStateException if db not open
+	 * @throws RDBKeyNotFoundException if settname not found in database
+	 * @see #getBoolean(RDBAdapter, String, boolean)
+	 */
+	public Settings(RDBAdapter db, String settname)
+			throws IllegalStateException, IllegalArgumentException, RDBKeyNotFoundException
+	{
+		super(db, -1);  // checks db != null
+		sfield = settname;
+		String[] fv = db.getRow(TABNAME, KEYFIELD, settname, VALFIELDS_AND_ID);
+		if (fv == null)
+			throw new RDBKeyNotFoundException(settname);
 
-    	try {
+		try {
 			id = Integer.parseInt(fv[2]);
 		} catch (NumberFormatException e) {}
-    	svalue = fv[0];
-    	if (fv[1] != null)
-    	{
-    		try {
-    			ivalue = Integer.parseInt(fv[1]);
-    		} catch (NumberFormatException e) {}
-    	}
-    }
-
-    /**
-     * Create a new string-valued Setting (not yet inserted to the database).
-     * @param settname field to set; empty strings ("") are stored as null.
-     * @param svalue    string value to set
-     */
-    public Settings(String settname, String svalue)
-    {
-    	super();
-    	if ((svalue != null) && (svalue.length() == 0))
-    		svalue = null;
-    	sfield = settname;
-    	this.svalue = svalue;
-    	ivalue = 0;
-    }
-
-    /**
-     * Create a new int-valued Setting (not yet inserted to the database).
-     * @param settname field to set
-     * @param ivalue    int value to set
-     */
-    public Settings(String settname, int ivalue)
-    {
-    	super();
-    	sfield = settname;
-    	svalue = null;
-    	this.ivalue = ivalue;
-    }
-
-    /** name of the field */
-    public String getField() { return sfield; }
-
-    /** string value of the field, if set. Empty string values ("") are returned as null. */
-    public String getStrValue()
-    {
-	if ((svalue != null) && (svalue.length() > 0))
-	    return svalue;
-	else
-	    return null;
-    }
-
-    /** int value of the field, if set. */
-    public int getIntValue() { return ivalue; }
-
-    /**
-     * Set the string value, clear the int value (unless <tt>s</tt> is null). Dirty the DB record.
-     * @param s New string value, or null; "" is considered null.
-     */
-    public void setStrValue(String s)
-    {
-    	if ((s != null) && (s.length() == 0))
-    		s = null;
-    	svalue = s;
-    	if (s != null)
-    		ivalue = 0;
-    	dirty = true;
+		svalue = fv[0];
+		if (fv[1] != null)
+		{
+			try {
+				ivalue = Integer.parseInt(fv[1]);
+			} catch (NumberFormatException e) {}
+		}
 	}
 
-    /**
-     * Set the int value, clear the string value (unless <tt>i</tt> is 0). Dirty the DB record.
-     * @param i New int value, or 0
-     */
-    public void setIntValue(int i)
-    {
-    	if (ivalue != i)
-    	{
-    		ivalue = i;
-    		if (i != 0)
-    			svalue = null;
-    		dirty = true;
-    	}
-    }
+	/**
+	 * Create a new string-valued Setting (not yet inserted to the database).
+	 * @param settname field to set; empty strings ("") are stored as null.
+	 * @param svalue    string value to set
+	 */
+	public Settings(String settname, String svalue)
+	{
+		super();
+		if ((svalue != null) && (svalue.length() == 0))
+			svalue = null;
+		sfield = settname;
+		this.svalue = svalue;
+		ivalue = 0;
+	}
 
-    /**
-     * Insert a new record based on field and value.
+	/**
+	 * Create a new int-valued Setting (not yet inserted to the database).
+	 * @param settname field to set
+	 * @param ivalue    int value to set
+	 */
+	public Settings(String settname, int ivalue)
+	{
+		super();
+		sfield = settname;
+		svalue = null;
+		this.ivalue = ivalue;
+	}
+
+	/** name of the field */
+	public String getField() { return sfield; }
+
+	/** string value of the field, if set. Empty string values ("") are returned as null. */
+	public String getStrValue()
+	{
+		if ((svalue != null) && (svalue.length() > 0))
+			return svalue;
+		else
+			return null;
+	}
+
+	/** int value of the field, if set. */
+	public int getIntValue() { return ivalue; }
+
+	/**
+	 * Set the string value, clear the int value (unless <tt>s</tt> is null). Dirty the DB record.
+	 * @param s New string value, or null; "" is considered null.
+	 */
+	public void setStrValue(String s)
+	{
+		if ((s != null) && (s.length() == 0))
+			s = null;
+		svalue = s;
+		if (s != null)
+			ivalue = 0;
+		dirty = true;
+	}
+
+	/**
+	 * Set the int value, clear the string value (unless <tt>i</tt> is 0). Dirty the DB record.
+	 * @param i New int value, or 0
+	 */
+	public void setIntValue(int i)
+	{
+		if (ivalue == i)
+			return;
+
+		ivalue = i;
+		if (i != 0)
+			svalue = null;
+		dirty = true;
+	}
+
+	/**
+	 * Insert a new record based on field and value.
 	 * Clears dirty field; sets id and dbConn fields.
-     * @return new record's primary key (_id)
-     * @throws IllegalStateException if the insert fails
-     */
-    public int insert(RDBAdapter db)
-        throws IllegalStateException
-    {
-    	String iv;
-    	if (svalue != null)
-    		iv = null;
-    	else
-    		iv = Integer.toString(ivalue);
-    	String[] fv = { sfield, svalue, iv };
-    	id = db.insert(TABNAME, FIELDS, fv, true);
+	 * @return new record's primary key (_id)
+	 * @throws IllegalStateException if the insert fails
+	 */
+	public int insert(RDBAdapter db)
+		throws IllegalStateException
+	{
+		String iv;
+		if (svalue != null)
+			iv = null;
+		else
+			iv = Integer.toString(ivalue);
+		String[] fv = { sfield, svalue, iv };
+		id = db.insert(TABNAME, FIELDS, fv, true);
 		dirty = false;
-    	dbConn = db;
-    	return id;
-    }
+		dbConn = db;
+		return id;
+	}
 
-    /**
+	/**
 	 * Commit changes to an existing record.
 	 * Commits to the database; clears dirty field.
 	 *<P>
 	 * For new records, <b>do not call commit</b>:
 	 * use {@link #insert(RDBAdapter)} instead.
-     * @throws IllegalStateException if the update fails
-     * @throws NullPointerException if dbConn was null because
-     *     this is a new record, not an existing one
+	 * @throws IllegalStateException if the update fails
+	 * @throws NullPointerException if dbConn was null because
+	 *     this is a new record, not an existing one
 	 */
 	public void commit()
-        throws IllegalStateException, NullPointerException
+		throws IllegalStateException, NullPointerException
 	{
-    	String iv;
-    	if (svalue != null)
-    		iv = null;
-    	else
-    		iv = Integer.toString(ivalue);
+		String iv;
+		if (svalue != null)
+			iv = null;
+		else
+			iv = Integer.toString(ivalue);
 		String[] fv = { svalue, iv };
 		dbConn.update(TABNAME, KEYFIELD, sfield, VALFIELDS, fv);
 		dirty = false;
@@ -472,11 +472,11 @@ public class Settings extends RDBRecord
 	/**
 	 * Delete an existing record.
 	 *
-     * @throws NullPointerException if dbConn was null because
-     *     this is a new record, not an existing one
+	 * @throws NullPointerException if dbConn was null because
+	 *     this is a new record, not an existing one
 	 */
 	public void delete()
-	    throws NullPointerException
+		throws NullPointerException
 	{
 		dbConn.delete(TABNAME, id);
 		deleteCleanup();
@@ -556,9 +556,9 @@ public class Settings extends RDBRecord
 	 * instead of directly calling this method.
 	 * @param db  connection to use
 	 * @param ve  new vehicle, or null for none
-     * @throws IllegalStateException if the db isn't open
-     * @throws IllegalArgumentException if a non-null <tt>ve</tt>'s dbconn isn't db;
-     *         if ve's dbconn is <tt>null</tt>, this will be in the exception detail text.
+	 * @throws IllegalStateException if the db isn't open
+	 * @throws IllegalArgumentException if a non-null <tt>ve</tt>'s dbconn isn't db;
+	 *         if ve's dbconn is <tt>null</tt>, this will be in the exception detail text.
 	 */
 	public static void setCurrentVehicle(RDBAdapter db, Vehicle ve)
 		throws IllegalStateException, IllegalArgumentException

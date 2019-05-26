@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010,2013-2015 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010,2013-2015,2019 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -80,89 +80,92 @@ public class AppInfo extends RDBRecord
 
 	private String aifield, aivalue;
 
-    /**
-     * Look up an AppInfo from the database.
-     * @param db  db connection
-     * @param keyname key value to retrieve. See schema SQL or <tt>KEY_*</tt> constant fields.
-     * @throws IllegalStateException if db not open
-     * @throws RDBKeyNotFoundException if fieldname not found
-     */
-    public AppInfo(RDBAdapter db, String keyname)
-        throws IllegalStateException, RDBKeyNotFoundException
-    {
-    	super(db, -1);
-    	aifield = keyname;
-    	String[] fv = db.getRow(TABNAME, KEYFIELD, keyname, VALFIELD_AND_ID);
-    	if (fv == null)
-    		throw new RDBKeyNotFoundException(keyname);
-    	try {
+	/**
+	 * Look up an AppInfo from the database.
+	 * @param db  db connection
+	 * @param keyname key value to retrieve. See schema SQL or <tt>KEY_*</tt> constant fields.
+	 * @throws IllegalStateException if db not open
+	 * @throws RDBKeyNotFoundException if fieldname not found
+	 */
+	public AppInfo(RDBAdapter db, String keyname)
+		throws IllegalStateException, RDBKeyNotFoundException
+	{
+		super(db, -1);
+		aifield = keyname;
+		String[] fv = db.getRow(TABNAME, KEYFIELD, keyname, VALFIELD_AND_ID);
+		if (fv == null)
+			throw new RDBKeyNotFoundException(keyname);
+
+		try {
 			id = Integer.parseInt(fv[1]);
 		} catch (NumberFormatException e) {}
-    	aivalue = fv[0];
-    }
+		aivalue = fv[0];
+	}
 
-    /**
-     * Create a new AppInfo (not yet inserted to the database).
-     * @param fieldname field to set
-     * @param fvalue    value to set; null is not allowed in the schema
-     * @throws IllegalArgumentException if fvalue is null
-     */
-    public AppInfo(String fieldname, final String fvalue)
-    	throws NullPointerException 
-    {
-    	super();
-    	if (fvalue == null)
-    		throw new IllegalArgumentException("null fvalue");
-    	aifield = fieldname;
-    	aivalue = fvalue;
-    }
+	/**
+	 * Create a new AppInfo (not yet inserted to the database).
+	 * @param fieldname field to set
+	 * @param fvalue    value to set; null is not allowed in the schema
+	 * @throws IllegalArgumentException if fvalue is null
+	 */
+	public AppInfo(String fieldname, final String fvalue)
+		throws NullPointerException
+	{
+		super();
+		if (fvalue == null)
+			throw new IllegalArgumentException("null fvalue");
 
-    public String getField() { return aifield; }
-    public String getValue() { return aivalue; }
+		aifield = fieldname;
+		aivalue = fvalue;
+	}
 
-    /**
-     * Change this AppInfo's value.
-     * @param fvalue    value to set; null is not allowed in the schema
-     * @throws IllegalArgumentException if fvalue is null
-     */
-    public void setValue(String fvalue)
-    	throws IllegalArgumentException
-    {
-    	if (fvalue == null)
-    		throw new IllegalArgumentException("null fvalue");
-    	aivalue = fvalue;
-    	dirty = true;
-    }
+	public String getField() { return aifield; }
+	public String getValue() { return aivalue; }
 
-    /**
-     * Insert a new record based on field and value.
+	/**
+	 * Change this AppInfo's value.
+	 * @param fvalue    value to set; null is not allowed in the schema
+	 * @throws IllegalArgumentException if fvalue is null
+	 */
+	public void setValue(String fvalue)
+		throws IllegalArgumentException
+	{
+		if (fvalue == null)
+			throw new IllegalArgumentException("null fvalue");
+
+		aivalue = fvalue;
+		dirty = true;
+	}
+
+	/**
+	 * Insert a new record based on field and value.
 	 * Clears dirty field; sets id and dbConn fields.
-     * @param db  db connection
-     * @return new record's primary key (_id)
-     * @throws IllegalStateException if the insert fails (db closed, etc)
-     */
-    public int insert(RDBAdapter db)
-        throws IllegalStateException
-    {
-    	String[] fv = { aifield, aivalue };
-    	id = db.insert(TABNAME, FIELDS, fv, true);
+	 * @param db  db connection
+	 * @return new record's primary key (_id)
+	 * @throws IllegalStateException if the insert fails (db closed, etc)
+	 */
+	public int insert(RDBAdapter db)
+		throws IllegalStateException
+	{
+		String[] fv = { aifield, aivalue };
+		id = db.insert(TABNAME, FIELDS, fv, true);
 		dirty = false;
-    	dbConn = db;
-    	return id;
-    }
+		dbConn = db;
+		return id;
+	}
 
-    /**
+	/**
 	 * Commit changes to an existing record.
 	 * Commits to the database; clears dirty field.
 	 *<P>
 	 * For new records, <b>do not call commit</b>:
 	 * use {@link #insert(RDBAdapter)} instead.
-     * @throws IllegalStateException if the update fails (db closed, etc)
-     * @throws NullPointerException if dbConn was null because
-     *     this is a new record, not an existing one
+	 * @throws IllegalStateException if the update fails (db closed, etc)
+	 * @throws NullPointerException if dbConn was null because
+	 *     this is a new record, not an existing one
 	 */
 	public void commit()
-        throws IllegalStateException, NullPointerException
+		throws IllegalStateException, NullPointerException
 	{
 		dbConn.updateField(TABNAME, KEYFIELD, aifield, VALFIELD, aivalue);
 		dirty = false;
@@ -171,19 +174,19 @@ public class AppInfo extends RDBRecord
 	/**
 	 * Insert or update a record with this field/value combination.
 	 * Calls commit or insert.
-     * @param db  db connection
-     * @param fname  field to set
-     * @param fvalue value to set; null is not allowed in the schema
+	 * @param db  db connection
+	 * @param fname  field to set
+	 * @param fvalue value to set; null is not allowed in the schema
 	 * @return the created or updated AppInfo
-     * @throws IllegalArgumentException if fvalue is null
+	 * @throws IllegalArgumentException if fvalue is null
 	 * @throws IllegalStateException if the db isn't open
 	 */
 	public static AppInfo insertOrUpdate
 		(RDBAdapter db, final String fname, final String fvalue)
-    	throws IllegalArgumentException, IllegalStateException
+		throws IllegalArgumentException, IllegalStateException
 	{
 		if (fvalue == null)
-    		throw new IllegalArgumentException("null fvalue");
+			throw new IllegalArgumentException("null fvalue");
 
 		AppInfo ai = null;
 		try {
@@ -202,11 +205,11 @@ public class AppInfo extends RDBRecord
 	/**
 	 * Delete an existing record.
 	 *
-     * @throws NullPointerException if dbConn was null because
-     *     this is a new record, not an existing one
+	 * @throws NullPointerException if dbConn was null because
+	 *     this is a new record, not an existing one
 	 */
 	public void delete()
-	    throws NullPointerException
+		throws NullPointerException
 	{
 		dbConn.delete(TABNAME, id);
 		deleteCleanup();

@@ -145,7 +145,7 @@ public class BackupsRestore
 
 	/**
 	 * date formatter for use by {@link DateFormat#format(CharSequence, Calendar)},
-	 * initialized via {@link Misc#buildDateFormatDOWShort(Context, boolean)}.
+	 * initialized via {@link Misc#buildDateFormatDOWShort(android.content.Context, boolean)}.
 	 */
 	private StringBuffer fmt_dow_shortdate;
 
@@ -239,18 +239,13 @@ public class BackupsRestore
 	}
 
 	/**
-	 * Set {@link #isSDCardWritable}, {@link #readDBLastBackupTime(RDBAdapter, int)},
-	 * {@link #populateBackupsList(boolean)}, etc.
+	 * If not already validated, start a task to do so.
+	 * Otherwise show validation results.
 	 */
 	@Override
 	public void onResume()
 	{
 		super.onResume();
-//		RDBAdapter db = new RDBOpenHelper(this);
-
-//		readDBLastBackupTime(db, -1);
-
-//		db.close();
 
 		if (bkupIsTooOldOrNew)
 		{

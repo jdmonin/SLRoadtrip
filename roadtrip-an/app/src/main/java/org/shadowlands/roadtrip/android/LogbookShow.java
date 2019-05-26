@@ -79,6 +79,11 @@ import android.widget.Toast;
  *<P>
  * Or, can set the starting date to {@link #EXTRAS_DATE}; this date and 2 weeks of newer trips are
  * shown, with buttons to show older and newer trips.
+ *<P>
+ * Can validate the database contents through a menu item.
+ * After successful validation, if it's been more than 10 days since
+ * the last backup ({@link #BACKUP_ASK_TIME_AGO_DAYS}), will ask if user
+ * wants to back up now.
  *
  * @author jdmonin
  */
@@ -134,7 +139,7 @@ public class LogbookShow extends Activity
 	 * since the last backup, ask the user if they would like to run a backup now.
 	 * @since 0.9.61
 	 */
-	private static final int BACKUP_ASK_TIME_AGO_DAYS = 10;
+	public static final int BACKUP_ASK_TIME_AGO_DAYS = 10;
 
 	/** tag for android logging */
 	private static final String TAG = "RTR.LogbookShow";
@@ -828,7 +833,7 @@ public class LogbookShow extends Activity
 	 * @param sbTrips  New trip strings to add, by calling {@link Trip.TripListTimeRange#getTripListRowsTabbed()}
 	 * @param trips    Optional list of {@link Trip}s (one per sbTrips item) to associate one per TextView,
 	 *     or {@code null}
-	 * @param addAtEnd  True to add at the bottom of the activity (at {@link #tripListBtnLaterPosition}),
+	 * @param isLaterPos  True to add at the bottom of the activity (at {@link #tripListBtnLaterPosition}),
 	 *     false to add at the top (below {@link #tripListBtnEarlierPosition}).
 	 *     If {@link #tvNoTripsFound} != {@code null}, that TextView's contents will be replaced
 	 *     with the first trip's strings.
@@ -1015,9 +1020,10 @@ public class LogbookShow extends Activity
 	/**
 	 * Run db validation level {@link RDBVerifier#LEVEL_TDATA} in a separate thread.
 	 * Uses {@link LogbookShow#verifCache}, which must not be null.
-	 * Calls {@link RDBVerifier#verify(int)}.
-	 * If OK, sets {@link LogbookShow#verifiedLevel} and clears {@link LogbookShow#verifCache}.
-	 * @see LogbookShow#doDBValidation(boolean)
+	 * Calls {@link RDBVerifier#verify(int)}, then clears {@link LogbookShow#verifTask}.
+	 * If OK, clears {@link LogbookShow#verifCache} to free memory.
+	 *
+	 * @see LogbookShow#doDBValidation()
 	 * @see BackupsRestore.ValidateDBTask
 	 */
 	private class ValidateDBTDataTask extends AsyncTask<Void, Integer, Boolean>
@@ -1036,6 +1042,7 @@ public class LogbookShow extends Activity
 					verifCache = null;
 				}
 			}
+
 			verifTask = null;
 			return ok ? Boolean.TRUE : Boolean.FALSE;
 		}
@@ -1285,9 +1292,8 @@ public class LogbookShow extends Activity
 
 		/**
 		 * Get the built search dialog. Call this method from {@code onCreateDialog(..)}
-		 * instead of calling {@link #show()}.
+		 * instead of building a new one.
 		 * @return the AlertDialog, or {@code null} if it couldn't be initialized in the constructor
-		 * @see #show()
 		 */
 		public AlertDialog getDialog()
 		{
@@ -1600,7 +1606,6 @@ public class LogbookShow extends Activity
 		 * Get the built search dialog. Call this method from {@code onCreateDialog(..)}
 		 * instead of calling {@link #show()}.
 		 * @return the AlertDialog, or {@code null} if it couldn't be initialized in the constructor
-		 * @see #show()
 		 */
 		public AlertDialog getDialog()
 		{

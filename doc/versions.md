@@ -25,8 +25,8 @@ Being developed now; improvements and bugfixes since 0.9.70
 
 ## SLRoadtrip android app:
 - Development: Convert project to Android Studio/Gradle from Eclipse ADT
-- Add padding at screen edges for all activities, adjust odometer/time-picker spacing
 - Standardize odometer style to NumberPicker
+- Add padding at screen edges for all activities, adjust odometer/time-picker spacing
 
 # 0.9.70
 
@@ -187,8 +187,8 @@ Migration from svn to git, google code to github
 
 - Can edit vehicle & some related settings during trip
 - Add landscape layouts
-- Allow Backup/Restore with any folder
-- TripBegin ask before using historical mode
+- Backup/Restore: Add Change Folder button
+- TripBegin: Ask before using historical mode
 
 # 0.9.20b (beta)
 
@@ -325,7 +325,8 @@ Android improvements:
 
 2010-10-15
 
-- Android TripBegin: Optional Historical Mode, if previous trip was more than a few days ago
+- Android TripBegin: Historical Mode to add older trips to db later;
+  used when previous trip was more than a few days ago
 - Bookedit viewer: Add vehicle dropdown
 - Add schema fields for vehicle distance/currency units/decimal places (US defaults)
 

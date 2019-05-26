@@ -154,7 +154,7 @@ In Main activity, tap "Show Logbook" button.
 ### Validate DB
 
 - In Logbook view, Menu -> Validate does so, then shows results in a message box
-- If it's been several weeks since last backup, should then ask whether you want to backup now;
+- If it's been more than 10 days since last backup, should then ask whether you want to backup now
   - Say No, should do nothing
   - Validate again and say Yes, should take you to Backup List activity
 

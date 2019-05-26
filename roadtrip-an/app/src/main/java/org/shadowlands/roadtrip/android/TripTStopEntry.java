@@ -234,7 +234,7 @@ public class TripTStopEntry extends Activity
 	 *<P>
 	 * The exception to the rule "current selected area ID of {@link #rbRoadtripArea_chosen}" is when
 	 * text is currently being typed into {@link #etRoadtripAreaOther}: Its radio button will be chosen
-	 * for responsiveness, but {@link #areaLocs_areaID}, {@link #loc}, and related fields aren't updated
+	 * for responsiveness, but {@code areaLocs_areaID}, {@link #loc}, and related fields aren't updated
 	 * from the previous area until {@code etRoadtripAreaOther} loses focus or {@link #enterTStop(boolean)}
 	 * is called from a button press.
 	 */
@@ -263,7 +263,7 @@ public class TripTStopEntry extends Activity
 	 *<BR>
 	 * Format is -1 if unused, or (Hour << 8) | Minute.
 	 * @see #contTimeRunningHandler
-	 * @see #initContTimeRunning(Calendar, long)
+	 * @see #initContTimeRunning(Calendar)
 	 */
 	private int contTimeRunningHourMinute = -1;
 
@@ -271,7 +271,7 @@ public class TripTStopEntry extends Activity
 	 * If we're updating {@link #tp_time_cont} as the time changes, the handler for that.
 	 * Otherwise null.
 	 * @see #contTimeRunningHourMinute
-	 * @see #initContTimeRunning(Calendar, long)
+	 * @see #initContTimeRunning(Calendar)
 	 * @see #contTimeRunningRunnable
 	 * @see http://developer.android.com/resources/articles/timed-ui-updates.html
 	 */
@@ -349,18 +349,17 @@ public class TripTStopEntry extends Activity
 
 	/**
 	 * When stopping at a stop, selection from the {@link #via} dropdown for selecting a ViaRoute.
-	 * Changing {@link #via}'s text clears {@link #viaRouteObj},
-	 * unless <tt>viaRouteObj</tt> was created for this stop
+	 * Changing {@link #via}'s text clears {@code viaRouteObj}, unless object was created for this stop
 	 * ({@link #viaRouteObjCreatedHere} != null).
 	 * @see #prevLocObj
 	 * @see #locObj
 	 * @see #viaRouteObjCreatedHere
-	 * @see ViaRouteOnItemClickListener#onItemClick(AdapterView, View, int, long)
+	 * @see ViaRouteListenerWatcher#onItemClick(AdapterView, View, int, long)
 	 */
 	private ViaRoute viaRouteObj;
 
 	/**
-	 * if non-null, then <tt>currTS != null</tt>, and
+	 * if non-null, then {@link #currTS} != null, and
 	 * {@link #viaRouteObj} was created for this TStop.
 	 * @see TStop#TEMPFLAG_CREATED_VIAROUTE
 	 */
@@ -1211,7 +1210,7 @@ public class TripTStopEntry extends Activity
 	}
 
 	/** set a timepicker's hour and minute, based on a calendar's current time */
-	private final static void initTimePicker(Calendar c, TimePicker tp)
+	private static void initTimePicker(Calendar c, TimePicker tp)
 	{
 		tp.setCurrentHour(c.get(Calendar.HOUR_OF_DAY));
 		tp.setCurrentMinute(c.get(Calendar.MINUTE));
@@ -1226,7 +1225,7 @@ public class TripTStopEntry extends Activity
 	 *   <BR>
 	 *   Or, if <tt>cNow</tt> is null, also initialize the timepicker.
 	 */
-	private final void initContTimeRunning(Calendar cNow)
+	private void initContTimeRunning(Calendar cNow)
 	{
 		if (viewTS != null)
 			return;
@@ -1341,10 +1340,10 @@ public class TripTStopEntry extends Activity
 	 * @param confirmChange  User-confirm action, if <tt>alsoUpdateData</tt>,
 	 *   if they've already chosen a Location in another geoarea:
 	 *   <UL>
-	 *   <LI> 0: Ask the user in a popup AlertDialog: Calls
+	 *    <LI> 0: Ask the user in a popup AlertDialog: Calls
 	 *     {@link #showRoadtripAreaButtonConfirmDialog(int, String, String, String)}
-	 *   <LI> 1: Change to this location in the new area
-	 *   <LI> 2: Clear the Location and ViaRoute fields
+	 *    <LI> 1: Change to this location in the new area
+	 *    <LI> 2: Clear the Location and ViaRoute fields
 	 *   </UL>
 	 *   The buttons of the popup in choice 0 will either call this method again,
 	 *   with <tt>confirmChange</tt> 1 or 2, or cancel changing the GeoArea.
@@ -1836,9 +1835,7 @@ public class TripTStopEntry extends Activity
 		{
 			stopGas = new TStopGas(db, currTS.getID());
 			btnGas.setCompoundDrawablesWithIntrinsicBounds
-			  ((stopGas != null) ? android.R.drawable.presence_online
-				: android.R.drawable.presence_invisible,
-				0, 0, 0);
+			  (android.R.drawable.presence_online, 0, 0, 0);
 			if ((stopGas.gas_brandgrade_id != 0)
 			    && currTS.isSingleFlagSet(TStop.TEMPFLAG_CREATED_GASBRANDGRADE))
 				gbgCreatedHere = true;
@@ -1854,7 +1851,7 @@ public class TripTStopEntry extends Activity
 	 * Replace a View within the layout with a {@link TextView} containing given text.
 	 * @param vOld  The view to hide (visibility becomes {@link View#GONE}), or {@code null}
 	 * @param vTxtID  The text view's ID to use
-	 * @param ext  Text to use; if null or "", will use {@code "(none)"} from {@code R.string.none__parens}.
+	 * @param txt  Text to use; if null or "", will use {@code "(none)"} from {@code R.string.none__parens}.
 	 * @param setPadLeft  True to set 6dp padding on left
 	 * @since 0.9.60
 	 */
@@ -3028,6 +3025,7 @@ public class TripTStopEntry extends Activity
 	/**
 	 * Show the {@link DatePickerDialog} when the stop-date button is clicked.
 	 * @see #onCreateDialog(int)
+	 * @see #onClick_BtnContDate(View)
 	 */
 	public void onClick_BtnStopDate(View v)
 	{
@@ -3037,12 +3035,16 @@ public class TripTStopEntry extends Activity
 	/**
 	 * Show the {@link DatePickerDialog} when the continue-date button is clicked.
 	 * @see #onCreateDialog(int)
+	 * @see #onClick_BtnStopDate(View)
 	 */
 	public void onClick_BtnContDate(View v)
 	{
 		showDialog(R.id.trip_tstop_btn_cont_date);
 	}
 
+	/**
+	 * Show the {@link TripTStopGas} activity when the Gas button is clicked.
+	 */
 	public void onClick_BtnGas(View v)
 	{
 		Intent i = new Intent(this, TripTStopGas.class);
@@ -3139,10 +3141,12 @@ public class TripTStopEntry extends Activity
 	}
 
 	/**
-	 * Callback for displaying {@link DatePickerDialog} after {@link #onClick_BtnStartDate(View)},
+	 * Callback for displaying {@link DatePickerDialog}
+	 * after {@link #onClick_BtnStopDate(View)} or {@link #onClick_BtnContDate(View)},
 	 * or "Choose a new GeoArea" after {@link #onClick_BtnAreaLocalChange(View)}.
+	 *
 	 * @param id  Unique dialog key, borrowed from various controls' {@code R.id}s:
-	 *    <UL>
+	 *   <UL>
 	 *    <LI> {@code trip_tstop_area_local_row}: Show "Choose a new GeoArea for this stop"
 	 *         (including "none" choice {@link GeoArea#GEOAREA_NONE} unless {@link #stopEndsTrip}).
 	 *         Used when the trip is currently local, to convert it to a roadtrip.
@@ -3154,7 +3158,7 @@ public class TripTStopEntry extends Activity
 	 *         the trip will remain local.
 	 *    <LI> {@code trip_tstop_btn_cont_date}: Choose a date for Continue time
 	 *    <LI> Otherwise: Choose a date for Stopped At time
-	 *    </UL>
+	 *   </UL>
 	 * @see #onDateSet(DatePicker, int, int, int)
 	 */
 	@Override
@@ -4221,6 +4225,7 @@ public class TripTStopEntry extends Activity
 		 * they will be updated at that time by {@link #onFocusChange(View, boolean)}.
 		 *<P>
 		 * (callback method for addTextChangedListener / {@link TextWatcher})
+		 *
 		 * @param et  {@link TripTStopEntry#etRoadtripAreaOther etRoadtripAreaOther}
 		 */
 		public void afterTextChanged(Editable et)

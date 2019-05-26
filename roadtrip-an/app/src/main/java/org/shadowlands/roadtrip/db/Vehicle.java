@@ -102,7 +102,7 @@ public class Vehicle extends RDBRecord
     public static final int FLAG_ONLY_INACTIVE = 0x2;
 
     /**
-     * Flag to add "Other..." ({@link #OTHER_VEHICLE} placeholder) to {@link #getAll(RDBAdapter, boolean)} results.
+     * Flag to add "Other..." ({@link #OTHER_VEHICLE} placeholder) to {@link #getAll(RDBAdapter, int)} results.
      * @since 0.9.41
      * @see #FLAG_ONLY_ACTIVE
      */
@@ -310,7 +310,7 @@ public class Vehicle extends RDBRecord
     }
 
 	/**
-	 * Get the most recent active vehicle in the database, if any.
+	 * Get the most recently added active vehicle in the database, if any.
 	 * @param db  db connection
 	 * @return the newest active vehicle by {@code _id}, or null if none in the database
 	 * @throws IllegalStateException if db not open
@@ -508,7 +508,7 @@ public class Vehicle extends RDBRecord
     }
 
 	/**
-     * Insert a new record with the current field values of this object.
+     * Insert a new Vehicle record with the current field values of this object.
 	 * Clears dirty field; sets id and dbConn fields.
      * @return new record's primary key (_id)
      * @throws IllegalStateException if the insert fails
@@ -555,7 +555,7 @@ public class Vehicle extends RDBRecord
     }
 
     /**
-	 * Commit changes to an existing record.
+	 * Commit changes to an existing Vehicle record.
 	 * Commits to the database; clears dirty field.
 	 *<P>
 	 * For new records, <b>do not call commit</b>:
@@ -665,6 +665,7 @@ public class Vehicle extends RDBRecord
 	/**
 	 * @return the Date From ("in use since" date), unix format.  0 for empty/unused.
 	 * @see #getDate_added()
+	 * @see #getDate_to()
 	 */
 	public int getDate_from() {
 		return date_from;
@@ -679,6 +680,11 @@ public class Vehicle extends RDBRecord
 		dirty = true;
 	}
 
+	/**
+	 * This field is not yet populated from the android app or bookedit.
+	 * @return the Date To ("in use until" date), unix format.  0 for empty/unused.
+	 * @see #getDate_from()
+	 */
 	public int getDate_to() {
 		return date_to;
 	}

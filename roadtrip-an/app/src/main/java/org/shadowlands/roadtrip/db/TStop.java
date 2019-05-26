@@ -209,12 +209,26 @@ public class TStop extends RDBRecord
 
 	private int tripid;  // FK
 
-	/** Odometer at stop; fixed-point with 1 decimal place.  0 is blank/unused. */
-	private int odo_total, odo_trip;
+	/**
+	 * Total Odometer at this stop; fixed-point with 1 decimal place
+	 * that the user doesn't normally see.
+	 * Although {@link #odo_trip} is considered accurate to 0.1 units,
+	 * the Total Odometer's hidden decimal place is usually ignored.
+	 * 0 is blank/unused (null in DB).
+	 * @see #odo_trip
+	 */
+	private int odo_total;
+
+	/**
+	 * Trip Odometer at this stop; fixed-point with 1 decimal place.
+	 * 0 is blank/unused (null in DB) except when {@link #odo_trip_0_beginTrip}.
+	 * @see #odo_total
+	 */
+	private int odo_trip;
 
 	/**
 	 * if true, this is the start of a trip, so trip-odometer 0
-	 * should be stored, instead of null.
+	 * is correct and should be stored to the DB instead of null (unused).
 	 */
 	private boolean odo_trip_0_beginTrip;
 
@@ -374,7 +388,7 @@ public class TStop extends RDBRecord
 	 * @param ignoreIfNoTime  Ignore stops which don't have a continue time nor a stopping time
 	 * @return that stop, or null if none yet on this trip
 	 * @throws IllegalStateException if the db connection is closed
-	 * @see #readAllTStops()
+	 * @see Trip#readAllTStops()
 	 */
 	public static TStop latestStopForTrip(RDBAdapter db, final int tripID, final boolean ignoreIfNoTime)
 		throws IllegalStateException
@@ -549,7 +563,11 @@ public class TStop extends RDBRecord
 		if (rec[1] != null)
 			odo_total = Integer.parseInt(rec[1]);
 		if (rec[2] != null)
+		{
 			odo_trip = Integer.parseInt(rec[2]);
+			if (odo_trip == 0)
+				odo_trip_0_beginTrip = true;
+		}
 		if (rec[3] != null)
 			time_stop = Integer.parseInt(rec[3]);
 		if (rec[4] != null)
@@ -588,8 +606,8 @@ public class TStop extends RDBRecord
 	 * instead of this constructor.
 	 *
 	 * @param trip   Trip containing this stop; it must be committed, with a valid tripID
-	 * @param odo_total  Total odometer, or 0 if unknown
-	 * @param odo_trip   Trip odometer, or 0 if unknown
+	 * @param odo_total  Total odometer, or 0 if unknown (will be stored as null in db)
+	 * @param odo_trip   Trip odometer, or 0 if unknown (will be stored as null in db)
 	 * @param time_stop   Travel-stop time (arrival time; unix format), or 0
 	 * @param time_continue   Travel-Start time (resuming travel after the stop), or 0
 	 * @param locid      Location ID, not empty (not 0 or -1)
@@ -638,7 +656,8 @@ public class TStop extends RDBRecord
 
 	/**
 	 * Create the new trip stop which represents the start of a trip,
-	 * but don't yet write to the database.  <tt>trip_odo</tt> will be 0.
+	 * but don't yet write to the database. {@code trip_odo} will be 0,
+	 * instead of {@code null} like it is for TStops with no {@code trip_odo} value.
 	 * GeoArea ID will be 0 for local trips; if {@link Trip#isRoadtrip()}, will be {@link Trip#getAreaID()}.
 	 *<P>
 	 * When ready to write (after any changes you make to this object),
@@ -781,7 +800,9 @@ public class TStop extends RDBRecord
 	}
 
 	/**
-	 * Get the vehicle's overall total odometer at this tstop, or 0 if blank.
+	 * Get the vehicle's overall Total odometer at this tstop, or 0 if blank.
+	 * This value is fixed-point with 1 decimal place that the user doesn't normally see.
+	 * So, the Total odometer is considered accurate to 1.0 units, not the 0.1 it stores.
 	 * @see #getOdo_trip()
 	 * @see #setOdos(int, int)
 	 */
@@ -792,7 +813,7 @@ public class TStop extends RDBRecord
 
 	/**
 	 * Set or clear the vehicle's odometers at this tstop.
-	 * Remember that the ending TStop's odometers must not be blank.
+	 * Remember that the trip-ending TStop's total odometer must not be blank.
 	 * @param odoTotal new overall total-odo value, or 0 if blank/unused
 	 * @param odoTrip new trip-odo value, or 0 if blank/unused
 	 * @see #getOdo_trip()
@@ -807,17 +828,30 @@ public class TStop extends RDBRecord
 
 		odo_total = odoTotal;
 		odo_trip = odoTrip;
+
 		dirty = true;
 	}
 
 	/**
 	 * Get the distance within this trip at this tstop, or 0 if blank.
 	 * @see #getOdo_total()
+	 * @see #isTripBeginningStop()
 	 * @see #setOdos(int, int)
 	 */
 	public int getOdo_trip()
 	{
 		return odo_trip;
+	}
+
+	/**
+	 * Is this the "stop" which begins a trip from a new location?
+	 * If true, trip odometer is 0 but not null in database.
+	 * @return  True if this TStop begins a trip
+	 * @since 0.9.80
+	 */
+	public boolean isTripBeginningStop()
+	{
+		return (odo_trip == 0) && odo_trip_0_beginTrip;
 	}
 
 	/**
@@ -883,7 +917,7 @@ public class TStop extends RDBRecord
 	 * This is usually <tt>null</tt> for TStops created in 0.9.05 or newer,
 	 * which is older than the oldest released APK.
 	 * Unless reading very old data, use {@link #readLocationText()} or
-	 * {@link #getLocation()} instead.
+	 * {@link #getLocationID()} instead.
 	 * @return <tt>descr</tt> field contents, or null if <tt>locid</tt> is used instead.
 	 * @see #getLocationID()
 	 */
@@ -964,7 +998,6 @@ public class TStop extends RDBRecord
 
 	/**
 	 * Set the <tt>locid</tt> Location-ID field.
-	 * Don't forget to also call {@link #setLocationDescr(String)}}.
 	 * @param locID  New Location ID, or 0 for null
 	 * */
 	public void setLocationID(final int locID)
@@ -1367,10 +1400,10 @@ public class TStop extends RDBRecord
 			ts = tsv.elementAt(sz - 2);  // stop before currTS
 		}
 
-		// Does its loc match prevLoc?
-		// If so, return its trip odo.
-		if ((ts.odo_trip != 0) && (ts.locid > 0)
-			&& (ts.locid == prevLoc.getID()))
+		// Does its loc match prevLoc? Is its trip-odometer known?
+		// If both are true, return its trip odo.
+		if ((ts.locid > 0) && (ts.locid == prevLoc.getID())
+		    && (ts.odo_trip_0_beginTrip || (ts.odo_trip != 0)))
 		{
 			return ts.odo_trip;
 		} else {
@@ -1448,7 +1481,7 @@ public class TStop extends RDBRecord
 
 		StringBuilder sb = new StringBuilder();
 
-		if (odo_trip != 0)
+		if ((odo_trip != 0) || odo_trip_0_beginTrip)
 		{
 			sb.append('(');
 			sb.append((int) (odo_trip / 10));

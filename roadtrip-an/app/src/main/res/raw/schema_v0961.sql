@@ -182,8 +182,8 @@ create table trip ( _id integer PRIMARY KEY AUTOINCREMENT not null, vid integer 
 	-- If the trip doesn't begin at the previous trip's ending tstop,
 	--  the trip's first tstop record is its "starting TStop" giving the starting location,
 	--      and must have the same odo_total as the trip's odo_start,
-	--	and 0 odo_trip, and null time_stop,
-	--	and either its locid or its descr must not be null.
+	--	odo_trip = 0 (not null), time_stop null,
+	--	and either its locid or its descr must be not null.
 
 
 create index "trip~odo" ON trip(vid, odo_start);

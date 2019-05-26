@@ -24,9 +24,12 @@ updated to list the released version's release date and commit hash.
 Being developed now; improvements and bugfixes since 0.9.70
 
 ## SLRoadtrip android app:
-- Development: Convert project to Android Studio/Gradle from Eclipse ADT
-- Standardize odometer style to NumberPicker
+- Bugfix: Previously did not record a new Via Route's distance from
+  trip's starting location to first stop, if trip had different
+  starting location or odometer change from end of previous trip
+- Update odometer style to standard NumberPicker
 - Add padding at screen edges for all activities, adjust odometer/time-picker spacing
+- Development: Convert project to Android Studio/Gradle from Eclipse ADT
 
 ## BookEdit desktop utility app:
 - Add vehicle dropdown at top to switch vehicles, instead of small button at bottom

@@ -56,6 +56,12 @@ daily trips with actual vehicle(s).
       - Change at least 1 letter's capitalization, should still use same Location within DB
       - Test Via Route field duplication the same way
   - Show Logbook afterwards: Should see trip details, including Via names and mileage between stops in tenths
+- Start a trip from a different location than end of previous trip
+  - Stop, entering a new location, new via, and a distance on trip odometer
+  - End trip at any location
+  - View logbook
+  - Search Via Routes: Enter trip's starting location and newly entered location;
+    should show the new via including distance
 - Start a trip which finishes in a different GeoArea
   - Include at least 1 stop in the starting area
     - To test duplicate-prevention: Start typing the name of the start location;
@@ -267,3 +273,7 @@ Test with a copy of a log backup (made using Android app), not the original back
         Only in roadtrip-an/app/src/main/java/org/shadowlands/roadtrip/db/: android
         Only in bookedit/src/org/shadowlands/roadtrip/db: jdbc
         Only in bookedit/src/org/shadowlands/roadtrip/db: script
+
+  - Run this command, should see no output:  
+    `diff -u bookedit/src/org/shadowlands/roadtrip/db/script/schema_v*.sql roadtrip-an/app/src/main/res/raw/schema_v0*.sql`
+

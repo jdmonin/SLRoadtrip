@@ -28,6 +28,9 @@ Being developed now; improvements and bugfixes since 0.9.70
 - Standardize odometer style to NumberPicker
 - Add padding at screen edges for all activities, adjust odometer/time-picker spacing
 
+## BookEdit desktop utility app:
+- Add vehicle dropdown at top to switch vehicles, instead of small button at bottom
+
 # 0.9.70
 
 2019-05-20: e4bf4f5

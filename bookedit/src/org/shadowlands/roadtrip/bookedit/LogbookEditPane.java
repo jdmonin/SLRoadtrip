@@ -64,17 +64,22 @@ import org.shadowlands.roadtrip.db.jdbc.RDBJDBCAdapter;
 import org.shadowlands.roadtrip.model.LogbookTableModel;
 import org.shadowlands.roadtrip.model.TableChangeListener;
 
-// TODO: needs buttons to control open/close/etc
 // TODO dropdowns for driver change, maybe area change
 // TODO show current driver, area, etc at top
-// TODO VehicleChooserDialog: indicate inactive vehicles; consider read-only log if inactive
+// TODO consider read-only log if veh inactive
 
+/**
+ * Logbook viewer/editor. Shows 1 vehicle's trips at a time,
+ * with buttons to view drivers/vehicles and validate the DB.
+ *<P>
+ * {@link #setupFromMain(String, String, JFrame, boolean, boolean)}
+ * takes a database or backup filename, does sanity checks and
+ * version upgrade if needed, then creates and shows a {@code LogbookEditPane}.
+ */
 @SuppressWarnings("serial")
-public class LogbookEditPane extends JPanel implements ActionListener, WindowListener
+public class LogbookEditPane
+	extends JPanel implements ActionListener, ItemListener, WindowListener
 {
-	/** 'Vehicle: ' button text */
-	private static final String TEXT_VEHICLE = "Vehicle: ";
-
 	/**
 	 * Increment in weeks when loading newer/older trips from the database,
 	 * or 0 to load all (This may run out of memory).
@@ -96,11 +101,16 @@ public class LogbookEditPane extends JPanel implements ActionListener, WindowLis
 
 	private RDBAdapter conn;
 	private final boolean isReadOnly;
+
+	/** Vehicle currently being shown in {@link #mdata} */
 	private Vehicle veh;
+
 	/** The trip data for {@link #tb}; see that field's javadoc. */
 	private LBSwingTableModel mdata;
+
 	/** Holds this jpanel */
 	private JFrame lbef;
+
 	/**
 	 * The current {@link #veh}'s trip data table.
 	 * If you change the table model {@link #mdata} to load a different vehicle's trips,
@@ -109,18 +119,42 @@ public class LogbookEditPane extends JPanel implements ActionListener, WindowLis
 	private JTable tb;
 	private JScrollPane sp;  // holds tb
 	private JButton bLoadPrevious;  // earlier trips
+
+	/**
+	 * Combo box of inactive/active vehicles in top panel.
+	 * Updated by {@link #updateVehicleInfoRow(Vehicle)}.
+	 * Calls {@link #itemStateChanged(ItemEvent)} when vehicle or "Other..." is selected.
+	 * Label is {@link #lblVehicles}.
+	 * @see #canChangeVehicle
+	 * @since 0.9.80
+	 */
+	private final JComboBox jcbVehicles;
+
+	/**
+	 * Can vehicle currently be changed, using {@link #jcbVehicles}?
+	 * True unless user is adding a new trip.
+	 * @since 0.9.80
+	 */
+	private boolean canChangeVehicle = true;
+
+	/** Label for {@link #jcbVehicles} */
+	private final JLabel lblVehicles;
+
 	private JPanel pbtns;  // below JTable
-	private JButton bAddSimple, bAddWithStops, bAddDone, bAddCancel, bChgVehicle;
-	private JButton bTmpValidateDB;  // this is for quick test for db verifier; TODO move to a menu or something
+	private JButton bAddSimple, bAddWithStops, bAddDone, bAddCancel;
+	private JButton bTmpValidateDB;
 	private final JButton bVehicles, bDrivers;
 
 	/**
 	 * Create and show a new scrolling grid, in a new {@link JFrame}, to view or edit this logbook data.
-	 * When the JFrame is closed, it will call {@link RDBAdapter#close() conn.close()}</tt> .
-	 * @param fname  Filename, for display only; all I/O happens via <tt>conn</tt>.
-	 * @param veh   Vehicle data
+	 * When the JFrame is closed, it will call {@link RDBAdapter#close() conn.close()}.
+	 *<P>
+	 * Called from {@link #setupFromMain(String, String, JFrame, boolean, boolean)}.
+	 *
+	 * @param fname  Filename, for display only; all I/O happens via {@code conn}
+	 * @param veh   Vehicle to initially show from database
 	 * @param conn  An open database connection associated with this data
-	 * @param isReadOnly  Treat conn as a read-only database
+	 * @param isReadOnly  If true, treat {@code conn} as a read-only database
 	 */
 	public LogbookEditPane(String fname, Vehicle veh, RDBAdapter conn, final boolean isReadOnly)
 	{
@@ -157,14 +191,27 @@ public class LogbookEditPane extends JPanel implements ActionListener, WindowLis
 		add(sp, BorderLayout.CENTER);
 		lbef.add(this, BorderLayout.CENTER);
 
-		// Buttons above JTable
+		// Vehicle control row and Buttons above JTable
 		{
-			GridLayout bgl = new GridLayout(1, 2);
+			GridLayout bgl = new GridLayout(0, 1);  // unlimited rows, 1 column, stretch entire width
+
 			JPanel pba = new JPanel(bgl);
+
+			final JPanel vehRow = new JPanel(new FlowLayout(FlowLayout.LEFT));
+			lblVehicles = new JLabel(" ");
+			jcbVehicles = new JComboBox();
+			jcbVehicles.setToolTipText("Display a different vehicle in this logbook.");
+			updateVehicleInfoRow(veh, true);  // set lblVehicles & jcbVehicles contents, addItemListener(this)
+			jcbVehicles.setEditable(false);
+			vehRow.add(lblVehicles);
+			vehRow.add(jcbVehicles);
+			pba.add(vehRow);
+
 			bLoadPrevious = new JButton("<< Earlier trips");
 			bLoadPrevious.setToolTipText("Show trips previous to the ones shown now");
 			bLoadPrevious.addActionListener(this);
 			pba.add(bLoadPrevious);
+
 			lbef.add(pba, BorderLayout.NORTH);
 		}
 
@@ -185,10 +232,6 @@ public class LogbookEditPane extends JPanel implements ActionListener, WindowLis
 		bAddCancel.setToolTipText("Cancel and clear this new trip.");
 		bAddCancel.addActionListener(this);
 		bAddCancel.setVisible(false);
-		bChgVehicle = new JButton(TEXT_VEHICLE + veh.toString());
-		bChgVehicle.setToolTipText("Display a different vehicle in this logbook.");
-		bChgVehicle.addActionListener(this);
-		bChgVehicle.setVisible(true);
 		bTmpValidateDB = new JButton("Validate DB");
 		bTmpValidateDB.setToolTipText("Validate the db data logical structure. The physical structure is already verified when the DB is opened.");
 		bTmpValidateDB.addActionListener(this);
@@ -212,8 +255,8 @@ public class LogbookEditPane extends JPanel implements ActionListener, WindowLis
 		pbtns.add(bTmpValidateDB);
 		pbtns.add(bAddDone);
 		pbtns.add(bAddCancel);
-		pbtns.add(new JLabel());
-		pbtns.add(bChgVehicle);
+		pbtns.add(new JLabel());  // end of middle row
+		pbtns.add(new JLabel());  // start of bottom row; before v0.9.80, was "Change Vehicle..." button
 		pbtns.add(bVehicles);
 		pbtns.add(bDrivers);
 		lbef.add(pbtns, BorderLayout.SOUTH);
@@ -245,8 +288,6 @@ public class LogbookEditPane extends JPanel implements ActionListener, WindowLis
 			actionAddTripFinish(true);
 		else if (src == bAddCancel)
 			actionAddTripFinish(false);
-		else if (src == bChgVehicle)
-			actionChangeVehicle(veh.isActive());
 		else if (src == bVehicles)
 			new VehicleListDialog(conn, isReadOnly, lbef);
 		else if (src == bDrivers)
@@ -270,8 +311,8 @@ public class LogbookEditPane extends JPanel implements ActionListener, WindowLis
 			return;  // just in case
 		mdata.ltm.finishAdd();  // in case of previous trip
 		mdata.ltm.beginAdd(withStops);
-		bChgVehicle.setEnabled(false);
-		bChgVehicle.setVisible(false);
+		canChangeVehicle = false;
+		jcbVehicles.setEnabled(false);
 		bAddDone.setVisible(true);
 		bAddCancel.setVisible(true);
 		// wait for AWT to update itself
@@ -293,8 +334,8 @@ public class LogbookEditPane extends JPanel implements ActionListener, WindowLis
 			mdata.ltm.cancelAdd();
 		bAddDone.setVisible(false);
 		bAddCancel.setVisible(false);
-		bChgVehicle.setEnabled(true);
-		bChgVehicle.setVisible(true);
+		jcbVehicles.setEnabled(true);
+		canChangeVehicle = true;
 	}
 
 	/**
@@ -313,7 +354,6 @@ public class LogbookEditPane extends JPanel implements ActionListener, WindowLis
 			    "This is the only vehicle in the logbook.",
 			    "No other vehicles",
 			    JOptionPane.INFORMATION_MESSAGE);
-			bChgVehicle.setEnabled(false);
 			return;  // <--- Early return: Nothing to change ---
 		}
 
@@ -363,12 +403,94 @@ public class LogbookEditPane extends JPanel implements ActionListener, WindowLis
 		    optionPaneLevel);
 	}
 
-	/** Show this vehicle's trips. Callback from VehicleChooserDialog. */
+	/**
+	 * Update the Vehicle Info and {@link #jcbVehicles} dropdown for a new current vehicle,
+	 * including label for active/inactive vehicle list.
+	 * Does not set or use {@link #veh}, only {@code newV}.
+	 * @param newV  New vehicle for info row; may be active or inactive. Not null.
+	 * @param isInitialSetup  If true, calling for initial setup;
+	 *     won't remove Panel as listener before changing contents, but will add afterwards.
+	 * @since 0.9.80
+	 * @throws NullPointerException if {@code newV} is null
+	 */
+	private void updateVehicleInfoRow(final Vehicle newV, final boolean isInitialSetup)
+		throws NullPointerException
+	{
+		final boolean isActive = newV.isActive();
+
+		lblVehicles.setText( ((isActive) ? "Active" : "Inactive") + " vehicles: ");
+
+		if (! isInitialSetup)
+			jcbVehicles.removeItemListener(this);
+
+		Vehicle[] vlist = Vehicle.getAll
+			(conn, Vehicle.FLAG_WITH_OTHER |
+			    ((isActive) ? Vehicle.FLAG_ONLY_ACTIVE : Vehicle.FLAG_ONLY_INACTIVE));
+		if (vlist == null)
+			vlist = new Vehicle[] { Vehicle.OTHER_VEHICLE };
+
+		int selIndex = -1;
+		jcbVehicles.removeAllItems();
+		for (int i = 0; i < vlist.length; ++i)
+		{
+			jcbVehicles.addItem(vlist[i]);
+			if (newV.getID() == vlist[i].getID())
+				selIndex = i;
+		}
+		if (selIndex != -1)
+			jcbVehicles.setSelectedIndex(selIndex);
+		else if (vlist[vlist.length - 1] == Vehicle.OTHER_VEHICLE)
+			jcbVehicles.setSelectedItem(vlist[vlist.length - 1]);
+
+		jcbVehicles.addItemListener(this);  // only after done making changes
+	}
+
+	/**
+	 * Handle change of vehicle in top-of-panel dropdown,
+	 * including "Other..." item which brings up {@link VehicleChooserDialog}
+	 * showing inactive/active vehicles.
+	 * @since 0.9.80
+	 */
+	public void itemStateChanged(ItemEvent e)
+	{
+		if (! (e.getStateChange() == ItemEvent.SELECTED))
+			return;
+		Object o = e.getItem();
+		if (! (o instanceof Vehicle))
+			return;
+
+		if (! canChangeVehicle)
+		{
+			JOptionPane.showMessageDialog(lbef,
+			    "Cannot change vehicles right now: Finish editing the trip first.",
+			    "Cannot change now",
+			    JOptionPane.INFORMATION_MESSAGE);
+
+			return;
+		}
+
+		Vehicle v = (Vehicle) o;
+		if (v != Vehicle.OTHER_VEHICLE)
+		{
+			final int id = v.getID();
+			if (id == veh.getID())
+				return;
+			showVehicleTrips(id);  // callback to LogbookEditPane
+		} else {
+			// "Other Vehicle...": Show dialog to switch browsing active/inactive vehicles
+			actionChangeVehicle(! veh.isActive());
+		}
+	}
+
+	/**
+	 * Show this vehicle's trips. Callback from VehicleChooserDialog or {@link #jcbVehicles} dropdown.
+	 * Does nothing if same ID as currently shown vehicle, or if can't change vehicle (during trip editing).
+	 */
 	public void showVehicleTrips(final int vID)
 	{
 		if (vID == veh.getID())
 			return;  // nothing to do
-		if (! (bChgVehicle.isEnabled() && bChgVehicle.isVisible()))
+		if (! canChangeVehicle)
 			return;  // not allowed to change right now
 
 		try {
@@ -380,7 +502,7 @@ public class LogbookEditPane extends JPanel implements ActionListener, WindowLis
 			tb.setModel(mdata);
 			setupTbColumnModel();
 			bLoadPrevious.setEnabled(true);  // in case disabled because prev vehicle had no earlier trips
-			bChgVehicle.setText(TEXT_VEHICLE + veh.toString());
+			updateVehicleInfoRow(veh, false);
 		} catch (IllegalStateException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

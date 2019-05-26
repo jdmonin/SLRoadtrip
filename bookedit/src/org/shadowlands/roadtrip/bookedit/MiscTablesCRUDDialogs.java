@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010,2012,2014-2015 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010,2012,2014-2015,2019 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -58,7 +58,7 @@ public abstract class MiscTablesCRUDDialogs
 	    (JFrame owner, RDBAdapter conn, final boolean isReadOnly, Person p, final boolean driverIfNew)
 	    throws IllegalStateException, NullPointerException
 	{
-		final String[] labels = { "Name", "Driver?", "Added at", "Comment" };
+		final String[] labels = { "Name", "Driver?", "Added on", "Comment" };
 		String[] vals = new String[4];
 		if (p != null)
 		{
@@ -141,8 +141,8 @@ public abstract class MiscTablesCRUDDialogs
 
 		// keep arrays congruent: labels[], FTYPES_DIA_VEHICLE[], vals[]
 		final String[] labels =
-			{ "Nickname", "Active?", "Main Driver", "Make", "Model", "Year", "Added at", "Owned from",
-			  "Owned to", "VIN", "License plate/tag", "Original odometer", "Current odometer", "Comment" };
+			{ "Nickname", "Active?", "Main Driver", "Make", "Model", "Year", "Added on", "In use since",
+			  "In use until", "VIN", "License plate/tag", "Original odometer", "Current odometer", "Comment" };
 		String[] vals = new String[14];
 		if (v != null)
 		{

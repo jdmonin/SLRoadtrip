@@ -34,7 +34,9 @@ daily trips with actual vehicle(s).
   - Dialog to confirm should show how long ago the trip started
 - Start and finish a trip
   - Include at least 1 intermediate stop somewhere
+  - Fill out a comment for at least one stop
   - Once trip has at least one stop, should not be able to cancel trip
+  - During trip, Logbook view should show "Current Trip in progress" at bottom of trip details
   - While stopped, test Trip Stop activity's "Save changes" button once instead of "Continue from stop"
     - Should be able to change comment, odometer, via, and save changes
 	- Logbook should show those changes
@@ -156,6 +158,22 @@ In Main activity, tap "Show Logbook" button.
   - "Search" button should show all ViaRoutes between them in either direction, including distance if entered from trip odometers
   - Bring up dialog again, change dropdown to a different area
   - Now, location should auto-complete to those in the new area
+- Long-press a trip to view details
+  - Brings up a message box that:
+  - Shows vehile, driver, starting time and location, etc
+  - Has list of trip stops' trip-odometer, location, comment
+  - Tap a stop in the trip to view its details
+    - Uses same "Trip Stop" activity used during trips to enter TStops
+	- Is read-only
+	- For a stop that has gas, Gas button has green icon, can tap it for gas details
+  - Tap a stop that has a comment
+    - Should be able to copy comment text to clipboard
+	- Edit the comment, tap Save Changes
+  - Tap that stop again, should say "Edited" near comment field
+  - Tap a stop without a comment to view details: Add a comment
+  - Tap that stop again, should say "Added" near comment field
+  - Edit that stop's comment, Save Changes
+  - Tap that stop again yet, should say both "Added" and "Edited"
 
 ### Validate DB
 
@@ -257,9 +275,18 @@ Test with a copy of a log backup (made using Android app), not the original back
 - "Validate DB" button does so, then shows results in a message box
 - If you have a backup available from an earlier schema version:
   - Make a temporary copy
-  - Use "View Backup" to open that copy
+  - Click "View Backup" to open that copy
   - In console or terminal, should see schema version info and SQL commands from `upgradeCopyToCurrent` debug output
   - Should then be able to view info and browse trips from the upgraded backup copy
+  - Close that viewer window
+  - Click "Open" to open that same copy
+  - Should ask whether to upgrade in place, make and upgrade a read-only copy, or cancel
+  - Choose Cancel: Should do nothing
+  - Click Open again, choose same copy, should get prompt, choose Read-only
+  - Browse trips, close
+  - Click Open again, choose same copy, should get prompt, choose Upgrade in Place
+  - Browse trips, close
+  - Click Open again, choose same copy, should not get prompt because it's been upgraded
 
 ## Other checks
 

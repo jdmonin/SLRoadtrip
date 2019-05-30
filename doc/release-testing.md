@@ -42,8 +42,10 @@ daily trips with actual vehicle(s).
 	- Logbook should show those changes
 	- From Main activity, should then be able to tap Continue button to re-show Trip Stop activity and actually continue
   - During each stop, fill in Via and the trip odometer
-  - After first stop, test "Undo Continue from Stop"
+  - After first stop, test "Undo Continue from Stop" menu item
     - Should return you to being stopped there
+  - Make a new Stop, Continue trip without entering a total or trip odometer value
+    - When you hit continue, should ask "Are you sure"
   - Tap the odometer calculator button (pencil icon)
     - Test both Trip odometer and Total odometer calculator
 	- Clear should zero the field in the calculator popup

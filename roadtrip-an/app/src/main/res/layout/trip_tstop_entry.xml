@@ -234,8 +234,9 @@
 	<LinearLayout
 	    android:orientation="vertical"
 	    android:layout_width="wrap_content"
-	    android:layout_height="fill_parent"
+	    android:layout_height="wrap_content"
             android:gravity="center_vertical"
+	    android:layout_gravity="center_vertical"
 	    android:padding="0dp">
 		<TextView
 		    android:layout_width="wrap_content"
@@ -274,8 +275,9 @@
 	<LinearLayout
 	    android:orientation="vertical"
 	    android:layout_width="wrap_content"
-	    android:layout_height="fill_parent"
+	    android:layout_height="wrap_content"
 	    android:gravity="center_vertical"
+	    android:layout_gravity="center_vertical"
 	    android:padding="0dp">
 		<TextView android:id="@+id/trip_tstop_odo_total_calc_lbl"
 		    android:layout_width="wrap_content"

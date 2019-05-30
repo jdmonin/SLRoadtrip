@@ -224,7 +224,7 @@
 </TableLayout>
 <!-- Table with 3 columns: odometers -->
 <TableLayout android:layout_height="wrap_content" android:layout_width="fill_parent">
-    <TableRow>
+    <TableRow android:id="@+id/trip_tstop_odo_trip_row">
 	<CheckBox android:id="@+id/trip_tstop_odo_trip_chk"
 	    android:paddingBottom="12sp"
 	    android:paddingTop="12sp"
@@ -265,7 +265,7 @@
 	    android:padding="0dp"
 	    android:textSize="18sp" />
     </TableRow>
-    <TableRow>
+    <TableRow android:id="@+id/trip_tstop_odo_total_row">
 	<CheckBox android:id="@+id/trip_tstop_odo_total_chk"
 	    android:paddingBottom="12sp"
 	    android:paddingTop="12sp"
@@ -349,7 +349,7 @@
 	android:layout_height="wrap_content" android:layout_width="fill_parent"
 	android:stretchColumns="2"
 	>
-	<!-- This row used only in View Previous TStop mode, otherwise hidden in onCreate -->
+	<!-- This row visible only in View Previous TStop mode -->
 	<TableRow android:id="@+id/trip_tstop_time_cont_value_row">
 		<!-- 2-line label: Continue (newline) at Time -->
 		<TextView android:id="@+id/trip_tstop_time_cont_value_lbl"

@@ -28,6 +28,8 @@ Being developed now; improvements and bugfixes since 0.9.70
   trip's starting location to first stop, if trip had different
   starting location or odometer change from end of previous trip
 - Update odometer style to standard NumberPicker
+- Logbook: View TStop details: To reduce clutter, hide odometer checkboxes;
+  if odometer not entered, hide its entire row
 - Add padding at screen edges for all activities, adjust odometer/time-picker spacing
 - Development: Convert project to Android Studio/Gradle from Eclipse ADT
 

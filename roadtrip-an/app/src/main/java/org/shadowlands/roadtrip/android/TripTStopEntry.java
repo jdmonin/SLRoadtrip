@@ -562,10 +562,11 @@ public class TripTStopEntry extends Activity
 	// End of calculator fields
 	///////////////////////////////
 
-	/** Called when the activity is first created.
-	 * See {@link #updateTextAndButtons()} for remainder of init work,
+	/**
+	 * Called when the activity is first created.
+	 * Calls {@link #updateTextAndButtons()} for remainder of init work,
 	 * which includes checking the current driver/vehicle/trip
-	 * and hiding/showing buttons as appropriate.
+	 * and hiding/showing buttons/odometers as appropriate.
 	 * Also calls {@link #onRestoreInstanceState(Bundle)} if
 	 * our state was saved.
 	 * Sets {@link #areaLocs_areaID} and fills {@link #areaLocs} based
@@ -575,6 +576,7 @@ public class TripTStopEntry extends Activity
 	public void onCreate(Bundle savedInstanceState)
 	{
 		super.onCreate(savedInstanceState);
+
 		db = new RDBOpenHelper(this);
 		setContentView(R.layout.trip_tstop_entry);
 		neverPaused = true;
@@ -608,7 +610,7 @@ public class TripTStopEntry extends Activity
 
 		Intent i = getIntent();
 
-		// check viewTS first: determines where to get other settings
+		// check for viewTS first: Determines where to look for other settings
 		if ((i != null) && i.hasExtra(EXTRAS_FIELD_VIEW_TSTOP_ID))
 		{
 			final int tsid = i.getIntExtra(EXTRAS_FIELD_VIEW_TSTOP_ID, 0);
@@ -635,7 +637,7 @@ public class TripTStopEntry extends Activity
 			return;
 		}
 
-		isCurrentlyStopped = (currTS != null);  // true when viewTS != null
+		isCurrentlyStopped = (currTS != null);  // is also true when viewTS != null
 
 		// now check other intent extras
 		if (i != null)
@@ -684,6 +686,7 @@ public class TripTStopEntry extends Activity
 					b.setEnabled(false);
 			}
 		}
+
 		// In View Previous TStop mode, Enter will be renamed below to Close
 		// and most other fields updated or disabled.
 
@@ -790,7 +793,10 @@ public class TripTStopEntry extends Activity
 		{
 			View v = findViewById(R.id.trip_tstop_via_dropdown);
 			if (v != null)
+			{
 				v.setEnabled(false);
+				v.setVisibility(View.GONE);
+			}
 
 			// Won't be able to set via_text in updateViaRouteAutocomplete() because
 			// prevLocObj == null. Workaround is handled later in this method; search for
@@ -999,6 +1005,7 @@ public class TripTStopEntry extends Activity
 
 		// Give status, read odometer, etc;
 		// if currTS != null, fill fields from it.
+		// if viewTS != null, hide odometer pickers etc.
 		updateTextAndButtons();
 		if ((savedInstanceState != null) && savedInstanceState.containsKey(TSTOP_BUNDLE_SAVED_MARKER))
 			onRestoreInstanceState(savedInstanceState);
@@ -1638,6 +1645,7 @@ public class TripTStopEntry extends Activity
 	 * {@link #viaRouteObj}, and {@link #stopGas};
 	 * update odometers from {@link Trip#readHighestOdometers()}.
 	 * If <tt>{@link #currTS} != null</tt>, fill fields from that instead.
+	 * If <tt>{@link #viewTS} != null</tt>, hide odometer pickers etc.
 	 * Called as an ending part of {@link #onCreate(Bundle)}.
 	 */
 	private void updateTextAndButtons()
@@ -1650,6 +1658,7 @@ public class TripTStopEntry extends Activity
 			odoTripOrig = odos[1];
 			odo_total.setCurrent10d(odos[0], false);
 			odo_trip.setCurrent10d(odos[1], false);
+
 			return;  // <--- Early return: no current tstop ---
 		}
 
@@ -1678,31 +1687,55 @@ public class TripTStopEntry extends Activity
 			odo_trip.setCurrent10d(odos[1], false);
 		}
 
-		// Disable odos in viewTS mode
+		// In viewTS mode: Hide unused odometer rows,
+		// or hide checkboxes and replace odo pickers with text values
 		if (viewTS != null)
 		{
 			odo_trip_chk.setEnabled(false);
 			odo_total_chk.setEnabled(false);
 			odo_trip.setEnabled(false);
 			odo_total.setEnabled(false);
-			View v = findViewById(R.id.trip_tstop_odo_trip_calc_edit);
-			if (v != null)
-				v.setVisibility(View.GONE);
-			v = findViewById(R.id.trip_tstop_odo_total_calc_edit);
-			if (v != null)
-				v.setVisibility(View.GONE);
 
-			// find and replace odometer widgets with text values
-			odo = currTS.getOdo_total();
-			replaceViewWithText
-				(odo_total, R.id.trip_tstop_odo_total_value_txt,
-				 ((odo != 0) ? Integer.toString(odo / 10) : " "),
-				 true);
-			odo = currTS.getOdo_trip();
-			replaceViewWithText
-				(odo_trip, R.id.trip_tstop_odo_trip_value_txt,
-				 ((odo != 0) ? getResources().getString(R.string.value__odo__float, odo / 10f) : " "),
-				 true);
+			if (! odo_trip_chk.isChecked())
+			{
+				// Trip odometer not entered at this stop
+				View v = findViewById(R.id.trip_tstop_odo_trip_row);
+				if (v != null)
+					v.setVisibility(View.GONE);
+			} else {
+				odo_trip_chk.setVisibility(View.GONE);  // checkbox is redundant
+
+				View v = findViewById(R.id.trip_tstop_odo_trip_calc_edit);
+				if (v != null)
+					v.setVisibility(View.GONE);
+
+				odo = currTS.getOdo_trip();
+				replaceViewWithText
+					(odo_trip, R.id.trip_tstop_odo_trip_value_txt,
+					 ((odo != 0) ? getResources().getString(R.string.value__odo__float, odo / 10f) : " "),
+					 true);
+
+			}
+
+			if (! odo_total_chk.isChecked())
+			{
+				// Total odometer not entered at this stop
+				View v = findViewById(R.id.trip_tstop_odo_total_row);
+				if (v != null)
+					v.setVisibility(View.GONE);
+			} else {
+				odo_total_chk.setVisibility(View.GONE);  // checkbox is redundant
+
+				View v = findViewById(R.id.trip_tstop_odo_total_calc_edit);
+				if (v != null)
+					v.setVisibility(View.GONE);
+
+				odo = currTS.getOdo_total();
+				replaceViewWithText
+					(odo_total, R.id.trip_tstop_odo_total_value_txt,
+					 ((odo != 0) ? Integer.toString(odo / 10) : " "),
+					 true);
+			}
 		}
 
 		// Prep to fill via_route text field in read-only View Previous TStop mode:

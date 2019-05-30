@@ -158,22 +158,26 @@ In Main activity, tap "Show Logbook" button.
   - "Search" button should show all ViaRoutes between them in either direction, including distance if entered from trip odometers
   - Bring up dialog again, change dropdown to a different area
   - Now, location should auto-complete to those in the new area
-- Long-press a trip to view details
+- Tap a trip to view its details
   - Brings up a message box that:
   - Shows vehile, driver, starting time and location, etc
   - Has list of trip stops' trip-odometer, location, comment
   - Tap a stop in the trip to view its details
     - Uses same "Trip Stop" activity used during trips to enter TStops
-	- Is read-only
-	- For a stop that has gas, Gas button has green icon, can tap it for gas details
+    - Is read-only
+    - Total/trip odometer values should be shown if entered, otherwise hidden including their labels
+    - For a stop that has gas, Gas button has green icon, can tap it for gas details
   - Tap a stop that has a comment
     - Should be able to copy comment text to clipboard
-	- Edit the comment, tap Save Changes
-  - Tap that stop again, should say "Edited" near comment field
+    - Edit the comment, tap Save Changes
+  - Tap that stop again, should say "Edited later" under comment field
   - Tap a stop without a comment to view details: Add a comment
-  - Tap that stop again, should say "Added" near comment field
+  - Tap that stop again, should say "Added later" under comment field
   - Edit that stop's comment, Save Changes
   - Tap that stop again yet, should say both "Added" and "Edited"
+  - Tap a different stop that has a comment
+  - Remove that stop's comment, Save Changes
+  - Tap that stop again yet, should say "Removed later" under comment field
 
 ### Validate DB
 

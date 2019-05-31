@@ -34,13 +34,16 @@ daily trips with actual vehicle(s).
   - Dialog to confirm should show how long ago the trip started
 - Start and finish a trip
   - Include at least 1 intermediate stop somewhere
-  - Fill out a comment for at least one stop
+  - Fill out a comment for at least two stops
+    - For one of them, make a comment with a very long sentence
+      - Should soft-wrap to the next line instead of scrolling horizontally
+      - Should accept newlines (Enter key)
   - Once trip has at least one stop, should not be able to cancel trip
   - During trip, Logbook view should show "Current Trip in progress" at bottom of trip details
   - While stopped, test Trip Stop activity's "Save changes" button once instead of "Continue from stop"
     - Should be able to change comment, odometer, via, and save changes
-	- Logbook should show those changes
-	- From Main activity, should then be able to tap Continue button to re-show Trip Stop activity and actually continue
+    - Logbook should show those changes
+    - From Main activity, should then be able to tap Continue button to re-show Trip Stop activity and actually continue
   - During each stop, fill in Via and the trip odometer
   - After first stop, test "Undo Continue from Stop" menu item
     - Should return you to being stopped there

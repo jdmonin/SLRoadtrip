@@ -14,10 +14,10 @@ For now, please see the 'doc' directory for details, such as README.developer
 which includes a version history and roadmap.
 
 To run the bookedit JAR, you will need to download sqlite-jdbc-<version>.jar
-from https://bitbucket.org/xerial/sqlite-jdbc -> Downloads, and place it in
-the same folder as slroadtrip-bookedit.jar. You'll need to rename the sqlite JAR
-to sqlite-jdbc.jar (without any version number). Then just double-click
-slroadtrip-bookedit.jar to run it and view db backup files.
+3.15.1 or newer from https://bitbucket.org/xerial/sqlite-jdbc/downloads/ and
+place it in the same folder as slroadtrip-bookedit.jar. You'll need to rename
+the sqlite JAR to sqlite-jdbc.jar (without any version number). Then just
+double-click slroadtrip-bookedit.jar to run it and view db backup files.
 
 
 Known limitations:
@@ -26,4 +26,4 @@ Known limitations:
 - Two copies of the db library source (one each for bookedit and roadtrip-an)
 
 Jeremy D Monin <jdmonin@nand.net>
-January 2019
+June 2019

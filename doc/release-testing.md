@@ -265,6 +265,7 @@ From main activity, hit the Backups button.
 ## BookEdit utility
 
 Test with a copy of a log backup (made using Android app), not the original backup.
+Use sqlite-jdbc 3.15.1 or newer.
 
 ### Basics
 
@@ -296,6 +297,20 @@ Test with a copy of a log backup (made using Android app), not the original back
   - Click Open again, choose same copy, should get prompt, choose Upgrade in Place
   - Browse trips, close
   - Click Open again, choose same copy, should not get prompt because it's been upgraded
+
+### Optional tests
+
+- If sqlite-jdbc driver jar is too old, won't be able to open files
+  - Get a too-old version such as 3.6.23, rename to sqlite-jdbc.jar
+  - Launch bookedit jar
+  - Try to open a logbook or view backup
+  - Error dialog should say it can't open the database
+  - Console should print details and version:  
+    ```
+    org.sqlite.JDBC version: SQLiteJDBC pure (3.6.23.1 3.0)
+    DB pragma integrity_check failed: class java.sql.SQLException [SQLITE_NOTADB]  File opened that is not a database file (file is encrypted or is not a database)
+    ```
+
 
 ## Other checks
 

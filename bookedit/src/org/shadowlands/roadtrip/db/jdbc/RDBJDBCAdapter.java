@@ -123,15 +123,28 @@ public class RDBJDBCAdapter implements RDBAdapter
 	public RDBJDBCAdapter (final String sqliteDBFilename)
 	    throws ClassNotFoundException, SQLException
 	{
+		boolean printVersionOnce = false;
+
 		if (! didDriverInit)
 		{
 			// do class initialization:
 			Class.forName("org.sqlite.JDBC");
 			didDriverInit = true;
+			printVersionOnce = true;
 		}
 		dbFilename = sqliteDBFilename;
 		conn = DriverManager.getConnection("jdbc:sqlite:" + sqliteDBFilename);
 		stat = conn.createStatement();
+
+		if (printVersionOnce)
+		{
+			final DatabaseMetaData meta = conn.getMetaData();
+			System.err.println
+				("org.sqlite.JDBC version: "
+				 + meta.getDriverName() + ' ' + meta.getDriverVersion()
+				 + " (" + meta.getDatabaseProductVersion() + " "
+				 + meta.getDatabaseMajorVersion() + '.' + meta.getDatabaseMinorVersion() + ')');
+		}
 	}
 
 	/**

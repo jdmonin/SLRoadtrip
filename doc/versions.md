@@ -19,9 +19,13 @@ updated to list the released version's release date and commit hash.
 
 # Versions:
 
+# 0.9.81
+
+Being developed now; improvements and bugfixes since 0.9.80
+
 # 0.9.80
 
-Being developed now; improvements and bugfixes since 0.9.70
+2019-05-31: d137727
 
 ## SLRoadtrip android app:
 - Bugfix: Previously did not record a new Via Route's distance from

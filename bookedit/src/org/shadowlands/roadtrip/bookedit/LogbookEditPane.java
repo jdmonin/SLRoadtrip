@@ -580,6 +580,25 @@ public class LogbookEditPane
 				verifOK = (0 == verif.verify(RDBVerifier.LEVEL_PHYS));
 			} catch (IllegalStateException e) {
 				verifOK = false;
+
+				Throwable t = e.getCause();  // print underlying SQLException instead, if any
+				if (! (t instanceof SQLException))
+					t = e;
+				System.err.println
+					("DB pragma integrity_check failed: " + t.getClass() + " " + t.getMessage());
+				System.err.println();
+				for (int max = 3; max > 0; --max)
+				{
+					Throwable tc = t.getCause();
+					if ((tc != null) && ! tc.equals(t))
+					{
+						t = tc;
+						System.err.println("Caused by: " + t.getClass() + " " + t.getMessage());
+						System.err.println();
+					} else {
+						break;
+					}
+				}
 			}
 			verif.release();
 

@@ -31,7 +31,8 @@ daily trips with actual vehicle(s).
 
 - Start a trip
 - After starting a trip, main activity's menu should allow Cancel Trip
-  - Dialog to confirm should show how long ago the trip started
+  - Should first show a dialog to confirm
+  - After cancel: Main should show no current trip, Show Logbook shouldn't show the cancelled trip
 - Start and finish a trip
   - Include at least 1 intermediate stop somewhere
   - Fill out a comment for at least two stops
@@ -70,7 +71,7 @@ daily trips with actual vehicle(s).
   - Search Via Routes: Enter trip's starting location and newly entered location;
     should show the new via including distance
 - Start a trip which finishes in a different GeoArea
-  - Include at least 1 stop in the starting area
+  - Include at least 1 stop at an existing location within starting area
     - To test duplicate-prevention: Start typing the name of the start location;
       auto-complete should show 1 match, not 2 with the same name
     - Test Via field duplicate-prevention the same way
@@ -157,7 +158,9 @@ In Main activity, tap "Show Logbook" button.
   - Test for current vehicle, for All vehicles
   - Select a different area; dialog should then autocomplete locations in that area
   - Go back to first logbook screen
-- Recent Gas button should show gas info, including calculated MPG between fill-up gas stops
+- Tap Recent Gas in action bar
+  - Should show gas info, including calculated MPG between fill-up gas stops
+  - Tap "Change Vehicle" button: Should show popup, select another vehicle, should show its gas stops if any
 - Search Via Routes button
   - Enter two locations
   - "Search" button should show all ViaRoutes between them in either direction, including distance if entered from trip odometers
@@ -165,16 +168,18 @@ In Main activity, tap "Show Logbook" button.
   - Now, location should auto-complete to those in the new area
 - Tap a trip to view its details
   - Brings up a message box that:
-  - Shows vehile, driver, starting time and location, etc
+  - Shows vehicle, driver, starting time and location, etc
+  - For a roadtrip, lists start and end areas
   - Has list of trip stops' trip-odometer, location, comment
   - Tap a stop in the trip to view its details
     - Uses same "Trip Stop" activity used during trips to enter TStops
-    - Is read-only
+    - Is read-only, except comment field
     - Total/trip odometer values should be shown if entered, otherwise hidden including their labels
     - For a stop that has gas, Gas button has green icon, can tap it for gas details
   - Tap a stop that has a comment
     - Should be able to copy comment text to clipboard
     - Edit the comment, tap Save Changes
+    - Trip detail popup should show updated comment text for that stop
   - Tap that stop again, should say "Edited later" under comment field
   - Tap a stop without a comment to view details: Add a comment
   - Tap that stop again, should say "Added later" under comment field
@@ -203,7 +208,9 @@ From main activity, hit the Backups button.
   - Change Folder should let you type other paths (later versions can be more user-friendly)
   - Hit Change Folder, then clear the path field in the dialog, hit Change
   - Should then take you to Downloads folder as default location
-- Backup Now button should show a toast with new backup's filename
+- Tap Backup Now button
+  - Should show a "Backup successful" toast
+  - List of backups should refresh to include new backup with today's date
 - Using Android Studio device file explorer, or an Android file manager app:
   - Should be able to see that backup
   - Copy that backup off the device onto a computer for testing
@@ -220,7 +227,7 @@ From main activity, hit the Backups button.
 - Should see Welcome/initial setup activity
 - Tap Restore button, should take you to Backups activity
 - Go Back to Welcome activity
-- Walk through Initial Setup
+- Tap Continue, walk through Initial Setup
   - Should prompt you for a driver name, local geo area
   - Should have you enter a vehicle's info
   - Then, should be at main activity
@@ -271,14 +278,16 @@ Use sqlite-jdbc 3.15.1 or newer.
 
 - Version shown at bottom of main dialog is correct
   - Including DB schema version: Check against `DATABASE_VERSION` in bookedit/src/org/shadowlands/roadtrip/db/RDBSchema.java
-- Can open the backup using "View Backup" button's dialog
+- Click "View Backup" button
+  - File dialog should appear; browse to open a backup file
+  - BookEdit should open the backup's logbook in a new window
 - In console or terminal that lauched BookEdit, should see schema version (`user_version`) when backup is opened
 - Can browse current vehicle's most recent trips
-- Can tap "Earlier Trips" button, shows them at top of log window
-- Can tap "Vehicle" button to view logs of another vehicle, if any in backup
-- Can see list of driver(s) and tap for details
-- Can see list of vehicle(s), including active/inactive icon (green/gray), and tap for details
-- Quit and re-launch BookEdit, tap View Backup: Dialog should start in folder of last-opened backup
+- Click "Earlier Trips" button, shows them at top of log window
+- Use Vehicles dropdown to view logs for another vehicle, if any in backup
+- Click "Drivers" button, see list of driver(s) and tap for details
+- Click "Vehicles" button, see list of vehicle(s), including active/inactive icon (green/gray), click one for details
+- Quit and re-launch BookEdit, click View Backup: Dialog should start in folder of last-opened backup
 
 ### Other functionality
 
@@ -315,7 +324,7 @@ Use sqlite-jdbc 3.15.1 or newer.
 ## Other checks
 
 - doc/versions.md should list all notable changes in this release
-- DB package consistency between Bookedit and Android app
+- DB package consistency between BookEdit and Android app
   - Run this command at the root of the repo:  
     `diff -ur bookedit/src/org/shadowlands/roadtrip/db roadtrip-an/app/src/main/java/org/shadowlands/roadtrip/db`
 
@@ -326,5 +335,5 @@ Use sqlite-jdbc 3.15.1 or newer.
         Only in bookedit/src/org/shadowlands/roadtrip/db: script
 
   - Run this command, should see no output:  
-    `diff -u bookedit/src/org/shadowlands/roadtrip/db/script/schema_v*.sql roadtrip-an/app/src/main/res/raw/schema_v0*.sql`
+    `diff -u bookedit/src/org/shadowlands/roadtrip/db/script/schema_v*.sql roadtrip-an/app/src/main/res/raw/schema_v*.sql`
 

@@ -30,10 +30,11 @@ daily trips with actual vehicle(s).
 ### Making trips
 
 - Start a trip
-- After starting a trip, main activity's menu should allow Cancel Trip
+- After starting the trip, main activity's menu should allow Cancel Trip
   - Should first show a dialog to confirm
   - After cancel: Main should show no current trip, Show Logbook shouldn't show the cancelled trip
 - Start and finish a trip
+  - When beginning trip, give it a category from the dropdown
   - Include at least 1 intermediate stop somewhere
   - Fill out a comment for at least two stops
     - For one of them, make a comment with a very long sentence
@@ -52,18 +53,24 @@ daily trips with actual vehicle(s).
     - When you hit continue, should ask "Are you sure"
   - Tap the odometer calculator button (pencil icon)
     - Test both Trip odometer and Total odometer calculator
-	- Clear should zero the field in the calculator popup
-	- Reset should give it the current odometer value
-	- Save is grayed out until `=`, `+`, `-`, or another operator is tapped
-	- Test both `+` and `-`
-	- Test memory: M+, MR, M-, MR, MC, MR while entering values in popup
-	- Save button should update odometer in the activity
+    - Clear should zero the field in the calculator popup
+    - Reset should give it the current odometer value
+    - Save is grayed out until `=`, `+`, `-`, or another operator is tapped
+    - Test both `+` and `-`
+    - Test memory: M+, MR, M-, MR, MC, MR while entering values/using digit buttons
+      - After MC is tapped: MC, MR buttons should be disabled
+    - Save button should update odometer in the activity
   - End trip by returning to the start location
     - To test duplicate-prevention:
       - Type that location name, instead of tapping on the auto-complete
-      - Change at least 1 letter's capitalization, should still use same Location within DB
-      - Test Via Route field duplication the same way
-  - Show Logbook afterwards: Should see trip details, including Via names and mileage between stops in tenths
+      - Change at least 1 letter's capitalization; should still use same Location record within DB
+      - Test Via Route field dupe-prevention, with the same kind of typing capital change
+      - For an upcoming test, note the Location and Via Route names typed here
+  - Show Logbook afterwards: Should see trip details
+    - Trip category, at start of trip in [brackets]
+    - Via names
+    - Mileage between stops in tenths
+    - Location and Via names from "duplicate-prevention" test should be properly capitalized
 - Start a trip from a different location than end of previous trip
   - Stop, entering a new location, new via, and a distance on trip odometer
   - End trip at any location
@@ -71,27 +78,35 @@ daily trips with actual vehicle(s).
   - Search Via Routes: Enter trip's starting location and newly entered location;
     should show the new via including distance
 - Start a trip which finishes in a different GeoArea
-  - Include at least 1 stop at an existing location within starting area
-    - To test duplicate-prevention: Start typing the name of the start location;
-      auto-complete should show 1 match, not 2 with the same name
+  - Stop and continue at an existing location within starting area
+    - To test duplicate-prevention:
+      - Start typing the name of the location used in the recent "duplicate-prevention" test
+      - Auto-complete should show 1 match, not 2 with the same name
+      - Tap auto-complete to select location
     - Test Via field duplicate-prevention the same way
     - Type or auto-complete the name of the intermediate stop from the previous trip
     - Via Route dropdown should show previously entered route
     - Via Route auto-complete should also show a match and be tappable
+  - Optionally stop again within the starting area
   - Include at least 1 stop in area "(none)", like a highway Rest Area
   - Stop again; should auto-complete locations in area "(none)"
-  - Stop again, typing name of a new geographic area
-  - Main activity "Current Area" should be the newly created one
-  - Stop again; should auto-complete the location in the new area
-  - Finish the trip
+  - Stop again: Enter name of a new geographic area, new location in that new area
+  - After stop, Main activity "Current Area" should be the newly created one
+  - Tap "End Trip"
+    - Start typing just-created new location name; should auto-complete
+    - Clear out Location field, type name of another new location
+    - End the trip
 - Start a trip from a different GeoArea than previous trip
-  - First, tap "Begin Trip" and note the starting location
-  - When changing to the new Area, starting location name should be cleared out
-  - Go back to Main activity instead of starting the trip
+  - First, tap "Begin Trip"
+    - Look at the Starting Location field
+    - Select a different Area from the dropdown; should clear out location field
+    - Go back to Main activity instead of starting the trip
   - Tap "Begin Trip"
-  - Change/add to the text in the starting location textfield
-  - Now when changing to the new Area, that changed name should not be cleared out
-  - Location name field should auto-complete location names from the selected Area
+    - Change/add to the text in the starting location textfield
+    - Now pick the new Area in dropdown; that changed name should not be cleared out
+    - Location name field should auto-complete location names from the selected Area
+  - After begin trip, main activity's Current Area should be the selected one
+  - No need to end trip yet: Can use same trip for next test (gas test)
 - Start and finish a trip which includes a stop for gas
   - Use the "fill up" checkbox
   - Save changes but don't continue yet
@@ -133,12 +148,15 @@ In Main activity, hit "Change Driver / Vehicle" button.
 - Current vehicle details should be read-only while on a trip
 - Can add a new vehicle
   - Give the new vehicle a different Starting Area
+  - After add, should ask whether to change vehicle to new one: Tap "Change"
   - Tap "Begin Trip" with that vehicle, should use that selected Area
   - Go Back instead of starting the trip
 - To continue testing, current vehicle must not be on a trip
   - Can cancel trip, if started one with no stops for testing
-- Can change or add vehicle's comment
-- Can change a vehicle's active/inactive status; list shows updated status icon
+- Change or add vehicle's comment
+- Change a vehicle's active/inactive status
+  - Shouldn't be able to change current vehicle's status
+  - After change, list shows updated status icon
 
 ### Logbook
 
@@ -154,10 +172,12 @@ In Main activity, tap "Show Logbook" button.
   - Should see vehicle's trips on/after that date, if any
   - "Earlier Trips" button should work, or show toast indicating no earlier trips
   - Go back to first logbook screen
+  - Repeat this test, but choose another vehicle from dropdown in Go to Date dialog
 - Search for Location should filter for the entered location
-  - Test for current vehicle, for All vehicles
+  - View search results for current vehicle
+  - Search for All vehicles, view search results
   - Select a different area; dialog should then autocomplete locations in that area
-  - Go back to first logbook screen
+  - Go back to first logbook screen. Or back to Main, tap Show Logbook
 - Tap Recent Gas in action bar
   - Should show gas info, including calculated MPG between fill-up gas stops
   - Tap "Change Vehicle" button: Should show popup, select another vehicle, should show its gas stops if any

@@ -23,6 +23,9 @@ updated to list the released version's release date and commit hash.
 
 Being developed now; improvements and bugfixes since 0.9.80
 
+## SLRoadtrip android app:
+- LogbookShow Search by Location: Add 'x' to clear location text field
+
 ## BookEdit desktop utility app:
 - When first DB is opened, print SQLiteJDBC version to console for debugging
 - When opening a DB, if integrity_check fails, print exception details to console for debugging

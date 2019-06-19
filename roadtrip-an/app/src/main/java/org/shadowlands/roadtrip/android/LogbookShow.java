@@ -63,6 +63,7 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.DatePicker;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.ListAdapter;
 import android.widget.ScrollView;
@@ -1176,6 +1177,8 @@ public class LogbookShow extends Activity
 				fromActivity.getLayoutInflater().inflate(R.layout.logbook_show_popup_locsearch, null);
 			final AutoCompleteTextView loc =
 				(AutoCompleteTextView) askItems.findViewById(R.id.logbook_show_popup_locs_loc);
+			final ImageButton locClearBtn =
+				(ImageButton) askItems.findViewById(R.id.logbook_show_popup_locs_clear_btn);
 
 			if (locObj != null)
 			{
@@ -1243,6 +1246,13 @@ public class LogbookShow extends Activity
 				}
 
 				public void onNothingSelected(AdapterView<?> parent) { } // Required stub
+			});
+
+			/** When Clear button tapped, clear loc edittext */
+			locClearBtn.setOnClickListener(new View.OnClickListener() {
+				public void onClick(View view) {
+					loc.setText("");
+				}
 			});
 
 			AlertDialog.Builder alert = new AlertDialog.Builder(fromActivity);

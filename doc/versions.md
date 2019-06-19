@@ -25,6 +25,7 @@ Being developed now; improvements and bugfixes since 0.9.80
 
 ## SLRoadtrip android app:
 - LogbookShow Search by Location: Add 'x' to clear location text field
+- Main: Show current area during roadtrip, not starting area
 
 ## BookEdit desktop utility app:
 - When first DB is opened, print SQLiteJDBC version to console for debugging

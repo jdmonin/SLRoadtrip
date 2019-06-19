@@ -600,36 +600,24 @@ public class Main extends Activity
 		txt.append(res.getString(R.string.vehicle));
 		txt.append(": ");
 		txt.append(currV.toString());
+		txt.append("\n");
+		txt.append(res.getString(R.string.area__colon));
+		txt.append(' ');
+		if (currA != null)
+			txt.append(currA.toString());
+
 		if (currT == null)
 		{
-			txt.append("\n");
-			txt.append(res.getString(R.string.area__colon));
-			txt.append(' ');
-			if (currA != null)
-				txt.append(currA.toString());
 			txt.append("\n\n");
 			txt.append(res.getString(R.string.main_no_current_trip));
 			changeDriverOrVeh.setText(R.string.change_driver_vehicle);
 		} else {
-			final int destAreaID = currT.getRoadtripEndAreaID();
-			txt.append("\n");
-			if ((currT != null) && (destAreaID != 0))
-			{
-				txt.append(res.getString(R.string.main_roadtrip_start_area));
-				txt.append(' ');
-				final int a_id = currT.getAreaID();
-				if ((currA != null) && (currA.getID() == a_id))
-					txt.append(currA.toString());
-				else
-					try {
-						txt.append(new GeoArea(db, a_id).toString());
-					} catch (Exception e) {}
-			} else {
-				txt.append(res.getString(R.string.area__colon));
-				txt.append(' ');
-				if (currA != null)
-					txt.append(currA.toString());
-			}
+			txt.append("\n\n");
+
+			if (currT.getRoadtripEndAreaID() == 0)
+				txt.append(res.getString(R.string.main_trip_in_progress));
+			else
+				txt.append(res.getString(R.string.main_roadtrip_in_progress));
 
 			String currTCateg = null;
 			if (currT.getTripCategoryID() != 0)
@@ -642,11 +630,6 @@ public class Main extends Activity
 				catch (Throwable th) {}
 			}
 
-			txt.append("\n\n");
-			if (destAreaID == 0)
-				txt.append(res.getString(R.string.main_trip_in_progress));
-			else
-				txt.append(res.getString(R.string.main_roadtrip_in_progress));
 			if (currTCateg != null)
 				txt.append(currTCateg);
 			if (currFT != null)

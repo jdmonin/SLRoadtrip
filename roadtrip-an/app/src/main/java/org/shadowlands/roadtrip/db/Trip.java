@@ -1,6 +1,6 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
- *  This file Copyright (C) 2010-2017 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2017,2019 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -2008,17 +2008,21 @@ public class Trip extends RDBRecord
 		 * In Location Mode, as a temporary measure until more subtle match highlighting can be done,
 		 * {@link TStop}s at a Location matched in {@link #tMatchedRows} are shown in ALL CAPS.
 		 *<P>
+		 * List elements are always {@link StringBuilder}; declares return type List&lt;{@link CharSequence}&gt;
+		 * so the android app can replace highlight matches with another CharSequence type
+		 * like {@code Spannable} if needed.
+		 *<P>
 		 * Before v0.9.60, this method was {@code appendRowsAsTabbedString(StringBuffer)}.
 		 *
-		 * @return List of StringBuilders, 1 per trip in {@link #tr}, or {@code null} if none in {@link #tText}.
+		 * @return List of {@link StringBuilder}s, 1 per trip in {@link #tr}, or {@code null} if none in {@link #tText}.
 		 */
-		public List<StringBuilder> getTripListRowsTabbed()
+		public List<CharSequence> getTripListRowsTabbed()
 		{
 			if ((tText == null) || tText.isEmpty())
 				return null;
 
 			final int L = tr.size();
-			List<StringBuilder> tlist = new ArrayList<StringBuilder>(L);
+			List<CharSequence> tlist = new ArrayList<CharSequence>(L);
 
 			for (int i = 0; i < L; ++i)
 				tlist.add(getTripRowsTabbed_idx(i));

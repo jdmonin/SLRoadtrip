@@ -413,28 +413,29 @@ public class LogbookShow extends Activity
 		}
 
 		boolean sbEmpty = false;
-		List<StringBuilder> sbTrips = null;
+		List<CharSequence> tripsStrs = null;
 		List<Trip> trips = null;
 		if (ltm.getRangeCount() > 0)
 		{
 			Trip.TripListTimeRange range = ltm.getRange(0);
-			sbTrips = range.getTripListRowsTabbed();
+			tripsStrs = range.getTripListRowsTabbed();
 			trips = range.tr;
 		}
 
-		if ((sbTrips == null) || sbTrips.isEmpty())
+		if ((tripsStrs == null) || tripsStrs.isEmpty())
 		{
 			sbEmpty = true;
-			sbTrips = new ArrayList<StringBuilder>();
-			sbTrips.add(new StringBuilder());
+			tripsStrs = new ArrayList<CharSequence>();
+			tripsStrs.add(new StringBuilder());
 		}
 		if (ltm.hasCurrentTrip())
 		{
-			sbTrips.get(sbTrips.size() - 1).append("\n\t\t(Current Trip in progress)");
+			StringBuilder tripSB = (StringBuilder) tripsStrs.get(tripsStrs.size() - 1);
+			tripSB.append("\n\t\t(Current Trip in progress)");
 		}
-		else if (sbEmpty || (sbTrips.get(0).length() < 5))
+		else if (sbEmpty || (tripsStrs.get(0).length() < 5))
 		{
-			StringBuilder sb = sbTrips.get(0);
+			StringBuilder sb = (StringBuilder) tripsStrs.get(0);
 			if (locID != -1)
 				sb.append("\nNo trips found to that Location for this Vehicle.");
 			else if (goToDate != 0)
@@ -466,8 +467,9 @@ public class LogbookShow extends Activity
 
 		Log.d(TAG, "L415 init positions: earlier=" + tripListBtnEarlierPosition + ", later=" + tripListBtnLaterPosition);
 
+		// Add the trip rows to textview
 		tvNoTripsFound = tvContent;  // first textview, for addTripsTextViews to reuse
-		addTripsTextViews(sbTrips, trips, true, false);
+		addTripsTextViews(tripsStrs, trips, true, false);
 		if (sbEmpty)
 			tvNoTripsFound = tvContent;  // addTripsTextViews may have set it null
 		else
@@ -831,7 +833,7 @@ public class LogbookShow extends Activity
 	 * If {@code tr != null}, will call {@link View#setTag(Object) tv.setTag(tr)} and add {@code LogbookShow}
 	 * as an onClickListener.
 	 *
-	 * @param sbTrips  New trip strings to add, by calling {@link Trip.TripListTimeRange#getTripListRowsTabbed()}
+	 * @param tripsStrs  New trip strings to add, by calling {@link Trip.TripListTimeRange#getTripListRowsTabbed()}
 	 * @param trips    Optional list of {@link Trip}s (one per sbTrips item) to associate one per TextView,
 	 *     or {@code null}
 	 * @param isLaterPos  True to add at the bottom of the activity (at {@link #tripListBtnLaterPosition}),
@@ -844,13 +846,13 @@ public class LogbookShow extends Activity
 	 * @since 0.9.60
 	 */
 	private List<TextView> addTripsTextViews
-		(final List<StringBuilder> sbTrips, final List<Trip> trips,
+		(final List<CharSequence> tripsStrs, final List<Trip> trips,
 		 final boolean isLaterPos, final boolean wantTVList)
 		throws IllegalArgumentException
 	{
-		if ((sbTrips == null) || sbTrips.isEmpty())
+		if ((tripsStrs == null) || tripsStrs.isEmpty())
 			return null;
-		final int S = sbTrips.size();
+		final int S = tripsStrs.size();
 		if ((trips != null) && (trips.size() != S))
 			throw new IllegalArgumentException("trips size != sbTrips");
 
@@ -858,15 +860,15 @@ public class LogbookShow extends Activity
 			TS_ROW_LP = new ViewGroup.LayoutParams
 				(ViewGroup.LayoutParams.FILL_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
 
-		final List<TextView> tvl = (wantTVList) ? new ArrayList<TextView>(sbTrips.size()) : null;
+		final List<TextView> tvl = (wantTVList) ? new ArrayList<TextView>(tripsStrs.size()) : null;
 		if (isLaterPos)
 			for (int i = 0; i < S; ++i)
 				addTripsTextViews_addOne
-				    (sbTrips.get(i), ((trips != null) ? trips.get(i) : null), tvl, true);
+				    (tripsStrs.get(i), ((trips != null) ? trips.get(i) : null), tvl, true);
 		else
 			for (int i = S - 1; i >= 0; --i)
 				addTripsTextViews_addOne
-				    (sbTrips.get(i), ((trips != null) ? trips.get(i) : null), tvl, false);
+				    (tripsStrs.get(i), ((trips != null) ? trips.get(i) : null), tvl, false);
 
 		return tvl;
 	}
@@ -876,7 +878,7 @@ public class LogbookShow extends Activity
 	 * @since 0.9.60
 	 */
 	private void addTripsTextViews_addOne
-		(final StringBuilder sb, final Trip tr, final List<TextView> tvl, final boolean isLaterPos)
+		(final CharSequence tripStr, final Trip tr, final List<TextView> tvl, final boolean isLaterPos)
 	{
 		final TextView tv;
 
@@ -884,14 +886,14 @@ public class LogbookShow extends Activity
 		{
 			// replace that with the trip text
 			tv = tvNoTripsFound;
-			tv.setText(sb);
+			tv.setText(tripStr);
 			tvNoTripsFound = null;
 			Log.d(TAG, "set trip at tvNoTripsFound");
 		} else {
 			// create a new textview
 			tv = new TextView(this);
 			tv.setLayoutParams(TS_ROW_LP);
-			tv.setText(sb);
+			tv.setText(tripStr);
 
 			if (isLaterPos)
 			{

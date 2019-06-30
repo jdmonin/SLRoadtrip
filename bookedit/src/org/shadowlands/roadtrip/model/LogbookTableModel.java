@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010-2017 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2017,2019 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -342,7 +342,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 		{
 			for (TripListTimeRange ttr : ltm.tData)
 			{
-				TripListTimeRange ttlocal = new TripListTimeRange(ttr.timeStart, ttr.timeEnd, ttr.tr);
+				TripListTimeRange ttlocal = TripListTimeRange.build(ttr.timeStart, ttr.timeEnd, ttr.tr);
 				tData.add(ttlocal);
 				addRowsFromTrips(ttlocal, conn);
 			}
@@ -694,7 +694,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 		if (vtrips == null)
 			return;  // <--- nothing found ---
 
-		TripListTimeRange ttr = new TripListTimeRange(vtrips, -1);
+		TripListTimeRange ttr = TripListTimeRange.build(vtrips, -1);
 		ttr.noneEarlier = true;
 		ttr.noneLater = true;
 		tData.add(ttr);

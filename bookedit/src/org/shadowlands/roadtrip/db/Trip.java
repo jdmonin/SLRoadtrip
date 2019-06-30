@@ -319,7 +319,7 @@ public class Trip extends RDBRecord
 					t0 = trips.get(0).getTime_start();
 			}
 
-			return new TripListTimeRange(t0, t1, trips);
+			return TripListTimeRange.build(t0, t1, trips);
 		}
 	}
 
@@ -464,7 +464,7 @@ public class Trip extends RDBRecord
 		if (trips == null)
 			return null;
 		else
-			return new TripListTimeRange(trips, locID);
+			return TripListTimeRange.build(trips, locID);
 	}
 
 	/** parse String[] to Trips, optionally also call {@link #readAllTStops()} */
@@ -1900,11 +1900,56 @@ public class Trip extends RDBRecord
 	 * {@link org.shadowlands.model.LogbookTableModel LogbookTableModel} and by
 	 * {@link #tripsForVehicle(RDBAdapter, Vehicle, int, int, boolean, boolean, boolean)}.
 	 *<P>
+	 * To construct a new {@code TripListTimeRange}, call
+	 * {@link #build(List, int)} or {@link #build(int, int, List)}.
+	 *<P>
 	 * Trips added to this Range are available as text through {@link #tText}
 	 * or by calling {@link #getTripListRowsTabbed()}.
 	 */
 	public static class TripListTimeRange
 	{
+		/**
+		 * Optional factory to use for {@code build} methods.
+		 * If {@code null}, those methods call {@link TripListTimeRange} constructors directly.
+		 * @since 0.9.81
+		 */
+		public static TLTRFactory factory = null;
+
+		/**
+		 * Construct and return a new {@link TripListTimeRange} from a list of trips.
+		 * Uses optional {@link #factory} if not null.
+		 * @param time_start First trip's start time, from {@link Trip#getTime_start()}
+		 * @param time_end  Last trip's <b>start</b> time (not end time)
+		 * @param trips  List of trips
+		 * @see #build(List, int)
+		 * @since 0.9.81
+		 */
+		public static TripListTimeRange build(int time_start, int time_end, List<Trip> trips)
+		{
+			if (factory != null)
+				return factory.newTripListTimeRange(time_start, time_end, trips);
+			else
+				return new TripListTimeRange(time_start, time_end, trips);
+		}
+
+		/**
+		 * Construct and return a new {@link TripListTimeRange} from a list of trips,
+		 * with optional search location ID.
+		 * Uses optional {@link #factory} if not null.
+		 * @param trips  List of trips
+		 * @param matchLocID  Optional Location ID (for results of searching by location), or -1;
+		 *     if provided, this range will track which {@link TStop}s use this Location ID.
+		 * @see #build(int, int, List)
+		 * @since 0.9.81
+		 */
+		public static TripListTimeRange build(List<Trip> trips, final int matchLocID)
+		{
+			if (factory != null)
+				return factory.newTripListTimeRange(trips, matchLocID);
+			else
+				return new TripListTimeRange(trips, matchLocID);
+		}
+
 		/** Starting/ending date/time of trip range, in Unix format */
 		public final int timeStart, timeEnd;
 
@@ -1970,23 +2015,25 @@ public class Trip extends RDBRecord
 
 		/**
 		 * Constructor from a list of trips.
+		 * Public callers use {@link #build(int, int, List)} instead, because of the optional factory.
 		 * @param time_start First trip's start time, from {@link Trip#getTime_start()}
 		 * @param time_end  Last trip's <b>start</b> time (not end time)
 		 * @param trips  List of trips
 		 */
-		public TripListTimeRange(int time_start, int time_end, List<Trip> t)
+		protected TripListTimeRange(int time_start, int time_end, List<Trip> trips)
 		{
-			this(time_start, time_end, t, -1);
+			this(time_start, time_end, trips, -1);
 		}
 
 		/**
 		 * Constructor from a list of trips, with optional search location ID.
+		 * Public callers use {@link #build(List, int)} instead, because of the optional factory.
 		 * @param trips  List of trips
 		 * @param matchLocID  Optional Location ID (for results of searching by location), or -1;
 		 *     if provided, this range will track which {@link TStop}s use this Location ID.
 		 * @since 0.9.50
 		 */
-		public TripListTimeRange(List<Trip> trips, final int matchLocID)
+		protected TripListTimeRange(List<Trip> trips, final int matchLocID)
 		{
 			this(trips.get(0).getTime_start(), trips.get(trips.size() - 1).getTime_start(),
 			     trips, matchLocID);
@@ -2100,5 +2147,30 @@ public class Trip extends RDBRecord
 		}
 
 	}  // public static nested class TripListTimeRange
+
+	/**
+	 * Factory interface to construct and return new {@link TripListTimeRange}s or a subclass.
+	 * To use a factory, set {@link Trip.TripListTimeRange#factory}.
+	 * @since 0.9.81
+	 */
+	public interface TLTRFactory
+	{
+		/**
+		 * Construct and return a new {@link TripListTimeRange} from a list of trips.
+		 * @param time_start First trip's start time, from {@link Trip#getTime_start()}
+		 * @param time_end  Last trip's <b>start</b> time (not end time)
+		 * @param trips  List of trips
+		 */
+		public TripListTimeRange newTripListTimeRange(int time_start, int time_end, List<Trip> trips);
+
+		/**
+		 * Construct and return a new {@link TripListTimeRange} from a list of trips,
+		 * with optional search location ID.
+		 * @param trips  List of trips
+		 * @param matchLocID  Optional Location ID (for results of searching by location), or -1;
+		 *     if provided, this range will track which {@link TStop}s use this Location ID.
+		 */
+		public TripListTimeRange newTripListTimeRange(List<Trip> trips, final int matchLocID);
+	}
 
 }  // public class Trip

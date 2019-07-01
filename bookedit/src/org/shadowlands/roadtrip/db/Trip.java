@@ -2055,13 +2055,12 @@ public class Trip extends RDBRecord
 		 * In Location Mode, as a temporary measure until more subtle match highlighting can be done,
 		 * {@link TStop}s at a Location matched in {@link #tMatchedRows} are shown in ALL CAPS.
 		 *<P>
-		 * List elements are always {@link StringBuilder}; declares return type List&lt;{@link CharSequence}&gt;
-		 * so the android app can replace highlight matches with another CharSequence type
-		 * like {@code Spannable} if needed.
+		 * Returned list elements are always {@link StringBuilder} unless the optional {@link #factory}
+		 * is used. The android app uses such a Factory to highlight matches using {@code SpannableStringBuilder}.
 		 *<P>
 		 * Before v0.9.60, this method was {@code appendRowsAsTabbedString(StringBuffer)}.
 		 *
-		 * @return List of {@link StringBuilder}s, 1 per trip in {@link #tr}, or {@code null} if none in {@link #tText}.
+		 * @return List of formatted trips, 1 per trip in {@link #tr}, or {@code null} if none in {@link #tText}.
 		 */
 		public List<CharSequence> getTripListRowsTabbed()
 		{
@@ -2080,12 +2079,16 @@ public class Trip extends RDBRecord
 		/**
 		 * Create and return tab-delimited (\t) contents of one trip's text row(s)
 		 * from {@link #tText} and {@link #tr}.
+		 *<P>
+		 * If the optional {@link #factory} is used, may return a CharSequence subtype
+		 * other than {@link StringBuilder}.
+		 *
 		 * @param tripID  {@link Trip} ID in the database of a Trip in this TripListTimeRange
-		 * @return The Trip's text rows as a StringBuilder,
+		 * @return The Trip's text rows,
 		 *     or {@code null} if trip not in {@link #trBeginTextIdx}.
 		 * @since 0.9.60
 		 */
-		public StringBuilder getTripRowsTabbed(final int tripID)
+		public CharSequence getTripRowsTabbed(final int tripID)
 		{
 			if ((tText == null) || (trBeginTextIdx == null))
 				return null;
@@ -2100,10 +2103,11 @@ public class Trip extends RDBRecord
 		/**
 		 * Get a Trip's rows by trip index within this TripListTimeRange.
 		 * @param i  Index into {@link #trBeginTextIdx} and {@link #tr}
-		 * @return  StringBuilder for the Trip
+		 * @return  Formatted string for the Trip, with rows separated by \n
+		 *     and columns separated by \t
 		 * @since 0.9.60
 		 */
-		private StringBuilder getTripRowsTabbed_idx(final int i)
+		protected CharSequence getTripRowsTabbed_idx(final int i)
 		{
 			final boolean chkMatches = (matchLocID != -1)
 				&& (tMatchedRows != null) && ! tMatchedRows.isEmpty();
@@ -2131,8 +2135,10 @@ public class Trip extends RDBRecord
 					if (rstr[c] != null)
 					{
 						String str = rstr[c];
-						if (chkMatches && (c == LogbookTableModel.COL_TSTOP_DESC)
-						    && tMatchedRows.contains(Integer.valueOf(r)))
+						final boolean doHighlight =
+						    (chkMatches && (c == LogbookTableModel.COL_TSTOP_DESC)
+						      && tMatchedRows.contains(Integer.valueOf(r)));
+						if (doHighlight)
 							str = str.toUpperCase();
 
 						sb.append(str);

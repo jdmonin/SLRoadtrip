@@ -24,7 +24,10 @@ updated to list the released version's release date and commit hash.
 Being developed now; improvements and bugfixes since 0.9.80
 
 ## SLRoadtrip android app:
-- LogbookShow Search by Location: Add 'x' to clear location text field
+- LogbookShow Search by Location:
+  - Add 'x' to clear location text field
+  - Location name matches are highlighted in search result trips,
+    instead of all-caps used in previous versions
 - Main: Show current area during roadtrip, not starting area
 
 ## BookEdit desktop utility app:

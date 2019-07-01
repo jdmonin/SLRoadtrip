@@ -362,6 +362,9 @@ public class LogbookShow extends Activity
 			return;  // <--- early ret: no vehicle ---
 		}
 
+		if (Trip.TripListTimeRange.factory == null)
+			Trip.TripListTimeRange.factory = new TripListTimeRangeAn.FactoryAn();
+
 		// Read and semi-format the trips for this vehicle.
 		// (The LogbookTableModel constructor calls ltm.addRowsFromTrips.)
 		int locID = -1;
@@ -977,9 +980,9 @@ public class LogbookShow extends Activity
 
 		if ((tripTTR != null) && (tripView != null))
 		{
-			StringBuilder sb = tripTTR.getTripRowsTabbed(src.tr.getID());
-			if (sb != null)
-				tripView.setText(sb);
+			CharSequence tstr = tripTTR.getTripRowsTabbed(src.tr.getID());
+			if (tstr != null)
+				tripView.setText(tstr);
 		}
 	}
 

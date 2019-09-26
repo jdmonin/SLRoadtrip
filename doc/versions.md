@@ -28,6 +28,8 @@ Being developed now; improvements and bugfixes since 0.9.80
   - Add 'x' to clear location text field
   - Location name matches are highlighted in search result trips,
     instead of all-caps used in previous versions
+- LogbookShow bugfix: Previously if used Go to Date, then tap Earlier Trips,
+  then Later Trips, those trips would be inserted before the end
 - Main: Show current area during roadtrip, not starting area
 
 ## BookEdit desktop utility app:

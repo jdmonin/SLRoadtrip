@@ -173,6 +173,15 @@ In Main activity, tap "Show Logbook" button.
   - "Earlier Trips" button should work, or show toast indicating no earlier trips
   - Go back to first logbook screen
   - Repeat this test, but choose another vehicle from dropdown in Go to Date dialog
+  - Go back to first logbook screen
+  - Test Earlier/Later buttons
+    - Go to Date dialog: Choose a date more than 1 month in the past
+    - Tap "Earlier Trips" button
+    - Should see older trips above previously-earliest one
+    - Scroll to bottom and note that trip's ending date and odometer
+    - Tap "Later Trips"
+    - Those newer trips should appear at the bottom, after the
+      previously-latest one
 - Search for Location should filter for the entered location
   - View search results for current vehicle
   - Search for All vehicles, view search results

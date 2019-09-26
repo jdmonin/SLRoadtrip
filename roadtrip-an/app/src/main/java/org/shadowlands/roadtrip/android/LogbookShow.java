@@ -146,9 +146,9 @@ public class LogbookShow extends Activity
 	private static final String TAG = "RTR.LogbookShow";
 
 	/**
-	 * For use by {@link #onClick_BtnEarlier(View)} and {@link #onClick_BtnLater(View)}
+	 * Params for use by {@link #onClick_BtnEarlier(View)} and {@link #onClick_BtnLater(View)}
 	 * to dynamically create TextViews to show more trips.
-	 * Width <tt>FILL_PARENT</tt>, height <tt>WRAP_CONTENT</tt>.
+	 * Width {@code FILL_PARENT}, height {@code WRAP_CONTENT}.
 	 * @see #addTripsTextViews(List, List, boolean, boolean)
 	 */
 	private static ViewGroup.LayoutParams TS_ROW_LP = null;
@@ -902,11 +902,12 @@ public class LogbookShow extends Activity
 			{
 				Log.d(TAG, "ins trip at later idx " + tripListBtnLaterPosition);
 				tripListParentLayout.addView(tv, tripListBtnLaterPosition);
-				++tripListBtnLaterPosition;
 			} else {
 				Log.d(TAG, "ins trip after earlier idx " + tripListBtnEarlierPosition);
 				tripListParentLayout.addView(tv, tripListBtnEarlierPosition + 1);
 			}
+
+			++tripListBtnLaterPosition;
 		}
 
 		if (tr != null)

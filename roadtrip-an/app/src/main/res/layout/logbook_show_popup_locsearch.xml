@@ -62,7 +62,7 @@
 	    android:layout_height="wrap_content"
 	    android:layout_marginRight="10dp"
 	    android:layout_gravity="right|center_vertical"
-	    android:background="@android:drawable/ic_menu_close_clear_cancel"
+	    android:background="@drawable/ic_clear_black_18dp"
 	    />
     </FrameLayout>
     <CheckBox  android:id="@+id/logbook_show_popup_locs_allv"

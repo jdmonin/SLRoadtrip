@@ -19,7 +19,7 @@ updated to list the released version's release date and commit hash.
 
 # Versions:
 
-# 0.9.81
+# 0.9.90
 
 Being developed now; improvements and bugfixes since 0.9.80
 

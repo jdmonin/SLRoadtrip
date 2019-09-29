@@ -37,6 +37,10 @@ Being developed now; improvements and bugfixes since 0.9.80
 - When first DB is opened, print SQLiteJDBC version to console for debugging
 - When opening a DB, if integrity_check fails, print exception details to console for debugging
 
+## Database schema:
+- Add a few more brand names
+
+
 # 0.9.80
 
 2019-05-31: d137727

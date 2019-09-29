@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010,2012-2015,2017 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010,2012-2015,2017,2019 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -71,10 +71,10 @@ public abstract class RDBSchema
 	 * See the class javadoc for what to change in the code when you update the schema version.
 	 * @see #DB_VERSION_MIN_UPGRADE
 	 */
-	public static final int DATABASE_VERSION = 961;
+	public static final int DATABASE_VERSION = 990;
 
 	/** Filename of schema create sql script for the current {@link #DATABASE_VERSION}. */
-	public static final String DB_SCHEMA_CREATE_FILENAME = "schema_v0961.sql";
+	public static final String DB_SCHEMA_CREATE_FILENAME = "schema_v0990.sql";
 
 	/**
 	 * The minimum {@link #DATABASE_VERSION} (901) that can be upgraded by
@@ -246,7 +246,7 @@ public abstract class RDBSchema
 			*
 			*/
 
-		case 961:
+		case 990:
 			// Nothing to do, current version already. Don't fall through, don't set anythingDone.
 			break;
 
@@ -269,6 +269,8 @@ public abstract class RDBSchema
 			upgradeStep(db, 943);
 		case 943:  // 0943 -> 0961   2017-02-02
 			upgradeStep(db, 961);
+		case 961:  // 0961 -> 0990   2019-09-29
+			upgradeStep(db, 990);
 
 		// after all cases, but NOT default case or already-current case
 			anythingDone = true;

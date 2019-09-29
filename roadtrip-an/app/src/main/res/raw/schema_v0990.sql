@@ -1,5 +1,5 @@
 -- org.shadowlands.roadtrip
--- version 0.9.61 schema (2017-02-02) for SQLite 3.4 or higher
+-- version 0.9.90 schema (2019-09-29) for SQLite 3.4 or higher
 --
 -- The db schema version is sometimes lower than the app version, never higher.
 --
@@ -13,7 +13,7 @@
 -- and doing a fresh install with the new schema, then restoring a
 -- previous backup that has an older schema (which will also upgrade).
 
-PRAGMA user_version = 0961;
+PRAGMA user_version = 0990;
 
 -- This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
 --
@@ -300,7 +300,8 @@ insert into vehiclemake(mname) values ('Lexus');
 insert into vehiclemake(mname) values ('Lincoln');
 insert into vehiclemake(mname) values ('Mack');
 insert into vehiclemake(mname) values ('Mazda');
-insert into vehiclemake(mname) values ('Mercedes');
+insert into vehiclemake(mname) values ('Mercedes-Benz');
+  -- was 'Mercedes' before v0990
 insert into vehiclemake(mname) values ('Mercury');
 insert into vehiclemake(mname) values ('Mini');
 insert into vehiclemake(mname) values ('Mitsubishi');
@@ -330,6 +331,18 @@ insert into vehiclemake(mname) values ('Renault');
 insert into vehiclemake(mname) values ('Geely');
 insert into vehiclemake(mname) values ('SAIC');
 insert into vehiclemake(mname) values ('Tata');
+-- vehiclemake adds 2019-09-29 v0990: _id 57-67
+insert into vehiclemake(mname) values ('BAIC');
+insert into vehiclemake(mname) values ('BYD');
+insert into vehiclemake(mname) values ('Chang''an');
+insert into vehiclemake(mname) values ('Dacia');
+insert into vehiclemake(mname) values ('Dongfeng');
+insert into vehiclemake(mname) values ('FAW');
+insert into vehiclemake(mname) values ('Hino');
+insert into vehiclemake(mname) values ('Mahindra');
+insert into vehiclemake(mname) values ('SEAT');
+insert into vehiclemake(mname) values ('Skoda');
+insert into vehiclemake(mname) values ('Vauxhall');
 commit;
 
 begin transaction;

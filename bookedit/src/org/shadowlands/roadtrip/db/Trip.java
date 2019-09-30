@@ -1911,7 +1911,7 @@ public class Trip extends RDBRecord
 		/**
 		 * Optional factory to use for {@code build} methods.
 		 * If {@code null}, those methods call {@link TripListTimeRange} constructors directly.
-		 * @since 0.9.81
+		 * @since 0.9.90
 		 */
 		public static TLTRFactory factory = null;
 
@@ -1922,7 +1922,7 @@ public class Trip extends RDBRecord
 		 * @param time_end  Last trip's <b>start</b> time (not end time)
 		 * @param trips  List of trips
 		 * @see #build(List, int)
-		 * @since 0.9.81
+		 * @since 0.9.90
 		 */
 		public static TripListTimeRange build(int time_start, int time_end, List<Trip> trips)
 		{
@@ -1940,7 +1940,7 @@ public class Trip extends RDBRecord
 		 * @param matchLocID  Optional Location ID (for results of searching by location), or -1;
 		 *     if provided, this range will track which {@link TStop}s use this Location ID.
 		 * @see #build(int, int, List)
-		 * @since 0.9.81
+		 * @since 0.9.90
 		 */
 		public static TripListTimeRange build(List<Trip> trips, final int matchLocID)
 		{
@@ -2157,7 +2157,7 @@ public class Trip extends RDBRecord
 	/**
 	 * Factory interface to construct and return new {@link TripListTimeRange}s or a subclass.
 	 * To use a factory, set {@link Trip.TripListTimeRange#factory}.
-	 * @since 0.9.81
+	 * @since 0.9.90
 	 */
 	public interface TLTRFactory
 	{

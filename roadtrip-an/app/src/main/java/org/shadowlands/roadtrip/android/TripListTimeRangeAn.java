@@ -38,7 +38,7 @@ import android.text.style.BackgroundColorSpan;
  * To use this class, be sure to set {@link TripListTimeRange#factory}
  * to a {@link TripListTimeRangeAn.FactoryAn}.
  *
- * @since 0.9.81
+ * @since 0.9.90
  */
 class TripListTimeRangeAn extends TripListTimeRange
 {

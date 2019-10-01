@@ -51,13 +51,23 @@ Quick instructions for Android Studio 3.4.1 (for Android app):
 - Build menu -> Make project
   - Some android components or dependencies might automatically download
   - Should successfully sync
-- Preferences -> editor -> code style
+- Preferences
   - Scheme: Project
+  Editor -> code style
   - Line separator: unix (\n)
-  -> Java, XML -> Tab size: 8
+  -> XML -> Tab size: 8
+  -> Java
+    - Tab size: 8
+    - Class count to use import with '*': 99
+    - Names count to use static import with '*': 99
   -> Other file types
     - Tab size: 8
     - [X] Use tab character
+  Inspections -> javadoc
+    - Declaration has problems in javadoc ref
+      - Un-check box: [ ] Report inaccessible symbols  
+        Some versions of Android Studio report this error for java.lang classes like StringBuilder;
+        actual syntax errors can be obscured by that clutter
 - Start an emulator, then run "app" there
   - You may need to download an android emulator image first;
     current minimum SDK version is very low: 11 (3.0 Honeycomb)

@@ -185,7 +185,10 @@ In Main activity, tap "Show Logbook" button.
 - Search for Location should filter for the entered location
   - View search results for current vehicle
   - Search for All vehicles, view search results
-  - Select a different area; dialog should then autocomplete locations in that area
+  - View a not-recently-used vehicle's log (not used within last 12 trips),
+    search for location: Should show that vehicle's trips to location
+  - Tap "Earlier Trips" button; should show that vehicle's previous trips to location
+  - In dialog, select a different geoarea; dialog should then autocomplete locations in that area
   - Go back to first logbook screen. Or back to Main, tap Show Logbook
 - Tap Recent Gas in action bar
   - Should show gas info, including calculated MPG between fill-up gas stops

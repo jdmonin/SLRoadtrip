@@ -29,8 +29,10 @@ Being developed now; improvements and bugfixes since 0.9.80
     - Show results with yellow highlight for location names,
       instead of all-caps used in previous versions
     - Add 'x' to clear location text field
+    - Bugfix: No longer excludes some trips to searched location
+      by infrequently-used vehicles
   - Bugfix: Previously if used Go to Date, then tap Earlier Trips,
-    then Later Trips, those trips would be inserted before the end
+    then Later Trips, those trips would be inserted above the end
 - Main: Show current area during roadtrip, not starting area
 
 ## BookEdit desktop utility app:

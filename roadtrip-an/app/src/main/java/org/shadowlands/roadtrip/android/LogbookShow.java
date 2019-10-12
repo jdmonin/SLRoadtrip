@@ -468,8 +468,6 @@ public class LogbookShow extends Activity
 				btnEarlier.setVisibility(View.GONE);
 		}
 
-		Log.d(TAG, "L415 init positions: earlier=" + tripListBtnEarlierPosition + ", later=" + tripListBtnLaterPosition);
-
 		// Add the trip rows to textview
 		tvNoTripsFound = tvContent;  // first textview, for addTripsTextViews to reuse
 		addTripsTextViews(tripsStrs, trips, true, false);
@@ -891,7 +889,6 @@ public class LogbookShow extends Activity
 			tv = tvNoTripsFound;
 			tv.setText(tripStr);
 			tvNoTripsFound = null;
-			Log.d(TAG, "set trip at tvNoTripsFound");
 		} else {
 			// create a new textview
 			tv = new TextView(this);
@@ -899,13 +896,9 @@ public class LogbookShow extends Activity
 			tv.setText(tripStr);
 
 			if (isLaterPos)
-			{
-				Log.d(TAG, "ins trip at later idx " + tripListBtnLaterPosition);
 				tripListParentLayout.addView(tv, tripListBtnLaterPosition);
-			} else {
-				Log.d(TAG, "ins trip after earlier idx " + tripListBtnEarlierPosition);
+			else
 				tripListParentLayout.addView(tv, tripListBtnEarlierPosition + 1);
-			}
 
 			++tripListBtnLaterPosition;
 		}

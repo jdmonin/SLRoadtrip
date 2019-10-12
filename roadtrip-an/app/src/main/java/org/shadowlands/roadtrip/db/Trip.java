@@ -118,17 +118,32 @@ public class Trip extends RDBRecord
 	private static final String WHERE_TIME_START_BEFORE_AND_VID =
 		"(time_start < ?) and vid = ?";
 
-	/** Where-clause for use in {@link #tripsForLocation(RDBAdapter, int, Vehicle, int, boolean, int, boolean)}. */
-	private static final String WHERE_LOCID =
-		"locid_start = ? OR _id in ( select distinct tripid from tstop where locid = ? order by tripid desc limit ? )";
+	/**
+	 * Where-clause for use in {@link #tripsForLocation(RDBAdapter, int, Vehicle, int, boolean, int, boolean)}.
+	 * Index 0 ignores trip VehicleID, index 1 filters by it.
+	 */
+	private static final String[] WHERE_LOCID = {
+		"locid_start = ? OR _id in ( select distinct tripid from tstop where locid = ? order by tripid desc limit ? )",
+		"(locid_start = ? OR _id in ( select distinct tripid from tstop where locid = ? )) and vid = ?",
+	};
 
-	/** Where-clause for use in {@link #tripsForLocation(RDBAdapter, int, Vehicle, int, boolean, int, boolean)}. */
-	private static final String WHERE_LOCID_AND_TRIPID_BEFORE =
-		"(locid_start = ? and _id < ?) OR _id in ( select distinct tripid from tstop where locid = ? and tripid < ? order by tripid desc limit ? )";
+	/**
+	 * Where-clause for use in {@link #tripsForLocation(RDBAdapter, int, Vehicle, int, boolean, int, boolean)}.
+	 * Index 0 ignores trip VehicleID, index 1 filters by it.
+	 */
+	private static final String[] WHERE_LOCID_AND_TRIPID_BEFORE = {
+		"(locid_start = ? and _id < ?) OR _id in ( select distinct tripid from tstop where locid = ? and tripid < ? order by tripid desc limit ? )",
+		"((locid_start = ? and _id < ?) OR _id in ( select distinct tripid from tstop where locid = ? and tripid < ? )) and vid = ?",
+	};
 
-	/** Where-clause for use in {@link #tripsForLocation(RDBAdapter, int, Vehicle, int, boolean, int, boolean)}. */
-	private static final String WHERE_LOCID_AND_TRIPID_AFTER =
-		"(locid_start = ? and _id > ?) OR _id in ( select distinct tripid from tstop where locid = ? and tripid > ? order by tripid desc limit ? )";
+	/**
+	 * Where-clause for use in {@link #tripsForLocation(RDBAdapter, int, Vehicle, int, boolean, int, boolean)}.
+	 * Index 0 ignores trip VehicleID, index 1 filters by it.
+	 */
+	private static final String[] WHERE_LOCID_AND_TRIPID_AFTER = {
+		"(locid_start = ? and _id > ?) OR _id in ( select distinct tripid from tstop where locid = ? and tripid > ? order by tripid limit ? )",
+		"((locid_start = ? and _id > ?) OR _id in ( select distinct tripid from tstop where locid = ? and tripid > ? )) and vid = ?",
+	};
 
 	private static final int WEEK_IN_SECONDS = 7 * 24 * 60 * 60;
 
@@ -200,7 +215,7 @@ public class Trip extends RDBRecord
 	private boolean has_continue;
 
 	/**
-	 * Cache of this trip's {@link TStops}; null unless {@link #readAllTStops()} called.
+	 * Cache of this trip's {@link TStop}s; null unless {@link #readAllTStops()} called.
 	 * @see #hasCheckedStops
 	 * @see #hasUnreadStops
 	 */
@@ -241,7 +256,7 @@ public class Trip extends RDBRecord
 		if (sv == null)
 			return null;
 
-		return parseStringsToTrips(db, alsoTStops, sv);
+		return parseStringsToTrips(db, alsoTStops, sv, false);
 	}
 
 	/**
@@ -305,7 +320,7 @@ public class Trip extends RDBRecord
 			return null;
 		}
 
-		final List<Trip> trips = parseStringsToTrips(db, alsoTStops, sv);
+		final List<Trip> trips = parseStringsToTrips(db, alsoTStops, sv, false);
 		if (trips == null)
 		{
 			return null;
@@ -419,40 +434,43 @@ public class Trip extends RDBRecord
 		final String[] whereArgs;  // Length must match number of ? in whereClause
 		if (prevTripID == 0)
 		{
-			whereArgs = new String[ (veh != null) ? 4 : 3 ];
+			whereArgs = new String[3];
 			whereArgs[0] = Integer.toString(locID);  // trip.locid_start
 			whereArgs[1] = whereArgs[0];   // subquery's tstop.locid
-			whereArgs[2] = Integer.toString(limit);
 			if (veh != null)
-				whereArgs[3] = Integer.toString( veh.getID() );
+				whereArgs[2] = Integer.toString(veh.getID());
+			else
+				whereArgs[2] = Integer.toString(limit);
 		} else {
-			whereArgs = new String[ (veh != null) ? 6 : 5 ];
+			whereArgs = new String[5];
 			whereArgs[0] = Integer.toString(locID);  // trip.locid_start
 			whereArgs[1] = Integer.toString(prevTripID);  // exclude already-shown trips
 			whereArgs[2] = whereArgs[0];   // subquery's tstop.locid
 			whereArgs[3] = whereArgs[1];   // subquery exclude already-shown trips
-			whereArgs[4] = Integer.toString(limit);
 			if (veh != null)
-				whereArgs[5] = Integer.toString( veh.getID() );
+				whereArgs[4] = Integer.toString(veh.getID());
+			else
+				whereArgs[4] = Integer.toString(limit);
 		}
 
 		String whereClause;
 		final String orderClause;
 		if (prevTripID != 0)
 		{
+			final int i = (veh != null) ? 1 : 0;
 			if (towardsNewer)
-				whereClause = WHERE_LOCID_AND_TRIPID_AFTER;
+				whereClause = WHERE_LOCID_AND_TRIPID_AFTER[i];
 			else
-				whereClause = WHERE_LOCID_AND_TRIPID_BEFORE;
+				whereClause = WHERE_LOCID_AND_TRIPID_BEFORE[i];
 		} else {
-			whereClause = WHERE_LOCID;
+			whereClause = WHERE_LOCID[(veh != null) ? 1 : 0];
 		}
-		if (veh != null) {
-			whereClause = "(" + whereClause + ") and vid = ?";
-			orderClause = "_id";
-		} else {
-			orderClause = FIELD_TIME_START;
-		}
+		orderClause = (veh != null)
+			? (((prevTripID != 0) && towardsNewer) ? "_id" : "_id DESC")
+				// if no prevtripid, show most-recent trips up to row limit
+			: FIELD_TIME_START;
+		final boolean listReversed = (veh != null) && ((prevTripID == 0) || ! towardsNewer);
+			// if true,  easier to build list backwards in parseStringsToTrips
 		sv = db.getRows(TABNAME, whereClause, whereArgs, FIELDS_AND_ID, orderClause, limit);
 
 		if (sv == null)
@@ -460,29 +478,43 @@ public class Trip extends RDBRecord
 			return null;
 		}
 
-		final List<Trip> trips = parseStringsToTrips(db, alsoTStops, sv);
-		if (trips == null)
-			return null;
-		else
-			return TripListTimeRange.build(trips, locID);
+		final List<Trip> trips = parseStringsToTrips(db, alsoTStops, sv, listReversed);
+		return ((trips != null)
+			? TripListTimeRange.build(trips, locID)
+			: null);
 	}
 
-	/** parse String[] to Trips, optionally also call {@link #readAllTStops()} */
+	/**
+	 * parse String[] rows from DB to {@link Trip}s, optionally also call {@link #readAllTStops()}.
+	 * @param alsoTStops  If true, also call {@link #readAllTStops()} to add to each Trip object
+	 * @param sv  Trip data from db.getRows({@link #TABNAME}, ..., {@link #FIELDS_AND_ID}, ...)
+	 * @param listReversed  If true, {@code sv} comes from an ORDER BY that's the opposite direction
+	 *      of what we want for the returned Trips list; reverse it while building the list
+	 */
 	private static final List<Trip> parseStringsToTrips
-		(RDBAdapter db, final boolean alsoTStops, Vector<String[]> sv)
+		(final RDBAdapter db, final boolean alsoTStops,
+		 final Vector<String[]> sv, final boolean listReversed)
 	{
 		final List<Trip> trips = new ArrayList<Trip>(sv.size());
 		try
 		{
-			Trip t;
-			for (int i = 0; i < sv.size(); ++i)
-			{
-				t = new Trip(db, sv.elementAt(i));
-				if (alsoTStops)
-					t.readAllTStops();
-				trips.add(t);
-			}
-		} catch (RDBKeyNotFoundException e) { }
+			if (listReversed)
+				for (int i = sv.size() - 1; i >= 0; --i)
+				{
+					Trip t = new Trip(db, sv.elementAt(i));
+					if (alsoTStops)
+						t.readAllTStops();
+					trips.add(t);
+				}
+			else
+				for (String[] tRow : sv)
+				{
+					Trip t = new Trip(db, tRow);
+					if (alsoTStops)
+						t.readAllTStops();
+					trips.add(t);
+				}
+		} catch (RDBKeyNotFoundException e) { }  // never actually thrown by Trip(String[]) constructor
 
 		return trips;
 	}
@@ -1896,8 +1928,7 @@ public class Trip extends RDBRecord
 	}
 
 	/**
-	 * Trips within a range of time; used by
-	 * {@link org.shadowlands.model.LogbookTableModel LogbookTableModel} and by
+	 * Trips within a range of time; used by {@link LogbookTableModel} and
 	 * {@link #tripsForVehicle(RDBAdapter, Vehicle, int, int, boolean, boolean, boolean)}.
 	 *<P>
 	 * To construct a new {@code TripListTimeRange}, call

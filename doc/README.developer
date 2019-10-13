@@ -238,6 +238,9 @@ Shadowlands Roadtrip is licensed under GPL v3 or later
 Included graphics are copyright (C) Jeremy D Monin, licensed (CC) By-SA 3.0, except for:
 - ic_clear_black_18dp.png is from Google's Material Design icons v3.0.1, licensed Apache 2.0, retrieved 2019-09-27
   from https://github.com/google/material-design-icons/tree/master/content/drawable-*/ic_clear_black_18dp.png
+- ic_settings_gray60_24dp.png is from Google's Material Design icons v3.0.1, licensed Apache 2.0, retrieved 2019-10-13
+  from https://github.com/google/material-design-icons/tree/master/content/drawable-*/ic_settings_white_24dp.png
+  and changed to 60% gray (#999; -102 br in Gimp brightness/contrast dialog)
 
 Includes portions of GNU Trove 2.1.0 as source, which is licensed under
 LGPL v2.1 or later (the GNU Lesser General Public License).

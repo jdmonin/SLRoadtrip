@@ -82,7 +82,7 @@ useful to go to go to Add Software and download the Data Tools Platform from
 Java EE (J2EE) to use the data browser.
 
 You'll probably also want to download a SQLite jdbc driver jar to use with bookedit.
-See https://bitbucket.org/xerial/sqlite-jdbc -> Downloads.
+See https://bitbucket.org/xerial/sqlite-jdbc/downloads/ .
 
 In Eclipse add the bookedit project:
 - File menu -> New -> Project... -> Java -> From Exiting Ant Buildfile
@@ -160,7 +160,7 @@ each other. roadtrip-an's version is kept in AndroidMainfest.xml.
 bookedit's version is kept in org/shadowlands/roadtrip/bookedit/Main.java.
 
 More info about the SQLite versions and features available in Android is found
-by comparing the version numbers in http://www.sqlite.org/changes.html against
+by comparing the version numbers in https://www.sqlite.org/changes.html against
 those in http://stackoverflow.com/questions/2421189/version-of-sqlite-used-in-android
 As of May 2019, that table is summarized as:
 	1.6 Cupcake, 2.1 Eclair:       3.5.9   2008-05-14
@@ -174,7 +174,7 @@ As of May 2019, that table is summarized as:
 	8.0 Oreo:                      3.18.2  2017-06-17
 	8.1 Oreo:                      3.19.4 ~2017-08-18
 	9.0 Pie:                       3.22.0  2018-01-22
-	(dates from http://www.sqlite.org/changes.html)
+	(dates from https://www.sqlite.org/changes.html)
 
 
 (more sections here)
@@ -236,8 +236,8 @@ Shadowlands Roadtrip is licensed under GPL v3 or later
 (the GNU General Public License).  See the /COPYING-GPLv3.txt file for details.
 
 Included graphics are copyright (C) Jeremy D Monin, licensed (CC) By-SA 3.0, except for:
-ic_clear_black_18dp.png is from Google's Material Design icons v3.0.1, licensed Apache 2.0, retrieved 2019-09-27
-from https://github.com/google/material-design-icons/tree/master/content/drawable-*/ic_clear_black_18dp.png
+- ic_clear_black_18dp.png is from Google's Material Design icons v3.0.1, licensed Apache 2.0, retrieved 2019-09-27
+  from https://github.com/google/material-design-icons/tree/master/content/drawable-*/ic_clear_black_18dp.png
 
 Includes portions of GNU Trove 2.1.0 as source, which is licensed under
 LGPL v2.1 or later (the GNU Lesser General Public License).

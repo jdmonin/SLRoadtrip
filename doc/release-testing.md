@@ -355,7 +355,10 @@ Use sqlite-jdbc 3.15.1 or newer.
 
 ## Other checks
 
-- doc/versions.md should list all notable changes in this release
+- Docs:
+  - doc/versions.md should list all notable changes in this release
+  - Check all URLs in doc files
+  - README: Once all docs are up to date, date at bottom should be current month
 - DB package consistency between BookEdit and Android app
   - Run this command at the root of the repo:  
     `diff -ur bookedit/src/org/shadowlands/roadtrip/db roadtrip-an/app/src/main/java/org/shadowlands/roadtrip/db`

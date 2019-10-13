@@ -103,6 +103,7 @@ public class LogbookShow extends Activity
 	 * @see #WEEK_INCREMENT
 	 */
 	public static final int LOCID_TRIP_INCREMENT = 10;
+		// if value changes, update release-testing.md item that says "within last 12 trips"
 
 	/**
 	 * Location Mode: If added to intent extras, show only trips including

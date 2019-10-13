@@ -216,8 +216,12 @@ Future plans / feature roadmap:
 
 After v1.0:
 - More logbook search options
+	Search for stops at location before/after given date
+	Search for trips with stops from location directly to another location
+	etc
 - Logbook viewer: Ability to correct typos (location names, via routes, cost, etc)
 - General schema for new event types at stop (vehicle service, restaurant, movie, etc)
+  and/or tags to apply to location which can categorize like that
 - Edit list of vehicle makes, trip categories, GeoAreas, etc
 - "pass-through" TStop (rest area, toll, etc): Not a destination, just something on the way
 	At next tstop or end of trip, also write ViaRoutes from before this stop to the following one

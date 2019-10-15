@@ -388,15 +388,26 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 			currTS = VehSettings.getCurrentTStop(conn, veh, false);
 		}
 
-		int ltime = 0;
+		int ltime = 0;  // Latest Time, to select most recent trips from DB
 		if (currTS != null)
 		{
 			ltime = currTS.getTime_stop();
 			if (ltime == 0)
+			{
 				currTS = null;
+			} else {
+				final int tripStartTime = currT.getTime_start();
+				if (ltime < tripStartTime)
+					// Trip start time or currTS stop-at time was changed by user; pick the
+					// later time to make sure addRowsFromDBTrips still includes current trip
+					ltime = tripStartTime;
+			}
 		}
 		if (currTS == null)
-			ltime = veh.readLatestTime(currT);  // don't call if we have currTS
+			ltime = (currT != null)
+				? currT.getTime_start()
+				: veh.readLatestTime(null);
+
 		if ((ltime != 0) && (weekIncr != 0))
 		{
 			++ltime;  // addRowsFromDBTrips range is exclusive; make it include ltime
@@ -404,6 +415,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 			if (! tData.isEmpty())
 				tData.lastElement().noneLater = true;  // we know it's the newest trip
 		} else {
+			// fallback; this vehicle might have no trips
 			addRowsFromDBTrips(conn);
 		}
 	}
@@ -625,6 +637,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 		addRowsFromTrips(ttr, conn);
 		getValue_RangeRow0 = -1;  // row#s changing, so reset getValue_* vars
 		getValue_RangeRowN = -1;
+
 		return ttr.tText.size();
 	}
 
@@ -684,6 +697,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 
 		getValue_RangeRow0 = -1;  // row#s changing, so reset getValue_* vars
 		getValue_RangeRowN = -1;
+
 		return ttr.tText.size();
 	}
 

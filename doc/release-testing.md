@@ -36,7 +36,7 @@ daily trips with actual vehicle(s).
 - Start and finish a trip
   - When beginning trip, give it a category from the dropdown
   - Include at least 1 intermediate stop somewhere
-  - Fill out a comment for at least two stops
+  - Fill out a comment for at least two stops (intermediate and finishing stops)
     - For one of them, make a comment with a very long sentence
       - Should soft-wrap to the next line instead of scrolling horizontally
       - Should accept newlines (Enter key)
@@ -77,6 +77,16 @@ daily trips with actual vehicle(s).
   - View logbook
   - Search Via Routes: Enter trip's starting location and newly entered location;
     should show the new via including distance
+- Start a trip with a stop whose stop-at time is manually adjusted backwards  
+  This tests tolerating a time typo when entering trips in 'historical mode'
+  - Start a trip; note the starting time
+  - View logbook: The new trip should appear as Current trip
+  - Stop, changing the stop-time from default to an hour or two before trip's starting time
+  - View logbook: Trip should still be visible
+  - Continue from that stop
+  - View logbook: Trip should still be visible
+  - End trip at any location
+  - View logbook: Trip should still be visible
 - Start a trip which finishes in a different GeoArea
   - Stop and continue at an existing location within starting area
     - To test duplicate-prevention:
@@ -371,4 +381,6 @@ Use sqlite-jdbc 3.15.1 or newer.
 
   - Run this command, should see no output:  
     `diff -u bookedit/src/org/shadowlands/roadtrip/db/script/schema_v*.sql roadtrip-an/app/src/main/res/raw/schema_v*.sql`
+  - Run this command, should see no output:  
+    `diff -ur bookedit/src/org/shadowlands/roadtrip/model roadtrip-an/app/src/main/java/org/shadowlands/roadtrip/model`
 

@@ -201,7 +201,11 @@ public class Vehicle extends RDBRecord
 
 	private int odo_orig, odo_curr;
 
-	/** 0 for empty/unused */
+	/**
+	 * id of the vehicle's last completed trip, or 0 for empty/unused.
+	 * See {@link #getLastTripID()} for details.
+	 * Updated by {@link #setOdometerCurrentAndLastTrip(int, Trip, boolean)}.
+	 */
 	private int last_tripid;
 
 	/** 'M' for miles, 'K' for km; DB field uses "MI" or "KM" */
@@ -484,8 +488,10 @@ public class Vehicle extends RDBRecord
 
 	/**
 	 * Retrieve the most recent time of a trip or tstop for this Vehicle.
-	 * If the vehicle is currently on a trip, pass that current trip as <tt>tr</tt>.
 	 * Assumes no current TStop, because you could use that TStop's time instead.
+	 * If the vehicle is currently on a trip, pass that current trip as {@code tr}.
+	 * Otherwise will use {@link #getLastTripID()} to check most recent trip.
+	 * Calls {@link Trip#readLatestTime()}.
 	 * @param tr  The vehicle's current trip, if one is in progress, or null.
 	 *          tr's dbConn should be valid (not closed).
 	 * @return the time, or 0 if no completed trips for this vehicle

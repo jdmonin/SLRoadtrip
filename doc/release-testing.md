@@ -36,11 +36,11 @@ daily trips with actual vehicle(s).
 - Start and finish a trip
   - When beginning trip, give it a category from the dropdown
   - Include at least 1 intermediate stop somewhere
-  - Fill out a comment for at least two stops (intermediate and finishing stops)
+  - Fill out a comment for at least 2 stops (intermediate, finishing stop)
     - For one of them, make a comment with a very long sentence
       - Should soft-wrap to the next line instead of scrolling horizontally
       - Should accept newlines (Enter key)
-  - Once trip has at least one stop, should not be able to cancel trip
+  - Once trip has at least 1 stop, should not be able to cancel trip
   - During trip, Logbook view should show "Current Trip in progress" at bottom of trip details
   - While stopped, test Trip Stop activity's "Save changes" button once instead of "Continue from stop"
     - Should be able to change comment, odometer, via, and save changes
@@ -78,7 +78,7 @@ daily trips with actual vehicle(s).
   - Search Via Routes: Enter trip's starting location and newly entered location;
     should show the new via including distance
 - Start a trip with a stop whose stop-at time is manually adjusted backwards  
-  This tests tolerating a time typo when entering trips in 'historical mode'
+  This tests tolerating a time typo when entering trips in "historical mode".
   - Start a trip; note the starting time
   - View logbook: The new trip should appear as Current trip
   - Stop, changing the stop-time from default to an hour or two before trip's starting time
@@ -204,15 +204,17 @@ In Main activity, tap "Show Logbook" button.
   - Should show gas info, including calculated MPG between fill-up gas stops
   - Tap "Change Vehicle" button: Should show popup, select another vehicle, should show its gas stops if any
 - Search Via Routes button
-  - Enter two locations
-  - "Search" button should show all ViaRoutes between them in either direction, including distance if entered from trip odometers
+  - Enter 2 locations that you know have connecting ViaRoutes
+    - If necessary, make a trip first to create some
+  - Tap "Search" button
+  - Should show all ViaRoutes between them in either direction, including distance if entered from trip odometers
   - Bring up dialog again, change dropdown to a different area
   - Now, location should auto-complete to those in the new area
 - Tap a trip to view its details
   - Brings up a message box that:
-  - Shows vehicle, driver, starting time and location, etc
-  - For a roadtrip, lists start and end areas
-  - Has list of trip stops' trip-odometer, location, comment
+    - Shows vehicle, driver, starting time and location, distance, etc
+    - For a roadtrip, lists start and end areas
+    - Has list of trip stops' trip-odometer, location, comment
   - Tap a stop in the trip to view its details
     - Uses same "Trip Stop" activity used during trips to enter TStops
     - Is read-only, except comment field

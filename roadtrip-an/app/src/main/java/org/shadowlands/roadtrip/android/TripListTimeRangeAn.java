@@ -37,6 +37,10 @@ import android.text.style.BackgroundColorSpan;
  *<P>
  * To use this class, be sure to set {@link TripListTimeRange#factory}
  * to a {@link TripListTimeRangeAn.FactoryAn}.
+ *<P>
+ * When updating this code or the {@link TripListTimeRange} data structures it uses,
+ * be sure its fallback still works by temporarily changing {@code getTripRowsTabbed_idx(..)}
+ * to return {@code super.getTripRowsTabbed_idx(..)}.
  *
  * @since 0.9.90
  */
@@ -113,7 +117,13 @@ class TripListTimeRangeAn extends TripListTimeRange
 					     && tMatchedRows.contains(Integer.valueOf(r)));
 					if (doHighlight)
 					{
-						final int idx0 = sb.length();
+						int idx0 = sb.length();
+						if (tMatchedRowLocNameOffset != null)
+						{
+							Integer offs = tMatchedRowLocNameOffset.get(Integer.valueOf(r));
+							if (offs != null)
+								idx0 += offs;
+						}
 						sb.append(str);
 						sb.setSpan
                                                         (new BackgroundColorSpan(Color.YELLOW),

@@ -781,6 +781,9 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	 *<P>
 	 * Creates or updates {@link TripListTimeRange#trBeginTextIdx ttr.trBeginTextIdx}
 	 * and {@link TripListTimeRange#tstopTextIdx ttr.tstopTextIdx}.
+	 *<P>
+	 * If {@code matchLocID} is used, and any matching TStops end a trip or have {@link TStopGas},
+	 * will fill {@link TripListTimeRange#tMatchedRowLocNameOffset ttr.tMatchedRowLocNameOffset}.
 	 *
 	 * @param trips Trips data to add to {@code tText}
 	 * @param tText Append rows here from {@code trips}; typically {@link TripListTimeRange#tText ttr.tText};
@@ -806,6 +809,8 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 		final int L = trips.size();
 		final int tripIdx0;  // starting index within ttr.trBeginTextIdx for trips being added
 		HashMap<Integer, Integer> tstopTextIdx = null;  // ttr.tstopTextIdx, if any
+		HashMap<Integer, Integer> rowLocNameOffset = ttr.tMatchedRowLocNameOffset;
+			// probably null at this point; if constructed here, will update this ttr field
 
 		// Create or extend ttr.trBeginTextIdx and tstopTextIdx for the new trips
 		if ((ttr != null) && (ttr.trBeginTextIdx != null) && ! tText.isEmpty())
@@ -934,13 +939,15 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 
 				for (TStop ts : stops)
 				{
+					final boolean matchesLoc =
+						(matchLocID != -1) && (ts.getLocationID() == matchLocID);
+
 					if ((ts_start == null) && (ts.getOdo_trip() == 0) && (firstrow != null))
 					{
 						// this stop is the starting location
 						ts_start = ts;
 						firstrow[COL_TSTOP_DESC] = getTStopLocDescr(ts, conn);
-						if ((matchSet != null) && (matchLocID != -1)
-						    && (ts.getLocationID() == matchLocID))
+						if (matchesLoc && (matchSet != null))
 							matchSet.add(Integer.valueOf(firstrow_rnum));
 
 						continue;  // <-- doesn't get its own row, only firstrow --
@@ -1053,8 +1060,12 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 					if (tr[6] != null)
 						tr[6] = "via " + tr[6];
 
-					// Description, for tr[5 == COL_TSTOP_DESC]
+					// Description, for tr[5 == COL_TSTOP_DESC]:
+
 					StringBuilder desc = new StringBuilder(getTStopLocDescr(ts, conn));
+					int descPrefixLen = 0;
+						// length of any prefix added ("-> ", TStopGas, etc),
+						// used only if matchesLoc
 
 					// Look for a gas tstop
 					int expense_gas = 0;
@@ -1087,6 +1098,10 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 								tsg.gas_brandgrade = null;  // clear the reference
 							if (desc.length() > 0)
 								gsb.append(' ');
+
+							if (matchesLoc)
+								descPrefixLen += gsb.length();
+
 							desc.insert(0, gsb);
 						}
 						catch (Throwable th) {}
@@ -1108,7 +1123,10 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 					// If it's the very last stop, Arrow to indicate that
 					if ((ts == lastStop) && (desc.length() > 0)
 						&& (odo_end != 0))
+					{
 						desc.insert(0, "-> ");  // Very last stop: "-> location"
+						descPrefixLen += 3;
+					}
 
 					tr[COL_TSTOP_DESC] = desc.toString();  // tr[5] is COL_TSTOP_DESC
 
@@ -1119,10 +1137,21 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 						tr[COL_TSTOP_COMMENT] = (doCommentBrackets) ? ("[" + stopc + "]") : stopc;
 
 					// In Location Mode, check tstop's location and update matchSet if needed
-					if ((matchSet != null) && (matchLocID != -1)
-					    && (ts.getLocationID() == matchLocID))
+					if (matchesLoc)
 					{
-						matchSet.add(Integer.valueOf(tText.size()));
+						if (matchSet != null)
+							matchSet.add(Integer.valueOf(tText.size()));
+
+						if ((descPrefixLen > 0) && (ttr != null))
+						{
+							if (rowLocNameOffset == null)
+							{
+								rowLocNameOffset = new HashMap<Integer, Integer>();
+								ttr.tMatchedRowLocNameOffset = rowLocNameOffset;
+							}
+							rowLocNameOffset.put
+								(Integer.valueOf(tText.size()), descPrefixLen);
+						}
 					}
 
 					// Done with this row

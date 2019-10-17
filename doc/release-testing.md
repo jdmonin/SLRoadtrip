@@ -98,7 +98,7 @@ daily trips with actual vehicle(s).
     - Via Route dropdown should show previously entered route
     - Via Route auto-complete should also show a match and be tappable
   - Optionally stop again within the starting area
-  - Include at least 1 stop in area "(none)", like a highway Rest Area
+  - Include at least 1 stop in area "(none)", like a highway Rest Area/Travel Plaza
   - Stop again; should auto-complete locations in area "(none)"
   - Stop again: Enter name of a new geographic area, new location in that new area
   - After stop, Main activity "Current Area" should be the newly created one
@@ -137,7 +137,7 @@ In Main activity, hit "Change Driver / Vehicle" button.
 
 - "New driver" button should bring up the activity to enter new info; hit Back
 - Hit "Edit drivers" button
-- List shows all drivers alphabetically
+- List shows all drivers alphabetically (case-insensitive)
 - Tap a driver for details; should be properly formatted, including "added on" date
 - Can edit name and/or comment
 - New Driver button
@@ -194,6 +194,10 @@ In Main activity, tap "Show Logbook" button.
       previously-latest one
 - Search for Location should filter for the entered location
   - View search results for current vehicle
+    - Location name matches should be highlighted (yellow background)
+  - Look through log to note any location where any trip ends
+  - Search for that location
+    - Location name should be highlighted at end of trip, prefix `->` should not
   - Search for All vehicles, view search results
   - View a not-recently-used vehicle's log (not used within last 12 trips),
     search for location: Should show that vehicle's trips to location
@@ -202,8 +206,13 @@ In Main activity, tap "Show Logbook" button.
   - Go back to first logbook screen. Or back to Main, tap Show Logbook
 - Tap Recent Gas in action bar
   - Should show gas info, including calculated MPG between fill-up gas stops
+  - Note the location name of a recent gas stop
   - Tap "Change Vehicle" button: Should show popup, select another vehicle, should show its gas stops if any
-- Search Via Routes button
+- Search for Location of gas stop
+  - Enter name of recent gas stop
+  - Location name matches should be highlighted (yellow background)
+  - Gas info should not be highlighted
+- Search Via Routes in action bar
   - Enter 2 locations that you know have connecting ViaRoutes
     - If necessary, make a trip first to create some
   - Tap "Search" button
@@ -224,14 +233,16 @@ In Main activity, tap "Show Logbook" button.
     - Should be able to copy comment text to clipboard
     - Edit the comment, tap Save Changes
     - Trip detail popup should show updated comment text for that stop
-  - Tap that stop again, should say "Edited later" under comment field
+  - Tap that stop again, status under comment field should show "Edited later"
   - Tap a stop without a comment to view details: Add a comment
-  - Tap that stop again, should say "Added later" under comment field
+  - Tap that stop again, status should show "Added later"
   - Edit that stop's comment, Save Changes
-  - Tap that stop again yet, should say both "Added" and "Edited"
+  - Tap that stop again yet, status should show both "Added" and "Edited"
   - Tap a different stop that has a comment
   - Remove that stop's comment, Save Changes
-  - Tap that stop again yet, should say "Removed later" under comment field
+  - Tap that stop again yet, status should show "Removed later"
+  - Re-add comment at that stop's comment, Save Changes
+  - Tap that stop again yet, status should show "Removed and added later"
 
 ### Validate DB
 

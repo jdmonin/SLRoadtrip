@@ -1984,10 +1984,11 @@ public class Trip extends RDBRecord
 		/** Starting/ending date/time of trip range, in Unix format */
 		public final int timeStart, timeEnd;
 
-		/** For {@link LogbookTableModel}'s Location Mode, the matching Location ID;
-		 *  otherwise -1.
-		 *  @see #tMatchedRows
-		 *  @since 0.9.50
+		/**
+		 * For {@link LogbookTableModel}'s Location Mode, the matching Location ID;
+		 * otherwise -1.
+		 * @see #tMatchedRows
+		 * @since 0.9.50
 		 */
 		public final int matchLocID;
 
@@ -2032,11 +2033,29 @@ public class Trip extends RDBRecord
 		public Vector<String[]> tText;
 
 		/**
-		 * For {@link LogbookTableModel}'s Location Mode, the optional set of row numbers of {@link TStop}s
-		 * matching the Location {@link #matchLocID} within {@link #tText}; {@code null} in other modes
-		 * or when no matches found.
+		 * For location search in {@link LogbookTableModel}'s Location Mode, to help highlight the matching
+		 * location names, the row numbers (if any) within {@link #tText} having a {@link TStop} matching
+		 * {@link #matchLocID} and the TStop name/description column has text in front of the location name
+		 * ({@link TStopGas}, {@code "->"} at end of trip, etc).
+		 *<P>
+		 * {@code null} in other modes, or when no matches have such prepended text.
+		 *<P>
+		 * Keys are a subset of {@link #tMatchedRows}. Each value is location name's
+		 * starting offset within text of column {@link LogbookTableModel#COL_TSTOP_DESC}.
 		 *<P>
 		 * Used by {@link #getTripListRowsTabbed()} to highlight matching TStops.
+		 * Current code assumes there might be a prefix, never a suffix, within that column's text.
+		 * @since 0.9.90
+		 */
+		public HashMap<Integer, Integer> tMatchedRowLocNameOffset;
+
+		/**
+		 * For location search in {@link LogbookTableModel}'s Location Mode, the optional set of row numbers
+		 * of {@link TStop}s matching the Location {@link #matchLocID} within {@link #tText}.
+		 * {@code null} in other modes or when no matches found.
+		 *<P>
+		 * Used by {@link #getTripListRowsTabbed()} to highlight matching TStops.
+		 * @see #tMatchedRowLocNameOffset
 		 * @since 0.9.50
 		 */
 		public Set<Integer> tMatchedRows;
@@ -2084,10 +2103,12 @@ public class Trip extends RDBRecord
 		 * contents of each trip's text row(s) from {@link #tText}.
 		 *<P>
 		 * In Location Mode, as a temporary measure until more subtle match highlighting can be done,
-		 * {@link TStop}s at a Location matched in {@link #tMatchedRows} are shown in ALL CAPS.
+		 * {@link TStop}s at a Location matched in {@link #tMatchedRows} are shown in ALL CAPS
+		 * unless overridden:
 		 *<P>
 		 * Returned list elements are always {@link StringBuilder} unless the optional {@link #factory}
-		 * is used. The android app uses such a Factory to highlight matches using {@code SpannableStringBuilder}.
+		 * is used. The android app uses such a Factory to highlight matches using {@code SpannableStringBuilder}
+		 * by overriding {@link #getTripRowsTabbed_idx(int)}.
 		 *<P>
 		 * Before v0.9.60, this method was {@code appendRowsAsTabbedString(StringBuffer)}.
 		 *
@@ -2170,7 +2191,18 @@ public class Trip extends RDBRecord
 						    (chkMatches && (c == LogbookTableModel.COL_TSTOP_DESC)
 						      && tMatchedRows.contains(Integer.valueOf(r)));
 						if (doHighlight)
-							str = str.toUpperCase();
+						{
+							String strUC = null;
+							if (tMatchedRowLocNameOffset != null)
+							{
+							    Integer offs = tMatchedRowLocNameOffset.get(Integer.valueOf(r));
+							    if (offs != null)
+								strUC = str.substring(0, offs)
+								      + str.substring(offs).toUpperCase();
+							}
+
+							str = (strUC != null) ? strUC : str.toUpperCase();
+						}
 
 						sb.append(str);
 					}

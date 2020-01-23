@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010-2017,2019 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2017,2019-2020 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -54,11 +54,12 @@ import org.shadowlands.roadtrip.util.RTRDateTimeFormatter;
  *   The ranges (increments) are several trips at a time, instead of
  *   several weeks.  Always read-only.
  *   Call {@link #getTripIncrement()} to get the increment.
+ *   To highlight matching {@link TStop}s, see {@link TripListTimeRange#tMatchedRows} and related fields.
  * </UL>
  *<P>
  * The data is loaded in "ranges" of several weeks or several trips,
- * depending on the mode.  You can either
- * retrieve them as a grid of cells, or can retrieve the ranges
+ * depending on the mode: See {@link TripListTimeRange} for data details.
+ * You can either retrieve them as a grid of cells, or can retrieve the ranges
  * by calling {@link #getRangeCount()} and {@link #getRange(int)}.
  * When first constructed, all data is loaded into a single range.
  * Load increments of earlier data by calling {@link #addEarlierTrips(RDBAdapter)}.

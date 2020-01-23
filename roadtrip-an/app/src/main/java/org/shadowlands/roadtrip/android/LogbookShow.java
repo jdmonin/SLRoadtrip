@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010-2017,2019 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2017,2019-2020 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -74,6 +74,7 @@ import android.widget.Toast;
 /**
  * Present an unformatted view of the current vehicle's trip log.
  * Can tap on any Trip for more details; see {@link #onClick(View)}.
+ * Logbook text can be lightly styled: See {@link TripListTimeRangeAn}.
  *<P>
  * Optionally, can filter to show only trips that include a given {@link #EXTRAS_LOCID location ID}
  * (Location Mode, same as in {@link LogbookTableModel}).

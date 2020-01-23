@@ -1,6 +1,6 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
- *  This file Copyright (C) 2010-2017,2019 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2017,2019-2020 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -1936,6 +1936,8 @@ public class Trip extends RDBRecord
 	 *<P>
 	 * Trips added to this Range are available as text through {@link #tText}
 	 * or by calling {@link #getTripListRowsTabbed()}.
+	 *<P>
+	 * To highlight matching {@link TStop}s in Location Mode, see {@link #tMatchedRows} and related fields.
 	 */
 	public static class TripListTimeRange
 	{
@@ -2029,6 +2031,7 @@ public class Trip extends RDBRecord
 		 * {@link org.shadowlands.roadtrip.model.LogbookTableModel#addEarlierTrips(RDBAdapter) LogbookTableModel.addEarlierTrips(RDBAdapter)}.
 		 * @see #tMatchedRows
 		 * @see #trBeginTextIdx
+		 * @see #tstopTextIdx
 		 */
 		public Vector<String[]> tText;
 

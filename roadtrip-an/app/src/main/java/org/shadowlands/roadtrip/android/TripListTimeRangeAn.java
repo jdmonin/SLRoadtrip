@@ -1,6 +1,6 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
- *  This file Copyright (C) 2019 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2019-2020 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -26,9 +26,11 @@ import org.shadowlands.roadtrip.db.Trip.TripListTimeRange;
 import org.shadowlands.roadtrip.model.LogbookTableModel;
 
 import android.graphics.Color;
+import android.graphics.Typeface;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
 import android.text.style.BackgroundColorSpan;
+import android.text.style.StyleSpan;
 
 /**
  * Subclass of {@link TripListTimeRange} for android, which uses
@@ -73,8 +75,8 @@ class TripListTimeRangeAn extends TripListTimeRange
 	/**
 	 * For {@link #getTripRowsTabbed(int)},
 	 * get a Trip's rows by trip index within this TripListTimeRange.
-	 * Uses {@link SpannableStringBuilder} to highlight location matches.
-	 * If not in Location mode, or if no matches, calls super implementation
+	 * Uses {@link SpannableStringBuilder} to bold dates and highlight location matches.
+	 * If no dates and not in Location mode, or if no matches, calls super implementation
 	 * which returns a {@link StringBuilder}.
 	 *
 	 * @param i  Index into {@link #trBeginTextIdx} and {@link #tr}
@@ -86,10 +88,10 @@ class TripListTimeRangeAn extends TripListTimeRange
 		final boolean chkMatches = (matchLocID != -1)
 		     && (tMatchedRows != null) && ! tMatchedRows.isEmpty();
 
-		if (! chkMatches)
+		if (((tDateRows == null) || tDateRows.isEmpty()) && ! chkMatches)
 			return super.getTripRowsTabbed_idx(i);
 
-		SpannableStringBuilder sb = new SpannableStringBuilder();
+		final SpannableStringBuilder sb = new SpannableStringBuilder();
 		final int rNextTr;
 		if ((i + 1) < trBeginTextIdx.length)
 			rNextTr = trBeginTextIdx[i + 1];
@@ -100,7 +102,14 @@ class TripListTimeRangeAn extends TripListTimeRange
 		{
 			final String[] rstr = tText.elementAt(r);
 			if (rstr[0] != null)
+			{
 				sb.append(rstr[0]);
+				if ((tDateRows != null) && tDateRows.contains(r))
+				{
+					final int L = sb.length();
+					sb.setSpan(new StyleSpan(Typeface.BOLD), L - rstr[0].length(), L, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+				}
+			}
 
 			// append rest of non-blank columns; don't append trailing tabs
 			int last = rstr.length - 1;

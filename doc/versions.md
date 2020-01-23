@@ -23,6 +23,10 @@ updated to list the released version's release date and commit hash.
 
 Being developed now; improvements and bugfixes since 0.9.90
 
+## SLRoadtrip android app:
+- Show Logbook:
+  - Show dates in bold for visibility
+
 # 0.9.90
 
 2019-10-18: b24ffc1

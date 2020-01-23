@@ -745,6 +745,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 		if (ttr.tText == null)
 		{
 			ttr.tText = new Vector<String[]>();
+			ttr.tDateRows = new HashSet<Integer>();
 			tRowCount = 0;
 		} else {
 			tRowCount = ttr.tText.size();
@@ -862,6 +863,8 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 			          tstartMDay = tstart.getDate();
 			if ((prevShownDT.mday != tstartMDay) || (prevShownDT.month != tstartMonth))
 			{
+				if (ttr != null)
+					ttr.tDateRows.add(Integer.valueOf(tText.size()));
 				tr = new String[COL_HEADINGS.length];
 				tr[0] = dtf.formatDate(tstart);
 				tText.addElement(tr);
@@ -964,6 +967,8 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 						dtf.formatDateTimeInSeq(ttstop * 1000L, prevShownDT);
 						tr[0] = prevShownDT.fmtDate;  // may be null
 						tr[1] = prevShownDT.fmtTime;
+						if ((tr[0] != null) && (ttr != null))
+							ttr.tDateRows.add(Integer.valueOf(tText.size()));
 						tText.addElement(tr);
 					}
 
@@ -1168,6 +1173,8 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 						dtf.formatDateTimeInSeq(ttcont * 1000L, prevShownDT);
 						tr[0] = prevShownDT.fmtDate;  // may be null
 						tr[1] = prevShownDT.fmtTime;
+						if ((tr[0] != null) && (ttr != null))
+							ttr.tDateRows.add(Integer.valueOf(tText.size()));
 						tText.addElement(tr);
 					}
 				}

@@ -2029,11 +2029,20 @@ public class Trip extends RDBRecord
 		 * {@link org.shadowlands.roadtrip.model.LogbookTableModel LogbookTableModel}
 		 * constructor or
 		 * {@link org.shadowlands.roadtrip.model.LogbookTableModel#addEarlierTrips(RDBAdapter) LogbookTableModel.addEarlierTrips(RDBAdapter)}.
+		 * @see #tDateRows
 		 * @see #tMatchedRows
 		 * @see #trBeginTextIdx
 		 * @see #tstopTextIdx
 		 */
 		public Vector<String[]> tText;
+
+		/**
+		 * The set of row numbers containing a new date in 1st column (and sometimes time in 2nd column).
+		 * Can be highlighted or bolded for visibility.
+		 * Initially null. Filled along with {@link #tText}; may be empty afterwards.
+		 * @since 0.9.91
+		 */
+		public Set<Integer> tDateRows;
 
 		/**
 		 * For location search in {@link LogbookTableModel}'s Location Mode, to help highlight the matching

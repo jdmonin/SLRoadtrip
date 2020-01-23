@@ -19,6 +19,7 @@
 
 package org.shadowlands.roadtrip.android;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashSet;
@@ -435,18 +436,27 @@ public class LogbookShow extends Activity
 		}
 		if (ltm.hasCurrentTrip())
 		{
-			StringBuilder tripSB = (StringBuilder) tripsStrs.get(tripsStrs.size() - 1);
-			tripSB.append("\n\t\t(Current Trip in progress)");
+			CharSequence tripCS = tripsStrs.get(tripsStrs.size() - 1);
+			if (tripCS instanceof Appendable)  // StringBuilder or android.text.SpannableStringBuilder
+				try {
+					((Appendable) tripCS).append("\n\t\t(Current Trip in progress)");
+				} catch (IOException e) {}
 		}
 		else if (sbEmpty || (tripsStrs.get(0).length() < 5))
 		{
-			StringBuilder sb = (StringBuilder) tripsStrs.get(0);
-			if (locID != -1)
-				sb.append("\nNo trips found to that Location for this Vehicle.");
-			else if (goToDate != 0)
-				sb.append("\nNo trips on or after that date for this vehicle.");
-			else
-				sb.append("\nNo trips found for this Vehicle.");
+			CharSequence cs = tripsStrs.get(0);
+			if (cs instanceof Appendable)
+				try {
+					if (locID != -1)
+						((Appendable) cs).append
+							("\nNo trips found to that Location for this Vehicle.");
+					else if (goToDate != 0)
+						((Appendable) cs).append
+							("\nNo trips on or after that date for this vehicle.");
+					else
+						((Appendable) cs).append
+							("\nNo trips found for this Vehicle.");
+				} catch (IOException e) {}
 		}
 
 		// Find the trip layout linearlayout, to benefit addTripsTextViews

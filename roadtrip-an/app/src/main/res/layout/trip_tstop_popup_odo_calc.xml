@@ -4,7 +4,7 @@
 
  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
 
- This file Copyright (C) 2011,2015-2017,2019 Jeremy D Monin (jdmonin@nand.net)
+ This file Copyright (C) 2011,2015-2017,2019-2020 Jeremy D Monin (jdmonin@nand.net)
 
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
@@ -43,7 +43,6 @@
 		<EditText android:id="@+id/trip_tstop_popup_odo_calc_value"
 		    android:layout_width="fill_parent"
 		    android:layout_height="wrap_content"
-		    android:numeric="decimal"
 		    android:inputType="numberDecimal"
 		    android:gravity="right"
 		    android:singleLine="true"
@@ -70,8 +69,8 @@
 			<Button android:text="9" android:onClick="onClick_CalcBtnDigit" android:id="@+id/trip_tstop_popup_odo_calc_9" />
 			<Button android:text="÷" android:onClick="onClick_CalcBtnDiv" android:id="@+id/trip_tstop_popup_odo_calc_div" />
 			   <!--  division is unicode obelus (U+00F7) -->
-			<Button android:text="←" android:onClick="onClick_CalcBtnBackspace" android:id="@+id/trip_tstop_popup_odo_calc_bs" />
-			   <!--  the backspace is unicode left arrow (U+2190 / decimal 8592) -->			
+			<Button android:text="⌫" android:onClick="onClick_CalcBtnBackspace" android:id="@+id/trip_tstop_popup_odo_calc_bs" />
+			   <!--  the backspace is unicode Erase To Left (U+232b) -->
 		</TableRow>
 		<TableRow>
 			<Button android:text="4" android:onClick="onClick_CalcBtnDigit" android:id="@+id/trip_tstop_popup_odo_calc_4"
@@ -80,21 +79,21 @@
 			<Button android:text="6" android:onClick="onClick_CalcBtnDigit" android:id="@+id/trip_tstop_popup_odo_calc_6" />
 			<Button android:text="×" android:onClick="onClick_CalcBtnMul" android:id="@+id/trip_tstop_popup_odo_calc_mul" />
 			   <!--  multiplication is unicode U+00D7 -->
-			<Button android:text="C" android:onClick="onClick_CalcBtnClear" android:id="@+id/trip_tstop_popup_odo_calc_clr" />			
 		</TableRow>
 		<TableRow>
 			<Button android:text="1" android:onClick="onClick_CalcBtnDigit" android:id="@+id/trip_tstop_popup_odo_calc_1"
 				android:layout_weight="0" android:layout_width="wrap_content"  />
 			<Button android:text="2" android:onClick="onClick_CalcBtnDigit" android:id="@+id/trip_tstop_popup_odo_calc_2" />
 			<Button android:text="3" android:onClick="onClick_CalcBtnDigit" android:id="@+id/trip_tstop_popup_odo_calc_3" />
-			<Button android:text="-" android:onClick="onClick_CalcBtnSub" android:id="@+id/trip_tstop_popup_odo_calc_sub" />			
-			<Button android:text="=" android:onClick="onClick_CalcBtnEquals" android:id="@+id/trip_tstop_popup_odo_calc_eq" />			
+			<Button android:text="-" android:onClick="onClick_CalcBtnSub" android:id="@+id/trip_tstop_popup_odo_calc_sub" />
+			<Button android:text="C" android:onClick="onClick_CalcBtnClear" android:id="@+id/trip_tstop_popup_odo_calc_clr" />
 		</TableRow>
 		<TableRow>
-			<Button android:text="0" android:onClick="onClick_CalcBtnDigit" android:id="@+id/trip_tstop_popup_odo_calc_0"
-			                        android:layout_span="2" />
-			<Button android:text="." android:onClick="onClick_CalcBtnDigit" android:id="@+id/trip_tstop_popup_odo_calc_deci" />
+			<Button android:text="0" android:onClick="onClick_CalcBtnDigit" android:id="@+id/trip_tstop_popup_odo_calc_0" />
+			<Button android:text="." android:textStyle="bold" android:onClick="onClick_CalcBtnDigit" android:id="@+id/trip_tstop_popup_odo_calc_deci" />
 			<Button android:text="+" android:onClick="onClick_CalcBtnAdd" android:id="@+id/trip_tstop_popup_odo_calc_add" />
+			<Button android:text="=" android:onClick="onClick_CalcBtnEquals" android:id="@+id/trip_tstop_popup_odo_calc_eq"
+				android:layout_span="2" />
 		</TableRow>
 	</TableLayout>
 </LinearLayout>

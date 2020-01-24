@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010-2017,2019 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2017,2019-2020 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -3811,6 +3811,7 @@ public class TripTStopEntry extends Activity
 		{
 			calcValue.setText(tx.subSequence(0, L - 1));
 			calcValue.setSelection(L-1);  // move cursor to end
+			calcNextPressClears = false;
 		}
 	}
 

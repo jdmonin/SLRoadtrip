@@ -26,6 +26,9 @@ Being developed now; improvements and bugfixes since 0.9.90
 ## SLRoadtrip android app:
 - Show Logbook:
   - Show dates in bold for visibility
+- Odometer calculator dialog:
+  - Rearrange layout bottom rows: Make '=' wide instead of '0'
+  - Backspace: Change symbol; fix bug where if first press is backspace, then digit, would erase previous contents
 
 # 0.9.90
 

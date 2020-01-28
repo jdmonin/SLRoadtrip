@@ -198,7 +198,11 @@ In Main activity, tap "Show Logbook" button.
   - Look through log to note any location where any trip ends
   - Search for that location
     - Location name should be highlighted at end of trip, prefix `->` should not
-  - Search for All vehicles, view search results
+  - Tap "Other Vehicle", show log for a different vehicle
+  - Search a location for All vehicles; view search results
+  - Choose "Recent Gas" or "Go to Date": Should show for that most recently shown vehicle, not current vehicle
+  - Search a location and un-check All Vehicles; view search results:
+    Should show for that most recently shown vehicle, not current vehicle
   - View a not-recently-used vehicle's log (not used within last 12 trips),
     search for location: Should show that vehicle's trips to location
   - Tap "Earlier Trips" button; should show that vehicle's previous trips to location

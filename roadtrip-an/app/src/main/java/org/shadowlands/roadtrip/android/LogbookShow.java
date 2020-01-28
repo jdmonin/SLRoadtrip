@@ -73,12 +73,14 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 /**
- * Present an unformatted view of the current vehicle's trip log.
+ * Present a lightly formatted view or search of the current vehicle's trip log,
+ * or a different vehicle by calling with {@link #EXTRAS_VEHICLE_ID}.
  * Can tap on any Trip for more details; see {@link #onClick(View)}.
  * Logbook text can be lightly styled: See {@link TripListTimeRangeAn}.
  *<P>
  * Optionally, can filter to show only trips that include a given {@link #EXTRAS_LOCID location ID}
- * (Location Mode, same as in {@link LogbookTableModel}).
+ * (Location Mode, same as in {@link LogbookTableModel}):
+ * See {@link #showTripsForLocation(int, boolean, int, Activity)}.
  *<P>
  * Or, can set the starting date to {@link #EXTRAS_DATE}; this date and 2 weeks of newer trips are
  * shown, with buttons to show older and newer trips.
@@ -118,6 +120,7 @@ public class LogbookShow extends Activity
 	 * Location Mode: Optional flag for intent extras to indicate all vehicles' trips
 	 * should be shown; for {@link Intent#putExtra(String, boolean)}.
 	 * Requires {@link #EXTRAS_LOCID}.
+	 * @see #EXTRAS_VEHICLE_ID
 	 */
 	public static final String EXTRAS_LOCMODE_ALLV = "LogbookShow.locAllV";
 
@@ -132,9 +135,14 @@ public class LogbookShow extends Activity
 	public static final String EXTRAS_DATE = "LogbookShow.dateUnix";
 
 	/**
-	 * Go To Date: If added to intent extras, show trips of this vehicle
+	 * If added to intent extras, show trips of this vehicle
 	 * instead of the current vehicle.
-	 * Requires {@link #EXTRAS_DATE}.
+	 * Requires {@link #EXTRAS_DATE} or {@link #EXTRAS_LOCID}.
+	 *<P>
+	 * When {@link #EXTRAS_LOCMODE_ALLV} is used, loc search ignores this Extra
+	 * but it's still useful for remembering previously-shown vehicle for
+	 * the next view from the currently running activity
+	 * (Go to Date, Recent Gas, next Location search).
 	 */
 	public static final String EXTRAS_VEHICLE_ID = "LogbookShow.vid";
 
@@ -172,7 +180,7 @@ public class LogbookShow extends Activity
 	private int goToDate = 0;
 
 	/**
-	 * Vehicle for "Go To Date" mode ({@link #EXTRAS_DATE}, {@link #EXTRAS_VEHICLE_ID});
+	 * Vehicle for "Go To Date" mode ({@link #EXTRAS_DATE}), from {@link #EXTRAS_VEHICLE_ID}
 	 * or {@link #currV}.
 	 */
 	private Vehicle showV = null;
@@ -210,21 +218,22 @@ public class LogbookShow extends Activity
 
 	/**
 	 * Used by {@link #onClick_BtnEarlier(View)},
-	 * {@link #addTripsTextViews_addOne(StringBuilder, Trip, List, boolean)}.
+	 * {@link #addTripsTextViews_addOne(CharSequence, Trip, List, boolean)}.
 	 */
 	private int tripListBtnEarlierPosition = -1;
 
 	/**
 	 * Used by {@link #onClick_BtnLater(View)},
-	 * {@link #addTripsTextViews_addOne(StringBuilder, Trip, List, boolean)}.
+	 * {@link #addTripsTextViews_addOne(CharSequence, Trip, List, boolean)}.
 	 */
 	private int tripListBtnLaterPosition = -1;
 
 	/**
 	 * Start this activity in Location Mode: Only show trips including a given location.
 	 * @param locID  Location ID
-	 * @param allV  If true, show all vehicles' trips, not just the current vehicle
-	 * @param vID   If not <tt>allV</tt>, a specific vehicle ID to show, or 0 for current vehicle
+	 * @param allV  If true, show all vehicles' trips, not just the currently shown vehicle
+	 * @param vID   Specific vehicle ID to show, or 0 for current vehicle;
+	 *     see {@link #EXTRAS_VEHICLE_ID} for details
 	 * @param fromActivity  Current activity; will call {@link Activity#startActivity(Intent)} on it
 	 */
 	public static final void showTripsForLocation
@@ -234,8 +243,9 @@ public class LogbookShow extends Activity
 		i.putExtra(EXTRAS_LOCID, locID);
 		if (allV)
 			i.putExtra(EXTRAS_LOCMODE_ALLV, true);
-		else if (vID != 0)
+		if (vID != 0)
 			i.putExtra(EXTRAS_VEHICLE_ID, vID);
+
 		fromActivity.startActivity(i);
 	}
 
@@ -384,17 +394,14 @@ public class LogbookShow extends Activity
 					goToDate = i.getIntExtra(EXTRAS_DATE, 0);
 				}
 
-				if (! locMode_allV)
+				final int vid = i.getIntExtra(EXTRAS_VEHICLE_ID, 0);
+				if (vid != 0)
 				{
-					final int vid = i.getIntExtra(EXTRAS_VEHICLE_ID, 0);
-					if (vid != 0)
+					try
 					{
-						try
-						{
-							showV = new Vehicle(db, vid);
-						}
-						catch (Throwable e) { }
+						showV = new Vehicle(db, vid);
 					}
+					catch (Throwable e) { }
 				}
 			}
 		}

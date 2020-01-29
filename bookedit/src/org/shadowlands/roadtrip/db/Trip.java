@@ -521,6 +521,7 @@ public class Trip extends RDBRecord
 
 	/**
 	 * Get the most recent trip, local trip, or roadtrip for this vehicle, if any.
+	 * That trip may be vehicle's current trip, so it may differ from {@link Vehicle#getLastTripID()}.
 	 * Does not call {@link #readAllTStops()} on the returned trip.
 	 * @param db  db connection
 	 * @param veh  vehicle to look for; not null
@@ -566,7 +567,7 @@ public class Trip extends RDBRecord
 	 * @param db  db connection
 	 * @return the newest trip, or null if none in the database
 	 * @throws IllegalStateException if db not open
-	 * @see #recentTripForVehicle(RDBAdapter, Vehicle, boolean)
+	 * @see #recentTripForVehicle(RDBAdapter, Vehicle, boolean, boolean)
 	 * @since 0.9.07
 	 */
 	public static Trip recentInDB(RDBAdapter db)
@@ -1099,6 +1100,7 @@ public class Trip extends RDBRecord
 			readhighest_ret = new int[2];
 		readhighest_ret[0] = oTotal;
 		readhighest_ret[1] = oTrip;
+
 		return readhighest_ret;
 	}
 

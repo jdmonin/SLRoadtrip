@@ -3647,7 +3647,7 @@ public class TripTStopEntry extends Activity
 		calcMC.setEnabled(calcMemory != 0.0f);
 		calcMR.setEnabled(calcMemory != 0.0f);
 
-		calcLoadValueFromOdo();
+		calcLoadValueFromOdo(false);
 		calcUpdateStatusView();
 		calcNextPressClears = true;
 
@@ -3709,15 +3709,57 @@ public class TripTStopEntry extends Activity
 		calcStatusView.setText(sb);
 	}
 
-	/** Load the calculator's {@link #calcValue} field from the
-	 *  odometer ({@link #calcOdoIsTrip} flag),
-	 *  or clear to blank if the odo is 0.
+	/**
+	 * Load the calculator's {@link #calcValue} field, either from
+	 * the current odometer number picker or from end of previous trip.
+	 * Checks {@link #calcOdoIsTrip} flag for whether to use trip/total odo.
+	 *<UL>
+	 *  <LI> If {@code fromPrevTrip}, load from vehicle's previous trip if possible,
+	 *    otherwise Toast to let the user know
+	 *  <LI> If not, load from TripTStopEntry odometer number picker,
+	 *    or clear field to blank if that odo is 0.
+	 *</UL>
+	 * @return  True if field updated, false if {@code fromPrevTrip} but no previous trip
 	 */
-	private void calcLoadValueFromOdo()
+	private boolean calcLoadValueFromOdo(final boolean fromPrevTrip)
 	{
-		final OdometerNumberPicker odo = (calcOdoIsTrip) ? odo_trip : odo_total;
-		final int ov = odo.getCurrent10d();
-		if (ov == 0)
+		final int ov;
+		if (fromPrevTrip)
+		{
+			Trip prevTrip = null;
+			try
+			{
+				final int tid = currV.getLastTripID();
+				if (tid != 0)
+					prevTrip = new Trip(db, tid);
+			} catch (RDBKeyNotFoundException e) {}
+
+			if (prevTrip == null)
+			{
+				Toast.makeText(this, R.string.trip_tstop_entry_calc_pte_no_trip, Toast.LENGTH_SHORT).show();
+					// "Vehicle has no Previous Trip"
+				return false;
+			}
+			if (! calcOdoIsTrip)
+			{
+				ov = prevTrip.getOdo_end();
+			} else {
+				TStop ts = prevTrip.readLatestTStop();
+				int t = (ts != null) ? ts.getOdo_trip() : 0;
+				if (t == 0)
+				{
+					Toast.makeText(this, R.string.trip_tstop_entry_calc_pte_no_odo, Toast.LENGTH_SHORT).show();
+						// "Previous Trip has no ending trip-odometer data"
+					return false;
+				}
+				ov = t;
+			}
+		} else {
+			final OdometerNumberPicker odo = (calcOdoIsTrip) ? odo_trip : odo_total;
+			ov = odo.getCurrent10d();
+		}
+
+		if ((ov == 0) && ! fromPrevTrip)
 		{
 			calcValue.setText("");
 		} else {
@@ -3726,8 +3768,14 @@ public class TripTStopEntry extends Activity
 			else
 				calcValue.setText( Integer.toString(ov / 10) );
 			calcValue.setSelection(calcValue.getText().length());  // move cursor to end
+
+			if (fromPrevTrip)
+				Toast.makeText(this, R.string.trip_tstop_entry_calc_pte_loaded, Toast.LENGTH_SHORT).show();
+					// "Loaded Previous Trip Ending odometer"
 		}
+
 		calcNextPressClears = false;
+		return true;
 	}
 
 	public void onClick_CalcBtnDigit(View v)
@@ -3780,10 +3828,11 @@ public class TripTStopEntry extends Activity
 	 * current value. Also re-enables "Save" button.
 	 * @since 0.9.42
 	 * @see #onClick_CalcBtnClear(View)
+	 * @see #onClick_CalcBtnPrevTripEnding(View)
 	 */
 	public void onClick_CalcBtnReset(View v)
 	{
-		calcLoadValueFromOdo();
+		calcLoadValueFromOdo(false);
 
 		if (popupCalcDia != null)
 			popupCalcDia.getButton(Dialog.BUTTON_POSITIVE).setEnabled(true);
@@ -3799,6 +3848,18 @@ public class TripTStopEntry extends Activity
 		calcValue.setText("");
 
 		if (popupCalcDia != null)
+			popupCalcDia.getButton(Dialog.BUTTON_POSITIVE).setEnabled(true);
+	}
+
+	/**
+	 * The calculator PTE button loads Previous Trip Ending odometer from vehicle's last trip (if available)
+	 * into {@link #calcValue}. Also re-enables "Save" button.
+	 * @since 0.9.91
+	 * @see #onClick_CalcBtnReset(View)
+	 */
+	public void onClick_CalcBtnPrevTripEnding(View v)
+	{
+		if (calcLoadValueFromOdo(true) && (popupCalcDia != null))
 			popupCalcDia.getButton(Dialog.BUTTON_POSITIVE).setEnabled(true);
 	}
 

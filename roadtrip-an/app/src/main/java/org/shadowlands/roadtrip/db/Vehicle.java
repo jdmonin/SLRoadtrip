@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010-2015,2017,2019 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2015,2017,2019-2020 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -725,6 +725,7 @@ public class Vehicle extends RDBRecord
 	 * @return trip ID, or 0 if no trip has been completed.
 	 * @see #setOdometerCurrentAndLastTrip(int, Trip, boolean)
 	 * @see #getTripInProgress()
+	 * @see Trip#recentTripForVehicle(RDBAdapter, Vehicle, boolean, boolean)
 	 */
 	public int getLastTripID() {
 		return last_tripid;

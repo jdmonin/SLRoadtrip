@@ -30,6 +30,7 @@ Being developed now; improvements and bugfixes since 0.9.90
     for use in next view from that activity (Go to Date, Recent Gas, next Location search)
 - Odometer calculator dialog:
   - Rearrange layout bottom rows: Make '=' wide instead of '0'
+  - Add PTE button: Loads Previous Trip Ending odometer value if available
   - Backspace: Change symbol; fix bug where if first press is backspace, then digit, would erase previous contents
 
 # 0.9.90

@@ -59,8 +59,14 @@ daily trips with actual vehicle(s).
     - Test both `+` and `-`
     - Test memory: M+, MR, M-, MR, MC, MR while entering values/using digit buttons
       - After MC is tapped: MC, MR buttons should be disabled
+    - If this is vehicle's first trip, tapping PTE button should show a toast with text like
+      "Vehicle has no Previous Trip"
+    - For Trip odometer: If vehicle's previous trip didn't save an ending trip-odometer value,
+      tapping PTE button should show a toast with text like
+      "Previous Trip has no ending trip-odometer data"
     - Save button should update odometer in the activity
   - End trip by returning to the start location
+    - For an upcoming test, enter a trip-odometer value
     - To test duplicate-prevention:
       - Type that location name, instead of tapping on the auto-complete
       - Change at least 1 letter's capitalization; should still use same Location record within DB
@@ -71,8 +77,13 @@ daily trips with actual vehicle(s).
     - Via names
     - Mileage between stops in tenths
     - Location and Via names from "duplicate-prevention" test should be properly capitalized
+    - Note the Total and Trip odometer values at end of trip
 - Start a trip from a different location than end of previous trip
   - Stop, entering a new location, new via, and a distance on trip odometer
+    - While stopped, tap the odometer calculator button for both Trip and Total odometers
+      - Tap PTE button: Should load correct odometer value from end of previous trip
+        and show a toast with text like "Loaded Previous Trip Ending odometer"
+      - Hit Cancel to close calculator
   - End trip at any location
   - View logbook
   - Search Via Routes: Enter trip's starting location and newly entered location;

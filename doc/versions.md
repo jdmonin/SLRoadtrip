@@ -33,6 +33,16 @@ Being developed now; improvements and bugfixes since 0.9.90
   - Add PTE button: Loads Previous Trip Ending odometer value if available
   - Backspace: Change symbol; fix bug where if first press is backspace, then digit, would erase previous contents
 
+## Database schema:
+- No changes to schema itself
+- `Vehicle.last_tripid` field: Don't set to current trip when switching to different vehicle
+  - In versions before 0.9.20, that field strictly held the vehicle's last completed trip
+  - In 0.9.20 it started also being used to hold vehicle's current trip when changing current vehicle
+    to a different one
+  - 0.9.40 added the `veh_settings` table which holds each vehicle's current trip
+  - Up through 0.9.90, the previous vehicle's `last_tripid` was also still set at vehicle change
+  - This version 0.9.91 no longer sets `last_tripid` to current trip while switching to a different vehicle
+
 # 0.9.90
 
 2019-10-18: b24ffc1

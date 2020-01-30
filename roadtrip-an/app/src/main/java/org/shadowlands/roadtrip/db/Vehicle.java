@@ -202,9 +202,14 @@ public class Vehicle extends RDBRecord
 	private int odo_orig, odo_curr;
 
 	/**
-	 * id of the vehicle's last completed trip, or 0 for empty/unused.
-	 * See {@link #getLastTripID()} for details.
+	 * id of the vehicle's last completed trip, or 0 for empty/unused (null in db).
+	 *<P>
+	 * Versions older than 0.9.91 also set this field to the vehicle's <em>current</em> trip
+	 * when changing current vehicle from this to another one.
+	 *<P>
+	 * See {@link #getLastTripID()} for all details.
 	 * Updated by {@link #setOdometerCurrentAndLastTrip(int, Trip, boolean)}.
+	 *<P>
 	 */
 	private int last_tripid;
 
@@ -722,10 +727,15 @@ public class Vehicle extends RDBRecord
 	/**
 	 * Get the id of the vehicle's last completed trip.
 	 * When starting a new trip, {@code last_tripid} is used to find the vehicle's previous stopping point.
+	 *<P>
+	 * Versions 0.9.20 - 0.9.90 also set this field to the vehicle's <em>current</em> trip when
+	 * changing current vehicle from this to a different one. So, caller should check that trip's
+	 * {@link Trip#isEnded()} in case vehicle was last used in version 0.9.90 or earlier.
+	 * Consider calling {@link Trip#recentTripForVehicle(RDBAdapter, Vehicle, boolean)} instead.
+	 *
 	 * @return trip ID, or 0 if no trip has been completed.
 	 * @see #setOdometerCurrentAndLastTrip(int, Trip, boolean)
 	 * @see #getTripInProgress()
-	 * @see Trip#recentTripForVehicle(RDBAdapter, Vehicle, boolean, boolean)
 	 */
 	public int getLastTripID() {
 		return last_tripid;
@@ -735,60 +745,51 @@ public class Vehicle extends RDBRecord
 	 * Does this vehicle (which can't be the current vehicle) have a trip in progress?
 	 * Before calling this, check {@link Settings} for the {@code CURRENT_VEHICLE} and {@code CURRENT_TRIP}.
 	 * If this is the current vehicle, its {@link #getLastTripID()} won't be the current trip,
-	 * so call {@link VehSettings#getCurrentTrip(RDBAdapter, Vehicle, boolean)} instead.
+	 * so you should call {@link VehSettings#getCurrentTrip(RDBAdapter, Vehicle, boolean)} instead.
 	 *<P>
-	 * Checks {@link #getLastTripID()}.
-	 * If nonzero, checks that trip's {@link Trip#getOdo_end()} using the vehicle's open db connection.
-	 * If trip's {@code odo_end} is 0, that trip is still in progress.
-	 *<P>
+	 * Calls {@link Trip#recentTripForVehicle(RDBAdapter, Vehicle, boolean)}.
+	 *
 	 * @return  This non-current vehicle's trip in progress, or {@code null} if none.
 	 *          If the db connection is closed, or trip record not found somehow, returns null.
 	 * @since 0.9.20
 	 */
 	public Trip getTripInProgress() {
-		if (0 == last_tripid)
-			return null;
-
-		Trip tr;
-		try {
-			tr = new Trip(dbConn, last_tripid);
-		} catch (IllegalStateException e) {
-			return null;
-		} catch (RDBKeyNotFoundException e) {
-			return null;
-		}
-
-		return (tr.getOdo_end() == 0) ? tr : null;
+		final Trip tr = Trip.recentTripForVehicle(dbConn, this, false);
+		return ((tr != null) && ! tr.isEnded()) ? tr : null;
 	}
 
 	/**
 	 * At the end of a trip, set the current odometer and last trip ID.
-	 * Also used when saving vehicle's current trip just before changing current vehicle.
+	 * Also used when saving vehicle's current odometer just before changing current vehicle.
 	 * @param newValue10ths  New current odometer
-	 * @param tr  New latest trip; not null
-	 * @param commitNow commit these 2 fields ONLY, right now; if false, just set {@link #isDirty()}.
-	 * @throws NullPointerException if {@code tr} is null
+	 * @param tr  New latest trip, or {@code null} to leave unchanged
+	 * @param commitNow  Commit these 2 fields <B>only</B>, right now; if false, instead sets {@link #isDirty()}.
 	 */
-	public void setOdometerCurrentAndLastTrip(int newValue10ths, Trip tr, final boolean commitNow)
-		throws NullPointerException
+	public void setOdometerCurrentAndLastTrip(final int newValue10ths, final Trip tr, final boolean commitNow)
 	{
 		// if no changes, don't update db
 		if (commitNow && (! dirty) && (allTrips == null)
-		    && (odo_curr == newValue10ths) && (last_tripid == tr.getID()))
+		    && (odo_curr == newValue10ths)
+		    && ((tr == null) || last_tripid == tr.getID()))
 			return;
 
 		odo_curr = newValue10ths;
-		last_tripid = tr.getID();
-		if ((allTrips != null) && ! allTrips.isEmpty())
+		if (tr != null)
 		{
-			if (allTrips.get(allTrips.size() - 1) != tr)
-				allTrips.add(tr);
+			last_tripid = tr.getID();
+			if ((allTrips != null) && ! allTrips.isEmpty())
+			{
+				if (allTrips.get(allTrips.size() - 1) != tr)
+					allTrips.add(tr);
+			}
 		}
+
 		if (! commitNow)
 		{
 			dirty = true;
 			return;
 		}
+
 		String[] odo_lastTrip = { Integer.toString(newValue10ths), Integer.toString(last_tripid) };
 		dbConn.update(TABNAME, id, FIELDS_ODO_LASTTRIP, odo_lastTrip);
 	}

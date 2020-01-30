@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2014-2015,2017 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2014-2015,2017,2020 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.Vector;
 
 /**
- * Read the VehSettings db table: Per-vehicle settings which change frequently.
+ * Read the {@code veh_settings} db table: Per-vehicle settings which change frequently.
  * For setting names, see static string fields here or see the schema.
  *<P>
  * Convenience methods: {@link #insertOrUpdate(RDBAdapter, String, Vehicle, int)},
@@ -37,7 +37,7 @@ import java.util.Vector;
  * to remove cached references to the overwritten db's settings objects.
  *<P>
  * Version 0.9.40 made these settings per-vehicle. In older versions they're in {@link Settings}.
- * Static fields here with setting names show their original version ("since 0.8.13" etc),
+ * Some static fields here for setting names show their original version ("since 0.8.13" etc),
  * which often is older than 0.9.40.
  *
  * @see RDBSchema#checkSettings(RDBAdapter, int)
@@ -109,7 +109,7 @@ public class VehSettings extends RDBRecord
 
 	/**
 	 * string setting for unused TStops in the current {@link FreqTrip}, if any,
-	 * as a comma-delimited list of IDs into {@link FreqTripTSTop}.
+	 * as a comma-delimited list of IDs into {@link FreqTripTStop}.
 	 * Should not be set if {@link #CURRENT_TRIP} isn't currently set.
 	 * @see #setCurrentFreqTrip(RDBAdapter, Vehicle, FreqTrip)
 	 * @see #reduceCurrentFreqTripTStops(RDBAdapter, Vehicle, FreqTripTStop)
@@ -1413,9 +1413,9 @@ public class VehSettings extends RDBRecord
 	 * Calls {@link Settings#setCurrentVehicle(RDBAdapter, Vehicle)}.
 	 * If new vehicle has current trip, validates current driver setting from trip's driver field.
 	 *<P>
-	 * Before changing vehicles, updates the old vehicle's current odometer and trip by calling
-	 * {@link Vehicle#setOdometerCurrentAndLastTrip(int, Trip, boolean)}, and setting the
-	 * current TStop's {@link TStop#TEMPFLAG_CURRENT_TSTOP_AT_CURRV_CHANGE} flag if currently stopped.
+	 * Before changing vehicles, updates the old vehicle's current odometer by calling
+	 * {@link Vehicle#setOdometerCurrentAndLastTrip(int, Trip, boolean)} in case record is dirty, and
+	 * sets current TStop's {@link TStop#TEMPFLAG_CURRENT_TSTOP_AT_CURRV_CHANGE} flag if currently stopped.
 	 *<P>
 	 * This method first attempts to find per-vehicle settings for the new vehicle's current trip, tstop, etc.
 	 * If not found, it uses other data to determine these settings (backward-compatible mode).
@@ -1446,9 +1446,8 @@ public class VehSettings extends RDBRecord
 
 		if (oldCurrT != null)
 		{
-			// before changing, update old current-vehicle with its current-trip info
 			oldV.setOdometerCurrentAndLastTrip
-				(oldV.getOdometerCurrent(), oldCurrT, true);
+				(oldV.getOdometerCurrent(), null, true);
 
 			TStop currTS = getCurrentTStop(db, oldV, false); // CURRENT_TSTOP
 			if (currTS != null)

@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010-2016,2019 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2016,2019-2020 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -93,10 +93,10 @@ public class ChangeDriverOrVehicle
 	/** Called when the activity is first created. */
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
-	    super.onCreate(savedInstanceState);
-	    setContentView(R.layout.change_driver_or_vehicle);
+		super.onCreate(savedInstanceState);
+		setContentView(R.layout.change_driver_or_vehicle);
 
-	    hasCurrentTrip = false;
+		hasCurrentTrip = false;
 
 		db = new RDBOpenHelper(this);
 		currV = Settings.getCurrentVehicle(db, false);
@@ -144,7 +144,7 @@ public class ChangeDriverOrVehicle
 	/**
 	 * Change current driver/vehicle, {@link #finish()} the activity.
 	 * Set our result to {@link #RESULT_OK} if any current setting was changed,
-	 * {@link #RESULT_CANCEL} otherwise (even if drivers/vehicles were edited).
+	 * {@link #RESULT_CANCELED} otherwise (even if drivers/vehicles were edited).
 	 * Also updates other settings from the new current vehicle if changed:
 	 * Current GeoArea, Trip, TStop, etc.
 	 */
@@ -188,7 +188,7 @@ public class ChangeDriverOrVehicle
 
     /**
      * Don't change the current driver/vehicle, and {@link #finish()} the activity.
-     * Result will be {@link #RESULT_CANCEL},even if drivers/vehicles were edited.
+     * Result will be {@link #RESULT_CANCELED},even if drivers/vehicles were edited.
      */
     public void onClick_BtnCancel(View v)
     {
@@ -241,7 +241,7 @@ public class ChangeDriverOrVehicle
     	startActivityForResult(i, R.id.change_cvd_vehicles_edit);
     }
 
-    /**
+	/**
 	 * Callback from {@link DriverEntry}, {@link VehicleEntry}, {@link DriversEdit} or {@link VehiclesEdit}.
 	 * If coming from "New Driver" or "New Vehicle" button and changes were made,
 	 * asks whether to change the current driver or current vehicle.
@@ -314,6 +314,7 @@ public class ChangeDriverOrVehicle
     	final int newID = idata.getIntExtra("_id", 0);
     	if (newID == 0)
     		return;
+
     	if (isDriver && (null != VehSettings.getCurrentTrip(db, currV, false)))
     	{
     		// Can't change current driver during a trip yet;
@@ -324,7 +325,7 @@ public class ChangeDriverOrVehicle
 
     	final int toastMsg =
     		isDriver ? R.string.change_vehicle_driver_ask_chg_new_d
-    				 : R.string.change_vehicle_driver_ask_chg_new_v;
+			 : R.string.change_vehicle_driver_ask_chg_new_v;
 
     	AlertDialog.Builder alert = new AlertDialog.Builder(this);
 
@@ -341,7 +342,7 @@ public class ChangeDriverOrVehicle
 	    	  }
 	    	});
     	alert.show();
-	}
+    }
 
 	/**
 	 * Update the Driver or Vehicle spinner contents after adding a new one.
@@ -353,7 +354,6 @@ public class ChangeDriverOrVehicle
     private void spinnerAddNewItem(final boolean isDriver, final Spinner sp, final boolean doChange, final int newID)
     {
     	if (doChange)
-    	{
     		try
     		{
 	    		if (isDriver)
@@ -363,10 +363,9 @@ public class ChangeDriverOrVehicle
 	    			Settings.setCurrentVehicle(db, new Vehicle(db, newID));	    			
 	    		}
     		} catch (Throwable th) {}
-    	}
 
     	try
-		{
+	{
 	    	if (isDriver)
 	    	{
 	    		Person dr = VehSettings.getCurrentDriver(db, currV, false);
@@ -374,16 +373,14 @@ public class ChangeDriverOrVehicle
 	    			currDID = dr.getID();
 	    		else
 	    			currDID = 0;
-				SpinnerDataFactory.setupDriversSpinner(db, this, driver, currDID);
-			} else {
-				currV = Settings.getCurrentVehicle(db, false);
-				currVID = currV.getID();
-				SpinnerDataFactory.setupVehiclesSpinner(db, Vehicle.FLAG_ONLY_ACTIVE, this, veh, currVID);
-			}
-		} catch (Throwable th) {
-			return;
-    	}
-	}
+			SpinnerDataFactory.setupDriversSpinner(db, this, driver, currDID);
+		} else {
+			currV = Settings.getCurrentVehicle(db, false);
+			currVID = currV.getID();
+			SpinnerDataFactory.setupVehiclesSpinner(db, Vehicle.FLAG_ONLY_ACTIVE, this, veh, currVID);
+		}
+	} catch (Throwable th) {}
+    }
 
 	// implement OnItemSelectedListener:
 
@@ -399,7 +396,7 @@ public class ChangeDriverOrVehicle
 			return;
 
 		Object obj = parent.getItemAtPosition(pos);
-		if ((obj == null) || ! (obj instanceof Vehicle))
+		if (! (obj instanceof Vehicle))
 			return;  // just in case
 		final Vehicle selV = (Vehicle) obj;
 
@@ -419,7 +416,7 @@ public class ChangeDriverOrVehicle
 
 		final int dID = vDriv.getID();
 		Object selDriv = driver.getSelectedItem();
-		if ((selDriv != null) && (selDriv instanceof Person)
+		if ((selDriv instanceof Person)
 		    && (((Person) selDriv).getID() == dID))
 		{
 			return;  // driver already selected

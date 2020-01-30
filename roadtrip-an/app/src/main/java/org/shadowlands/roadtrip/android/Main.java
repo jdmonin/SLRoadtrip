@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010-2012,2014-2015,2017,2019 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2012,2014-2015,2017,2019-2020 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -467,9 +467,12 @@ public class Main extends Activity
 		if (null != VehSettings.getCurrentTrip(db, currV, false))
 			return;  // should not occur, menu item would be disabled; checking here just in case
 
-		final Trip prevTrip = Trip.recentTripForVehicle(db, currV, false, false);
+		final Trip prevTrip = Trip.recentTripForVehicle(db, currV, false);
 		if (prevTrip == null)
 			return;  // should not occur, item would be disabled
+			// Note: If ! prevTrip.isEnded() because of inconsistent data (unlikely),
+			// calling Trip.cancelEndPreviousTrip will throw an exception
+			// and showExceptionAlertDialog will show it, which is fine.
 
 		_askUndoDialogWithTime
 			(getResources().getString(R.string.main_undo_end_trip__text),
@@ -776,7 +779,7 @@ public class Main extends Activity
 	 */
 	private void listRecentTripsForMakeFreq()
 	{
-		Trip t = Trip.recentTripForVehicle(db, currV, false, false);
+		Trip t = Trip.recentTripForVehicle(db, currV, false);
 		if (t == null)
 		{
 			Toast.makeText(this, R.string.main_no_recent_trips_for_vehicle, Toast.LENGTH_SHORT).show();

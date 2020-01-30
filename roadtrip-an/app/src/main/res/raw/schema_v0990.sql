@@ -1,5 +1,5 @@
 -- org.shadowlands.roadtrip
--- version 0.9.90 schema (2019-09-29) for SQLite 3.4 or higher
+-- version 0.9.90 schema (2019-09-29, comments updated 2020-01-30) for SQLite 3.4 or higher
 --
 -- The db schema version is sometimes lower than the app version, never higher.
 --
@@ -17,7 +17,7 @@ PRAGMA user_version = 0990;
 
 -- This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
 --
---  This file Copyright (C) 2010-2015,2017,2019 Jeremy D Monin (jdmonin@nand.net)
+--  This file Copyright (C) 2010-2015,2017,2019-2020 Jeremy D Monin (jdmonin@nand.net)
 --
 --  This program is free software: you can redistribute it and/or modify
 --  it under the terms of the GNU General Public License as published by
@@ -129,11 +129,16 @@ create table vehicle ( _id integer PRIMARY KEY AUTOINCREMENT not null, nickname 
     -- Required fields to help distinctly identify a vehicle: year <> 0 or nickname != null or model != null
     --   (see Vehicle.toString() javadoc). Before v0.9.43 the apps required a year but always allowed 0 for it.
     -- To reduce write freq, update odo_curr only at end of each trip, not at each trip stop.
-    -- Also update last_tripid at the end of each trip, or if a trip was in progress and then the current vehicle changed.
-    --   If the vehicle has never finished a trip, last_tripid is 0 or null.
+    -- last_tripid is also updated at the end of each trip:
+    --   If the vehicle has never finished a trip, last_tripid is null.
+    --   When ending each trip, update last_tripid and odo_curr.
     --   last_tripid is used to find the vehicle's previous stopping point, when starting a new trip.
-    --   If the CURRENT_VEHICLE setting changes during this vehicle's CURRENT_TRIP: Update last_tripid for this vehicle, and
-    --   then check the new vehicle's last_tripid.  If that trip's odo_end is 0, that trip is in progress, the new CURRENT_TRIP.
+    --   In version 0.9.20: If a trip was in progress and then the CURRENT_VEHICLE setting changed:
+    --   Set this vehicle's last_tripid to its current trip, and then check the new vehicle's last_tripid.
+    --   If that trip's odo_end is 0, that trip is in progress and is the new CURRENT_TRIP.
+    --   Versions 0.9.40 to 0.9.90 inclusive still updated last_tripid when switching vehicles,
+    --   even though VehSettings(vid, CURRENT_TRIP) tracks each vehicle's current trip.
+    --   In 0.9.91 and higher, last_tripid is set only when completing a trip.
     -- distance_storage is 'KM' or 'MI'
     -- expense_currency is, for example, 'USD' or 'CAD'
     -- expense_curr_sym is, for example, '$'

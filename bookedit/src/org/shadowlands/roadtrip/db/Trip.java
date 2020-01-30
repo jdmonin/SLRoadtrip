@@ -92,19 +92,18 @@ public class Trip extends RDBRecord
 	private static final String[] FIELDS_TIMES = { "time_start", "time_end" };
 
 	/**
-	 * Field names/where-clause for use in {@link #recentTripForVehicle(RDBAdapter, Vehicle, boolean, boolean)}.
+	 * Field names/where-clause for use in {@link #recentTripForVehicle(RDBAdapter, Vehicle, boolean)}.
 	 * @since 0.9.50
 	 */
 	private static final String WHERE_VID =
 		"_id=(select max(_id) from trip where vid = ?)";
 
-	/** Field names/where-clause for use in {@link #recentTripForVehicle(RDBAdapter, Vehicle, boolean, boolean)}. */
-	private static final String WHERE_VID_AND_NOT_ROADTRIP =
-		"_id=(select max(_id) from trip where vid = ? and roadtrip_end_aid is null)";
-
-	/** Field names/where-clause for use in {@link #recentTripForVehicle(RDBAdapter, Vehicle, boolean, boolean)}. */
-	private static final String WHERE_VID_AND_IS_ROADTRIP =
-		"_id=(select max(_id) from trip where vid = ? and roadtrip_end_aid is not null)";
+	/**
+	 * Field names/where-clause for use in {@link #recentTripForVehicle(RDBAdapter, Vehicle, boolean)}.
+	 * @since 0.9.91
+	 */
+	private static final String WHERE_VID_AND_COMPLETED =
+		"_id=(select max(_id) from trip where vid = ? and odo_end is null)";
 
 	/** Where-clause for use in {@link #tripsForVehicle(RDBAdapter, Vehicle, int, int, boolean, boolean, boolean)}. */
 	private static final String WHERE_TIME_START_AND_VID =
@@ -520,31 +519,27 @@ public class Trip extends RDBRecord
 	}
 
 	/**
-	 * Get the most recent trip, local trip, or roadtrip for this vehicle, if any.
-	 * That trip may be vehicle's current trip, so it may differ from {@link Vehicle#getLastTripID()}.
+	 * Get the most recent trip for this vehicle, if any.
+	 * That trip may be vehicle's current trip if not {@code completedOnly},
+	 * so it may differ from {@link Vehicle#getLastTripID()}.
 	 * Does not call {@link #readAllTStops()} on the returned trip.
 	 * @param db  db connection
 	 * @param veh  vehicle to look for; not null
-	 * @param localOnly  If true get most recent local trip, exclude roadtrips
-	 * @param roadtripOnly  If true get most recent roadtrip, exclude local trips
+	 * @param completedOnly  If true, return most recent completed trip ({@code odo_end} null)
 	 * @return Most recent Trip for this Vehicle, sorted by _id descending, or null if none
 	 * @throws IllegalStateException if db not open
-	 * @throws IllegalArgumentException if both {@code localOnly} and {@code roadtripOnly}
 	 * @since 0.9.03
 	 * @see #recentInDB(RDBAdapter)
 	 */
 	public static Trip recentTripForVehicle
-		(RDBAdapter db, Vehicle veh, final boolean localOnly, final boolean roadtripOnly)
-		throws IllegalStateException, IllegalArgumentException
+		(RDBAdapter db, Vehicle veh, final boolean completedOnly)
+		throws IllegalStateException
 	{
 		if (db == null)
 			throw new IllegalStateException("db null");
-		if (localOnly && roadtripOnly)
-			throw new IllegalArgumentException();
 		final String where =
-			(localOnly) ? WHERE_VID_AND_NOT_ROADTRIP
-			            : (roadtripOnly) ? WHERE_VID_AND_IS_ROADTRIP : WHERE_VID;
-		// "_id = (select max(_id) from trip where vid = ? and roadtrip_end_aid is null" or similar
+			(completedOnly) ? WHERE_VID_AND_COMPLETED : WHERE_VID;
+		// "_id = (select max(_id) from trip where vid = ? and odo_end is null" or similar
 
 		Vector<String[]> sv = db.getRows
 			(TABNAME, where, new String[]{ Integer.toString(veh.getID()) }, FIELDS_AND_ID, "_id DESC", 1);
@@ -567,7 +562,7 @@ public class Trip extends RDBRecord
 	 * @param db  db connection
 	 * @return the newest trip, or null if none in the database
 	 * @throws IllegalStateException if db not open
-	 * @see #recentTripForVehicle(RDBAdapter, Vehicle, boolean, boolean)
+	 * @see #recentTripForVehicle(RDBAdapter, Vehicle, boolean)
 	 * @since 0.9.07
 	 */
 	public static Trip recentInDB(RDBAdapter db)
@@ -638,7 +633,7 @@ public class Trip extends RDBRecord
 	 *<P>
 	 * The vehicle must not already have a current trip.
 	 * The previous trip will be queried with
-	 * {@link #recentTripForVehicle(RDBAdapter, Vehicle, boolean, boolean) recentTripForVehicle(db, currV, false, false)},
+	 * {@link #recentTripForVehicle(RDBAdapter, Vehicle, boolean) recentTripForVehicle(db, currV, false)},
 	 * not {@link Vehicle#getLastTripID() currV.getLastTripID()}.
 	 *<P>
 	 * The vehicle must already be the current vehicle, in case db contains data from an old version
@@ -650,7 +645,8 @@ public class Trip extends RDBRecord
 	 *     {@code Settings#getCurrentVehicle(RDBAdapter, boolean)} == null.
 	 * @throws IllegalStateException if missing any of the conditions listed above,
 	 *     or if null != {@link VehSettings#getCurrentTrip(RDBAdapter, Vehicle, boolean)},
-	 *     or if {@code dbConn} is null or not open.
+	 *     or if {@link Trip#recentTripForVehicle(RDBAdapter, Vehicle, boolean)}'s returned
+	 *     trip is ! {@link Trip#isEnded()}, or if {@code dbConn} is null or not open.
 	 * @since 0.9.50
 	 */
 	public static boolean cancelEndPreviousTrip(RDBAdapter db)
@@ -664,9 +660,12 @@ public class Trip extends RDBRecord
 			throw new IllegalStateException("Vehicle " + currV.getID() + " has currT");
 
 		// query db for previous trip, in case Vehicle.getLastTripID() is somehow outdated
-		final Trip tr = recentTripForVehicle(db, currV, false, false);
+		final Trip tr = recentTripForVehicle(db, currV, false);
 		if (tr == null)
 			return false;
+		if (! tr.isEnded())
+			throw new IllegalStateException
+				("Vehicle " + currV.getID() + " most recent trip " + tr.getID() + " not completed");
 
 		tr.setOdo_end(0);
 		tr.setTime_end(0);

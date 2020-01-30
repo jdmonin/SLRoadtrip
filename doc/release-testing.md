@@ -141,6 +141,14 @@ daily trips with actual vehicle(s).
 - After ending a trip, main activity's menu should allow to Undo End Trip
   - After undo: That trip should be current, and stopped at its last stop
     with buttons to Continue or End Trip
+- Start and finish a multi-day trip, with at least 1 stop's date between start and end dates
+  - Begin trip; Show Logbook, note starting date
+  - Stop on another day
+  - Continue from that stop on same or yet another day
+  - Stop again, same or another day
+  - Continue
+  - End trip on a different day
+  - Show Logbook: Each new date within trip, but not each time of day, should be bold
 
 ### Driver list
 
@@ -184,6 +192,7 @@ In Main activity, hit "Change Driver / Vehicle" button.
 In Main activity, tap "Show Logbook" button.
 
 - Should see most recent trips for current vehicle
+  - All dates should be bold, but not times
 - Action bar button: Change vehicle
   - Select a vehicle
   - Should see that vehicle's most recent trips

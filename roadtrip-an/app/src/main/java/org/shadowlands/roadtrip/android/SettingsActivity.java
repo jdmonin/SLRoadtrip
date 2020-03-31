@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2012 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2012,2020 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -24,9 +24,10 @@ import org.shadowlands.roadtrip.R;
 import org.shadowlands.roadtrip.db.*;
 import org.shadowlands.roadtrip.db.android.RDBOpenHelper;
 
-import android.app.Activity;
 import android.os.Bundle;
 import android.widget.CheckBox;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 
 /**
  * Settings activity.
@@ -34,7 +35,7 @@ import android.widget.CheckBox;
  * @author jdmonin
  * @since 0.9.12
  */
-public class SettingsActivity extends Activity
+public class SettingsActivity extends AppCompatActivity
 {
 	private RDBAdapter db = null;
 
@@ -59,6 +60,8 @@ public class SettingsActivity extends Activity
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.settings_activity);
+		setSupportActionBar((Toolbar) findViewById(R.id.rt_toolbar));
+		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
 		cbHideFreqtrip = (CheckBox) findViewById(R.id.cb_set_hide_freqtrip);
 		cbHideTripPax = (CheckBox) findViewById(R.id.cb_set_hide_trip_pax);
@@ -126,6 +129,16 @@ public class SettingsActivity extends Activity
 		super.onDestroy();
 		if (db != null)
 			db.close();
+	}
+
+	/**
+	 * Nav arrow handler for AppCompat's action bar: Call {@link #onBackPressed()}.
+	 * @since 0.9.92
+	 */
+	@Override
+	public boolean onSupportNavigateUp() {
+		onBackPressed();
+		return true;
 	}
 
 }

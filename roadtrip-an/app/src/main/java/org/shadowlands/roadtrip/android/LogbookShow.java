@@ -49,6 +49,7 @@ import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -71,6 +72,8 @@ import android.widget.ScrollView;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 
 /**
  * Present a lightly formatted view or search of the current vehicle's trip log,
@@ -92,7 +95,7 @@ import android.widget.Toast;
  *
  * @author jdmonin
  */
-public class LogbookShow extends Activity
+public class LogbookShow extends AppCompatActivity
 	implements View.OnClickListener, LogbookShowTripDetailDialogBuilder.DetailDialogListener
 {
 	/**
@@ -155,6 +158,12 @@ public class LogbookShow extends Activity
 
 	/** tag for android logging */
 	private static final String TAG = "RTR.LogbookShow";
+
+	/**
+	 * Activity {@code requestCode} to show we've called using {@link LogbookShowTripDetailDialogBuilder}.
+	 * @since 0.9.92
+	 */
+	private static final int REQUEST_SHOW_TRIP_DETAIL = 1;
 
 	/**
 	 * Params for use by {@link #onClick_BtnEarlier(View)} and {@link #onClick_BtnLater(View)}
@@ -362,6 +371,8 @@ public class LogbookShow extends Activity
 	{
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.logbook_show);
+		setSupportActionBar((Toolbar) findViewById(R.id.rt_toolbar));
+		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
 		TextView tvContent = (TextView) findViewById(R.id.logbook_show_textview);
 		db = new RDBOpenHelper(this);
@@ -377,6 +388,9 @@ public class LogbookShow extends Activity
 
 		if (Trip.TripListTimeRange.factory == null)
 			Trip.TripListTimeRange.factory = new TripListTimeRangeAn.FactoryAn();
+		TripListTimeRangeAn.isDarkMode =
+			((getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK)
+			 == Configuration.UI_MODE_NIGHT_YES);
 
 		// Read and semi-format the trips for this vehicle.
 		// (The LogbookTableModel constructor calls ltm.addRowsFromTrips.)
@@ -546,7 +560,7 @@ public class LogbookShow extends Activity
 	 * @param vehicleOnly  True if not also showing date ({@code dpick} == null)
 	 * @param selV  Selected vehicle from dialog's spinner
 	 * @param cal   Calendar object from dialog
-	 * @param dpick  Calendar picker, or null if {@code vehicleOnly}
+	 * @param dpick  Calendar picker which has the selected date, or null if {@code vehicleOnly}
 	 * @since 0.9.50
 	 */
 	private void onClickDateVehDialogOK
@@ -748,6 +762,10 @@ public class LogbookShow extends Activity
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 	    switch (item.getItemId()) {
+		case android.R.id.home:  // action bar Back arrow
+			onBackPressed();
+			return true;
+
 		case R.id.menu_logbook_recent_gas:
 			{
 				Intent i = new Intent(this, LogbookRecentGas.class);
@@ -947,7 +965,7 @@ public class LogbookShow extends Activity
 
 		tddb_tripView = (TextView) v;
 		tddb = new LogbookShowTripDetailDialogBuilder
-			(this, R.id.logbook_show_popup_trip_detail_tstop_list, this,
+			(this, REQUEST_SHOW_TRIP_DETAIL, this,
 			 (Trip) tag, ltm, db);
 		tddb.create().show();
 	}
@@ -961,7 +979,7 @@ public class LogbookShow extends Activity
 	@Override
 	public void onActivityResult(final int requestCode, final int resultCode, Intent idata)
 	{
-		if ((requestCode != R.id.logbook_show_popup_trip_detail_tstop_list)
+		if ((requestCode != REQUEST_SHOW_TRIP_DETAIL)
 		    || (resultCode != RESULT_FIRST_USER))
 			return;
 

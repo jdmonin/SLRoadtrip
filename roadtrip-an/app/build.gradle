@@ -1,13 +1,13 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 19
+    compileSdkVersion 28
     buildToolsVersion "28.0.3"
 
     defaultConfig {
         applicationId "org.shadowlands.roadtrip"
-        minSdkVersion 11
-        targetSdkVersion 19
+        minSdkVersion 14
+        targetSdkVersion 28
     }
 
     buildTypes {
@@ -21,4 +21,10 @@ android {
         abortOnError false  // be less strict
     }
 
+}
+
+dependencies {
+    def appcompat_version = '1.1.0'
+    implementation "androidx.appcompat:appcompat:$appcompat_version"
+    implementation "androidx.appcompat:appcompat-resources:$appcompat_version"
 }

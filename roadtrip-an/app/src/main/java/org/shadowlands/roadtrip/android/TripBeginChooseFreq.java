@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010,2012,2014-2015 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010,2012,2014-2015,2020 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -41,6 +41,8 @@ import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.Toast;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 
 /**
  * When user has pressed "Begin Frequent Trip" button in the {@link Main} activity,
@@ -62,7 +64,7 @@ import android.widget.Toast;
  *
  * @author jdmonin
  */
-public class TripBeginChooseFreq extends Activity
+public class TripBeginChooseFreq extends AppCompatActivity
 	implements OnItemClickListener
 {
 	/** tag for debug logging */
@@ -89,6 +91,8 @@ public class TripBeginChooseFreq extends Activity
 	{
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.trip_begin_choose_freq);
+		setSupportActionBar((Toolbar) findViewById(R.id.rt_toolbar));
+		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
 		db = new RDBOpenHelper(this);
 
@@ -157,6 +161,16 @@ public class TripBeginChooseFreq extends Activity
 		super.onDestroy();
 		if (db != null)
 			db.close();
+	}
+
+	/**
+	 * Nav arrow handler for AppCompat's action bar: Call {@link #onBackPressed()}.
+	 * @since 0.9.92
+	 */
+	@Override
+	public boolean onSupportNavigateUp() {
+		onBackPressed();
+		return true;
 	}
 
 	/**

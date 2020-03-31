@@ -3,7 +3,7 @@
  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  values/attrs.xml: attributes to set in themes.
 
- This file Copyright (C) 2019 Jeremy D Monin (jdmonin@nand.net)
+ This file Copyright (C) 2019-2020 Jeremy D Monin (jdmonin@nand.net)
 
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
@@ -21,8 +21,9 @@
  -->
 <resources>
 	<!--
-		rtr_theme_type: Useful for debugging what theme was chosen at runtime by Android.
-		See res/values/themes.xml, res-values-11/themes.xml
+		rtr_theme_type: Useful for debugging what theme was chosen at runtime by Android
+		in app versions which include several res/values-*/ directories.
+		See res/values/themes.xml
 
 		Example usage:
 		TypedValue outValue = new TypedValue();
@@ -35,13 +36,23 @@
 	<attr name="rtr_theme_type" format="string" />
 
 	<!--
-		rtr_activity_padding: Standard padding for all activities' and dialogs' overall layouts.
+		rtr_activity_padding: Consistent padding for all activities' and dialogs' overall layouts.
 		By default it's 0 and everything looks too crowded at the edge of the screen.
-		See res/values/themes.xml, res-values-11/themes.xml
+		See res/values/themes.xml
 
 		Example usage: (lightly edited because this is an xml comment)
 		LinearLayout android:padding="?rtr_activity_padding" ...
 	 -->
 	<attr name="rtr_activity_padding" format="dimension" />
+
+	<!--
+		rtr_spinner_padding: Consistent padding for all spinners.
+		By default it's 0 in newer versions of android/generations of style.
+		See res/values/themes.xml
+
+		Example usage: (lightly edited because this is an xml comment)
+		Spinner android:paddingTop="?rtr_spinner_padding" android:paddingBottom="?rtr_spinner_padding" ...
+	 -->
+	<attr name="rtr_spinner_padding" format="dimension" />
 
 </resources>

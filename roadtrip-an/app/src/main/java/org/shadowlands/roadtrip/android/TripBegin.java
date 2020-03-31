@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010-2016,2019 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2016,2019-2020 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -64,6 +64,8 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.TimePicker;
 import android.widget.Toast;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 
 /**
  * Confirm settings and location and begin a trip, from {@link Main} activity.
@@ -101,7 +103,7 @@ import android.widget.Toast;
  *
  * @author jdmonin
  */
-public class TripBegin extends Activity
+public class TripBegin extends AppCompatActivity
 	implements OnDateSetListener, OnItemClickListener
 {
 	/**
@@ -116,6 +118,18 @@ public class TripBegin extends Activity
 	 * other activity fields for a trip based on that frequent trip.
 	 */
 	public static final String EXTRAS_FLAG_FREQUENT = "frequent";
+
+	/**
+	 * Activity {@code requestCode} to show we've called {@link ChangeDriverOrVehicle}.
+	 * @since 0.9.92
+	 */
+	private static final int REQUEST_CDOV = 1;
+
+	/**
+	 * Activity {@code requestCode} to show we've called {@link TripBeginChooseFreq}.
+	 * @since 0.9.92
+	 */
+	private static final int REQUEST_CHOOSE_FREQ = 2;
 
 	/**
 	 * For asking about historical mode, the current time when the historical previous trip was created.
@@ -296,6 +310,8 @@ public class TripBegin extends Activity
 	public void onCreate(Bundle savedInstanceState) {
 	    super.onCreate(savedInstanceState);
 	    setContentView(R.layout.trip_begin);
+		setSupportActionBar((Toolbar) findViewById(R.id.rt_toolbar));
+		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
 		Intent i = getIntent();
 		if (i != null)
@@ -499,7 +515,7 @@ public class TripBegin extends Activity
 
 	/**
 	 * Update adapter for {@link #etGeoArea}, and optionally set {@link #destAreaObj}.
-	 * @param setAreaID  Set {@link #destAreaObj} to this AreaID, show its text in {@code etGeoArea},
+	 * @param selectAreaID  Set {@link #destAreaObj} to this AreaID, show its text in {@code etGeoArea},
 	 *     or 0 or -1 to leave {@code destAreaObj} unchanged.
 	 * @param exceptAreaID  Exclude this area; -1 to include all areas
 	 * @throws NullPointerException if {@link #etGeoArea} == null
@@ -736,7 +752,7 @@ public class TripBegin extends Activity
 				i.putExtra(VehSettings.PREV_LOCATION, locObj.getID());
 			}
 			startActivityForResult
-			    (i, R.id.main_btn_begin_freqtrip);
+			    (i, REQUEST_CHOOSE_FREQ);
 			// when it returns, activity execution continues in onActivityResult().
 		}
 	}
@@ -747,6 +763,16 @@ public class TripBegin extends Activity
 		super.onDestroy();
 		if (db != null)
 			db.close();
+	}
+
+	/**
+	 * Nav arrow handler for AppCompat's action bar: Call {@link #onBackPressed()}.
+	 * @since 0.9.92
+	 */
+	@Override
+	public boolean onSupportNavigateUp() {
+		onBackPressed();
+		return true;
 	}
 
 	/** Show or hide the roadtrip destination-area dropdown */
@@ -1075,7 +1101,7 @@ public class TripBegin extends Activity
 	{
 		startActivityForResult
 		   (new Intent(TripBegin.this, ChangeDriverOrVehicle.class),
-			R.id.main_btn_change_driver_vehicle);
+			REQUEST_CDOV);
 	}
 
 	/**
@@ -1083,10 +1109,10 @@ public class TripBegin extends Activity
 	 * @param requestCode  The activity request used with {@code startActivityForResult}
 	 *   when creating the activity which led to the callback:
 	 *   <UL>
-	 *     <LI> {@link R.id#main_btn_begin_freqtrip}: A {@link FreqTrip} has been selected,
+	 *     <LI> {@link #REQUEST_CHOOSE_FREQ}: A {@link FreqTrip} has been selected,
 	 *       set {@link #isFrequent} and other activity fields for a new trip based on that FreqTrip.
 	 *       {@code idata} contains int {@code _id} field with the FreqTrip ID.
-	 *     <LI> {@link R.id#main_btn_change_driver_vehicle}: The current driver or vehicle
+	 *     <LI> {@link #REQUEST_CDOV}: The current driver or vehicle
 	 *       has been changed; update activity fields to that driver, vehicle, and location.
 	 *   </UL>
 	 * @param resultCode  Result from activity; will do nothing if {@link Activity#RESULT_CANCELED}.
@@ -1095,7 +1121,7 @@ public class TripBegin extends Activity
 	@Override
 	public void onActivityResult(final int requestCode, final int resultCode, Intent idata)
 	{
-		if (requestCode == R.id.main_btn_begin_freqtrip)
+		if (requestCode == REQUEST_CHOOSE_FREQ)
 		{
 			if ((resultCode == RESULT_CANCELED) || (idata == null))
 			{
@@ -1145,7 +1171,7 @@ public class TripBegin extends Activity
 		if (resultCode == RESULT_CANCELED)
 			return;
 
-		if (requestCode == R.id.main_btn_change_driver_vehicle)
+		if (requestCode == REQUEST_CDOV)
 			updateDriverVehTripTextAndButtons();
 
 	}

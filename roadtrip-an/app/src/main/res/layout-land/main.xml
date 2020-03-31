@@ -3,7 +3,7 @@
  Main activity; Landscape mode.
  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
 
- This file Copyright (C) 2013,2015,2019 Jeremy D Monin (jdmonin@nand.net)
+ This file Copyright (C) 2013,2015,2019-2020 Jeremy D Monin (jdmonin@nand.net)
 
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
@@ -18,16 +18,23 @@
  You should have received a copy of the GNU General Public License
  along with this program.  If not, see http://www.gnu.org/licenses/ .
  -->
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     >
+<include layout="@layout/rt_toolbar" />
+<ScrollView
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    >
+
 <!-- Landscape layout: Left and Right Side  -->
 
 <LinearLayout
     android:orientation="horizontal"
     android:layout_width="fill_parent"
-    android:layout_height="fill_parent"
+    android:layout_height="wrap_content"
     android:gravity="top"
     android:padding="?rtr_activity_padding"
     >
@@ -50,13 +57,13 @@
 	    android:gravity="top"
 	    android:stretchColumns="*" >
 
-		<TableRow>
+		<TableRow android:id="@+id/main_begin_trip_row">
 			<Button android:id="@+id/main_btn_begin_trip"
 				android:text="@string/begin_trip"
 				android:onClick="onClick_BtnBeginTrip"
 				android:layout_span="2" />
 		</TableRow>
-		<TableRow>
+		<TableRow android:id="@+id/main_begin_freqtrip_row">
 			<Button android:id="@+id/main_btn_begin_freqtrip"
 				android:text="@string/begin_frequent_trip"
 				android:onClick="onClick_BtnBeginFreq"
@@ -93,3 +100,4 @@
 	</TableLayout>
 </LinearLayout>
 </ScrollView>
+</LinearLayout>

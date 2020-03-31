@@ -38,6 +38,8 @@ import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 
 /**
  * During a {@link FreqTrip frequent trip}, choose a {@link FreqTripTStop}
@@ -50,7 +52,7 @@ import android.widget.ListView;
  *
  * @author jdmonin
  */
-public class TripTStopChooseFreq extends Activity
+public class TripTStopChooseFreq extends AppCompatActivity
 	implements OnItemClickListener
 {
 	private RDBAdapter db = null;
@@ -70,6 +72,8 @@ public class TripTStopChooseFreq extends Activity
 	{
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.trip_tstop_choose_freq);
+		setSupportActionBar((Toolbar) findViewById(R.id.rt_toolbar));
+		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
 		db = new RDBOpenHelper(this);
 
@@ -111,6 +115,16 @@ public class TripTStopChooseFreq extends Activity
 		super.onDestroy();
 		if (db != null)
 			db.close();
+	}
+
+	/**
+	 * Nav arrow handler for AppCompat's action bar: Call {@link #onBackPressed()}.
+	 * @since 0.9.92
+	 */
+	@Override
+	public boolean onSupportNavigateUp() {
+		onBackPressed();
+		return true;
 	}
 
 	/**

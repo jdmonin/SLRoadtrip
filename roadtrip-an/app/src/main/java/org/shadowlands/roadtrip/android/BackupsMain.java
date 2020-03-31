@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010-2011,2013-2017,2019 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2011,2013-2017,2019-2020 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -53,6 +53,8 @@ import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 
 /**
  * Backup and Restore activity.
@@ -62,7 +64,7 @@ import android.widget.Toast;
  *
  * @author jdmonin
  */
-public class BackupsMain extends Activity
+public class BackupsMain extends AppCompatActivity
 	implements OnItemClickListener
 {
 	// no RDBAdapter field: db is not kept open, so that we can backup/restore it.
@@ -72,6 +74,12 @@ public class BackupsMain extends Activity
 	 * @since 0.9.40
 	 */
 	public static final int RESULT_BACKUP_RESTORED = Activity.RESULT_FIRST_USER;
+
+	/**
+	 * Activity {@code requestCode} to show we've called {@link BackupsRestore}.
+	 * @since 0.9.92
+	 */
+	private static final int REQUEST_BACKUPS_RESTORE = 1;
 
 	/** Free-space additional margin (64 kB) for {@link #checkFreeSpaceForBackup()}. */
 	final private static int FREE_SPACE_MARGIN = 64 * 1024;
@@ -118,6 +126,8 @@ public class BackupsMain extends Activity
 	public void onCreate(Bundle savedInstanceState) {
 	    super.onCreate(savedInstanceState);
 	    setContentView(R.layout.backups_main);
+	    setSupportActionBar((Toolbar) findViewById(R.id.rt_toolbar));
+	    getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 	    setTitle(R.string.backups_main_title);
 
 	    btnBackupNow = (Button) findViewById(R.id.backups_main_btn_backupnow);
@@ -448,6 +458,16 @@ public class BackupsMain extends Activity
 	}
 
 	/**
+	 * Nav arrow handler for AppCompat's action bar: Call {@link #onBackPressed()}.
+	 * @since 0.9.92
+	 */
+	@Override
+	public boolean onSupportNavigateUp() {
+		onBackPressed();
+		return true;
+	}
+
+	/**
 	 * Prompt for a folder path to restore from  If null, default to user's Download directory.
 	 * @param v  ignored
 	 */
@@ -628,7 +648,7 @@ public class BackupsMain extends Activity
 			i.putExtra(BackupsRestore.KEY_SCHEMA_VERS, bkupSchemaVersion);
 			i.putExtra(BackupsRestore.KEY_LAST_TRIPTIME, lastTripDataChange);
 
-			startActivityForResult(i, R.id.backups_main_list);
+			startActivityForResult(i, REQUEST_BACKUPS_RESTORE);
 		}
 	}
 
@@ -637,14 +657,14 @@ public class BackupsMain extends Activity
 	 * If a backup was restored (result code {@link #RESULT_BACKUP_RESTORED}),
 	 * finish this activity which will take us back to {@link Main}.
 	 *
-	 * @param requestCode  {@link R.id#backups_main_list} when calling {@link BackupsRestore}
+	 * @param requestCode  {@link #REQUEST_BACKUPS_RESTORE} when calling {@link BackupsRestore}
 	 * @param resultCode  {@link #RESULT_BACKUP_RESTORED} or {@link Activity#RESULT_CANCELED}
 	 * @param idata  intent containing any result extras; ignored here
 	 */
 	@Override
 	public void onActivityResult(final int requestCode, final int resultCode, Intent idata)
 	{
-		if ((resultCode != RESULT_BACKUP_RESTORED) || (requestCode != R.id.backups_main_list))
+		if ((resultCode != RESULT_BACKUP_RESTORED) || (requestCode != REQUEST_BACKUPS_RESTORE))
 			return;
 
 		finish();

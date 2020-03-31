@@ -215,6 +215,9 @@ In Main activity, tap "Show Logbook" button.
 - Search for Location should filter for the entered location
   - View search results for current vehicle
     - Location name matches should be highlighted (yellow background)
+    - If systemwide dark mode is supported (android 10+ device or 9+ developer options):
+      - Change device to Dark Theme/Night Mode and search again
+      - Location name matches should highlight as black text on yellow background
   - Look through log to note any location where any trip ends
   - Search for that location
     - Location name should be highlighted at end of trip, prefix `->` should not

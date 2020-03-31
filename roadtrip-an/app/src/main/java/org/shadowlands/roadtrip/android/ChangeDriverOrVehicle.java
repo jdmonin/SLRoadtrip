@@ -39,6 +39,8 @@ import android.widget.AdapterView.OnItemSelectedListener;
 import android.widget.Button;
 import android.widget.Spinner;
 import android.widget.Toast;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 
 /**
  * Change the current driver or the current vehicle
@@ -62,7 +64,7 @@ import android.widget.Toast;
  * @author jdmonin
  */
 public class ChangeDriverOrVehicle
-	extends Activity implements OnItemSelectedListener
+	extends AppCompatActivity implements OnItemSelectedListener
 {
 	/**
 	 * Activity result to indicate changes were made; used in callback to here
@@ -78,6 +80,30 @@ public class ChangeDriverOrVehicle
 	 * @since 0.9.41
 	 */
 	public static final int RESULT_ADDED_NEW = 1 + RESULT_CHANGES_MADE;
+
+	/**
+	 * Activity {@code requestCode} to show we've called {@link DriverEntry} for a new driver.
+	 * @since 0.9.92
+	 */
+	private static final int REQUEST_DRIVER_ENTRY = 1;
+
+	/**
+	 * Activity {@code requestCode} to show we've called {@link VehicleEntry} for a new vehicle.
+	 * @since 0.9.92
+	 */
+	private static final int REQUEST_VEHICLE_ENTRY = 2;
+
+	/**
+	 * Activity {@code requestCode} to show we've called {@link DriversEdit} to edit a driver.
+	 * @since 0.9.92
+	 */
+	private static final int REQUEST_DRIVER_EDIT = 3;
+
+	/**
+	 * Activity {@code requestCode} to show we've called {@link VehiclesEdit} to edit a vehicle.
+	 * @since 0.9.92
+	 */
+	private static final int REQUEST_VEHICLE_EDIT = 4;
 
 	/** Was the Current Vehicle or Current Driver setting changed? */
 	boolean anyChange = false;
@@ -95,6 +121,8 @@ public class ChangeDriverOrVehicle
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.change_driver_or_vehicle);
+		setSupportActionBar((Toolbar) findViewById(R.id.rt_toolbar));
+		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
 		hasCurrentTrip = false;
 
@@ -200,20 +228,20 @@ public class ChangeDriverOrVehicle
     {
     	Intent i = new Intent(this, DriverEntry.class);
 		i.putExtra(DriverEntry.EXTRAS_FLAG_ASKED_NEW, true);
-		startActivityForResult(i, R.id.change_cvd_driver_new);
+		startActivityForResult(i, REQUEST_DRIVER_ENTRY);
     }
 
     public void onClick_BtnVehicleNew(View v)
     {
     	Intent i = new Intent(this, VehicleEntry.class);
 		i.putExtra(VehicleEntry.EXTRAS_FLAG_ASKED_NEW, true);
-		startActivityForResult(i, R.id.change_cvd_vehicle_new);
+		startActivityForResult(i, REQUEST_VEHICLE_ENTRY);
     }
 
     public void onClick_BtnDriversEdit(View v)
     {
     	Intent i = new Intent(this, DriversEdit.class);
-    	startActivityForResult(i, R.id.change_cvd_drivers_edit);
+    	startActivityForResult(i, REQUEST_DRIVER_EDIT);
     }
 
     /**
@@ -238,7 +266,7 @@ public class ChangeDriverOrVehicle
     	}
  
     	Intent i = new Intent(this, VehiclesEdit.class);
-    	startActivityForResult(i, R.id.change_cvd_vehicles_edit);
+    	startActivityForResult(i, REQUEST_VEHICLE_EDIT);
     }
 
 	/**
@@ -263,13 +291,13 @@ public class ChangeDriverOrVehicle
 
 		switch (requestCode)
 		{
-		case R.id.change_cvd_driver_new:
+		case REQUEST_DRIVER_ENTRY:
 			spinnerAddNewItem_Ask(true, driver, idata);  break;
 
-		case R.id.change_cvd_vehicle_new:
+		case REQUEST_VEHICLE_ENTRY:
 			spinnerAddNewItem_Ask(false, veh, idata);    break;
 
-		case R.id.change_cvd_drivers_edit:
+		case REQUEST_DRIVER_EDIT:
 			if (resultCode == RESULT_ADDED_NEW) {
 				spinnerAddNewItem_Ask(true, driver, idata);
 			} else if (resultCode == RESULT_CHANGES_MADE) {
@@ -281,7 +309,7 @@ public class ChangeDriverOrVehicle
 			}
 			break;
 
-		case R.id.change_cvd_vehicles_edit:
+		case REQUEST_VEHICLE_EDIT:
 			if (resultCode == RESULT_ADDED_NEW) {
 				spinnerAddNewItem_Ask(false, veh, idata);
 			} else if (resultCode == RESULT_CHANGES_MADE) {
@@ -473,6 +501,16 @@ public class ChangeDriverOrVehicle
 		super.onDestroy();
 		if (db != null)
 			db.close();
+	}
+
+	/**
+	 * Nav arrow handler for AppCompat's action bar: Call {@link #onBackPressed()}.
+	 * @since 0.9.92
+	 */
+	@Override
+	public boolean onSupportNavigateUp() {
+		onBackPressed();
+		return true;
 	}
 
 }

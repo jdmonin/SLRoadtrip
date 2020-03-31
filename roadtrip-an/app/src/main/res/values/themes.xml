@@ -1,11 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
- values/themes.xml: App theme when running on android 2.x.
- Note that android:Theme.Light isn't guaranteed to be usable or consistent,
- depending on vendor skin, so we'll just go with the dark default theme on 2.x.
+ values/themes.xml: Dark-Mode compatible app theme, layout adjustments.
 
- This file Copyright (C) 2014,2019 Jeremy D Monin (jdmonin@nand.net)
+ This file Copyright (C) 2014,2019-2020 Jeremy D Monin (jdmonin@nand.net)
 
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
@@ -22,8 +20,14 @@
 
  -->
 <resources>
-	<style name="RTRTheme" parent="android:Theme">
-		<item name="rtr_theme_type">android2</item>
+	<style name="RTRTheme" parent="Theme.AppCompat.DayNight.NoActionBar">
+		<item name="rtr_theme_type">daynight</item>
 		<item name="rtr_activity_padding">4sp</item>
+		<item name="rtr_spinner_padding">6dp</item>
+		<item name="android:buttonStyle">@style/ButtonNoCaps</item>
+	</style>
+	<!-- For readability, disable material-design-inspired ALL CAPS button text default style -->
+	<style name="ButtonNoCaps" parent="Widget.AppCompat.Button">
+		<item name="android:textAllCaps">false</item>
 	</style>
 </resources>

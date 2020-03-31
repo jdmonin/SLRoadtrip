@@ -2,7 +2,7 @@
 <!--
  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
 
- This file Copyright (C) 2010-2013,2015,2017,2019 Jeremy D Monin (jdmonin@nand.net)
+ This file Copyright (C) 2010-2013,2015,2017,2019-2020 Jeremy D Monin (jdmonin@nand.net)
 
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
@@ -17,14 +17,20 @@
  You should have received a copy of the GNU General Public License
  along with this program.  If not, see http://www.gnu.org/licenses/ .
  -->
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    >
+<include layout="@layout/rt_toolbar" />
+<ScrollView
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     >
 <LinearLayout
     android:orientation="vertical"
     android:layout_width="fill_parent"
-    android:layout_height="fill_parent"
+    android:layout_height="wrap_content"
     android:padding="?rtr_activity_padding"
     >
 <TextView  
@@ -50,6 +56,8 @@
        <Spinner android:layout_height="wrap_content"
                 android:layout_width="fill_parent"
                 android:layout_weight="1"
+                android:paddingTop="?rtr_spinner_padding"
+                android:paddingBottom="?rtr_spinner_padding"
                 android:id="@+id/vehicle_entry_driver"/>
     </TableRow>
     <TableRow>
@@ -61,6 +69,8 @@
        <Spinner android:layout_height="wrap_content"
                 android:layout_width="fill_parent"
                 android:layout_weight="1"
+                android:paddingTop="?rtr_spinner_padding"
+                android:paddingBottom="?rtr_spinner_padding"
                 android:id="@+id/vehicle_entry_vmake"/>
     </TableRow>
     <TableRow>
@@ -175,6 +185,8 @@
 			    android:layout_width="fill_parent"
 			    android:layout_height="fill_parent"
 			    android:singleLine="true"
+			    android:paddingTop="?rtr_spinner_padding"
+			    android:paddingBottom="?rtr_spinner_padding"
 			    />
 			<ImageButton
 			    android:id="@+id/vehicle_entry_geoarea_arrow"
@@ -261,3 +273,4 @@
 </LinearLayout>
 </LinearLayout>
 </ScrollView>
+</LinearLayout>

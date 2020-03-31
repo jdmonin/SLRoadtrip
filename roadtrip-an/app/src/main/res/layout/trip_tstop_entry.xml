@@ -4,7 +4,7 @@
  Layout for stop during trip / resume trip / end trip; default title label is stop_during_a_trip.
  See TripTStopEntry class.
 
- This file Copyright (C) 2010-2012,2015,2017,2019 Jeremy D Monin (jdmonin@nand.net)
+ This file Copyright (C) 2010-2012,2015,2017,2019-2020 Jeremy D Monin (jdmonin@nand.net)
 
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
@@ -19,7 +19,13 @@
  You should have received a copy of the GNU General Public License
  along with this program.  If not, see http://www.gnu.org/licenses/ .
  -->
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    >
+<include layout="@layout/rt_toolbar" />
+<ScrollView
     android:id="@+id/trip_tstop_scrollview"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent" >
@@ -68,6 +74,7 @@
 		android:gravity="center"
 		android:onClick="onClick_BtnStopDate" />
 	<TimePicker android:id="@+id/trip_tstop_time_stop"
+		android:timePickerMode="spinner"
 		android:layout_toRightOf="@+id/trip_tstop_btn_stop_date"
 		android:layout_alignParentTop="true"
 		android:layout_width="fill_parent"
@@ -337,6 +344,7 @@
 		android:gravity="center"
 		android:onClick="onClick_BtnContDate" />
 	<TimePicker android:id="@+id/trip_tstop_time_cont"
+		android:timePickerMode="spinner"
 		android:layout_toRightOf="@+id/trip_tstop_btn_cont_date"
 		android:layout_alignParentTop="true"
 		android:layout_width="fill_parent"
@@ -457,8 +465,8 @@
 		android:layout_gravity="top"
 		android:layout_width="fill_parent"
 		android:layout_height="wrap_content"
-		android:paddingTop="2dp"
-		android:paddingBottom="2dp" />
+		android:paddingTop="?rtr_spinner_padding"
+		android:paddingBottom="?rtr_spinner_padding" />
 </TableRow>
 </TableLayout>
 <LinearLayout android:id="@+id/trip_tstop_row_end_mk_freq"
@@ -498,3 +506,4 @@
 </LinearLayout>
 </LinearLayout>
 </ScrollView>
+</LinearLayout>

@@ -2,7 +2,7 @@
  *  Drivers (people) Editor list.
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2012,2014-2015 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2012,2014-2015,2020 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -37,6 +37,8 @@ import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.Toast;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 
 /**
  * List of {@link Person} (people, drivers) to edit or view.
@@ -55,12 +57,24 @@ import android.widget.Toast;
  *
  * @author jdmonin
  */
-public class DriversEdit extends Activity
+public class DriversEdit extends AppCompatActivity
 	implements OnItemClickListener
 {
 	/** tag for debug logging */
 	@SuppressWarnings("unused")
 	private static final String TAG = "RTR.DriversEdit";
+
+	/**
+	 * Activity {@code requestCode} to show we've called {@link DriverEntry} to add a driver.
+	 * @since 0.9.92
+	 */
+	private static final int REQUEST_DRIVER_ADD = 1;
+
+	/**
+	 * Activity {@code requestCode} to show we've called {@link DriverEntry} to edit a driver.
+	 * @since 0.9.92
+	 */
+	private static final int REQUEST_DRIVER_EDIT = 1;
 
 	private RDBAdapter db = null;
 
@@ -77,6 +91,8 @@ public class DriversEdit extends Activity
 	{
 	    super.onCreate(savedInstanceState);
 	    setContentView(R.layout.drivers_edit);
+	    setSupportActionBar((Toolbar) findViewById(R.id.rt_toolbar));
+	    getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
 	    db = new RDBOpenHelper(this);
 
@@ -118,6 +134,16 @@ public class DriversEdit extends Activity
 	}
 
 	/**
+	 * Nav arrow handler for AppCompat's action bar: Call {@link #onBackPressed()}.
+	 * @since 0.9.92
+	 */
+	@Override
+	public boolean onSupportNavigateUp() {
+		onBackPressed();
+		return true;
+	}
+
+	/**
 	 * List the drivers currently available.
 	 * Fill {@link #people}.  Call {@link #lvPeople}.{@link ListView#setAdapter(android.widget.ListAdapter)}.
 	 * @return true if {@link Vehicle}s found, false otherwise
@@ -137,7 +163,7 @@ public class DriversEdit extends Activity
 	{
     	Intent i = new Intent(this, DriverEntry.class);
 		i.putExtra(DriverEntry.EXTRAS_FLAG_ASKED_NEW, true);
-		startActivityForResult(i, R.id.drivers_edit_new);		
+		startActivityForResult(i, REQUEST_DRIVER_ADD);
 	}
 
 	/** When an item is selected in the list, edit its ID using the {@link DriverEntry} activity. */
@@ -149,7 +175,7 @@ public class DriversEdit extends Activity
 		Person p = people[position];
     	Intent i = new Intent(this, DriverEntry.class);
 		i.putExtra(DriverEntry.EXTRAS_INT_EDIT_ID, p.getID());
-		startActivityForResult(i, R.id.list);
+		startActivityForResult(i, REQUEST_DRIVER_EDIT);
 	}
 
 	/** 'Done' button was clicked: finish this activity. */
@@ -174,8 +200,8 @@ public class DriversEdit extends Activity
 	{
 		if (resultCode == RESULT_CANCELED)
 			return;
-		final boolean added = (requestCode == R.id.drivers_edit_new);
-		if ((requestCode != R.id.list) && ! added)
+		final boolean added = (requestCode == REQUEST_DRIVER_ADD);
+		if ((requestCode != REQUEST_DRIVER_EDIT) && ! added)
 			return;
 		if ((idata == null) || (0 == idata.getIntExtra("_id", 0)))
 			return;
@@ -187,6 +213,7 @@ public class DriversEdit extends Activity
 		} else {
 			setResult(ChangeDriverOrVehicle.RESULT_CHANGES_MADE);
 		}
+
 		if (db == null)
 			db = new RDBOpenHelper(this);
 		populatePeopleList(db);		

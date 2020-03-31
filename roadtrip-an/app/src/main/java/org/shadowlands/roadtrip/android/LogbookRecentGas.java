@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2011,2013-2015,2017 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2011,2013-2015,2017,2020 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -37,7 +37,6 @@ import org.shadowlands.roadtrip.db.Vehicle;
 import org.shadowlands.roadtrip.db.android.RDBOpenHelper;
 import org.shadowlands.roadtrip.model.LogbookTableModel;
 
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -53,6 +52,8 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 
 /**
  * Activity listing recent gas stops for the current vehicle (up to 40).
@@ -61,7 +62,7 @@ import android.widget.Toast;
  *
  * @author jdmonin
  */
-public class LogbookRecentGas extends Activity
+public class LogbookRecentGas extends AppCompatActivity
 	implements OnItemClickListener
 {
 	/**
@@ -126,6 +127,8 @@ public class LogbookRecentGas extends Activity
 		super.onCreate(savedInstanceState);
 		db = new RDBOpenHelper(this);
 		setContentView(R.layout.logbook_recent_gas);
+		setSupportActionBar((Toolbar) findViewById(R.id.rt_toolbar));
+		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
 		tvTopText = (TextView) findViewById(R.id.logbook_recent_gas_toptext);
 		lvGasStopsList = (ListView) findViewById(R.id.logbook_recent_gas_list);
@@ -321,6 +324,10 @@ public class LogbookRecentGas extends Activity
 		{
 		case R.id.menu_logbook_gas_otherv:
 			askVehicleChange(isCurrVActive);
+			return true;
+
+		case android.R.id.home:
+			onBackPressed();
 			return true;
 
 		default:

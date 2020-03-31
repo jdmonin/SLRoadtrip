@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
- trip_tstop_choose_area.xml - TripTStopEntry activity's popup for choosing a new GeoArea.
+ trip_tstop_popup_choose_area.xml - TripTStopEntry activity's popup for choosing a new GeoArea.
 
  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
 
- This file Copyright (C) 2015,2019 Jeremy D Monin (jdmonin@nand.net)
+ This file Copyright (C) 2015,2019-2020 Jeremy D Monin (jdmonin@nand.net)
 
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
@@ -46,6 +46,8 @@
 	    android:layout_height="wrap_content"
 	    android:layout_width="0dp"
 	    android:layout_weight="1"
+	    android:paddingTop="?rtr_spinner_padding"
+	    android:paddingBottom="?rtr_spinner_padding"
 	    />
     </LinearLayout>
 </LinearLayout>

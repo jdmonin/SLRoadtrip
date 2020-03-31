@@ -38,7 +38,6 @@ import org.shadowlands.roadtrip.db.Vehicle;
 import org.shadowlands.roadtrip.db.android.RDBOpenHelper;
 
 import android.annotation.SuppressLint;
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.DialogInterface;
@@ -60,6 +59,8 @@ import android.view.ContextMenu.ContextMenuInfo;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 
 /**
  * Main activity/screen of the application.
@@ -70,8 +71,14 @@ import android.widget.Toast;
  *
  * @author jdmonin
  */
-public class Main extends Activity
+public class Main extends AppCompatActivity
 {
+	/**
+	 * Activity {@code requestCode} to show we've called {@link ChangeDriverOrVehicle}.
+	 * @since 0.9.92
+	 */
+	private static final int REQUEST_CDOV = 1;
+
 	private RDBAdapter db = null;
 
 	/** Current vehicle; updated in {@link #updateDriverVehTripTextAndButtons()} */
@@ -96,6 +103,7 @@ public class Main extends Activity
 	{
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.main);
+		setSupportActionBar((Toolbar) findViewById(R.id.rt_toolbar));
 
 		tvCurrentSet = (TextView) findViewById(R.id.main_text_current);
 		db = new RDBOpenHelper(this);
@@ -110,7 +118,7 @@ public class Main extends Activity
 		registerForContextMenu(btnBeginFreq);
 
 		if (Settings.getBoolean(db, Settings.HIDE_FREQTRIP, false))
-			btnBeginFreq.setVisibility(View.GONE);
+			findViewById(R.id.main_begin_freqtrip_row).setVisibility(View.GONE);  // TODO use a field
 
 		// see onResume for rest of initialization.
 	}
@@ -661,6 +669,7 @@ public class Main extends Activity
 			visNotTrip = View.VISIBLE;
 		}
 		btnBeginTrip.setVisibility(visNotTrip);
+		findViewById(R.id.main_begin_trip_row).setVisibility(visNotTrip);  // TODO use a field
 		if (Settings.getBoolean(db, Settings.HIDE_FREQTRIP, false))
 		{
 			btnBeginFreq.setVisibility(View.GONE);
@@ -739,7 +748,7 @@ public class Main extends Activity
 		// If we have a current trip, ChangeDriverOrVehicle is view-only.
 		startActivityForResult
 		   (new Intent(Main.this, ChangeDriverOrVehicle.class),
-			R.id.main_btn_change_driver_vehicle);
+			REQUEST_CDOV);
 	}
 
 	public void onClick_BtnShowLogbook(View v)
@@ -758,7 +767,7 @@ public class Main extends Activity
 		if (resultCode == RESULT_CANCELED)
 			return;
 
-		if (requestCode == R.id.main_btn_change_driver_vehicle)
+		if (requestCode == REQUEST_CDOV)
 			updateDriverVehTripTextAndButtons();
 	}
 

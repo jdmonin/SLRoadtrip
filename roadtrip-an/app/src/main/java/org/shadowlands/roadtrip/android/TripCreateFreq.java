@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010,2012,2015 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010,2012,2015,2020 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -33,7 +33,6 @@ import org.shadowlands.roadtrip.db.TripCategory;
 import org.shadowlands.roadtrip.db.ViaRoute;
 import org.shadowlands.roadtrip.db.android.RDBOpenHelper;
 
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -61,6 +60,8 @@ import android.widget.TextView;
 import android.widget.TimePicker;
 import android.widget.TimePicker.OnTimeChangedListener;
 import android.widget.Toast;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 
 /**
  * After the end of a trip, gather info and create a {@link FreqTrip frequent trip}.
@@ -74,7 +75,7 @@ import android.widget.Toast;
  *
  * @author jdmonin
  */
-public class TripCreateFreq extends Activity
+public class TripCreateFreq extends AppCompatActivity
 	implements OnItemClickListener, OnTimeChangedListener
 {
 	/** tag for android logging */
@@ -153,6 +154,8 @@ public class TripCreateFreq extends Activity
 	public void onCreate(Bundle savedInstanceState) {
 	    super.onCreate(savedInstanceState);
 	    setContentView(R.layout.trip_create_freq);
+	    setSupportActionBar((Toolbar) findViewById(R.id.rt_toolbar));
+	    getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
 	    confirmedCancel = false;
 	    etDescr = (EditText) findViewById(R.id.trip_createfreq_descr);
@@ -236,6 +239,16 @@ public class TripCreateFreq extends Activity
 	}
 
 	/**
+	 * Nav arrow handler for AppCompat's action bar: Call {@link #onClick_BtnCancel(View)}.
+	 * @since 0.9.92
+	 */
+	@Override
+	public boolean onSupportNavigateUp() {
+		onClick_BtnCancel(null);
+		return true;
+	}
+
+	/**
 	 * During <tt>onCreate</tt>, list the trip stops that are part of the source trip.
 	 * Populates {@link #stopsList}, {@link #stopsListRows}, and {@link #stopsChosen}.
 	 * The starting stop is never included.
@@ -306,6 +319,7 @@ public class TripCreateFreq extends Activity
 	 * 'Cancel' button or 'back' button was clicked: popup an
 	 * {@link AlertDialog} to confirm if wants to finish this activity,
 	 * and not create the frequent trip.
+	 * @param  v  ignored
 	 */
 	public void onClick_BtnCancel(View v)
 	{

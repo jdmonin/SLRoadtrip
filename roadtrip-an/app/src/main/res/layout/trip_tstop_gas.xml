@@ -7,7 +7,7 @@
  this activity's numeric input fields use android:digits="0123456789,."
  per comments in http://code.google.com/p/android/issues/detail?id=2626 .
 
- This file Copyright (C) 2010-2012,2015,2019 Jeremy D Monin (jdmonin@nand.net)
+ This file Copyright (C) 2010-2012,2015,2019-2020 Jeremy D Monin (jdmonin@nand.net)
 
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
@@ -22,14 +22,20 @@
  You should have received a copy of the GNU General Public License
  along with this program.  If not, see http://www.gnu.org/licenses/ .
  -->
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    >
+<include layout="@layout/rt_toolbar" />
+<ScrollView
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     >
 <LinearLayout
     android:orientation="vertical"
     android:layout_width="fill_parent"
-    android:layout_height="fill_parent"
+    android:layout_height="wrap_content"
     android:padding="?rtr_activity_padding"
     >
 <TextView  
@@ -158,3 +164,4 @@
 </LinearLayout>
 </LinearLayout>
 </ScrollView>
+</LinearLayout>

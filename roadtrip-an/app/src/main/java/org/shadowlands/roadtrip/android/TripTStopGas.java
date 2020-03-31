@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010-2012,2017 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2012,2017,2020 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -31,7 +31,6 @@ import org.shadowlands.roadtrip.db.TStopGas;
 import org.shadowlands.roadtrip.db.Vehicle;
 import org.shadowlands.roadtrip.db.android.RDBOpenHelper;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
@@ -46,6 +45,8 @@ import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ListAdapter;
 import android.widget.TextView;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 
 /**
  * Enter a TStop's gas details from {@link TripTStopEntry}.
@@ -53,7 +54,7 @@ import android.widget.TextView;
  * All fields are read-only if called with the
  * {@link TripTStopEntry#EXTRAS_FIELD_VIEW_TSTOP_ID} intent extra.
  */
-public class TripTStopGas extends Activity
+public class TripTStopGas extends AppCompatActivity
 	implements TextWatcher, OnItemClickListener
 {
 
@@ -128,6 +129,8 @@ public class TripTStopGas extends Activity
 	public void onCreate(Bundle savedInstanceState) {
 	    super.onCreate(savedInstanceState);
 	    setContentView(R.layout.trip_tstop_gas);
+	    setSupportActionBar((Toolbar) findViewById(R.id.rt_toolbar));
+	    getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
 	    quant_et = (EditText) findViewById(R.id.trip_tstopgas_quant);
 	    perunit_et = (EditText) findViewById(R.id.trip_tstopgas_perunit);
@@ -230,6 +233,16 @@ public class TripTStopGas extends Activity
 		super.onDestroy();
 		if (db != null)
 			db.close();
+	}
+
+	/**
+	 * Nav arrow handler for AppCompat's action bar: Call {@link #onBackPressed()}.
+	 * @since 0.9.92
+	 */
+	@Override
+	public boolean onSupportNavigateUp() {
+		onBackPressed();
+		return true;
 	}
 
 	/** Show or hide the gas brand/grade dropdown */

@@ -2,7 +2,7 @@
 <!--
  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
 
- This file Copyright (C) 2012,2019 Jeremy D Monin (jdmonin@nand.net)
+ This file Copyright (C) 2012,2019-2020 Jeremy D Monin (jdmonin@nand.net)
 
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
@@ -19,6 +19,12 @@
 
  -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="fill_parent"
+	android:layout_height="fill_parent"
+	android:orientation="vertical"
+	>
+<include layout="@layout/rt_toolbar" />
+<LinearLayout
 	android:layout_width="fill_parent"
 	android:layout_height="fill_parent"
 	android:orientation="vertical"
@@ -44,4 +50,5 @@
 	android:layout_height="wrap_content"
 	android:text="@string/settings_require_tripcat"
 	/>
+</LinearLayout>
 </LinearLayout>

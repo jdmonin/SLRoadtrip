@@ -30,6 +30,7 @@ import android.graphics.Typeface;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
 import android.text.style.BackgroundColorSpan;
+import android.text.style.ForegroundColorSpan;
 import android.text.style.StyleSpan;
 
 /**
@@ -40,6 +41,9 @@ import android.text.style.StyleSpan;
  * To use this class, be sure to set {@link TripListTimeRange#factory}
  * to a {@link TripListTimeRangeAn.FactoryAn}.
  *<P>
+ * If device enters or leaves Dark Theme/Dark Mode/Night Mode, your Activity should
+ * update static {@link #isDarkMode} flag for use by future {@code SpannableStringBuilder}s.
+ *<P>
  * When updating this code or the {@link TripListTimeRange} data structures it uses,
  * be sure its fallback still works by temporarily changing {@code getTripRowsTabbed_idx(..)}
  * to return {@code super.getTripRowsTabbed_idx(..)}.
@@ -48,6 +52,13 @@ import android.text.style.StyleSpan;
  */
 class TripListTimeRangeAn extends TripListTimeRange
 {
+	/**
+	 * If true, device is using Dark Theme/Dark Mode/Night Mode
+	 * and highlights must update text color, not just background color.
+	 * @since 0.9.92
+	 */
+	public static boolean isDarkMode = false;
+
 	/**
 	 * Constructor from a list of trips.
 	 * Public callers use the factory.
@@ -137,6 +148,10 @@ class TripListTimeRangeAn extends TripListTimeRange
 						sb.setSpan
                                                         (new BackgroundColorSpan(Color.YELLOW),
                                                          idx0, sb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+						if (isDarkMode)
+						    sb.setSpan
+						        (new ForegroundColorSpan(Color.BLACK),
+						         idx0, sb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
 					} else {
 						sb.append(str);
 					}

@@ -2,7 +2,7 @@
  *  Vehicles Editor list.
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2012-2015 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2012-2015,2020 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -40,6 +40,8 @@ import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 
 /**
  * List of {@link Vehicle}s to edit or view.
@@ -58,12 +60,24 @@ import android.widget.Toast;
  *
  * @author jdmonin
  */
-public class VehiclesEdit extends Activity
+public class VehiclesEdit extends AppCompatActivity
 	implements OnItemClickListener
 {
 	/** tag for debug logging */
 	@SuppressWarnings("unused")
 	private static final String TAG = "RTR.VehiclesEdit";
+
+	/**
+	 * Activity {@code requestCode} to show we've called {@link VehicleEntry} to add a vehicle.
+	 * @since 0.9.92
+	 */
+	private static final int REQUEST_VEHICLE_ADD = 1;
+
+	/**
+	 * Activity {@code requestCode} to show we've called {@link VehicleEntry} to edit a vehicle.
+	 * @since 0.9.92
+	 */
+	private static final int REQUEST_VEHICLE_EDIT = 1;
 
 	private RDBAdapter db = null;
 
@@ -80,6 +94,8 @@ public class VehiclesEdit extends Activity
 	{
 	    super.onCreate(savedInstanceState);
 	    setContentView(R.layout.vehicles_edit);
+	    setSupportActionBar((Toolbar) findViewById(R.id.rt_toolbar));
+	    getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
 	    db = new RDBOpenHelper(this);
 
@@ -120,6 +136,16 @@ public class VehiclesEdit extends Activity
 	}
 
 	/**
+	 * Nav arrow handler for AppCompat's action bar: Call {@link #onBackPressed()}.
+	 * @since 0.9.92
+	 */
+	@Override
+	public boolean onSupportNavigateUp() {
+		onBackPressed();
+		return true;
+	}
+
+	/**
 	 * List the vehicles currently available.
 	 * Fill {@link #veh}.  Call {@link #lvVeh}.{@link ListView#setAdapter(android.widget.ListAdapter)}.
 	 * @return true if {@link Vehicle}s found, false otherwise
@@ -156,19 +182,19 @@ public class VehiclesEdit extends Activity
 
 	/**
 	 * 'New' button was clicked: call {@link VehicleEntry} activity to do that.
-	 * Calls {@code startActivityForResult(Intent, R.id.vehicles_edit_new)}.
+	 * Calls {@code startActivityForResult(Intent, REQUEST_VEHICLE_ADD)}.
 	 * See {@link #onActivityResult(int, int, Intent)} for callback with activity result.
 	 */
 	public void onClick_BtnNewVehicle(View v)
 	{
     	Intent i = new Intent(this, VehicleEntry.class);
 		i.putExtra(VehicleEntry.EXTRAS_FLAG_ASKED_NEW, true);
-		startActivityForResult(i, R.id.vehicles_edit_new);		
+		startActivityForResult(i, REQUEST_VEHICLE_ADD);
 	}
 
 	/**
 	 * When an item is selected in the list, call {@link VehicleEntry} activity to edit its ID.
-	 * Calls {@code startActivityForResult(Intent, R.id.list)}.
+	 * Calls {@code startActivityForResult(Intent, REQUEST_VEHICLE_EDIT)}.
 	 * See {@link #onActivityResult(int, int, Intent)} for callback with activity result.
 	 */
 	public void onItemClick(AdapterView<?> parent, View view, int position, long id)
@@ -179,7 +205,7 @@ public class VehiclesEdit extends Activity
 		Vehicle v = veh[position];
     	Intent i = new Intent(this, VehicleEntry.class);
 		i.putExtra(VehicleEntry.EXTRAS_INT_EDIT_ID, v.getID());
-		startActivityForResult(i, R.id.list);
+		startActivityForResult(i, REQUEST_VEHICLE_EDIT);
 	}
 
 	/** 'Done' button was clicked: finish this activity. */
@@ -198,7 +224,7 @@ public class VehiclesEdit extends Activity
 	 * If a new vehicle was added, CDOV will ask whether to change the current vehicle.
 	 *
 	 * @param requestCode  Request code used in {@code startActivityForResult(..)}:
-	 *     {@code R.id.list} when editing a vehicle, {@link R.id.vehicles_edit_new} when adding a new one.
+	 *     {@code REQUEST_VEHICLE_EDIT} when editing a vehicle, {@code REQUEST_VEHICLE_ADD} when adding a new one.
 	 * @param resultCode  Activity result; {@link Activity#RESULT_CANCELED} returns immediately.
 	 * @param idata  intent containing extra int "_id" with the
 	 *     ID of the added or edited vehicle
@@ -208,8 +234,8 @@ public class VehiclesEdit extends Activity
 	{
 		if (resultCode == RESULT_CANCELED)
 			return;
-		final boolean added = (requestCode == R.id.vehicles_edit_new);
-		if ((requestCode != R.id.list) && ! added)
+		final boolean added = (requestCode == REQUEST_VEHICLE_ADD);
+		if ((requestCode != REQUEST_VEHICLE_EDIT) && ! added)
 			return;
 		if ((idata == null) || (0 == idata.getIntExtra("_id", 0)))
 			return;
@@ -221,6 +247,7 @@ public class VehiclesEdit extends Activity
 		} else {
 			setResult(ChangeDriverOrVehicle.RESULT_CHANGES_MADE);
 		}
+
 		if (db == null)
 			db = new RDBOpenHelper(this);
 		populateVehiclesList(db);		

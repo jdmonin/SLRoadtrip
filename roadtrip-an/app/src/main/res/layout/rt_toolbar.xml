@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
- This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
- values-v11/themes.xml: App theme when running on android 3.0 or newer.
+ Top-of-activity toolbar, for use with AppCompatActivity instead of ActionBar.
+ Meant to be included into a LinearLayout.
 
- This file Copyright (C) 2014,2019 Jeremy D Monin (jdmonin@nand.net)
+ This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
+
+ This file Copyright (C) 2020 Jeremy D Monin (jdmonin@nand.net)
 
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
@@ -17,11 +19,13 @@
 
  You should have received a copy of the GNU General Public License
  along with this program.  If not, see http://www.gnu.org/licenses/ .
-
  -->
-<resources>
-	<style name="RTRTheme" parent="android:Theme.Holo.Light">
-		<item name="rtr_theme_type">holo</item>
-		<item name="rtr_activity_padding">4sp</item>
-	</style>
-</resources>
+<androidx.appcompat.widget.Toolbar
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/rt_toolbar"
+    android:layout_width="match_parent"
+    android:layout_height="?attr/actionBarSize"
+    android:background="?attr/colorPrimary"
+    android:elevation="4dp"
+    android:theme="@style/ThemeOverlay.AppCompat.ActionBar"
+    android:popupTheme="@style/ThemeOverlay.AppCompat.Light" />

@@ -2,7 +2,7 @@
 <!--
  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
 
- This file Copyright (C) 2010,2012,2019 Jeremy D Monin (jdmonin@nand.net)
+ This file Copyright (C) 2010,2012,2019-2020 Jeremy D Monin (jdmonin@nand.net)
 
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
@@ -18,6 +18,12 @@
  along with this program.  If not, see http://www.gnu.org/licenses/ .
  -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    >
+<include layout="@layout/rt_toolbar" />
+<LinearLayout
     android:orientation="vertical"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
@@ -57,7 +63,10 @@
 		android:layout_height="wrap_content"
 		/>
 	<TimePicker android:id="@+id/trip_createfreq_timepicker"
+		android:timePickerMode="spinner"
 		android:layout_width="wrap_content" android:layout_height="wrap_content"
+		android:layout_marginTop="-6dp"
+		android:layout_marginBottom="-6dp"
 		/>
 	<TextView android:id="@+id/trip_createfreq_from"
 		android:text="@string/from__colon"
@@ -94,8 +103,8 @@
 			android:layout_gravity="top"
 			android:layout_width="fill_parent"
 			android:layout_height="wrap_content"
-			android:paddingTop="2dp"
-			android:paddingBottom="2dp"
+			android:paddingTop="?rtr_spinner_padding"
+			android:paddingBottom="?rtr_spinner_padding"
 			/>
 	</LinearLayout>
 	<LinearLayout
@@ -117,4 +126,5 @@
 	        android:onClick="onClick_BtnCancel" />
 	</LinearLayout>
 </LinearLayout></ScrollView>
+</LinearLayout>
 </LinearLayout>

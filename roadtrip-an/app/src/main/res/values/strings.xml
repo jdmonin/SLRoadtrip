@@ -179,7 +179,7 @@
 <string name="android_startup_starting">Starting up...</string>
 <string name="logbook_recent_gas_nonefound">No recent Gas Stops found for this vehicle.</string>
 <string name="logbook_recent_gas_text">Recent Gas Stops for Vehicle</string>
-<string name="logbook_show__title">View Logbook</string>
+<string name="logbook_show__title">Log</string>
 <string name="logbook_show__earlier_trips">^ Earlier Trips ^</string>
 <string name="logbook_show__export_complete">Export complete.</string>
 <string name="logbook_show__later_trips">v  Later Trips  v</string>

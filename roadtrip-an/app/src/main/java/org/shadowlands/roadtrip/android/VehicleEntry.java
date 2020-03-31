@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010-2016 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2016,2020 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -55,6 +55,8 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.AdapterView.OnItemClickListener;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 
 /**
  * Enter a new vehicle, or edit a vehicle.
@@ -81,7 +83,7 @@ import android.widget.AdapterView.OnItemClickListener;
  * The "OK" button to finish this Activity is handled in {@link #onClick_BtnOK(View)}.
  */
 public class VehicleEntry
-	extends Activity implements OnDateSetListener
+	extends AppCompatActivity implements OnDateSetListener
 {
 	/** Flag to show we already have a vehicle entered in the db,
 	 *  but the user asked to enter a new vehicle;
@@ -170,6 +172,8 @@ public class VehicleEntry
 	{
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.vehicle_entry);
+		setSupportActionBar((Toolbar) findViewById(R.id.rt_toolbar));
+		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
 		int cameFromEdit_id;
 		Intent i = getIntent();
@@ -423,6 +427,16 @@ public class VehicleEntry
 		super.onDestroy();
 		if (db != null)
 			db.close();
+	}
+
+	/**
+	 * Nav arrow handler for AppCompat's action bar: Call {@link #onBackPressed()}.
+	 * @since 0.9.92
+	 */
+	@Override
+	public boolean onSupportNavigateUp() {
+		onBackPressed();
+		return true;
 	}
 
 	/** Show or hide the {@link #etGeoArea} geographic-area dropdown */

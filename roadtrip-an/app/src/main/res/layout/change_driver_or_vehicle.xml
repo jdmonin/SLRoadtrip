@@ -2,7 +2,7 @@
 <!--
  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
 
- This file Copyright (C) 2010,2012-2014,2019 Jeremy D Monin (jdmonin@nand.net)
+ This file Copyright (C) 2010,2012-2014,2019-2020 Jeremy D Monin (jdmonin@nand.net)
 
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
@@ -27,6 +27,7 @@
     android:layout_width="fill_parent"
     android:padding="?rtr_activity_padding"
     >
+<include layout="@layout/rt_toolbar" />
 <TableLayout
     android:stretchColumns="1"
     android:layout_height="wrap_content"
@@ -41,6 +42,8 @@
        <Spinner android:layout_height="wrap_content"
                 android:layout_width="fill_parent"
                 android:layout_weight="1"
+                android:paddingTop="?rtr_spinner_padding"
+                android:paddingBottom="?rtr_spinner_padding"
                 android:id="@+id/change_cvd_vehicle"/>
     </TableRow>
     <TableRow>
@@ -52,6 +55,8 @@
        <Spinner android:layout_height="wrap_content"
                 android:layout_width="fill_parent"
                 android:layout_weight="1"
+                android:paddingTop="?rtr_spinner_padding"
+                android:paddingBottom="?rtr_spinner_padding"
                 android:id="@+id/change_cvd_driver"/>
     </TableRow>
 </TableLayout>

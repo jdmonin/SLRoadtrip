@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2011,2013-2015,2019 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2011,2013-2015,2019-2020 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -37,7 +37,6 @@ import org.shadowlands.roadtrip.db.RDBVerifier;
 import org.shadowlands.roadtrip.db.Settings;
 import org.shadowlands.roadtrip.db.android.RDBOpenHelper;
 
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -53,6 +52,8 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 
 /**
  * Restore file details activity.
@@ -73,7 +74,7 @@ import android.widget.Toast;
  * @author jdmonin
  */
 public class BackupsRestore
-	extends Activity implements UpgradeCopyCaller
+	extends AppCompatActivity implements UpgradeCopyCaller
 {
 	// db is not kept open, so we can restore, so there is no RDBAdapter field in this activity.
 
@@ -162,6 +163,8 @@ public class BackupsRestore
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.backups_restore);
+		setSupportActionBar((Toolbar) findViewById(R.id.rt_toolbar));
+		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 		final Resources res = getResources();
 
 		final Intent in = getIntent();
@@ -501,6 +504,16 @@ public class BackupsRestore
 					tf.delete();
 			} catch (Throwable e) {}
 		}
+	}
+
+	/**
+	 * Nav arrow handler for AppCompat's action bar: Call {@link #onBackPressed()}.
+	 * @since 0.9.92
+	 */
+	@Override
+	public boolean onSupportNavigateUp() {
+		onBackPressed();
+		return true;
 	}
 
 	public void onClick_BtnRestore(View v)

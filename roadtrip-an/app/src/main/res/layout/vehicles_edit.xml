@@ -3,7 +3,7 @@
  List of vehicles to edit.  Uses vehicles_list_item listitem layout.
  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
 
- This file Copyright (C) 2012-2013,2019 Jeremy D Monin (jdmonin@nand.net)
+ This file Copyright (C) 2012-2013,2019-2020 Jeremy D Monin (jdmonin@nand.net)
 
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
@@ -18,7 +18,13 @@
  You should have received a copy of the GNU General Public License
  along with this program.  If not, see http://www.gnu.org/licenses/ .
  -->
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    >
+<include layout="@layout/rt_toolbar" />
+<RelativeLayout
 	android:layout_width="fill_parent"
 	android:layout_height="fill_parent"
 	android:padding="?rtr_activity_padding"
@@ -45,8 +51,9 @@
 	<!-- List is populated using item layout vehicles_list_item in VehiclesEdit.populateVehiclesList -->
 	<ListView android:id="@+id/list"
 		android:layout_above="@id/vehicles_edit_btns"
-		android:layout_alignParentTop="true" 
+		android:layout_alignParentTop="true"
 		android:minHeight="?android:attr/listPreferredItemHeight"
 		android:layout_width="fill_parent"
 		android:layout_height="fill_parent" />
 </RelativeLayout>
+</LinearLayout>

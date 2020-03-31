@@ -75,6 +75,8 @@ import android.widget.TextView;
 import android.widget.TimePicker;
 import android.widget.TimePicker.OnTimeChangedListener;
 import android.widget.Toast;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 
 /**
  * Confirm a trip stop during a trip, or end the trip, from Main activity.
@@ -116,7 +118,7 @@ import android.widget.Toast;
  *
  * @author jdmonin
  */
-public class TripTStopEntry extends Activity
+public class TripTStopEntry extends AppCompatActivity
 	implements OnDateSetListener, OnItemClickListener, TextWatcher, OnTimeChangedListener
 {
 	/**
@@ -141,6 +143,18 @@ public class TripTStopEntry extends Activity
 	 * Used by {@link TripTStopEntry} and {@link TripBegin}.
 	 */
 	static final long TIMEDIFF_HISTORICAL_MILLIS = 24 * 60 * 60 * 1000L;
+
+	/**
+	 * Activity {@code requestCode} to show we've called {@link TripTStopChooseFreq}.
+	 * @since 0.9.92
+	 */
+	private static final int REQUEST_CHOOSE_FREQ = 1;
+
+	/**
+	 * Activity {@code requestCode} to show we've called {@link TripTStopGas}.
+	 * @since 0.9.92
+	 */
+	private static final int REQUEST_GAS = 2;
 
 	/**
 	 * Placeholder (-2) for GeoArea ID when the geoarea name is newly entered text
@@ -579,6 +593,8 @@ public class TripTStopEntry extends Activity
 
 		db = new RDBOpenHelper(this);
 		setContentView(R.layout.trip_tstop_entry);
+		setSupportActionBar((Toolbar) findViewById(R.id.rt_toolbar));
+		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 		neverPaused = true;
 
 		odo_total_chk = (CheckBox) findViewById(R.id.trip_tstop_odo_total_chk);
@@ -1078,7 +1094,7 @@ public class TripTStopEntry extends Activity
 					{
 						startActivityForResult
 							(new Intent(this, TripTStopChooseFreq.class),
-							 R.id.main_btn_begin_freqtrip);
+							 REQUEST_CHOOSE_FREQ);
 
 						// When it returns with the result, its intent should contain
 						// an int extra "_id" that's the chosen
@@ -1943,6 +1959,16 @@ public class TripTStopEntry extends Activity
 		super.onDestroy();
 		if (db != null)
 			db.close();
+	}
+
+	/**
+	 * Nav arrow handler for AppCompat's action bar: Call {@link #onBackPressed()}.
+	 * @since 0.9.92
+	 */
+	@Override
+	public boolean onSupportNavigateUp() {
+		onBackPressed();
+		return true;
 	}
 
 	/** For roadtrips, update GUI and data from a click on the 'starting geoarea' button. */
@@ -3124,7 +3150,7 @@ public class TripTStopEntry extends Activity
 		if (viewTS != null)
 			i.putExtra(EXTRAS_FIELD_VIEW_TSTOP_ID, viewTS.getID());
 
-		startActivityForResult(i, R.id.trip_tstop_btn_gas);
+		startActivityForResult(i, REQUEST_GAS);
 	}
 
 	/**
@@ -3139,7 +3165,7 @@ public class TripTStopEntry extends Activity
 
 		switch(requestCode)
 		{
-		case R.id.trip_tstop_btn_gas:  // TripTStopGas
+		case REQUEST_GAS:  // TripTStopGas
 			bundleGas = idata.getExtras();
 			btnGas.setCompoundDrawablesWithIntrinsicBounds
 			  ((bundleGas != null) ? android.R.drawable.presence_online
@@ -3162,7 +3188,7 @@ public class TripTStopEntry extends Activity
 			}
 			break;
 
-		case R.id.main_btn_begin_freqtrip:  // TripTStopChooseFreq
+		case REQUEST_CHOOSE_FREQ:  // TripTStopChooseFreq
 			if (idata != null)
 			{
 				int id = idata.getIntExtra("_id", 0);

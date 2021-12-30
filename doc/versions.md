@@ -25,6 +25,8 @@ Being developed now; improvements and bugfixes since 0.9.91
 
 ## SLRoadtrip android app:
 - Show Logbook:
+  - View details of a past trip's TStop:
+    - Can select and copy Location and Via Route text
   - Search by Location:
     - Bugfix: If 2 trips were on same date in different years, wasn't showing a date for 2nd trip
 

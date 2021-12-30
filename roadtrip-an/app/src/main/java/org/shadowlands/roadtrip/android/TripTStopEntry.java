@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010-2017,2019-2020 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2017,2019-2021 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -55,6 +55,7 @@ import android.content.res.Resources;
 import android.os.Bundle;
 import android.os.Handler;
 import android.text.Editable;
+import android.text.InputType;
 import android.text.TextWatcher;
 import android.text.format.DateFormat;
 import android.view.View;
@@ -3324,8 +3325,13 @@ public class TripTStopEntry extends Activity
 	 * Unless <tt>txt</tt> is <tt>null</tt>, set <tt>editTextID</tt>'s contents.
 	 *<P>
 	 * If <tt>{@link #viewTS} != null</tt>, makes the field read-only but not visibly dark
-	 * by calling {@link View#setFocusable(boolean)}. Exception: The {@code trip_tstop_comment}
-	 * field isn't made read-only unless {@link #isViewTScurrTS}.
+	 * by calling {@link View#setFocusable(boolean)}.
+	 *<BR>
+	 * {@code viewTS} special cases:
+	 * <UL>
+	 *   <LI> Location and Via made read-only, can select and copy their text
+	 *   <LI> {@code trip_tstop_comment} isn't made read-only unless {@link #isViewTScurrTS}.
+	 * </UL>
 	 */
 	private void setEditText(String txt, final int editTextID)
 	{
@@ -3336,8 +3342,17 @@ public class TripTStopEntry extends Activity
 
 		EditText et = (EditText) findViewById (editTextID);
 		et.setText(txt);
-		if ((viewTS != null) && ((editTextID != R.id.trip_tstop_comment) || isViewTScurrTS))
-			et.setFocusable(false);
+		if (viewTS != null)
+		{
+			if ((editTextID == R.id.trip_tstop_loc) || (editTextID == R.id.trip_tstop_via))
+			{
+				et.setInputType(InputType.TYPE_NULL);
+				et.setTextIsSelectable(true);
+				et.setKeyListener(null);
+			}
+			else if ((editTextID != R.id.trip_tstop_comment) || isViewTScurrTS)
+				et.setFocusable(false);
+		}
 	}
 
 	/**

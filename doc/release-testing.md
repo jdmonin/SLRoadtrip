@@ -251,6 +251,7 @@ In Main activity, tap "Show Logbook" button.
   - Tap a stop in the trip to view its details
     - Uses same "Trip Stop" activity used during trips to enter TStops
     - Is read-only, except comment field
+    - Can select and copy Location and Via Route text to clipboard
     - Total/trip odometer values should be shown if entered, otherwise hidden including their labels
     - For a stop that has gas, Gas button has green icon, can tap it for gas details
   - Tap a stop that has a comment

@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010,2012,2014-2017,2019-2020 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010,2012,2014-2017,2019-2021 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -44,6 +44,8 @@ import org.shadowlands.roadtrip.db.RDBSchema;
 /** Main startup for BookEdit. Prompts whether to use a database or a backup file, etc. */
 public class Main
 {
+	// Reminder: Version number is here and AndroidManifest.xml
+
 	/**
 	 * Application version code; changes with each point release.
 	 * Same format as {@link RDBSchema#DATABASE_VERSION}, but multiple releases may have the same db version.

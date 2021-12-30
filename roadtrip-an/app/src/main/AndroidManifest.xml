@@ -2,7 +2,7 @@
 <!--
  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
 
- This file Copyright (C) 2010-2017,2019-2020 Jeremy D Monin (jdmonin@nand.net)
+ This file Copyright (C) 2010-2017,2019-2021 Jeremy D Monin (jdmonin@nand.net)
 
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
@@ -20,6 +20,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
       package="org.shadowlands.roadtrip"
       android:versionCode="992" android:versionName="0.9.92">
+
+    <!-- Reminder: version number is here and bookedit/Main.java -->
 
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 

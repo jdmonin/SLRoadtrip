@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010-2017,2019-2020 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2017,2019-2021 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -860,8 +860,9 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 			// first row of trip: date, if different from prev date
 			final Date tstart = new Date(t.getTime_start() * 1000L);
 			final int tstartMonth = tstart.getMonth(),
-			          tstartMDay = tstart.getDate();
-			if ((prevShownDT.mday != tstartMDay) || (prevShownDT.month != tstartMonth))
+			          tstartMDay = tstart.getDate(),
+			          tstartYear = tstart.getYear();
+			if ((prevShownDT.mday != tstartMDay) || (prevShownDT.month != tstartMonth) || (prevShownDT.year != tstartYear))
 			{
 				if (ttr != null)
 					ttr.tDateRows.add(Integer.valueOf(tText.size()));
@@ -871,6 +872,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 
 				prevShownDT.month = tstartMonth;
 				prevShownDT.mday = tstartMDay;
+				prevShownDT.year = tstartYear;
 			}
 			prevTripStart = tstart;
 

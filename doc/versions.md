@@ -23,6 +23,11 @@ updated to list the released version's release date and commit hash.
 
 Being developed now; improvements and bugfixes since 0.9.91
 
+## SLRoadtrip android app:
+- Show Logbook:
+  - Search by Location:
+    - Bugfix: If 2 trips were on same date in different years, wasn't showing a date for 2nd trip
+
 # 0.9.91
 
 2020-01-31: ae769f3

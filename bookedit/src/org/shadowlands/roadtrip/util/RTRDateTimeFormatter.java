@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2011,2015,2017 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2011,2015,2017,2021 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -178,14 +178,15 @@ public class RTRDateTimeFormatter
 	{
 		final Date dobj = new Date(millis);
 		@SuppressWarnings("deprecation")
-		final int dMonth = dobj.getMonth(), dMDay = dobj.getDate();
+		final int dMonth = dobj.getMonth(), dMDay = dobj.getDate(), dYear = dobj.getYear();
 
-		final boolean changed = ((dMonth != dt.month) || (dMDay != dt.mday));
+		final boolean changed = ((dMonth != dt.month) || (dMDay != dt.mday) || (dYear != dt.year));
 		if (changed)
 		{
 			dt.fmtDate = formatDate(dobj);
 			dt.month = dMonth;
 			dt.mday = dMDay;
+			dt.year = dYear;
 		} else {
 			dt.fmtDate = null;
 		}
@@ -208,9 +209,18 @@ public class RTRDateTimeFormatter
 
 		/**
 		 * Month/day of month of the time rendered to {@link #fmtTime} and maybe {@link #fmtDate},
-		 * used by {@code formatDateTimeInSeq(..)} to determine when they've changed from the previous call. 
+		 * used with {@link #year} by {@code formatDateTimeInSeq(..)} to determine when they've
+		 * changed from the previous call.
 		 */
 		public int month, mday;
+
+		/**
+		 * Year of the time rendered to {@link #fmtTime} and maybe {@link #fmtDate},
+		 * used with {@link #month}, {@link #mday} by {@code formatDateTimeInSeq(..)} to determine when they've
+		 * changed from the previous call.
+		 * @since 0.9.92
+		 */
+		public int year;
 	}
 
 }

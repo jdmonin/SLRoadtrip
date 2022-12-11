@@ -25,6 +25,7 @@ Being developed now; improvements and bugfixes since 0.9.91
 
 ## SLRoadtrip android app:
 - Show Logbook:
+  - When stop has total but no trip odometer, calculate delta from prev stop's total odometer ignoring 10ths digit
   - View details of a past trip's TStop:
     - Can select and copy Location and Via Route text
   - Search by Location:

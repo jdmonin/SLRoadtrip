@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010-2017,2019-2021 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2017,2019-2022 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -989,15 +989,21 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 
 					int odo_delta = 0;  // distance from previous stop; used only when trip_odo_delta_mode != 0
 					final int ts_ototal = ts.getOdo_total();
+					final int ts_otrip = ts.getOdo_trip();
 					if ((trip_odo_delta_mode != 0) && (ts_ototal != 0))
 					{
-						odo_delta = ts_ototal - odo_total;
+						if (ts_otrip != 0)
+							odo_delta = ts_ototal - odo_total;
+						else
+							// make sure it matches the displayed prev & current stops' total odometers,
+							// in case the hidden 10ths digit would make the truncated whole numbers
+							// look incorrect (48.1 - 43.9 = 4.2, but 48 - 43 = 5)
+							odo_delta = ((ts_ototal / 10) - (odo_total / 10)) * 10;
 						odo_total = ts_ototal;
 					}
 					final boolean is_last_stop = (ts_ototal != 0) && (ts_ototal == odo_end) && (ttcont == 0);
 					if ((ts_ototal != 0) && ! is_last_stop)
 						tr[3] = Integer.toString((int) (ts_ototal / 10.0f));
-					final int ts_otrip = ts.getOdo_trip();
 					if (ts_otrip != 0)
 					{
 						if (trip_odo_delta_mode != 0)

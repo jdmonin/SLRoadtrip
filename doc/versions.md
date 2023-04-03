@@ -11,7 +11,7 @@ See doc/hist/*.sql for previous schema updates.
 Because a git commit can't predict and include its own hash, a released
 version's copy of `versions.md` does not contain its release date or
 its most recent commit hash. The `release-#.#.##` tag in git points to the
-master commit which was tested for that release, and the released APK's
+commit which was tested for that release, and the released APK's
 About box also shows that same commit hash.
 
 After release and before continuing development, versions.md should be
@@ -22,6 +22,9 @@ updated to list the released version's release date and commit hash.
 # 0.9.93
 
 Being developed now; improvements and bugfixes since 0.9.92
+
+## Code internals:
+- Rename master branch to main
 
 # 0.9.92
 

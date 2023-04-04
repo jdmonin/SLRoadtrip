@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010-2017,2019-2021 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2017,2019-2021,2023 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -49,8 +49,10 @@ import android.app.AlertDialog;
 import android.app.DatePickerDialog;
 import android.app.DatePickerDialog.OnDateSetListener;
 import android.app.Dialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.os.Bundle;
 import android.os.Handler;
@@ -530,7 +532,10 @@ public class TripTStopEntry extends Activity
 
 	/**
 	 * Calculator's memory register (M+ M- {@link #calcMR MR} {@link #calcMC MC} buttons).
+	 * Treated as empty when value is 0.0f.
 	 * @see #calcStatusView
+	 * @see #calcMemSave()
+	 * @see #calcMemRestore()
 	 */
 	private float calcMemory = 0.0f;
 
@@ -3643,6 +3648,7 @@ public class TripTStopEntry extends Activity
 		calcOperation = CALC_OP_NONE;
 		calcPrevOperand = 0;
 
+		calcMemRestore();
 		calcValue = (EditText) calcItems.findViewById(R.id.trip_tstop_popup_odo_calc_value);
 		calcStatusView = (TextView) calcItems.findViewById(R.id.trip_tstop_popup_odo_calc_status);
 		calc0 = calcItems.findViewById(R.id.trip_tstop_popup_odo_calc_0);
@@ -3688,12 +3694,14 @@ public class TripTStopEntry extends Activity
 					return;
 				}
 				odo.setCurrent10dAndRelated(Math.round(ov * 10));
+				calcMemSave();
 			}
 		});
 		alert.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
 			public void onClick(DialogInterface dialog, int whichButton)
 			{
 				popupCalcDia = null;
+				calcMemSave();
 			}
 		});
 
@@ -3703,7 +3711,7 @@ public class TripTStopEntry extends Activity
 
 	/**
 	 * Update {@link #calcStatusView} with the current {@link #calcOperation}
-	 * and whether {@link #calcMemory} is occupied.
+	 * and whether {@link #calcMemory} is occupied (nonzero).
 	 * @since 0.9.50
 	 */
 	private void calcUpdateStatusView()
@@ -4051,6 +4059,29 @@ public class TripTStopEntry extends Activity
 		calcValue.setText(Float.toString(calcMemory));
 	}
 
+	/**
+	 * Save the current calculator memory, if any, to the activity's Preferences.
+	 * @see #calcMemRestore()
+	 * @since 0.9.93
+	 */
+	private void calcMemSave()
+	{
+		SharedPreferences.Editor pe = getPreferences(Context.MODE_PRIVATE).edit();
+		pe.putFloat("CMEM", calcMemory);
+		pe.apply();
+	}
+
+	/**
+	 * Load the current calculator memory, if any, from the activity's Preferences.
+	 * @see #calcMemSave()
+	 * @since 0.9.93
+	 */
+	private void calcMemRestore()
+	{
+		SharedPreferences prefs = getPreferences(Context.MODE_PRIVATE);
+		calcMemory = prefs.getFloat("CMEM", 0.0f);
+	}
+
 	/////////////////////////////
 	// End of calculator methods
 	/////////////////////////////
@@ -4085,6 +4116,7 @@ public class TripTStopEntry extends Activity
 		outState.putInt("LOCID", (locObj != null) ? locObj.getID() : 0);
 		outState.putInt("VIAID", (viaRouteObj != null) ? viaRouteObj.getID() : 0);
 		outState.putFloat("CMEM", calcMemory);
+		calcMemSave();  // makes sure same mem value in bundle and sharedpref
 	}
 
 	/**

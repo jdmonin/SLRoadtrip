@@ -1,8 +1,8 @@
 apply plugin: 'com.android.application'
 
 android {
+    namespace "org.shadowlands.roadtrip"
     compileSdkVersion 19
-    buildToolsVersion "28.0.3"
 
     defaultConfig {
         applicationId "org.shadowlands.roadtrip"

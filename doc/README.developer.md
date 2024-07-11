@@ -26,8 +26,8 @@ The project development site is https://github.com/jdmonin/SLRoadtrip
 
 ## Java/Android versions required
 
-To allow for broad device support, currently the app requires Android 3.0
-(Honeycomb) or newer, and the BookEdit log viewer requires java 5 or newer.
+To allow for broad device support, currently the app requires Android 4.4
+(KitKat) or newer, and the BookEdit log viewer requires java 5 or newer.
 The app uses newer features such as ActionBar if available.
 
 
@@ -79,7 +79,7 @@ git checkout main
               actual syntax errors can be obscured by that clutter
 - Start an emulator, then run `app` there
     - You may need to download an android emulator image first;
-      current minimum SDK version is very low: 11 (3.0 Honeycomb)
+      current minimum SDK version is very low: 19 (4.4 KitKat)
     - In a moment you should see the Shadowlands Roadtrip welcome screen
     - Either start to enter some test data, or restore a backup you've sent into the emulator's Downloads folder
     - Once a driver and vehicle are created or restored, the app will start up at its main menu

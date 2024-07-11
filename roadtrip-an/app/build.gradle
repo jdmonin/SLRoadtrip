@@ -2,12 +2,12 @@ apply plugin: 'com.android.application'
 
 android {
     namespace "org.shadowlands.roadtrip"
-    compileSdkVersion 19
+    compileSdkVersion 23
 
     defaultConfig {
         applicationId "org.shadowlands.roadtrip"
-        minSdkVersion 11
-        targetSdkVersion 19
+        minSdkVersion 19
+        targetSdkVersion 23
     }
 
     buildTypes {

@@ -26,6 +26,7 @@ Being developed now; improvements and bugfixes since 0.9.92
 ## SLRoadtrip android app:
 - Odometer calculator dialog:
   - Remember memory value between uses
+- Set targetSdkVersion to API 23 (v6.0), minSdkVersion to 19 (v4.1)
 ## Code internals:
 - Rename master branch to main
 

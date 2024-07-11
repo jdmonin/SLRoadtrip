@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010-2011,2014-2015,2017 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2011,2014-2015,2017,2024 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -52,8 +52,8 @@ public abstract class Misc
 		// not java.text.DateFormat, throughout.
 
 		StringBuffer fmt_dow_shortdate = new StringBuffer();
-		final char da = DateFormat.DAY;
-		final char qu = DateFormat.QUOTE;
+		final char da = 'E';  // was DateFormat.DAY
+		final char qu = '\'';
 		fmt_dow_shortdate.append(da);
 		fmt_dow_shortdate.append(da);
 		fmt_dow_shortdate.append(da);
@@ -65,12 +65,13 @@ public abstract class Misc
 			fmt_dow_shortdate.append(' ');
 		fmt_dow_shortdate.append(qu);
 		// year-month-date will be 3 chars: yMd, Mdy, etc
+		// (the same chars used in SimpleDateFormat patterns)
 		final char[] ymd_order = DateFormat.getDateFormatOrder(ctx);
 		for (char c : ymd_order)
 		{
 			fmt_dow_shortdate.append(c);
 			fmt_dow_shortdate.append(c);
-			if (c == DateFormat.YEAR)
+			if (c == 'y')
 			{
 				fmt_dow_shortdate.append(c);
 				fmt_dow_shortdate.append(c);
@@ -99,23 +100,24 @@ public abstract class Misc
 		// not java.text.DateFormat, throughout.
 
 		StringBuffer fmt_dow_shortdate = new StringBuffer();
-		final char da = DateFormat.DAY;
-		final char qu = DateFormat.QUOTE;
+		final char da = 'E';  // was DateFormat.DAY
+		final char qu = '\'';
 		fmt_dow_shortdate.append(da);
 		fmt_dow_shortdate.append(qu);
 		fmt_dow_shortdate.append(' ');
 		fmt_dow_shortdate.append(qu);
 		// year-month-date will be 3 chars: yMd, Mdy, etc
+		// (the same chars used in SimpleDateFormat patterns)
 		final char[] ymd_order = DateFormat.getDateFormatOrder(ctx);
 		for (char c : ymd_order)
 		{
 			fmt_dow_shortdate.append(c);
-			if (c == DateFormat.MONTH)
+			if (c == 'M')
 			{
 				fmt_dow_shortdate.append(c);  // for MMM
 				fmt_dow_shortdate.append(c);
 			}
-			else if (c == DateFormat.YEAR)
+			else if (c == 'y')
 			{
 				fmt_dow_shortdate.append(c);  // for YYYY
 				fmt_dow_shortdate.append(c);

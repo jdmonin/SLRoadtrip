@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2011,2015,2017,2021 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2011,2015,2017,2021,2025 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -21,6 +21,7 @@ package org.shadowlands.roadtrip.util;
 
 import java.text.DateFormat;  // for JavaImpl
 import java.text.ParseException;
+import java.util.Calendar;
 import java.util.Date;        // for JavaImpl
 
 /**
@@ -31,6 +32,10 @@ import java.util.Date;        // for JavaImpl
  * {@link org.shadowlands.roadtrip.model.LogbookTableModel}.  In that model the time of day is shown for each event.
  * The date is shown only when it changes from the previous event, using the
  * {@link #formatDateTimeInSeq(long, DateAndTime)} method.
+ *<P>
+ * In version 0.9.93 and newer, the formatter has an internal copy of the current timezone
+ * from {@link Calendar#getInstance()}. If a later version needs to use multiple timezones
+ * (maybe specific to a Vehicle or a Driver), a Calendar parameter should be added to the constructor.
  *
  * @author jdmonin
  */
@@ -50,6 +55,12 @@ public class RTRDateTimeFormatter
 	protected java.text.DateFormat dfdt;
 
 	/**
+	 * Calendar for conversions which need to know the current timezone; not null.
+	 * @since 0.9.93
+	 */
+	protected Calendar localCal;
+
+	/**
 	 * Constructor for java locale-generic formatting.
 	 * For android-specific date/time formats, use child class util.android.RTRAndroidDateTimeFormatter instead.
 	 */
@@ -58,6 +69,7 @@ public class RTRDateTimeFormatter
 		dfd = java.text.DateFormat.getDateInstance(DateFormat.MEDIUM);
 		dft = java.text.DateFormat.getTimeInstance(DateFormat.SHORT);
 		dfdt = java.text.DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT);
+		localCal = Calendar.getInstance();
 	}
 
 	/**
@@ -192,6 +204,50 @@ public class RTRDateTimeFormatter
 		}
 		dt.fmtTime = formatTime(dobj);
 		return changed;
+	}
+
+	/**
+	 * Given a time during a given day, return the start of that day (00:00:00)
+	 * according to this formatter's copy of the current timezone.
+	 *<P>
+	 * Modifies this formatter's internal Calendar; not thread-safe.
+	 *
+	 * @param timeDuringDay  Time during that day, same format as {@link System#currentTimeMillis()}
+	 * @return  Start of that day, same format as {@link System#currentTimeMillis()}
+	 * @since 0.9.93
+	 * @see #startTimeOfDay(long, Calendar)
+	 */
+	public long startTimeOfDay(long timeDuringDay)
+	{
+		localCal.setTimeInMillis(timeDuringDay);
+		localCal.set(Calendar.HOUR_OF_DAY, 0);
+		localCal.set(Calendar.MINUTE, 0);
+		localCal.set(Calendar.SECOND, 0);
+
+		return localCal.getTimeInMillis();
+	}
+
+	/**
+	 * Given a time during a given day, return the start of that day (00:00:00)
+	 * according to the calendar's timezone.
+	 *
+	 * @param timeDuringDay  Time during that day, same format as {@link System#currentTimeMillis()}
+	 * @param localCal   Calendar to use, or {@code null} to get local timezone from {@link Calendar#getInstance()}
+	 * @return  Start of that day, same format as {@link System#currentTimeMillis()}
+	 * @since 0.9.93
+	 * @see #startTimeOfDay(long)
+	 */
+	public static long startTimeOfDay(long timeDuringDay, Calendar localCal)
+	{
+		if (localCal == null)
+			localCal = Calendar.getInstance();
+
+		localCal.setTimeInMillis(timeDuringDay);
+		localCal.set(Calendar.HOUR_OF_DAY, 0);
+		localCal.set(Calendar.MINUTE, 0);
+		localCal.set(Calendar.SECOND, 0);
+
+		return localCal.getTimeInMillis();
 	}
 
 	/**

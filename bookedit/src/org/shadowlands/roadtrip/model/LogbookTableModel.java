@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010-2017,2019-2022 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2017,2019-2022,2025 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -280,7 +280,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 
 	/**
 	 * Our date & time format, for {@link #addRowsFromTrips(TripListTimeRange, RDBAdapter)}.
-	 * May be null; initialized in <tt>addRowsFromTrips</tt>.
+	 * May be null; lazily initialized in <tt>addRowsFromTrips</tt>.
 	 */
 	private transient RTRDateTimeFormatter dtf;
 
@@ -360,10 +360,14 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	 *<P>
 	 * You can add earlier trips afterwards by calling {@link #addEarlierTrips(RDBAdapter)}.
 	 * This is the only non-copy constructor that might set {@link #hasCurrentTrip()}.
+	 *<P>
+	 * The start time to look for trips will be adjusted to start of the day (midnight 00:00)
+	 * {@code weeks} ago, using {@link RTRDateTimeFormatter#startTimeOfDay(long)}.
+	 * To use a non-default timezone, pass in a {@code dtf} which has the desired timezone.
 	 *
 	 * @param veh  Vehicle; never null
 	 * @param weeks  Increment in weeks when loading newer/older trips from the database,
-	 *          or 0 to load all (This may run out of memory).
+	 *          or 0 to load all (which may run out of memory).
 	 *          The vehicle's most recent trips are loaded in this constructor.
 	 * @param dtf  date-time format for {@link #addRowsFromTrips(TripListTimeRange, RDBAdapter)}, or null for default
 	 * @param conn Add existing rows from this connection, via addRowsFromTrips.
@@ -411,6 +415,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 
 		if ((ltime != 0) && (weekIncr != 0))
 		{
+			ltime = startTimeOfDay(ltime);  // look back to 00:00, not current time of day
 			++ltime;  // addRowsFromDBTrips range is exclusive; make it include ltime
 			addRowsFromDBTrips(ltime, weekIncr, true, false, conn);
 			if (! tData.isEmpty())
@@ -431,6 +436,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 	 * @param timeStart  Starting date/time of trip range, in Unix format.
 	 *          If no trips found within <tt>weeks</tt> of this date,
 	 *          keep searching until a trip is found.
+	 *          To show all trips for that day, caller should set {@code timeStart}'s hh:mm:ss to the local timezone's 00:00:00.
 	 * @param weeks  Increment in weeks when loading newer/older trips from the database.
 	 *          Must be greater than 0.
 	 * @param towardsNewer  If true, retrieve <tt>timeStart</tt> and newer;
@@ -1560,6 +1566,20 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 		return tData.elementAt(i);
 	}
 
+	/**
+	 * Convenience method to call {@link RTRDateTimeFormatter#startTimeOfDay(long)}
+	 * even if our {@link #dtf} field is still null, using Unix seconds not millis.
+	 * @param timeDuringDayUnix  Time during that day, in Unix format
+	 * @return Start of that day, in Unix format
+	 * @since 0.9.93
+	 */
+	private int startTimeOfDay(final int timeDuringDayUnix)
+	{
+		if (dtf != null)
+			return (int) (dtf.startTimeOfDay(timeDuringDayUnix * 1000L) / 1000L);
+		else
+			return (int) (RTRDateTimeFormatter.startTimeOfDay(timeDuringDayUnix * 1000L, null) / 1000L);
+	}
 
 	/// Cache helper methods ///
 

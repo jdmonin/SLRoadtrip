@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010-2017,2019-2020 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2017,2019-2020,2025 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -569,6 +569,7 @@ public class LogbookShow extends Activity
 			cal.set(Calendar.DAY_OF_MONTH, dpick.getDayOfMonth());
 			cal.set(Calendar.HOUR_OF_DAY, 0);
 			cal.set(Calendar.MINUTE, 0);
+			cal.set(Calendar.SECOND, 0);
 			calGoToDate = (int) (cal.getTimeInMillis() / 1000L);
 		}
 

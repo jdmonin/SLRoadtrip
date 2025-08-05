@@ -1,6 +1,6 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
- *  This file Copyright (C) 2010-2017,2019-2020 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2017,2019-2020,2025 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -105,11 +105,14 @@ public class Trip extends RDBRecord
 	private static final String WHERE_VID_AND_COMPLETED =
 		"_id=(select max(_id) from trip where vid = ? and odo_end is null)";
 
-	/** Where-clause for use in {@link #tripsForVehicle(RDBAdapter, Vehicle, int, int, boolean, boolean, boolean)}. */
+	/** Where-clause for use in {@link #tripsForVehicle(RDBAdapter, Vehicle, int, int, boolean, boolean, boolean, boolean)}. */
 	private static final String WHERE_TIME_START_AND_VID =
 		"(time_start >= ?) and (time_start <= ?) and vid = ?";
 
-	/** Where-clause for use in {@link #tripsForVehicle_searchBeyond(RDBAdapter, String, int, int, int, boolean)}. */
+	/**
+	 * Where-clause for use in {@link #tripsForVehicle_searchBeyond(RDBAdapter, String, int, int, int, boolean)}
+	 * and {@link #tripsForVehicle(RDBAdapter, Vehicle, int, int, boolean, boolean, boolean, boolean)}.
+	 */
 	private static final String WHERE_TIME_START_AFTER_AND_VID =
 		"(time_start > ?) and vid = ?";
 
@@ -268,6 +271,8 @@ public class Trip extends RDBRecord
 	 *          <tt>weeks</tt>, keep searching until a trip is found
 	 * @param towardsNewer  If true, retrieve <tt>timeStart</tt> and newer;
 	 *          otherwise retrieve <tt>timeStart</tt> and older.
+	 * @param andAllNewer  If true, search from a start time without any end time.
+	 *          Useful when showing a vehicle's latest trips.
 	 * @param alsoTStops  If true, call {@link #readAllTStops()} for each trip found
 	 * @return Trips for this Vehicle, sorted by time_start, or null if none
 	 * @throws IllegalStateException if db not open
@@ -275,7 +280,7 @@ public class Trip extends RDBRecord
 	 */
 	public static TripListTimeRange tripsForVehicle
 		(RDBAdapter db, Vehicle veh, final int timeStart, final int weeks,
-		 final boolean searchBeyondWeeks, final boolean towardsNewer, final boolean alsoTStops)
+		 final boolean searchBeyondWeeks, final boolean towardsNewer, final boolean andAllNewer, final boolean alsoTStops)
 		throws IllegalStateException
 	{
 		if (db == null)
@@ -296,12 +301,26 @@ public class Trip extends RDBRecord
 		for (int tries = 0; (sv == null) && (tries <= 2) && searchBeyondWeeks; ++tries)
 		{
 			if (towardsNewer)
+			{
+				if (andAllNewer)
+					break;  // t1 not used, so requery would get same results
 				t1 += (weeks * WEEK_IN_SECONDS);
-			else
+			} else {
 				t0 -= (weeks * WEEK_IN_SECONDS);
-			final String[] whereArgs =
-				{ Integer.toString(t0), Integer.toString(t1), vIDstr };
-			sv = db.getRows(TABNAME, WHERE_TIME_START_AND_VID, whereArgs, FIELDS_AND_ID, "_id", 0);
+			}
+
+			if (andAllNewer)
+			{
+				final String[] whereArgs =
+					{Integer.toString(t0), vIDstr};
+				sv = db.getRows
+					(TABNAME, WHERE_TIME_START_AFTER_AND_VID, whereArgs, FIELDS_AND_ID, "_id", 0);
+			} else {
+				final String[] whereArgs =
+					{Integer.toString(t0), Integer.toString(t1), vIDstr};
+				sv = db.getRows
+					(TABNAME, WHERE_TIME_START_AND_VID, whereArgs, FIELDS_AND_ID, "_id", 0);
+			}
 		}
 
 		final boolean searchedBeyond;
@@ -1930,7 +1949,7 @@ public class Trip extends RDBRecord
 
 	/**
 	 * Trips within a range of time; used by {@link LogbookTableModel} and
-	 * {@link #tripsForVehicle(RDBAdapter, Vehicle, int, int, boolean, boolean, boolean)}.
+	 * {@link #tripsForVehicle(RDBAdapter, Vehicle, int, int, boolean, boolean, boolean, boolean)}.
 	 *<P>
 	 * To construct a new {@code TripListTimeRange}, call
 	 * {@link #build(List, int)} or {@link #build(int, int, List)}.

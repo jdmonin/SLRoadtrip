@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010-2015,2017,2019-2020 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2015,2017,2019-2020,2025 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -476,7 +476,7 @@ public class Vehicle extends RDBRecord
 	 * @param alsoTStops  If true, call {@link Trip#readAllTStops()} for each trip found
 	 * @return  ordered list of trips (sorted by time_start), or null if none
 	 * @throws IllegalStateException if the db connection is closed
-	 * @see Trip#tripsForVehicle(RDBAdapter, Vehicle, int, int, boolean, boolean, boolean)
+	 * @see Trip#tripsForVehicle(RDBAdapter, Vehicle, int, int, boolean, boolean, boolean, boolean)
 	 */
 	public List<Trip> readAllTrips(final boolean alsoTStops)
 		throws IllegalStateException

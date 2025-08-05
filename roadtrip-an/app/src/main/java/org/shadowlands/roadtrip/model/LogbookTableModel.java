@@ -417,7 +417,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 		{
 			ltime = startTimeOfDay(ltime);  // look back to 00:00, not current time of day
 			++ltime;  // addRowsFromDBTrips range is exclusive; make it include ltime
-			addRowsFromDBTrips(ltime, weekIncr, true, false, conn);
+			addRowsFromDBTrips(ltime, weekIncr, true, false, true, conn);
 			if (! tData.isEmpty())
 				tData.lastElement().noneLater = true;  // we know it's the newest trip
 		} else {
@@ -461,7 +461,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 		tripIncr = 0;
 		filterWeekModeStartDate = timeStart;
 
-		addRowsFromDBTrips(timeStart, weekIncr, true, towardsNewer, conn);
+		addRowsFromDBTrips(timeStart, weekIncr, true, towardsNewer, false, conn);
 	}
 
 	/**
@@ -547,7 +547,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 				loadToTime = filterWeekModeStartDate;
 			else
 				loadToTime = tData.firstElement().timeStart;
-			nAdded = addRowsFromDBTrips(loadToTime, weekIncr, true, false, conn);
+			nAdded = addRowsFromDBTrips(loadToTime, weekIncr, true, false, false, conn);
 		} else {
 			// Location Mode
 			final int laterTripID = tData.firstElement().tr.get(0).getID();
@@ -585,7 +585,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 		{
 			// Week Mode
 			final int loadToTime = tData.lastElement().timeEnd;
-			nAdded = addRowsFromDBTrips(loadToTime, weekIncr, true, true, conn);
+			nAdded = addRowsFromDBTrips(loadToTime, weekIncr, true, true, false, conn);
 		} else {
 			// Location Mode
 			final List<Trip> lastTrips = tData.lastElement().tr;
@@ -669,12 +669,16 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
      *          and assume adding at the end of {@link #tData};
      *          otherwise retrieve older than <tt>timeStart</tt>,
      *          and add at the start of {@link #tData}.
+	 * @param andAllNewer  If true, search from a start time without any end time.
+	 *          Useful when showing a vehicle's latest trips, especially since that constructor
+	 *          might make <tt>timeStart</tt> earlier before calling this method, so 2 weeks after that
+	 *          might be before the latest trip's start time.
 	 * @param conn Add existing rows from this connection
 	 * @return Number of rows of text added to the table
 	 */
 	private int addRowsFromDBTrips
 		(int timeStart, final int weeks,
-    	 final boolean searchBeyondWeeks, final boolean towardsNewer, RDBAdapter conn)
+		 final boolean searchBeyondWeeks, final boolean towardsNewer, final boolean andAllNewer, RDBAdapter conn)
 	{
 		// TODO check tData for this time range already present
 
@@ -684,7 +688,7 @@ public class LogbookTableModel // extends javax.swing.table.AbstractTableModel
 		else
 			--timeStart;
 		TripListTimeRange ttr = Trip.tripsForVehicle
-			(conn, veh, timeStart, weeks, searchBeyondWeeks, towardsNewer, true);
+			(conn, veh, timeStart, weeks, searchBeyondWeeks, towardsNewer, andAllNewer, true);
 		if (ttr == null)
 		{
 			if (searchBeyondWeeks && ! tData.isEmpty())

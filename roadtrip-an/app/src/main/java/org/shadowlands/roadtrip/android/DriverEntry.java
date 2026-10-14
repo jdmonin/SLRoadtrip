@@ -41,7 +41,7 @@ import android.widget.Toast;
 
 /**
  * Enter information about a driver.
- * Read-only if current trip and not adding a driver.
+ * Read-only if current trip and {@link #EXTRAS_INT_EDIT_ID} is its driver.
  *<P>
  * <b>When no intent extras are used:</b><BR>
  * When OK is pressed, check if CURRENT_VEHICLE is set.
@@ -56,7 +56,7 @@ import android.widget.Toast;
  * an int extra called "_id" with the ID of the newly added driver.
  *<P>
  * <b>When {@link #EXTRAS_INT_EDIT_ID} is set:</b><BR>
- * Edit the specified person.
+ * View or edit the specified person.
  * Finish this activity and return to what the user was previously doing.
  * The Result code will be set to RESULT_OK, and the Intent will get
  * an int extra called "_id" with the ID of the edited person.
@@ -86,7 +86,8 @@ public class DriverEntry extends Activity
 	private boolean cameFromAskNew;
 
 	/**
-	 * Are we on a trip? Is {@link VehSettings#getCurrentTrip(RDBAdapter, Vehicle, boolean)} != null?
+	 * Are we on a trip and editing its driver?
+	 * Is {@link VehSettings#getCurrentTrip(RDBAdapter, Vehicle, boolean)} != null, etc?
 	 */
 	private boolean hasCurrentTrip;
 
@@ -171,15 +172,17 @@ public class DriverEntry extends Activity
 		final Vehicle currV = Settings.getCurrentVehicle(db, false);
 		if ((currV != null) && ! cameFromAskNew)
 		{
-			hasCurrentTrip = (null != VehSettings.getCurrentTrip(db, currV, false));
-			if (hasCurrentTrip)
+			if (null != VehSettings.getCurrentTrip(db, currV, false))
 			{
-				setTitle(R.string.view_drivers);
-				name.setEnabled(false);
-				comment.setEnabled(false);
+				final Person currD = VehSettings.getCurrentDriver(db, currV, false);
+				hasCurrentTrip = ((currD != null) && (cameFromEdit_id == currD.getID()));
+				if (hasCurrentTrip)
+				{
+					setTitle(R.string.view_drivers);
+					name.setEnabled(false);
+					comment.setEnabled(false);
+				}
 			}
-		} else {
-			hasCurrentTrip = false;
 		}
     }
 

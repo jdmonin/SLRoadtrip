@@ -163,6 +163,11 @@ In Main activity, hit "Change Driver / Vehicle" button.
   - Enter info for the new driver
   - List should show that new driver
   - Tap for details; should be properly formatted
+- While there is a current trip:
+  - Current driver's details should be read-only
+  - Should be able to edit other drivers
+    - Edit a driver's name. List should refresh to show updated name
+  - Should be able to add a driver and add their vehicle
 
 ### Vehicle list
 
@@ -175,6 +180,8 @@ In Main activity, hit "Change Driver / Vehicle" button.
 - Make sure current vehicle is on a trip
   - Can just begin a trip, doesn't need to have any stops
 - Current vehicle details should be read-only while on a trip
+- Should be able to edit other vehicles
+  - Edit a vehicle's model. List should refresh to show updated model
 - Can add a new vehicle
   - Give the new vehicle a different Starting Area
   - After add, should ask whether to change vehicle to new one: Tap "Change"

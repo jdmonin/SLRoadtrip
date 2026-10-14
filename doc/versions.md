@@ -28,6 +28,7 @@ Being developed now; improvements and bugfixes since 0.9.92
   - Show trips starting at midnight *n* weeks ago, not current time of day, to include all trips from that entire day
 - Odometer calculator dialog:
   - Remember memory value between uses
+- Can add new driver even if there is a current trip
 - Set targetSdkVersion to API 23 (Android 6.0), minSdkVersion to 19 (4.4)
 ## BookEdit desktop utility app:
 - Logbook window:

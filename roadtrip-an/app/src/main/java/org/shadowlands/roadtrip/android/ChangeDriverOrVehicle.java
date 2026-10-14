@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010-2016,2019-2020 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010-2016,2019-2020,2026 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -50,6 +50,7 @@ import android.widget.Toast;
  * The vehicle can't be changed during a Trip.
  * Changing the current vehicle will switch to a different current trip.
  * The driver can't be changed during a Trip yet.
+ * Can always add a new driver or new vehicle.
  *<P>
  * The "Change" button that changes current settings and finishes the Activity
  * is handled by {@link #onClick_BtnChange(View)}.
@@ -136,7 +137,6 @@ public class ChangeDriverOrVehicle
 			((Button) findViewById(R.id.change_cvd_vehicles_edit)).setText(R.string.edit_vehicles);
 		}
 		driver.setEnabled(! hasCurrent);
-		findViewById(R.id.change_cvd_driver_new).setEnabled(! hasCurrent);
 
 		// Remember: Keep button text sync'd with any updates to the change_driver_or_vehicle.xml layout.
 	}

@@ -1,7 +1,7 @@
 /*
  *  This file is part of Shadowlands RoadTrip - A vehicle logbook for Android.
  *
- *  This file Copyright (C) 2010,2012,2014-2015 Jeremy D Monin <jdmonin@nand.net>
+ *  This file Copyright (C) 2010,2012,2014-2015,2026 Jeremy D Monin <jdmonin@nand.net>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -41,7 +41,7 @@ import android.widget.Toast;
 
 /**
  * Enter information about a driver.
- * Read-only if current trip.
+ * Read-only if current trip and not adding a driver.
  *<P>
  * <b>When no intent extras are used:</b><BR>
  * When OK is pressed, check if CURRENT_VEHICLE is set.
@@ -169,7 +169,7 @@ public class DriverEntry extends Activity
 		}
 
 		final Vehicle currV = Settings.getCurrentVehicle(db, false);
-		if (currV != null)
+		if ((currV != null) && ! cameFromAskNew)
 		{
 			hasCurrentTrip = (null != VehSettings.getCurrentTrip(db, currV, false));
 			if (hasCurrentTrip)
